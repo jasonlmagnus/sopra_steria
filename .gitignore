@@ -259,4 +259,7 @@ otto_audit.csv
 !dashboard/*.sh
 !dashboard/*.txt
 !dashboard/*.md
-!README.md 
+!README.md
+
+# Environment variables
+.env 

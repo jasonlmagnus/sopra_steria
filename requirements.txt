@@ -1,0 +1,7 @@
+playwright
+beautifulsoup4
+anthropic
+Jinja2
+python-dotenv
+tqdm
+streamlit 
