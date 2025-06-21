@@ -2,11 +2,20 @@
 This module handles all interactions with third-party AI APIs.
 """
 import os
-import anthropic
 import logging
 from dotenv import load_dotenv
+from datetime import datetime
+from pathlib import Path
 from .models import PageData
+from .persona_parser import PersonaParser
+from .methodology_parser import MethodologyParser
 import json
+
+try:
+    from anthropic import Anthropic
+except ImportError:
+    print("Anthropic package not found. Please install it with: pip install anthropic")
+    raise
 
 load_dotenv()
 
@@ -14,53 +23,89 @@ class AIInterface:
     """A class to handle interactions with the Anthropic API."""
 
     def __init__(self):
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY environment variable not set.")
-        self.client = anthropic.Anthropic(api_key=api_key)
+        self.client = Anthropic()
+        self.persona_parser = PersonaParser()
+        
+        # Find the project root directory (where audit_inputs is located)
+        self.project_root = self._find_project_root()
 
-    def generate_narrative(self, persona_content: str, page_text: str) -> str:
-        """
-        Calls the AI to generate a narrative report, with retries.
-        """
-        prompt = f"""
-You are an expert at emulating a specific persona to analyze a webpage. Your task is to adopt the mindset, goals, and pain points of the persona provided below and write a first-person analysis from their perspective.
+    def _find_project_root(self) -> Path:
+        """Find the project root directory by looking for audit_inputs folder."""
+        current_path = Path(__file__).parent
+        
+        # Go up directories until we find audit_inputs
+        while current_path != current_path.parent:
+            if (current_path / "audit_inputs").exists():
+                return current_path
+            current_path = current_path.parent
+        
+        # If not found, assume current working directory
+        if (Path.cwd() / "audit_inputs").exists():
+            return Path.cwd()
+        
+        # Fallback to the parent of audit_tool directory
+        return Path(__file__).parent.parent
 
-<persona_to_emulate>
-{persona_content}
-</persona_to_emulate>
+    def _load_prompt_template(self, template_name: str) -> str:
+        """Load prompt template from audit_inputs/prompts folder."""
+        template_path = self.project_root / "audit_inputs" / "prompts" / f"{template_name}.md"
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Extract the main prompt section (everything after "## Main Prompt")
+                if "## Main Prompt" in content:
+                    return content.split("## Main Prompt")[1].strip()
+                return content
+        except FileNotFoundError:
+            logging.error(f"Prompt template not found: {template_path}")
+            return "Error: Prompt template not found."
+    
+    def _get_system_message(self, template_name: str) -> str:
+        """Extract system message from prompt template."""
+        template_path = self.project_root / "audit_inputs" / "prompts" / f"{template_name}.md"
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                # Extract system message section
+                if "## System Message" in content:
+                    lines = content.split("## System Message")[1].split("## Main Prompt")[0].strip()
+                    return lines
+                return "You are a helpful AI assistant."
+        except FileNotFoundError:
+            return "You are a helpful AI assistant."
+    
+    def _format_persona_attributes(self, persona_attributes) -> dict:
+        """Format persona attributes for template substitution."""
+        return {
+            'persona_name': persona_attributes.name,
+            'persona_role': persona_attributes.role,
+            'persona_industry': persona_attributes.industry,
+            'persona_geographic_scope': persona_attributes.geographic_scope,
+            'persona_business_context': persona_attributes.business_context,
+            'persona_communication_style': persona_attributes.communication_style,
+            'persona_priorities': '\n'.join([f"- {priority}" for priority in persona_attributes.key_priorities]),
+            'persona_pain_points': '\n'.join([f"- {pain}" for pain in persona_attributes.pain_points])
+        }
 
-You have been given the raw text content from a webpage to analyze:
-<webpage_text>
-{page_text[:12000]}
-</webpage_text>
-
----
-**TONE & STYLE**
-
-Your tone must match the persona. Your analysis must be **professional, analytical, and constructive**, framed from the persona's point of view.
-- **BE:** Objective, direct, and candid in the persona's voice.
-- **AVOID:** Generic or melodramatic language.
-- **FOCUS:** Frame all analysis in terms of the persona's goals and how this webpage helps or hinders them.
----
-
-Your task is to write a professional, first-person strategic analysis of this content *from the persona's perspective*.
-
-First, provide a table of specific copy examples from the text. Identify "Effective Copy" that resonates with the persona and "Ineffective Copy" that is vague or fails to meet their needs. For each, provide a concise strategic analysis *from the persona's viewpoint*. Use this markdown format:
-
-| Finding         | Example from Text | Strategic Analysis (from Persona's View) |
-|-----------------|-------------------|------------------------------------------|
-| Ineffective Copy | "Example..."      | "As a [Persona Role], this is unhelpful because..."   |
-| Effective Copy   | "Example..."      | "As a [Persona Role], this is useful because..."       |
-
-After the table, write a first-person narrative analysis (2-3 paragraphs) as if you are the persona. Provide a balanced view of strengths and weaknesses. Structure your analysis around these key questions:
-
-*   **First Impression:** What is my immediate impression of this page as [Persona Role]? How clear is the value proposition *for me*?
-*   **Language & Tone:** How well does the language resonate with me? Where is it effective and where does it fall short? Refer to your examples.
-*   **Gaps in Information:** What critical information is missing *for me* to move forward? (e.g., proof points, outcomes, differentiators relevant to my role).
-*   **Trust and Credibility:** Does this page build or erode my trust in this company? What specific elements contribute to this?
-*   **Business Impact & Next Steps:** What is the likely impact of this page on someone like me? What would I, as [Persona Role], recommend they change?
-"""
+    def generate_experience_report(self, url: str, page_content: str, persona_content: str, methodology) -> str:
+        """Generate experience report using configurable prompts and structured persona parsing."""
+        
+        # Parse persona attributes
+        persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content)
+        
+        # Load prompt template
+        prompt_template = self._load_prompt_template("narrative_analysis")
+        system_message = self._get_system_message("narrative_analysis")
+        
+        # Format persona attributes for template
+        persona_vars = self._format_persona_attributes(persona_attributes)
+        
+        # Substitute variables in prompt
+        prompt = prompt_template.format(
+            page_content=page_content[:12000],  # Limit content length
+            **persona_vars
+        )
+        
         retries = 3
         for attempt in range(retries):
             try:
@@ -68,7 +113,7 @@ After the table, write a first-person narrative analysis (2-3 paragraphs) as if 
                     model="claude-3-opus-20240229",
                     max_tokens=1500,
                     temperature=0.6,
-                    system="You are an expert persona simulator. Your task is to adopt the provided persona and write a first-person analysis of a webpage from their specific point of view. Maintain the persona's voice and perspective throughout.",
+                    system=system_message,
                     messages=[
                         {
                             "role": "user",
@@ -80,9 +125,80 @@ After the table, write a first-person narrative analysis (2-3 paragraphs) as if 
             except Exception as e:
                 logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
                 if attempt + 1 == retries:
-                    logging.error("Final API call attempt failed. Could not generate narrative.")
-                    return "Error: Could not generate the narrative report due to a persistent API error."
+                    logging.error("Final API call attempt failed. Could not generate experience report.")
+                    return "Error: Could not generate the experience report due to a persistent API error."
         return "Error: Should not be reached."
+
+    def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology) -> str:
+        """Generate hygiene scorecard using configurable prompts and YAML methodology."""
+        
+        # Parse persona attributes
+        persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content)
+        
+        # Get criteria from methodology (this would need to be implemented)
+        # For now, use basic criteria
+        criteria_list = self._get_criteria_for_page(page_content, methodology)
+        
+        # Load prompt template
+        prompt_template = self._load_prompt_template("hygiene_scorecard")
+        system_message = self._get_system_message("hygiene_scorecard")
+        
+        # Format persona attributes for template
+        persona_vars = self._format_persona_attributes(persona_attributes)
+        
+        # Substitute variables in prompt
+        prompt = prompt_template.format(
+            page_url=url,
+            page_content=page_content[:8000],  # Limit content length
+            criteria_list=criteria_list,
+            current_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            scoring_table="[To be filled by AI]",
+            **persona_vars
+        )
+        
+        retries = 3
+        for attempt in range(retries):
+            try:
+                message = self.client.messages.create(
+                    model="claude-3-opus-20240229",
+                    max_tokens=2000,
+                    temperature=0.3,
+                    system=system_message,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        }
+                    ],
+                )
+                return message.content[0].text
+            except Exception as e:
+                logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
+                if attempt + 1 == retries:
+                    logging.error("Final API call attempt failed. Could not generate hygiene scorecard.")
+                    return "Error: Could not generate the hygiene scorecard due to a persistent API error."
+        return "Error: Should not be reached."
+    
+    def _get_criteria_for_page(self, page_content: str, methodology) -> str:
+        """Get appropriate criteria based on page content and methodology."""
+        # This is a simplified version - would need full implementation
+        # based on page classification and YAML methodology
+        
+        basic_criteria = [
+            "Corporate Positioning Alignment - How well does the page reflect the company's core brand message?",
+            "Brand Differentiation - Does the content clearly differentiate from competitors?", 
+            "Value Proposition Clarity - Is the value proposition clear and compelling for the target persona?",
+            "Trust & Credibility Signals - Are there sufficient trust indicators and proof points?",
+            "Call-to-Action Effectiveness - Are the next steps clear and relevant to the persona?"
+        ]
+        
+        return '\n'.join([f"- {criterion}" for criterion in basic_criteria])
+
+    def generate_narrative(self, persona_content: str, page_text: str) -> str:
+        """
+        Legacy method - redirects to new experience report generation
+        """
+        return self.generate_experience_report("", page_text, persona_content, None)
 
     def get_subjective_score(self, criterion_name: str, page_text: str) -> float:
         """

@@ -28,6 +28,12 @@ class Scraper:
         safe_filename = "".join(c for c in filename if c.isalnum() or c in ('_','-')).rstrip()
         return os.path.join(CACHE_DIR, f"{safe_filename}.pkl")
 
+    def url_to_filename(self, url: str) -> str:
+        """Convert URL to safe filename for reports."""
+        filename = urlparse(url).netloc + urlparse(url).path
+        safe_filename = "".join(c for c in filename if c.isalnum() or c in ('_','-')).rstrip()
+        return safe_filename
+
     def _save_to_cache(self, url: str, page_data: PageData):
         """Saves a PageData object to the cache."""
         cache_path = self._get_cache_path(url)

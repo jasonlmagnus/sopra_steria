@@ -9,7 +9,7 @@ import argparse
 import logging
 from typing import Optional
 
-from .scraper import WebScraper
+from .scraper import Scraper
 from .ai_interface import AIInterface
 from .generators import ReportGenerator
 from .strategic_summary_generator import StrategicSummaryGenerator
@@ -39,7 +39,7 @@ def run_audit(urls_file: str, persona_file: str, output_dir: str,
         logger.info(f"📋 Loaded methodology: {methodology.get_metadata()['name']} v{methodology.get_metadata()['version']}")
         
         # Initialize scraper and AI interface
-        scraper = WebScraper()
+        scraper = Scraper()
         ai_interface = AIInterface()
         reporter = ReportGenerator(output_dir)
         
@@ -63,10 +63,12 @@ def run_audit(urls_file: str, persona_file: str, output_dir: str,
             
             try:
                 # Scrape content
-                page_content = scraper.scrape_page(url)
-                if not page_content:
+                page_data = scraper.fetch_page(url)
+                if not page_data or page_data.is_404:
                     logger.warning(f"⚠️ Failed to scrape: {url}")
                     continue
+                
+                page_content = page_data.raw_text
                 
                 # Generate reports using AI
                 hygiene_report = ai_interface.generate_hygiene_scorecard(

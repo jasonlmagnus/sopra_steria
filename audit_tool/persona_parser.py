@@ -44,45 +44,55 @@ class PersonaParser:
             pain_points=self._extract_pain_points()
         )
     
+    def extract_attributes_from_content(self, persona_content: str) -> PersonaAttributes:
+        """Extract structured attributes from persona content string."""
+        logging.info("Parsing persona content...")
+        
+        self.content = persona_content
+        
+        return PersonaAttributes(
+            name=self._extract_name(),
+            role=self._extract_role(),
+            industry=self._extract_industry(),
+            geographic_scope=self._extract_geographic_scope(),
+            key_priorities=self._extract_priorities(),
+            business_context=self._extract_business_context(),
+            communication_style=self._extract_communication_style(),
+            organization_type=self._extract_organization_type(),
+            decision_factors=self._extract_decision_factors(),
+            pain_points=self._extract_pain_points()
+        )
+    
     def _extract_name(self) -> str:
         """Extract persona name from file header or content."""
+        # Look for "Persona Brief:" pattern
+        brief_match = re.search(r'Persona Brief:\s*(.+)', self.content)
+        if brief_match:
+            return brief_match.group(1).strip()
+        
         # Look for title patterns
         title_match = re.search(r'^#\s+(.+)', self.content, re.MULTILINE)
         if title_match:
             return title_match.group(1).strip()
         
-        # Look for "Persona Report:" pattern
-        persona_match = re.search(r'Persona Report:\s*(.+)', self.content)
-        if persona_match:
-            return persona_match.group(1).strip()
-        
         return "Unknown Persona"
     
     def _extract_role(self) -> str:
         """Extract the primary role/title."""
-        # Look for role patterns in content
-        role_patterns = [
-            r'Chief\s+\w+\s+Officer',
-            r'Senior\s+\w+\s+Executive',
-            r'IT\s+Director',
-            r'Finance\s+Leader',
-            r'Operations\s+Executive'
-        ]
+        # Look for Role: pattern in structured content
+        role_match = re.search(r'Role:\s*(.+?)(?:\n|$)', self.content, re.IGNORECASE)
+        if role_match:
+            return role_match.group(1).strip()
         
-        for pattern in role_patterns:
-            match = re.search(pattern, self.content, re.IGNORECASE)
-            if match:
-                return match.group(0)
-        
-        # Fallback to generic extraction
-        if 'CIO' in self.content:
+        # Look for C-suite patterns in persona brief
+        if 'C-suite Executive' in self.content:
+            return 'C-suite Executive'
+        elif 'Chief Information Officer' in self.content or 'CIO' in self.content:
             return 'Chief Information Officer'
-        elif 'CDO' in self.content:
+        elif 'Chief Digital Officer' in self.content or 'CDO' in self.content:
             return 'Chief Digital Officer'
-        elif 'finance' in self.content.lower():
+        elif 'Finance Leader' in self.content:
             return 'Finance Leader'
-        elif 'IT' in self.content:
-            return 'IT Executive'
         
         return "Senior Executive"
     
@@ -111,47 +121,48 @@ class PersonaParser:
             return 'Regional'
     
     def _extract_priorities(self) -> List[str]:
-        """Extract key priorities from content."""
+        """Extract key priorities from structured content."""
         priorities = []
         
-        # Common priority patterns
-        priority_keywords = [
-            'digital transformation',
-            'operational efficiency',
-            'regulatory compliance',
-            'cost optimization',
-            'security',
-            'innovation',
-            'customer experience',
-            'data governance',
-            'risk management',
-            'competitive advantage'
-        ]
+        # Look for "Key Responsibilities:" section
+        resp_match = re.search(r'Key Responsibilities:\s*(.+?)(?:\n\s*Content Implication:|\n\s*\d+\.)', self.content, re.DOTALL)
+        if resp_match:
+            resp_text = resp_match.group(1)
+            # Extract bullet points or numbered items
+            items = re.findall(r'(?:•|\*|-|\d+\.)\s*(.+?)(?:\n|$)', resp_text)
+            for item in items[:5]:  # Limit to top 5
+                # Clean up and extract key themes
+                clean_item = re.sub(r'^[^:]+:\s*', '', item.strip())
+                if len(clean_item) > 20:  # Only meaningful priorities
+                    priorities.append(clean_item[:80] + "..." if len(clean_item) > 80 else clean_item)
         
-        for keyword in priority_keywords:
-            if keyword in self.content.lower():
-                priorities.append(keyword.title())
-        
-        # If no specific priorities found, add generic ones
+        # If no structured priorities found, extract from content
         if not priorities:
-            priorities = ['Operational Excellence', 'Strategic Growth', 'Risk Management']
+            priority_keywords = [
+                'digital transformation', 'operational efficiency', 'regulatory compliance',
+                'cost optimization', 'security', 'innovation', 'business model reinvention',
+                'risk management', 'competitive advantage', 'enterprise viability'
+            ]
+            
+            for keyword in priority_keywords:
+                if keyword in self.content.lower():
+                    priorities.append(keyword.title())
         
-        return priorities[:5]  # Limit to top 5
+        return priorities[:5] if priorities else ['Strategic Growth', 'Operational Excellence', 'Risk Management']
     
     def _extract_business_context(self) -> str:
-        """Generate business context description."""
+        """Extract business context description."""
+        # Look for "User Goal Statement:" section
+        goal_match = re.search(r'User Goal Statement:\s*(.+?)(?:\n\s*\n|\n\s*[A-Z])', self.content, re.DOTALL)
+        if goal_match:
+            return goal_match.group(1).strip()
+        
+        # Fallback to generic context
         role = self._extract_role()
         industry = self._extract_industry()
         scope = self._extract_geographic_scope()
         
-        if 'BENELUX' in scope and 'executive' in role.lower():
-            return f"a {scope} {role.lower()} evaluating strategic partnerships and digital transformation initiatives"
-        elif 'finance' in role.lower():
-            return f"a {industry} {role.lower()} focused on cost optimization and regulatory compliance"
-        elif 'digital' in role.lower() or 'CDO' in role:
-            return f"a {role} driving organizational digital transformation and innovation"
-        else:
-            return f"a {industry} {role.lower()} responsible for strategic technology decisions"
+        return f"a {scope} {role.lower()} focused on strategic technology decisions and business transformation"
     
     def _extract_communication_style(self) -> str:
         """Determine communication style based on role."""
@@ -205,25 +216,30 @@ class PersonaParser:
         return factors[:5]
     
     def _extract_pain_points(self) -> List[str]:
-        """Extract key pain points."""
+        """Extract key pain points from structured content."""
         pain_points = []
         
-        pain_keywords = [
-            'legacy systems',
-            'budget constraints',
-            'regulatory pressure',
-            'skill gaps',
-            'digital transformation',
-            'operational inefficiency',
-            'security threats',
-            'compliance burden'
-        ]
+        # Look for "Pain Points and Challenges" or "Frustrations:" section
+        pain_match = re.search(r'(?:Pain Points and Challenges|Frustrations:)\s*(.+?)(?:\n\s*[A-Z][^:]*:|\n\s*\d+\.)', self.content, re.DOTALL)
+        if pain_match:
+            pain_text = pain_match.group(1)
+            # Extract bullet points or listed items
+            items = re.findall(r'(?:•|\*|-|The)\s*(.+?)(?:\n|$)', pain_text)
+            for item in items[:5]:  # Limit to top 5
+                clean_item = item.strip()
+                if len(clean_item) > 15:  # Only meaningful pain points
+                    pain_points.append(clean_item[:80] + "..." if len(clean_item) > 80 else clean_item)
         
-        for keyword in pain_keywords:
-            if keyword.lower() in self.content.lower():
-                pain_points.append(keyword.title())
-        
+        # Fallback to common pain points if none found
         if not pain_points:
-            pain_points = ['Resource Constraints', 'Technology Complexity', 'Change Management']
+            pain_keywords = [
+                'legacy systems', 'budget constraints', 'regulatory pressure',
+                'talent shortages', 'cybersecurity threats', 'supply chain disruptions',
+                'business model obsolescence', 'compliance complexity'
+            ]
+            
+            for keyword in pain_keywords:
+                if keyword in self.content.lower():
+                    pain_points.append(keyword.title())
         
-        return pain_points[:5] 
+        return pain_points[:5] if pain_points else ['Resource Constraints', 'Technology Complexity', 'Market Volatility'] 
