@@ -2,7 +2,7 @@
 This module defines the data structures used for passing data between modules.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Any, Optional
 
 @dataclass
 class PageData:
@@ -19,27 +19,47 @@ class Criterion:
     """Represents a single scoring criterion from the methodology."""
     name: str
     weight: float
-    # We can add more fields later, like 'description' or 'gating_rule'
+    category: str = "general"  # brand, performance, authenticity, sentiment
+    requirements: List[str] = field(default_factory=list)
+    criterion_id: str = ""
+    description: str = ""
 
 @dataclass
 class Tier:
     """Represents a scoring tier (e.g., Tier 1, Tier 2) from the methodology."""
     name: str
     criteria: List[Criterion]
-    weight: float # The weight of this tier in the final onsite score
+    weight: float  # The weight of this tier in the final onsite score
+    brand_percentage: int = 50
+    performance_percentage: int = 50
+    triggers: List[str] = field(default_factory=list)
+    examples: List[str] = field(default_factory=list)
 
 @dataclass
 class OffsiteChannel:
     """Represents an offsite channel type (e.g., Owned, Influenced)."""
     name: str
     criteria: List[Criterion]
-    weight: float # The weight of this channel in the final offsite score
+    weight: float  # The weight of this channel in the final offsite score
+    brand_percentage: int = 50
+    performance_percentage: int = 0
+    authenticity_percentage: int = 0
+    sentiment_percentage: int = 0
+    examples: List[str] = field(default_factory=list)
 
 @dataclass
 class Methodology:
     """Represents the entire scoring methodology, composed of multiple tiers."""
     tiers: List[Tier]
     offsite_channels: List[OffsiteChannel]
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    scoring_config: Dict[str, Any] = field(default_factory=dict)
+    calculation_config: Dict[str, Any] = field(default_factory=dict)
+    gating_rules: Dict[str, Any] = field(default_factory=dict)
+    brand_messaging: Dict[str, Any] = field(default_factory=dict)
+    validation_flags: Dict[str, Any] = field(default_factory=dict)
+    quality_penalties: Dict[str, Any] = field(default_factory=dict)
+    evidence_requirements: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class ScoredCriterion:
@@ -48,14 +68,20 @@ class ScoredCriterion:
     weight: float
     score: float
     notes: str = ""
+    evidence: str = ""
+    category: str = "general"
+    penalties_applied: List[str] = field(default_factory=list)
 
 @dataclass
 class Scorecard:
     """Represents the final, calculated scorecard for a URL."""
     url: str
     final_score: float
-    tier_name: str # For onsite, this is Tier 1/2/3. For offsite, this is Owned/Influenced/Independent.
+    tier_name: str  # For onsite, this is Tier 1/2/3. For offsite, this is Owned/Influenced/Independent.
     scored_criteria: List[ScoredCriterion]
+    brand_consistency_check: Dict[str, Any] = field(default_factory=dict)
+    gating_rules_applied: List[str] = field(default_factory=list)
+    quality_penalties: List[str] = field(default_factory=list)
 
 @dataclass
 class AggregatedTierScore:

@@ -1,0 +1,541 @@
+# Sopra Steria Brand Audit Methodology
+# Comprehensive scoring framework configuration
+
+metadata:
+  name: "Sopra Steria Brand Audit Methodology"
+  version: "2.0"
+  tagline: "The world is how we shape it"
+  updated: "2024-06-21"
+  description: "Complete brand evaluation framework for onsite and offsite touchpoints"
+
+# Core Scoring Configuration
+scoring:
+  scale:
+    min: 0
+    max: 10
+  
+  descriptors:
+    0-3:
+      label: "Missing / Broken / Off-brand"
+      status: "FAIL"
+      color: "red"
+    4-5:
+      label: "Basic presence, no differentiation"
+      status: "WARNING"
+      color: "orange"
+    6-7:
+      label: "Competent but generic"
+      status: "WARNING"
+      color: "yellow"
+    8-9:
+      label: "Strong, differentiated, persona-relevant"
+      status: "PASS"
+      color: "green"
+    10:
+      label: "Exceptional, best-in-class"
+      status: "EXCELLENT"
+      color: "dark-green"
+
+# Overall Brand Score Calculation
+calculation:
+  formula: "(ONSITE_SCORE × 0.7) + (OFFSITE_SCORE × 0.3) × CRISIS_MULTIPLIER"
+  
+  onsite_weight: 0.7
+  offsite_weight: 0.3
+  
+  crisis_multipliers:
+    no_issues: 1.0
+    minor_issues: 0.9   # 10% reduction
+    major_issues: 0.5   # 50% reduction
+    crisis_situation: 0.3   # 70% reduction
+
+# Page Classification System
+classification:
+  onsite:
+    tier_1:
+      name: "Brand Positioning"
+      weight_in_onsite: 0.3
+      brand_percentage: 80
+      performance_percentage: 20
+      triggers:
+        - "h1 contains 'The world is how we shape it'"
+        - "nav starts with 'About/Investors/Careers'"
+      examples:
+        - "Homepage"
+        - "About Us"
+        - "Corporate Responsibility"
+    
+    tier_2:
+      name: "Value Propositions"
+      weight_in_onsite: 0.5
+      brand_percentage: 50
+      performance_percentage: 50
+      triggers:
+        - "URL contains '/services/'"
+        - "URL contains '/industries/'"
+        - "URL contains '/transformation/'"
+        - "URL contains '/what-we-do/'"
+      examples:
+        - "AI Services"
+        - "Financial Services"
+        - "Cloud Solutions"
+    
+    tier_3:
+      name: "Functional Content"
+      weight_in_onsite: 0.2
+      brand_percentage: 30
+      performance_percentage: 70
+      triggers:
+        - "blog posts"
+        - "case studies"
+        - "white papers"
+        - "press releases"
+        - "events"
+      examples:
+        - "Thought leadership articles"
+        - "Industry insights"
+        - "Technical deep-dives"
+
+  offsite:
+    owned:
+      name: "Owned Channels"
+      weight_in_offsite: 0.4
+      brand_percentage: 60
+      performance_percentage: 40
+      examples:
+        - "LinkedIn Company Page"
+        - "Twitter/X"
+        - "YouTube"
+        - "Facebook"
+    
+    influenced:
+      name: "Influenced Channels"
+      weight_in_offsite: 0.35
+      brand_percentage: 40
+      authenticity_percentage: 60
+      examples:
+        - "Glassdoor"
+        - "Employee LinkedIn"
+        - "Partner Content"
+        - "Events"
+    
+    independent:
+      name: "Independent Channels"
+      weight_in_offsite: 0.25
+      brand_percentage: 20
+      sentiment_percentage: 80
+      examples:
+        - "G2"
+        - "Capterra"
+        - "Trustpilot"
+        - "Industry Reports"
+
+# Tier-Specific Scoring Criteria
+criteria:
+  tier_1:
+    brand_criteria:
+      corporate_positioning_alignment:
+        weight: 25
+        description: "The world is how we shape it tagline presence and integration"
+        requirements:
+          - "Tagline presence and integration"
+          - "Human-centric technology vision"
+          - "Optimistic, active transformation approach"
+          - "Inspirational and aspirational tone"
+      
+      brand_differentiation:
+        weight: 20
+        description: "European leadership positioning clarity"
+        requirements:
+          - "European leadership positioning"
+          - "Local leader + European champion messaging"
+          - "Competitive advantage articulation"
+          - "Digital sovereignty emphasis"
+      
+      emotional_resonance:
+        weight: 20
+        description: "Inspirational quality and memorability"
+        requirements:
+          - "Inspirational quality and memorability"
+          - "Future-positive technology vision"
+          - "Human-centric approach demonstration"
+          - "Emotional connection to transformation"
+      
+      visual_brand_integrity:
+        weight: 15
+        description: "Logo, colors, typography compliance"
+        requirements:
+          - "Logo placement and consistency"
+          - "Color palette adherence (navy #3d4a6b, red #dc3545)"
+          - "Typography compliance (Hurme Geometric Sans)"
+          - "Design system consistency"
+    
+    performance_criteria:
+      strategic_clarity:
+        weight: 10
+        description: "Clear mission/vision articulation"
+        requirements:
+          - "Clear mission/vision articulation"
+          - "Human-centric technology approach"
+          - "Innovation and transformation emphasis"
+          - "Long-term strategic thinking"
+      
+      trust_credibility_signals:
+        weight: 10
+        description: "European presence and commitment evidence"
+        requirements:
+          - "European presence evidence"
+          - "Partnership and certification displays"
+          - "Industry recognition markers"
+          - "Enterprise-scale credibility"
+
+  tier_2:
+    brand_criteria:
+      regional_narrative_integration:
+        weight: 15
+        description: "BENELUX Secure Progress narrative presence"
+        requirements:
+          - "BENELUX 'Secure Progress' narrative"
+          - "Sub-narrative alignment"
+          - "Innovation and risk balance"
+          - "Regional context and sovereignty"
+      
+      brand_message_consistency:
+        weight: 15
+        description: "Approved value proposition usage"
+        requirements:
+          - "Approved value proposition usage"
+          - "Consistent terminology and voice"
+          - "Corporate positioning reinforcement"
+          - "Message hierarchy compliance"
+      
+      visual_brand_consistency:
+        weight: 10
+        description: "Design system adherence"
+        requirements:
+          - "Design system adherence"
+          - "Brand element proper usage"
+          - "Visual hierarchy maintenance"
+          - "Photography alignment"
+      
+      brand_promise_delivery:
+        weight: 10
+        description: "Demonstration of shaping the world through solutions"
+        requirements:
+          - "Shaping the world demonstration"
+          - "Human-centric technology application"
+          - "European trust and partnership"
+          - "Innovation with security balance"
+    
+    performance_criteria:
+      strategic_value_clarity:
+        weight: 25
+        description: "Clear business outcome focus and ROI"
+        requirements:
+          - "Clear business outcome focus"
+          - "ROI articulation"
+          - "Risk mitigation integration"
+          - "C-suite relevant value proposition"
+      
+      solution_sophistication:
+        weight: 15
+        description: "Enterprise-scale capability demonstration"
+        requirements:
+          - "Enterprise-scale capabilities"
+          - "Transformation, resilience & sovereignty integration"
+          - "Cross-functional impact"
+          - "Innovation with security balance"
+      
+      proof_points_validation:
+        weight: 10
+        description: "Relevant European case studies"
+        requirements:
+          - "Relevant European case studies"
+          - "Industry analyst recognition"
+          - "Measurable business outcomes"
+          - "Client testimonials and metrics"
+
+  tier_3:
+    brand_criteria:
+      brand_voice_alignment:
+        weight: 10
+        description: "Consistent tone and terminology"
+        requirements:
+          - "Consistent tone and terminology"
+          - "Human-centric technology perspective"
+          - "European values and approach"
+          - "Corporate positioning reinforcement"
+      
+      sub_narrative_integration:
+        weight: 10
+        description: "Appropriate thematic messaging"
+        requirements:
+          - "Thematic messaging integration"
+          - "Thought leadership consistency"
+          - "Brand personality expression"
+          - "Strategic pillar reinforcement"
+      
+      visual_brand_elements:
+        weight: 10
+        description: "Proper brand element usage"
+        requirements:
+          - "Proper brand element usage"
+          - "Design consistency maintenance"
+          - "Photography and visual compliance"
+          - "Template and layout adherence"
+    
+    performance_criteria:
+      executive_relevance:
+        weight: 25
+        description: "C-suite priority alignment"
+        requirements:
+          - "Business model innovation"
+          - "Operational excellence"
+          - "Risk & compliance management"
+          - "Technology-driven growth"
+          - "Cost optimization and ROI"
+          - "Talent development"
+      
+      strategic_insight_quality:
+        weight: 20
+        description: "Market trend analysis and implications"
+        requirements:
+          - "Market trend analysis"
+          - "Strategic recommendations"
+          - "Risk considerations"
+          - "Competitive landscape insights"
+      
+      business_value_focus:
+        weight: 15
+        description: "Clear outcome linkage and ROI"
+        requirements:
+          - "Clear outcome linkage"
+          - "Implementation approach"
+          - "Resource requirements"
+          - "Success metrics and KPIs"
+      
+      credibility_elements:
+        weight: 10
+        description: "Data-backed insights and statistics"
+        requirements:
+          - "Data-backed insights"
+          - "Expert perspectives"
+          - "Industry context"
+          - "Success stories and proof points"
+
+# Offsite Channel Criteria
+offsite_criteria:
+  owned:
+    brand_criteria:
+      brand_message_alignment:
+        weight: 25
+        description: "Corporate positioning consistency"
+      visual_identity_consistency:
+        weight: 20
+        description: "Logo, brand compliance"
+      content_quality:
+        weight: 15
+        description: "Professional standards, human-centric focus"
+    
+    performance_criteria:
+      audience_engagement:
+        weight: 15
+        description: "Growth, interaction rates"
+      posting_frequency:
+        weight: 10
+        description: "Strategic consistency"
+      response_management:
+        weight: 15
+        description: "Professional, European values alignment"
+  
+  influenced:
+    brand_criteria:
+      message_alignment:
+        weight: 25
+        description: "Controllable consistency"
+      employee_advocacy:
+        weight: 20
+        description: "Positive representation"
+    
+    authenticity_criteria:
+      glassdoor_ratings:
+        weight: 15
+        description: "Score and sentiment"
+      partner_content_quality:
+        weight: 15
+        description: "Joint standards"
+      thought_leadership:
+        weight: 15
+        description: "Expert positioning"
+      response_to_concerns:
+        weight: 10
+        description: "Issue management"
+  
+  independent:
+    brand_criteria:
+      brand_mention_quality:
+        weight: 10
+        description: "Context accuracy"
+      industry_recognition:
+        weight: 10
+        description: "Awards, analyst reports"
+    
+    sentiment_criteria:
+      overall_sentiment:
+        weight: 30
+        description: "Positive vs negative"
+      review_ratings:
+        weight: 25
+        description: "Scores and distribution"
+      competitive_position:
+        weight: 15
+        description: "Market standing"
+      crisis_management:
+        weight: 10
+        description: "Response effectiveness"
+
+# Hard Gating Rules (Non-Negotiable)
+gating_rules:
+  corporate_tagline_missing:
+    trigger: "The world is how we shape it tagline missing"
+    penalty: "Corporate Positioning Alignment ≤ 3"
+    severity: "CRITICAL"
+  
+  regional_narrative_missing:
+    trigger: "Required regional or sub-narrative missing"
+    penalty: "Regional Narrative Integration ≤ 4"
+    severity: "HIGH"
+  
+  broken_content:
+    trigger: "Page copy < 50 words, broken, or placeholder text"
+    penalty: "Maximum TOTAL page score = 4"
+    severity: "CRITICAL"
+
+# Evidence Requirements
+evidence:
+  high_scores:
+    requirement: "Scores ≥7 require verbatim quote ≥25 words"
+    penalty: "-2 points if missing or insufficient"
+  
+  low_scores:
+    requirement: "Scores ≤4 require verbatim quote showing poor content"
+    penalty: "-2 points if missing justification"
+
+# Copy Quality Penalties
+quality_penalties:
+  redundant_wording:
+    points: -1
+    example: "deep understanding... profound understanding"
+  
+  empty_jargon:
+    points: -1
+    examples:
+      - "cutting-edge without proof"
+      - "essential asset without metrics"
+      - "future-proof without evidence"
+  
+  placeholder_content:
+    points: -2
+    examples:
+      - "Lorem ipsum text"
+      - "Dummy content"
+
+# Brand Messaging Reference
+messaging:
+  corporate_hierarchy:
+    global: "The world is how we shape it"
+    regional: "Secure Progress (BENELUX)"
+    sub_narratives:
+      cybersecurity: "Strength through Serenity"
+      ai: "Resonating with Reason"
+      public_sector: "Confident Stewardship"
+      financial_services: "Secure Growth"
+  
+  value_propositions:
+    - "Navigate Regulatory Complexity with a Trusted European Partner"
+    - "Achieve True Digital Sovereignty, Without Compromise"
+    - "From AI ambition to tangible ROI"
+    - "Transform with Confidence"
+  
+  strategic_ctas:
+    - "Schedule Your Strategic IT Review"
+    - "Download the Executive Brief: [Topic]"
+    - "Explore a Proof of Concept"
+    - "Book a 15-min [Service] gap scan"
+  
+  benelux_positioning:
+    - "Your new local leader with combined power of Ordina, Tobania, and Sopra Steria"
+    - "Unparalleled local expertise and client proximity"
+    - "Backed by global scale of European tech champion"
+
+# Output Format Requirements
+output_format:
+  required_sections:
+    - "Page Classification & Summary"
+    - "Brand Score Tables"
+    - "Brand Consistency Check"
+    - "Overall Brand Health"
+    - "Critical Findings"
+    - "Strategic Recommendations"
+  
+  mandatory_elements:
+    - "Every criterion must have score and evidence"
+    - "Every weakness must have a fix"
+    - "All weightings must sum to 100%"
+    - "Brand consistency check required for all tiers"
+
+# Validation Flags
+validation_flags:
+  technical:
+    broken_links:
+      penalty: "Auto-score: 0"
+    low_res_images:
+      penalty: "-2 points"
+  
+  brand:
+    off_brand_messaging:
+      penalty: "-2 points"
+    missing_corporate_positioning:
+      penalty: "-1 point"
+    generic_ctas:
+      penalty: "-1 point"
+    visual_brand_violations:
+      penalty: "-1 point"
+
+# Examples and Calibration
+examples:
+  tier_1_good:
+    score: 9
+    text: "The world is how we shape it – By combining Ordina, Tobania and Sopra Steria we deliver Secure Progress across the BENELUX. 4,000 local experts, 13 offices and a single purpose: empowering public institutions to innovate with confidence while maintaining European sovereignty."
+    why_good:
+      - "Tagline present and prominent"
+      - "Regional narrative integrated"
+      - "Quantified local proof-points"
+      - "Human-centric, inspirational tone"
+  
+  tier_1_bad:
+    score: 3
+    text: "Intelligent Data Migration • Applications & Integration • Cloud & Infrastructure Platforms"
+    why_bad:
+      - "No tagline or positioning"
+      - "Pure service list, zero narrative"
+      - "No emotion, no differentiation"
+      - "Triggers Gating Rule #1"
+  
+  tier_2_good:
+    score: 9
+    text: "Deploy compliant, fair and ethical AI that meets European standards – our clients have achieved 40% efficiency gains in customer support and 25% logistics cost reduction within 12 months. 4,000 AI specialists across Europe ensure full DORA & GDPR compliance while delivering measurable ROI through our proven three-pillar implementation framework."
+    why_good:
+      - "Concrete quantified outcomes (40%, 25%)"
+      - "Regulatory compliance specificity"
+      - "Scale demonstration (4,000 specialists)"
+      - "Clear business value with timelines"
+  
+  tier_2_bad:
+    score: 4
+    text: "AI is an essential asset for the future. We help you energize your collective intelligence and optimize processes for better performance through cutting-edge solutions."
+    why_bad:
+      - "Empty jargon triggers penalty"
+      - "No quantified outcomes"
+      - "Generic corporate speak"
+      - "No regulatory context"

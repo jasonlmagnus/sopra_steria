@@ -1,117 +1,180 @@
+#!/usr/bin/env python3
 """
-This is the main entry point for the Persona Experience & Brand Audit Tool.
+Main audit tool entry point
 """
-import argparse
+
+import os
 import sys
+import argparse
 import logging
-import re
-from audit_tool.scraper import Scraper
-from audit_tool.ai_interface import AIInterface
-from audit_tool.generators import NarrativeGenerator, ScorecardGenerator, SummaryGenerator
-from audit_tool.reporter import Reporter
-from audit_tool.methodology_parser import MethodologyParser
-from tqdm import tqdm
+from typing import Optional
 
-METHODOLOGY_PATH = "prompts/audit/audit_method.md"
+from .scraper import WebScraper
+from .ai_interface import AIInterface
+from .generators import ReportGenerator
+from .strategic_summary_generator import StrategicSummaryGenerator
+from .methodology_parser import MethodologyParser
 
-def process_url(url: str, persona_content: str, scraper: Scraper, narrative_generator: NarrativeGenerator, scorecard_generator: ScorecardGenerator, reporter: Reporter):
-    """Processes a single URL."""
-    logging.info(f"--- Starting Audit for URL: {url} ---")
-    page_data = scraper.fetch_page(url)
+def setup_logging(verbose: bool = False):
+    """Setup logging configuration"""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
-    if page_data.is_404:
-        logging.error(f"Could not fetch {url}. Skipping.")
-        return
-
-    narrative_report = narrative_generator.create_report(persona_content, page_data)
-    scorecard = scorecard_generator.create_scorecard(page_data)
+def run_audit(urls_file: str, persona_file: str, output_dir: str, 
+              generate_summary: bool = True, verbose: bool = False):
+    """Run complete audit pipeline"""
     
-    reporter.write_narrative_report(url, narrative_report)
-    reporter.write_scorecard(scorecard)
-    logging.info(f"--- Finished Audit for URL: {url} ---")
+    setup_logging(verbose)
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Initialize components
+        logger.info("🚀 Starting Sopra Steria Brand Audit")
+        
+        # Load methodology
+        methodology = MethodologyParser()
+        logger.info(f"📋 Loaded methodology: {methodology.get_metadata()['name']} v{methodology.get_metadata()['version']}")
+        
+        # Initialize scraper and AI interface
+        scraper = WebScraper()
+        ai_interface = AIInterface()
+        reporter = ReportGenerator(output_dir)
+        
+        # Load URLs and persona
+        with open(urls_file, 'r') as f:
+            urls = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+        
+        with open(persona_file, 'r') as f:
+            persona_content = f.read()
+        
+        logger.info(f"📄 Loaded {len(urls)} URLs for audit")
+        logger.info(f"🎭 Using persona: {os.path.basename(persona_file)}")
+        
+        # Create output directory
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Process each URL
+        results = []
+        for i, url in enumerate(urls, 1):
+            logger.info(f"🔍 Processing URL {i}/{len(urls)}: {url}")
+            
+            try:
+                # Scrape content
+                page_content = scraper.scrape_page(url)
+                if not page_content:
+                    logger.warning(f"⚠️ Failed to scrape: {url}")
+                    continue
+                
+                # Generate reports using AI
+                hygiene_report = ai_interface.generate_hygiene_scorecard(
+                    url, page_content, persona_content, methodology
+                )
+                
+                experience_report = ai_interface.generate_experience_report(
+                    url, page_content, persona_content, methodology
+                )
+                
+                # Save individual reports
+                page_slug = scraper.url_to_filename(url)
+                reporter.save_hygiene_scorecard(page_slug, hygiene_report)
+                reporter.save_experience_report(page_slug, experience_report)
+                
+                results.append({
+                    'url': url,
+                    'page_slug': page_slug,
+                    'hygiene_score': reporter.extract_score_from_report(hygiene_report),
+                    'status': 'success'
+                })
+                
+                logger.info(f"✅ Completed: {url}")
+                
+            except Exception as e:
+                logger.error(f"❌ Error processing {url}: {str(e)}")
+                results.append({
+                    'url': url,
+                    'page_slug': scraper.url_to_filename(url),
+                    'hygiene_score': 0,
+                    'status': 'error',
+                    'error': str(e)
+                })
+        
+        # Generate strategic summary using new YAML-driven generator
+        if generate_summary and results:
+            logger.info("📊 Generating Strategic Summary...")
+            
+            summary_generator = StrategicSummaryGenerator(output_dir)
+            report, data, stats = summary_generator.generate_full_report()
+            
+            # Save strategic summary
+            summary_file = os.path.join(output_dir, "Strategic_Summary.md")
+            with open(summary_file, 'w', encoding='utf-8') as f:
+                f.write(report)
+            
+            # Save raw data for analysis
+            import pandas as pd
+            df = pd.DataFrame([
+                {
+                    'page': p['page_slug'],
+                    'url': p['url'],
+                    'tier': p['tier'],
+                    'final_score': p['final_score'],
+                    **{c['name']: c['score'] for c in p['criteria']}
+                }
+                for p in data
+            ])
+            df.to_csv(os.path.join(output_dir, "scorecard_data.csv"), index=False)
+            
+            logger.info(f"📄 Strategic Summary saved: {summary_file}")
+            logger.info(f"📊 Raw data saved: {os.path.join(output_dir, 'scorecard_data.csv')}")
+        
+        # Summary stats
+        successful = len([r for r in results if r['status'] == 'success'])
+        failed = len([r for r in results if r['status'] == 'error'])
+        avg_score = sum(r['hygiene_score'] for r in results if r['status'] == 'success') / successful if successful > 0 else 0
+        
+        logger.info("🎯 Audit Complete!")
+        logger.info(f"   ✅ Successful: {successful}")
+        logger.info(f"   ❌ Failed: {failed}")
+        logger.info(f"   📊 Average Score: {avg_score:.1f}/10")
+        logger.info(f"   📁 Output Directory: {output_dir}")
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"💥 Audit failed: {str(e)}")
+        raise
 
 def main():
-    """
-    Main function to run the audit tool.
-    - Parses command-line arguments for URL and persona.
-    - Orchestrates the scraping, generation, and reporting process.
-    """
-    # --- Setup Logging ---
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler("audit_tool.log"),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-    # --- End Setup ---
-
-    parser = argparse.ArgumentParser(description="Run a persona-based experience audit on one or more URLs.")
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--url", type=str, help="A single URL to audit.")
-    group.add_argument("--file", type=str, help="A file containing a list of URLs to audit (one per line).")
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description='Sopra Steria Brand Audit Tool')
+    parser.add_argument('--urls', required=True, help='File containing URLs to audit')
+    parser.add_argument('--persona', required=True, help='Persona file for evaluation context')
+    parser.add_argument('--output', required=True, help='Output directory for reports')
+    parser.add_argument('--no-summary', action='store_true', help='Skip strategic summary generation')
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
     
-    parser.add_argument("--persona", type=str, required=True, help="The file path to the persona markdown file.")
     args = parser.parse_args()
-
+    
     try:
-        with open(args.persona, 'r', encoding='utf-8') as f:
-            persona_content = f.read()
-    except FileNotFoundError:
-        logging.error(f"Persona file not found at {args.persona}")
-        sys.exit(1)
+        results = run_audit(
+            urls_file=args.urls,
+            persona_file=args.persona,
+            output_dir=args.output,
+            generate_summary=not args.no_summary,
+            verbose=args.verbose
+        )
+        
+        print(f"\n🎉 Audit completed successfully!")
+        print(f"📁 Results saved to: {args.output}")
+        
+        return 0
+        
     except Exception as e:
-        logging.error(f"Error reading persona file: {e}")
-        sys.exit(1)
-
-    logging.info(f"Starting audit for persona: {args.persona}")
-
-    # 1. Instantiate components
-    logging.info("--- Initializing Components ---")
-    scraper = Scraper()
-    ai_interface = AIInterface()
-    
-    methodology_parser = MethodologyParser(METHODOLOGY_PATH)
-    methodology = methodology_parser.parse()
-    
-    narrative_generator = NarrativeGenerator(ai_interface)
-    scorecard_generator = ScorecardGenerator(methodology, ai_interface)
-    
-    reporter = Reporter(persona_name=args.persona)
-
-    urls_to_process = []
-    if args.url:
-        urls_to_process.append(args.url)
-    elif args.file:
-        try:
-            with open(args.file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Use regex to find all URLs in the markdown file
-                urls_to_process = re.findall(r'https?://[^\s|)]+', content)
-        except FileNotFoundError:
-            logging.error(f"URL file not found at {args.file}")
-            sys.exit(1)
-
-    if not urls_to_process:
-        logging.error("No URLs found to process. Please check the input file.")
-        sys.exit(1)
-
-    logging.info(f"Found {len(urls_to_process)} URL(s) to process.")
-
-    for url in tqdm(urls_to_process, desc="Auditing URLs"):
-        process_url(url, persona_content, scraper, narrative_generator, scorecard_generator, reporter)
-
-    logging.info("--- All individual audits complete. Starting summary generation. ---")
-    summary_generator = SummaryGenerator(
-        persona_name=args.persona, 
-        ai_interface=ai_interface,
-        methodology=methodology
-    )
-    summary_report = summary_generator.create_summary()
-    reporter.write_summary_report(summary_report)
-
-    logging.info("Audit complete.")
+        print(f"\n💥 Audit failed: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
-    main() 
+    sys.exit(main()) 
