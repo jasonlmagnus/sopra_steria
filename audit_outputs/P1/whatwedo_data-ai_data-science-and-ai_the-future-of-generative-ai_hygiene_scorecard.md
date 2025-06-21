@@ -1,7 +1,7 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.be/whatwedo/data-ai/data-science-and-ai/the-future-of-generative-ai  
-**Audited:** 2025-06-21 11:29:52
+**Audited:** 2025-06-21 12:24:33
 
 ---
 

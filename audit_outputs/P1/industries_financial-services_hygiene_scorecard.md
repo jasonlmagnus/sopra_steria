@@ -1,7 +1,7 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.be/industries/financial-services  
-**Audited:** 2025-06-21 11:32:08
+**Audited:** 2025-06-21 12:26:46
 
 ---
 

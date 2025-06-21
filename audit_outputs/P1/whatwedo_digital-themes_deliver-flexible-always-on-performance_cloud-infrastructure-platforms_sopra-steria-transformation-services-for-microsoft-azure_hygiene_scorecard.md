@@ -1,7 +1,7 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.be/whatwedo/digital-themes/deliver-flexible-always-on-performance/cloud-infrastructure-platforms/sopra-steria-transformation-services-for-microsoft-azure  
-**Audited:** 2025-06-21 11:30:47
+**Audited:** 2025-06-21 12:25:17
 
 ---
 

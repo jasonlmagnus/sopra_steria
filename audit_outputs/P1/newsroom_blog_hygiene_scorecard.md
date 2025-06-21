@@ -1,14 +1,14 @@
 # Brand Hygiene Scorecard
 
-**URL:** https://www.soprasteria.be/industries/industry-retail-logistics-telecom-media  
-**Audited:** 2025-06-21 12:27:25
+**URL:** https://www.soprasteria.nl/newsroom/blog  
+**Audited:** 2025-06-21 12:29:41
 
 ---
 
 ## Overall Assessment
 
 - **Tier/Channel:** TIER 1 - BRAND POSITIONING
-- **Final Score:** 7.2/10
+- **Final Score:** 7.3/10
 
 ---
 
@@ -18,9 +18,9 @@
 | -------- | ----- | --------- |
 
 | **Corporate Positioning Alignment** | 8.0/10 | Tagline present. |
-| **Brand Differentiation** | 7.0/10 | Scored by AI. |
+| **Brand Differentiation** | 6.5/10 | Scored by AI. |
 | **Emotional Resonance** | 6.0/10 | Scored by AI. |
-| **Visual Brand Integrity** | 7.0/10 | Scored by AI. |
+| **Visual Brand Integrity** | 8.0/10 | Scored by AI. |
 | **Strategic Clarity** | 8.0/10 | Scored by AI. |
 | **Trust & Credibility Signals** | 8.0/10 | Scored by AI. |
 ---

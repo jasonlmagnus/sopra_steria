@@ -1,14 +1,14 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.nl/newsroom/press-releases/details/sopra-steria-next-predicts  
-**Audited:** 2025-06-21 11:34:37
+**Audited:** 2025-06-21 12:29:00
 
 ---
 
 ## Overall Assessment
 
 - **Tier/Channel:** TIER 1 - BRAND POSITIONING
-- **Final Score:** 6.2/10
+- **Final Score:** 6.5/10
 
 ---
 
@@ -20,7 +20,7 @@
 | **Corporate Positioning Alignment** | 8.0/10 | Tagline present. |
 | **Brand Differentiation** | 6.0/10 | Scored by AI. |
 | **Emotional Resonance** | 5.0/10 | Scored by AI. |
-| **Visual Brand Integrity** | 3.0/10 | Scored by AI. |
+| **Visual Brand Integrity** | 5.0/10 | Scored by AI. |
 | **Strategic Clarity** | 8.0/10 | Scored by AI. |
 | **Trust & Credibility Signals** | 8.0/10 | Scored by AI. |
 ---

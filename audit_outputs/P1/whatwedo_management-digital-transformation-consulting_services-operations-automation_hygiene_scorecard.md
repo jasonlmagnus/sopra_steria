@@ -1,7 +1,7 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.be/whatwedo/management-digital-transformation-consulting/services-operations-automation  
-**Audited:** 2025-06-21 11:31:30
+**Audited:** 2025-06-21 12:26:03
 
 ---
 

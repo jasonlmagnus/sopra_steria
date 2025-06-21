@@ -1,7 +1,7 @@
 # Brand Hygiene Scorecard
 
 **URL:** https://www.soprasteria.nl/newsroom/press-releases/details/welcome-to-the-future-of-innovation  
-**Audited:** 2025-06-21 11:33:54
+**Audited:** 2025-06-21 12:28:06
 
 ---
 
