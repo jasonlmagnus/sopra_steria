@@ -24,7 +24,7 @@ class MultiPersonaPackager:
         """Get list of available persona analyses"""
         personas = []
         for persona_dir in self.audit_outputs_dir.iterdir():
-            if persona_dir.is_dir() and persona_dir.name.startswith('P'):
+            if persona_dir.is_dir() and (persona_dir.name.startswith('P') or persona_dir.name.startswith('The_')):
                 personas.append(persona_dir.name)
         return sorted(personas)
     

@@ -261,3 +261,265 @@ The audit tool is now **production ready** with:
 - ✅ **Modular design** - Easy to extend and maintain
 
 **Ready for deployment and further enhancement.**
+
+## 8. Data Pipeline Enhancement Architecture
+
+### 8.1. Enhanced Data Model
+
+The system now generates **5 interconnected datasets** providing comprehensive analytics:
+
+```mermaid
+erDiagram
+    PAGES {
+        string page_id PK
+        string url
+        string slug
+        string persona
+        string tier
+        float final_score
+        datetime audited_ts
+    }
+
+    CRITERIA_SCORES {
+        string page_id FK
+        string criterion_code
+        string criterion_name
+        float score
+        text evidence
+        float weight_pct
+        string tier
+        string descriptor
+    }
+
+    EXPERIENCE {
+        string page_id FK
+        string persona_id
+        text first_impression
+        text language_tone_feedback
+        text information_gaps
+        text trust_credibility_assessment
+        text business_impact_analysis
+        text effective_copy_examples
+        text ineffective_copy_examples
+        string overall_sentiment
+        string engagement_level
+        string conversion_likelihood
+    }
+
+    RECOMMENDATIONS {
+        string page_id FK
+        text recommendation
+        string strategic_impact
+        string complexity
+        string urgency
+        string resources
+    }
+
+    PAGES ||--o{ CRITERIA_SCORES : "has many"
+    PAGES ||--|| EXPERIENCE : "has one"
+    PAGES ||--o{ RECOMMENDATIONS : "has many"
+```
+
+### 8.2. Enhanced Backfill Packager (`backfill_packager.py`)
+
+**New Component Architecture:**
+
+```mermaid
+classDiagram
+    class EnhancedBackfillPackager {
+        +process_persona_data(persona_name: str)
+        +parse_hygiene_scorecard(content: str) : List[CriterionScore]
+        +parse_experience_report(content: str) : ExperienceData
+        +extract_recommendations(content: str) : List[Recommendation]
+        +analyze_sentiment(text: str) : str
+        +categorize_strategic_impact(rec: str) : str
+        +validate_evidence_length(evidence: str) : bool
+        +generate_enhanced_csvs(data: dict)
+        -_map_criterion_to_code(name: str) : str
+        -_get_criterion_weight(code: str) : float
+        -_parse_effective_examples(section: str) : List[str]
+        -_extract_narrative_sections(content: str) : dict
+    }
+
+    class ExperienceData {
+        <<Dataclass>>
+        +page_id: str
+        +persona_id: str
+        +first_impression: str
+        +language_tone_feedback: str
+        +information_gaps: str
+        +trust_credibility_assessment: str
+        +business_impact_analysis: str
+        +effective_copy_examples: List[str]
+        +ineffective_copy_examples: List[str]
+        +overall_sentiment: str
+        +engagement_level: str
+        +conversion_likelihood: str
+    }
+
+    class CriterionScore {
+        <<Dataclass>>
+        +page_id: str
+        +criterion_code: str
+        +criterion_name: str
+        +score: float
+        +evidence: str
+        +weight_pct: float
+        +tier: str
+        +descriptor: str
+    }
+
+    EnhancedBackfillPackager ..> ExperienceData : creates
+    EnhancedBackfillPackager ..> CriterionScore : creates
+```
+
+### 8.3. Enhanced Dashboard Architecture (`brand_audit_dashboard.py`)
+
+**Data Integration Layer:**
+
+```python
+def load_audit_data(persona_name: str) -> dict:
+    """Load and integrate all 5 datasets with comprehensive joining"""
+
+    # Load individual datasets
+    pages_df = pd.read_csv(f"{persona_name}/pages.csv")
+    criteria_df = pd.read_csv(f"{persona_name}/criteria_scores.csv")
+    experience_df = pd.read_csv(f"{persona_name}/experience.csv")
+    recommendations_df = pd.read_csv(f"{persona_name}/recommendations.csv")
+
+    # Create master dataset with contextual joining
+    master_df = pages_df.merge(
+        criteria_df.groupby('page_id').agg({
+            'score': ['mean', 'min', 'max', 'count']
+        }).round(2),
+        on='page_id', how='left'
+    ).merge(
+        experience_df, on='page_id', how='left'
+    ).merge(
+        recommendations_df.groupby('page_id').size().rename('rec_count'),
+        on='page_id', how='left'
+    )
+
+    return {
+        'pages': pages_df,
+        'criteria': criteria_df,
+        'experience': experience_df,
+        'recommendations': recommendations_df,
+        'master': master_df  # 25-column comprehensive dataset
+    }
+```
+
+### 8.4. Experience Data Processing Pipeline
+
+**Automated Experience Extraction:**
+
+```mermaid
+graph TD
+    A[Experience Report .md] --> B[Parse Structured Tables]
+    B --> C[Extract Narrative Sections]
+    C --> D[Identify Copy Examples]
+    D --> E[Analyze Sentiment]
+    E --> F[Assess Engagement Level]
+    F --> G[Predict Conversion Likelihood]
+    G --> H[Generate Experience CSV]
+
+    subgraph "Sentiment Analysis"
+        I[Keyword Analysis] --> J[Context Evaluation]
+        J --> K[Weighted Scoring]
+        K --> L[Sentiment Classification]
+    end
+
+    E --> I
+    L --> F
+```
+
+### 8.5. Master Dataset Schema
+
+**25-Column Integrated Analytics Dataset:**
+
+```yaml
+Page Metadata (7 columns):
+  - page_id, url, slug, persona, tier, final_score, audited_ts
+
+Score Aggregates (4 columns):
+  - avg_score, min_score, max_score, criteria_count
+
+Experience Data (12 columns):
+  - first_impression, language_tone_feedback, information_gaps
+  - trust_credibility_assessment, business_impact_analysis
+  - effective_copy_examples, ineffective_copy_examples
+  - overall_sentiment, engagement_level, conversion_likelihood
+  - persona_id_x, persona_id_y
+
+Recommendations (2 columns):
+  - rec_count, primary_impact
+```
+
+### 8.6. Production Data Flow
+
+**Enhanced Pipeline Architecture:**
+
+```mermaid
+graph TD
+    A[Audit Execution] --> B[Generate Markdown Reports]
+    B --> C[Enhanced Backfill Packager]
+
+    subgraph "Data Processing"
+        D[Parse Hygiene Scorecards] --> G[Extract Criterion Scores]
+        E[Parse Experience Reports] --> H[Extract Persona Journeys]
+        F[Extract Recommendations] --> I[Categorize Strategic Impact]
+    end
+
+    C --> D
+    C --> E
+    C --> F
+
+    G --> J[Generate 5 CSV Files]
+    H --> J
+    I --> J
+
+    J --> K[Enhanced Dashboard]
+    K --> L[8-Tab Analytics Interface]
+
+    subgraph "Dashboard Tabs"
+        M[📈 Overview]
+        N[👥 Persona Comparison]
+        O[🎯 Criteria Deep Dive]
+        P[📄 Page Performance]
+        Q[🔍 Evidence Explorer]
+        R[👤 Persona Experience]
+        S[📋 Detailed Data]
+        T[💡 AI Insights]
+    end
+
+    L --> M
+    L --> N
+    L --> O
+    L --> P
+    L --> Q
+    L --> R
+    L --> S
+    L --> T
+```
+
+### 8.7. Data Quality & Validation Architecture
+
+**Automated Quality Assurance:**
+
+- **Evidence Length Validation**: Ensures 25+ word justifications for high/low scores
+- **Score Consistency Checks**: Validates final scores match criterion averages
+- **Data Completeness Verification**: Checks for missing relationships across datasets
+- **Experience Extraction Validation**: Verifies narrative section parsing accuracy
+- **Sentiment Analysis Calibration**: Keyword-based sentiment classification with context weighting
+
+### 8.8. Performance & Scalability Enhancements
+
+**Technical Optimizations:**
+
+- **Dual Format Output**: Both CSV and Parquet for performance optimization
+- **Streamlit Caching**: Dashboard performance optimization with @st.cache_data
+- **Data Partitioning**: Support for multi-persona, multi-project analysis
+- **Incremental Processing**: Only processes new/changed audit outputs
+- **Memory Optimization**: Efficient data joining and aggregation strategies
+
+This enhanced architecture transforms the audit tool from a basic scoring system into a comprehensive brand intelligence platform, providing unprecedented insights into persona experiences and strategic optimization opportunities.

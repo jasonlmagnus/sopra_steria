@@ -1,0 +1,1 @@
+Error: Could not generate the hygiene scorecard due to a persistent API error.

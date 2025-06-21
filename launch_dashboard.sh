@@ -1,3 +1,3 @@
 #!/bin/bash
-echo "Launching the Brand Audit Tool Dashboard..."
-streamlit run audit_tool/dashboard/streamlit_dashboard.py 
+cd audit_tool/dashboard
+streamlit run brand_audit_dashboard.py --server.port 8505 

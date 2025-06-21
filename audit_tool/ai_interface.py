@@ -28,6 +28,10 @@ class AIInterface:
         
         # Find the project root directory (where audit_inputs is located)
         self.project_root = self._find_project_root()
+        
+        # Cache for parsed persona to avoid redundant parsing
+        self._cached_persona_content = None
+        self._cached_persona_attributes = None
 
     def _find_project_root(self) -> Path:
         """Find the project root directory by looking for audit_inputs folder."""
@@ -74,6 +78,16 @@ class AIInterface:
         except FileNotFoundError:
             return "You are a helpful AI assistant."
     
+    def _get_cached_persona_attributes(self, persona_content: str):
+        """Get cached persona attributes or parse if not cached."""
+        if self._cached_persona_content != persona_content:
+            # Content changed, need to re-parse
+            logging.info("Parsing persona content...")
+            self._cached_persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content, log_parsing=False)
+            self._cached_persona_content = persona_content
+        
+        return self._cached_persona_attributes
+
     def _format_persona_attributes(self, persona_attributes) -> dict:
         """Format persona attributes for template substitution."""
         return {
@@ -90,8 +104,8 @@ class AIInterface:
     def generate_experience_report(self, url: str, page_content: str, persona_content: str, methodology) -> str:
         """Generate experience report using configurable prompts and structured persona parsing."""
         
-        # Parse persona attributes
-        persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content)
+        # Get cached persona attributes (parsed only once per persona)
+        persona_attributes = self._get_cached_persona_attributes(persona_content)
         
         # Load prompt template
         prompt_template = self._load_prompt_template("narrative_analysis")
@@ -132,8 +146,8 @@ class AIInterface:
     def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology) -> str:
         """Generate hygiene scorecard using configurable prompts and YAML methodology."""
         
-        # Parse persona attributes
-        persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content)
+        # Get cached persona attributes (parsed only once per persona)
+        persona_attributes = self._get_cached_persona_attributes(persona_content)
         
         # Get criteria from methodology (this would need to be implemented)
         # For now, use basic criteria

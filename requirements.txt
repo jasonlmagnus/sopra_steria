@@ -4,4 +4,5 @@ anthropic
 Jinja2
 python-dotenv
 tqdm
-streamlit 
+streamlit
+psutil 

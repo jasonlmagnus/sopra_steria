@@ -44,9 +44,10 @@ class PersonaParser:
             pain_points=self._extract_pain_points()
         )
     
-    def extract_attributes_from_content(self, persona_content: str) -> PersonaAttributes:
+    def extract_attributes_from_content(self, persona_content: str, log_parsing: bool = True) -> PersonaAttributes:
         """Extract structured attributes from persona content string."""
-        logging.info("Parsing persona content...")
+        if log_parsing:
+            logging.info("Parsing persona content...")
         
         self.content = persona_content
         
