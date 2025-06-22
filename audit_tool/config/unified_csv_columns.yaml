@@ -3,6 +3,260 @@
 # Issue: Enhanced and regular unified files are identical (MD5: 0274365f688f69a060e68589d31a238d)
 
 unified_audit_data_columns:
+  # === IDENTIFIERS ===
+  persona_id:
+    type: string
+    nullable: false
+    description: "Persona identifier (e.g., 'The Benelux Cybersecurity Decision Maker')"
+    category: "identifier"
+  
+  page_id:
+    type: string
+    nullable: false
+    description: "Unique page identifier (hash)"
+    category: "identifier"
+  
+  url_slug:
+    type: string
+    nullable: false
+    description: "URL slug for the audited page"
+    category: "identifier"
+  
+  url:
+    type: string
+    nullable: false
+    description: "Full URL of the audited page"
+    category: "identifier"
+  
+  slug:
+    type: string
+    nullable: false
+    description: "Duplicate of url_slug (legacy)"
+    category: "identifier"
+  
+  # === TIER INFORMATION ===
+  tier:
+    type: string
+    nullable: false
+    description: "Tier classification (e.g., 'tier_1', 'tier_2', 'tier_3')"
+    category: "tier"
+    valid_values: ["tier_1", "tier_2", "tier_3"]
+  
+  tier_name:
+    type: string
+    nullable: false
+    description: "Human-readable tier name (e.g., 'Strategic Content')"
+    category: "tier"
+  
+  tier_weight:
+    type: float
+    nullable: false
+    description: "Weight of the tier in overall scoring (0.0-1.0)"
+    category: "tier"
+    min_value: 0.0
+    max_value: 1.0
+  
+  brand_percentage:
+    type: integer
+    nullable: false
+    description: "Brand component percentage in tier scoring"
+    category: "tier"
+    min_value: 0
+    max_value: 100
+  
+  performance_percentage:
+    type: integer
+    nullable: false
+    description: "Performance component percentage in tier scoring"
+    category: "tier"
+    min_value: 0
+    max_value: 100
+  
+  # === CRITERIA INFORMATION ===
+  criterion_id:
+    type: string
+    nullable: false
+    description: "Criterion identifier (e.g., 'corporate_positioning_alignment')"
+    category: "criteria"
+  
+  criterion_code:
+    type: string
+    nullable: false
+    description: "Criterion code (same as criterion_id)"
+    category: "criteria"
+  
+  # === SCORING DATA (NUMERIC) ===
+  raw_score:
+    type: float
+    nullable: false
+    description: "Raw audit score (1-10 scale)"
+    category: "score"
+    min_value: 1.0
+    max_value: 10.0
+  
+  final_score:
+    type: float
+    nullable: false
+    description: "Final processed score (1-10 scale)"
+    category: "score"
+    min_value: 1.0
+    max_value: 10.0
+  
+  tier_weighted_score:
+    type: float
+    nullable: false
+    description: "Score weighted by tier importance"
+    category: "score"
+    min_value: 0.0
+  
+  avg_score:
+    type: float
+    nullable: false
+    description: "Average score across criteria"
+    category: "score"
+    min_value: 1.0
+    max_value: 10.0
+  
+  # === QUALITATIVE ASSESSMENT ===
+  descriptor:
+    type: string
+    nullable: false
+    description: "Score descriptor (e.g., 'WARN', 'CONCERN', 'GOOD')"
+    category: "assessment"
+    valid_values: ["CRITICAL", "CONCERN", "WARN", "GOOD", "EXCELLENT"]
+  
+  evidence:
+    type: string
+    nullable: false
+    description: "Detailed evidence and rationale for the score"
+    category: "assessment"
+  
+  # === FEEDBACK COLUMNS (EMPTY IN CURRENT DATA) ===
+  first_impression:
+    type: float
+    nullable: true
+    description: "First impression score (currently unused)"
+    category: "feedback"
+    min_value: 1.0
+    max_value: 10.0
+  
+  language_tone_feedback:
+    type: float
+    nullable: true
+    description: "Language and tone feedback score (currently unused)"
+    category: "feedback"
+    min_value: 1.0
+    max_value: 10.0
+  
+  information_gaps:
+    type: float
+    nullable: true
+    description: "Information gaps assessment score (currently unused)"
+    category: "feedback"
+    min_value: 1.0
+    max_value: 10.0
+  
+  trust_credibility_assessment:
+    type: float
+    nullable: true
+    description: "Trust and credibility assessment score (currently unused)"
+    category: "feedback"
+    min_value: 1.0
+    max_value: 10.0
+  
+  business_impact_analysis:
+    type: string
+    nullable: true
+    description: "Business impact analysis text (sparse data)"
+    category: "feedback"
+  
+  # === CONTENT EXAMPLES ===
+  effective_copy_examples:
+    type: string
+    nullable: true
+    description: "Examples of effective copy from the page"
+    category: "content"
+  
+  ineffective_copy_examples:
+    type: string
+    nullable: true
+    description: "Examples of ineffective copy from the page"
+    category: "content"
+  
+  # === EXPERIENCE METRICS ===
+  overall_sentiment:
+    type: string
+    nullable: false
+    description: "Overall sentiment assessment"
+    category: "experience"
+    valid_values: ["Negative", "Neutral", "Positive"]
+  
+  engagement_level:
+    type: string
+    nullable: false
+    description: "Engagement level assessment"
+    category: "experience"
+    valid_values: ["Low", "Medium", "High"]
+  
+  conversion_likelihood:
+    type: string
+    nullable: false
+    description: "Conversion likelihood assessment"
+    category: "experience"
+    valid_values: ["Low", "Medium", "High"]
+  
+  sentiment_numeric:
+    type: integer
+    nullable: false
+    description: "Numeric sentiment score (1-10)"
+    category: "experience"
+    min_value: 1
+    max_value: 10
+  
+  engagement_numeric:
+    type: integer
+    nullable: false
+    description: "Numeric engagement score (1-10)"
+    category: "experience"
+    min_value: 1
+    max_value: 10
+  
+  conversion_numeric:
+    type: integer
+    nullable: false
+    description: "Numeric conversion score (1-10)"
+    category: "experience"
+    min_value: 1
+    max_value: 10
+  
+  # === METADATA ===
+  audited_ts:
+    type: datetime
+    nullable: false
+    description: "Timestamp when the audit was performed"
+    category: "metadata"
+  
+  # === FLAGS ===
+  quick_win_flag:
+    type: boolean
+    nullable: false
+    description: "Whether this is marked as a quick win opportunity"
+    category: "flags"
+  
+  critical_issue_flag:
+    type: boolean
+    nullable: false
+    description: "Whether this is marked as a critical issue"
+    category: "flags"
+  
+  success_flag:
+    type: boolean
+    nullable: false
+    description: "Whether this is marked as a success story"
+    category: "flags"
+
+# === LEGACY COLUMN LIST (for backward compatibility) ===
+column_names_only:
   - persona_id
   - page_id
   - url_slug
@@ -36,12 +290,53 @@ unified_audit_data_columns:
   - sentiment_numeric
   - engagement_numeric
   - conversion_numeric
-  - avg_score
   - tier_weighted_score
+  - avg_score
+
+# === COLUMN CATEGORIES ===
+categories:
+  identifier: ["persona_id", "page_id", "url_slug", "url", "slug"]
+  tier: ["tier", "tier_name", "tier_weight", "brand_percentage", "performance_percentage"]
+  criteria: ["criterion_id", "criterion_code"]
+  score: ["raw_score", "final_score", "tier_weighted_score", "avg_score"]
+  assessment: ["descriptor", "evidence"]
+  feedback: ["first_impression", "language_tone_feedback", "information_gaps", "trust_credibility_assessment", "business_impact_analysis"]
+  content: ["effective_copy_examples", "ineffective_copy_examples"]
+  experience: ["overall_sentiment", "engagement_level", "conversion_likelihood", "sentiment_numeric", "engagement_numeric", "conversion_numeric"]
+  metadata: ["audited_ts"]
+  flags: ["quick_win_flag", "critical_issue_flag", "success_flag"]
+
+# === NUMERIC COLUMNS (for dashboard calculations) ===
+numeric_columns:
+  primary_scores: ["raw_score", "final_score", "avg_score"]
+  weighted_scores: ["tier_weighted_score"]
+  experience_scores: ["sentiment_numeric", "engagement_numeric", "conversion_numeric"]
+  tier_weights: ["tier_weight"]
+  percentages: ["brand_percentage", "performance_percentage"]
+  feedback_scores: ["first_impression", "language_tone_feedback", "information_gaps", "trust_credibility_assessment"]
+
+# === STRING COLUMNS (categorical) ===
+categorical_columns:
+  tier_related: ["tier", "tier_name"]
+  criteria_related: ["criterion_id", "criterion_code"]
+  assessment_related: ["descriptor", "overall_sentiment", "engagement_level", "conversion_likelihood"]
+  identifiers: ["persona_id", "page_id", "url_slug", "url", "slug"]
+
+# === TEXT COLUMNS (long text content) ===
+text_columns: ["evidence", "business_impact_analysis", "effective_copy_examples", "ineffective_copy_examples"]
+
+# === BOOLEAN COLUMNS ===
+boolean_columns: ["quick_win_flag", "critical_issue_flag", "success_flag"]
+
+# === DATA QUALITY NOTES ===
+data_quality_notes:
+  empty_columns: ["first_impression", "language_tone_feedback", "information_gaps", "trust_credibility_assessment"]
+  sparse_columns: ["business_impact_analysis"]
+  duplicate_columns: ["url_slug", "slug", "criterion_id", "criterion_code"]
 
 # Column count: 35
 # File size: 1,021,465 bytes
-# Row count: 403 (including header)
+# Row count: 432 (data rows)
 
 # Data Quality Issues - RESOLVED:
 data_quality_issues_resolved:

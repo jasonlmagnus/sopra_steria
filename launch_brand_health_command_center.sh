@@ -33,6 +33,10 @@ if [ ! -d "audit_outputs" ] || [ -z "$(ls -A audit_outputs)" ]; then
     echo ""
 fi
 
+echo "🔄 Killing any existing Streamlit processes..."
+pkill -f streamlit || true
+sleep 2
+
 echo "🚀 Starting Brand Health Command Center..."
 echo ""
 echo "📊 Dashboard will be available at:"

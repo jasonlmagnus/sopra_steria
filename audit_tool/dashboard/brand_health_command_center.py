@@ -1,6 +1,6 @@
 """
-Brand Health Command Center - Main Dashboard
-Strategic marketing decision engine that transforms raw audit data into actionable business intelligence
+Brand Health Command Center - Executive Dashboard
+30-second strategic marketing decision engine for executives
 """
 
 import streamlit as st
@@ -121,17 +121,50 @@ st.markdown("""
         font-size: 0.8rem;
         font-weight: 600;
     }
+    
+    .executive-question {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid var(--navy-deep);
+        margin-bottom: 1rem;
+    }
+    
+    .navigation-guide {
+        background: #f0f9ff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border: 1px solid #0ea5e9;
+        margin-top: 2rem;
+    }
+    
+    .nav-button {
+        background: var(--navy-deep);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 0.25rem;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+    
+    .nav-button:hover {
+        background: #1e3a8a;
+        color: white;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 def main():
-    """Main Brand Health Command Center application"""
+    """Main Brand Health Command Center - Executive Dashboard"""
     
     # Header
     st.markdown("""
     <div class="main-header">
         <h1>🎯 Brand Health Command Center</h1>
-        <p>Strategic Marketing Decision Engine</p>
+        <p>Executive Dashboard - 30-Second Strategic Overview</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -158,57 +191,19 @@ def main():
     # Generate executive summary
     executive_summary = metrics_calc.generate_executive_summary()
     
-    # Display main dashboard
+    # Display focused executive dashboard
     display_executive_dashboard(executive_summary, metrics_calc)
     
-    # Navigation guidance
-    st.markdown("---")
-    st.markdown("### 🧭 Navigation Guide")
+    # Enhanced navigation guidance
+    display_navigation_guidance()
     
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        **📊 Analysis Tabs:**
-        - Executive Dashboard (You are here)
-        - Persona Insights
-        - Content Matrix
-        """)
-    
-    with col2:
-        st.markdown("""
-        **🎯 Action Tabs:**
-        - Opportunity & Impact
-        - Success Library
-        - Run Audit
-        """)
-    
-    with col3:
-        st.markdown("""
-        **📋 Export Tabs:**
-        - Reports & Export
-        - Detailed Data
-        """)
-    
-    # Data quality info
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📊 Data Quality")
-    
-    stats = data_loader.get_summary_stats(master_df, datasets)
-    st.sidebar.metric("Total Pages", stats.get('total_pages', 0))
-    st.sidebar.metric("Total Records", stats.get('total_records', 0))
-    st.sidebar.metric("Avg Score", f"{stats.get('avg_score', 0):.1f}/10")
-    
-    # Show experience data availability
-    if stats.get('experience_records', 0) > 0:
-        st.sidebar.success(f"✅ Experience Data: {stats['experience_records']} records")
-    if stats.get('total_recommendations', 0) > 0:
-        st.sidebar.success(f"✅ Recommendations: {stats['total_recommendations']} items")
+    # Sidebar with essential data quality info only
+    display_sidebar_essentials(data_loader, master_df, datasets)
 
 def display_executive_dashboard(summary, metrics_calc):
-    """Display the executive dashboard with key metrics"""
+    """Display the focused executive dashboard - 30-second overview"""
     
-    # Brand Health Score - Hero Metric
+    # EXECUTIVE QUESTION 1: How healthy is our brand?
     st.markdown("## 🏥 Brand Health Overview")
     
     brand_health = summary['brand_health']
@@ -222,7 +217,7 @@ def display_executive_dashboard(summary, metrics_calc):
             <div class="metric-value {status_class}">
                 {brand_health['emoji']} {brand_health['raw_score']}/10
             </div>
-            <div class="metric-label">Brand Health Score - {brand_health['status']}</div>
+            <div class="metric-label">Overall Brand Health - {brand_health['status']}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -254,92 +249,83 @@ def display_executive_dashboard(summary, metrics_calc):
         </div>
         """, unsafe_allow_html=True)
     
-    # Critical Issues Alert
+    # EXECUTIVE QUESTION 2: What needs immediate attention?
     if critical_count > 0:
-        st.error(f"🚨 **CRITICAL ALERT**: {critical_count} pages are scoring below 4.0 and need immediate attention!")
+        st.markdown("""
+        <div class="insights-box" style="border-left: 4px solid var(--red-status);">
+            <h4>🚨 CRITICAL ALERT</h4>
+            <p><strong>{} pages are scoring below 4.0 and need immediate attention!</strong></p>
+            <p>👉 <em>Visit the <strong>Opportunity & Impact</strong> tab for detailed action plans.</em></p>
+        </div>
+        """.format(critical_count), unsafe_allow_html=True)
     
-    # Three Strategic Questions
+    # Three Strategic Questions - Focused Executive View
     st.markdown("## 🎯 Strategic Brand Assessment")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("### 🔍 Are we distinct?")
-        # Calculate distinctiveness metrics
+        st.markdown("""
+        <div class="executive-question">
+            <h4>🔍 Are we distinct?</h4>
+        """, unsafe_allow_html=True)
+        
+        # Calculate distinctiveness metrics (simplified for executive view)
         tier_performance = metrics_calc.calculate_tier_performance()
         if not tier_performance.empty:
-            # Use the correct column name from the flattened tier performance result
             score_col = 'avg_score_mean' if 'avg_score_mean' in tier_performance.columns else 'avg_score'
             if score_col in tier_performance.columns:
                 distinct_score = tier_performance[score_col].mean()
-                distinct_status = "✅ Yes" if distinct_score >= 7 else "⚠️ Partially" if distinct_score >= 5 else "❌ No"
-                st.metric("Distinctiveness", f"{distinct_score:.1f}/10", delta=distinct_status)
+                if distinct_score is not None:
+                    distinct_status = "🎯 Strong" if distinct_score >= 7 else "⚠️ Moderate" if distinct_score >= 4 else "🚨 Weak"
+                    st.metric("Distinctiveness", f"{distinct_score:.1f}/10", delta=distinct_status)
+                else:
+                    st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
             else:
                 st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
+        else:
+            st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
         
-        st.markdown("**Key Factors:**")
-        st.markdown("- Unique value proposition clarity")
-        st.markdown("- Differentiation from competitors")
-        st.markdown("- Brand positioning strength")
+        st.markdown("</div>", unsafe_allow_html=True)
     
     with col2:
-        st.markdown("### 💭 Are we resonating?")
+        st.markdown("""
+        <div class="executive-question">
+            <h4>💭 Are we resonating?</h4>
+        """, unsafe_allow_html=True)
+        
         sentiment = summary['sentiment']
         resonance_score = sentiment['net_sentiment']
-        resonance_status = "✅ Yes" if resonance_score >= 20 else "⚠️ Partially" if resonance_score >= 0 else "❌ No"
+        if resonance_score is not None:
+            resonance_status = "😊 Positive" if resonance_score >= 60 else "😐 Neutral" if resonance_score >= 40 else "😞 Negative"
+            st.metric("Net Sentiment", f"{resonance_score:.1f}%", delta=resonance_status)
         
-        st.metric("Net Sentiment", f"{resonance_score:.1f}%", delta=resonance_status)
-        
-        st.markdown("**Sentiment Breakdown:**")
-        st.markdown(f"- 😊 Positive: {sentiment['positive']:.1f}%")
-        st.markdown(f"- 😐 Neutral: {sentiment['neutral']:.1f}%")
-        st.markdown(f"- 😞 Negative: {sentiment['negative']:.1f}%")
+        st.markdown("</div>", unsafe_allow_html=True)
     
     with col3:
-        st.markdown("### 💰 Are we converting?")
+        st.markdown("""
+        <div class="executive-question">
+            <h4>💰 Are we converting?</h4>
+        """, unsafe_allow_html=True)
+        
         conversion = summary['conversion']
-        convert_status = "✅ Yes" if conversion['status'] == 'High' else "⚠️ Partially" if conversion['status'] == 'Medium' else "❌ No"
+        convert_status = "🚀 Ready" if conversion['status'] == "High" else "⚠️ Moderate" if conversion['status'] == "Medium" else "🔧 Needs Work"
         
         st.metric("Conversion Readiness", conversion['status'], delta=convert_status)
-        st.metric("Conversion Score", f"{conversion['raw_score']:.1f}/10")
+        # Handle missing score key gracefully
+        conversion_score = conversion.get('score', conversion.get('net_sentiment', 0))
+        st.metric("Conversion Score", f"{conversion_score:.1f}/10")
         
-        st.markdown("**Conversion Factors:**")
-        st.markdown("- Call-to-action effectiveness")
-        st.markdown("- Trust & credibility signals")
-        st.markdown("- User journey optimization")
+        st.markdown("</div>", unsafe_allow_html=True)
     
-    # Tier Performance with Experience Data
-    st.markdown("## 📊 Tier Performance Analysis")
-    
-    if not tier_performance.empty:
-        # Display tier performance table with dynamic column formatting
-        format_dict = {}
-        gradient_cols = []
-        
-        # Build format dictionary based on actual columns that exist
-        for col in tier_performance.columns:
-            if col in ['avg_score', 'avg_sentiment', 'avg_conversion', 'avg_engagement']:
-                format_dict[col] = '{:.1f}'
-                if col == 'avg_score':
-                    gradient_cols.append(col)
-        
-        # Apply styling only to columns that exist
-        styled_df = tier_performance.style.format(format_dict)
-        if gradient_cols:
-            styled_df = styled_df.background_gradient(subset=gradient_cols, cmap='RdYlGn', vmin=0, vmax=10)
-        
-        st.dataframe(styled_df, use_container_width=True)
-    else:
-        st.info("📊 Tier performance data not available with current dataset.")
-    
-    # Top Opportunities
-    st.markdown("## 🎯 Top Improvement Opportunities")
+    # EXECUTIVE QUESTION 3: What can we fix quickly? (Top 3 Opportunities)
+    st.markdown("## 🎯 Top 3 Improvement Opportunities")
+    st.markdown("*For comprehensive analysis, visit the **Opportunity & Impact** tab*")
     
     opportunities = metrics_calc.get_top_opportunities(limit=3)
     
     if opportunities:
         for i, opp in enumerate(opportunities, 1):
-            # Use the friendly title from metrics calculator
             page_title = opp.get('page_title', 'Unknown Page')
             
             with st.expander(f"#{i} - {page_title} (Impact: {opp['potential_impact']:.1f})"):
@@ -352,27 +338,28 @@ def display_executive_dashboard(summary, metrics_calc):
                     st.metric("Effort Level", opp['effort_level'])
                 
                 with col3:
-                    st.metric("Page Tier", opp['tier'])
+                    st.metric("Potential Impact", f"{opp['potential_impact']:.1f}")
                 
-                st.markdown(f"**💡 Recommendation:** {opp['recommendation']}")
-                if opp['url']:
-                    st.markdown(f"**🔗 URL:** {opp['url']}")
+                st.markdown(f"**💡 Quick Action:** {opp['recommendation']}")
+                
+                # Link to detailed analysis
+                st.markdown("*👉 For detailed action plan, visit **Opportunity & Impact** tab*")
     else:
-        st.info("📈 No specific opportunities identified with current data structure.")
+        st.info("📈 No specific opportunities identified. Visit **Content Matrix** for detailed analysis.")
     
-    # Success Stories
-    st.markdown("## 🌟 Success Stories")
+    # EXECUTIVE QUESTION 4: What's working well? (Top 3 Success Stories)
+    st.markdown("## 🌟 Top 3 Success Stories")
+    st.markdown("*For detailed success analysis, visit the **Success Library** tab*")
     
     success_stories = metrics_calc.calculate_success_stories()
     
     if success_stories:
         st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 7.7)")
         
-        for story in success_stories[:3]:  # Show top 3
-            # Use the friendly title from metrics calculator
+        for i, story in enumerate(success_stories[:3], 1):
             page_title = story.get('page_title', 'Unknown Page')
             
-            with st.expander(f"⭐ {page_title} - Score: {story['raw_score']:.1f}"):
+            with st.expander(f"⭐ #{i} - {page_title} - Score: {story['raw_score']:.1f}"):
                 col1, col2 = st.columns(2)
                 
                 with col1:
@@ -380,25 +367,82 @@ def display_executive_dashboard(summary, metrics_calc):
                     st.markdown(f"**📊 Tier:** {story['tier']}")
                 
                 with col2:
-                    # Additional metrics could go here if needed
-                    pass
+                    if story['key_strengths']:
+                        st.markdown("**✨ Key Strengths:**")
+                        for strength in story['key_strengths'][:2]:  # Show only top 2 for executive view
+                            st.markdown(f"• {strength}")
                 
-                if story['key_strengths']:
-                    st.markdown("**✨ Key Strengths:**")
-                    for strength in story['key_strengths']:
-                        st.markdown(f"• {strength}")
-                
-                if story['url']:
-                    st.markdown(f"**🔗 URL:** {story['url']}")
+                # Link to detailed analysis
+                st.markdown("*👉 For pattern analysis and replication guide, visit **Success Library** tab*")
     else:
         st.warning("⚠️ No pages currently scoring 7.7 or above. Focus on improvement opportunities.")
     
-    # Strategic Recommendations
+    # EXECUTIVE QUESTION 5: What should we do next? (Strategic Recommendations)
     if summary['recommendations']:
         st.markdown("## 💡 Strategic Recommendations")
+        st.markdown("*AI-generated action priorities based on current brand health*")
         
         for i, rec in enumerate(summary['recommendations'], 1):
-            st.markdown(f"**{i}.** {rec}")
+            st.markdown(f"""
+            <div class="insights-box">
+                <strong>{i}.</strong> {rec}
+            </div>
+            """, unsafe_allow_html=True)
+
+def display_navigation_guidance():
+    """Enhanced navigation guidance to specialized tabs"""
+    st.markdown("""
+    <div class="navigation-guide">
+        <h3>🧭 Deep-Dive Analysis</h3>
+        <p><strong>Need more details?</strong> Visit these specialized tabs for comprehensive analysis:</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        **📊 Analysis Tabs:**
+        - **👥 Persona Insights** - How different personas experience your brand
+        - **📊 Content Matrix** - Detailed performance by content type and tier
+        """)
+    
+    with col2:
+        st.markdown("""
+        **🎯 Action Tabs:**
+        - **💡 Opportunity & Impact** - Comprehensive improvement roadmap
+        - **🌟 Success Library** - Pattern analysis and replication guides
+        """)
+    
+    with col3:
+        st.markdown("""
+        **📋 Data & Tools:**
+        - **📋 Reports & Export** - Custom reports and data exports
+        - **🚀 Run Audit** - Generate fresh audit data
+        """)
+
+def display_sidebar_essentials(data_loader, master_df, datasets):
+    """Display essential sidebar information only"""
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 📊 Data Overview")
+    
+    stats = data_loader.get_summary_stats(master_df, datasets)
+    st.sidebar.metric("Total Pages", stats.get('total_pages', 0))
+    st.sidebar.metric("Total Records", stats.get('total_records', 0))
+    st.sidebar.metric("Avg Score", f"{stats.get('avg_score', 0):.1f}/10")
+    
+    # Show data quality indicators
+    if stats.get('experience_records', 0) > 0:
+        st.sidebar.success(f"✅ Experience Data: {stats['experience_records']} records")
+    if stats.get('total_recommendations', 0) > 0:
+        st.sidebar.success(f"✅ Recommendations: {stats['total_recommendations']} items")
+    
+    # Quick navigation
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🚀 Quick Actions")
+    st.sidebar.markdown("- 👥 **Persona Insights** - Filter by persona")
+    st.sidebar.markdown("- 📊 **Content Matrix** - Detailed tier analysis")
+    st.sidebar.markdown("- 💡 **Opportunity & Impact** - Action roadmap")
 
 if __name__ == "__main__":
     main() 
