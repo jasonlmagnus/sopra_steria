@@ -136,46 +136,29 @@ def main():
     """, unsafe_allow_html=True)
     
     # Initialize data loader
-    @st.cache_resource
-    def get_data_loader():
-        return BrandHealthDataLoader()
+    data_loader = BrandHealthDataLoader()
     
-    data_loader = get_data_loader()
+    # Load unified data only
+    datasets, master_df = data_loader.load_all_data()
     
-    # Sidebar for persona selection
-    st.sidebar.title("🎯 Command Center")
-    st.sidebar.markdown("---")
+    # Store data in session state for other pages to access
+    st.session_state['datasets'] = datasets
+    st.session_state['master_df'] = master_df
+    st.session_state['summary'] = data_loader.get_summary_stats(master_df, datasets)
     
-    # Get available personas
-    available_personas = data_loader.get_available_personas()
-    
-    if not available_personas:
-        st.error("❌ No persona data found. Please run an audit first.")
-        st.info("💡 Use the 'Run Audit' tab to generate brand audit data.")
+    if master_df.empty:
+        st.error("❌ No data available. Please ensure the enhanced unified dataset exists.")
+        st.info("💡 Run the multi-persona packager to generate the enhanced unified dataset.")
         return
     
-    # Persona selector
-    selected_persona = st.sidebar.selectbox(
-        "Select Persona",
-        available_personas,
-        help="Choose which persona's audit data to analyze"
-    )
-    
-    # Load data
-    with st.spinner("🔄 Loading brand health data..."):
-        df = data_loader.load_enhanced_data(selected_persona)
-    
-    if df.empty:
-        st.error(f"❌ No data found for persona: {selected_persona}")
-        return
-    
-    # Initialize metrics calculator
-    metrics_calc = BrandHealthMetricsCalculator(df)
+    # Initialize metrics calculator with unified data
+    recommendations_df = datasets.get('recommendations') if datasets else None
+    metrics_calc = BrandHealthMetricsCalculator(master_df, recommendations_df)
     
     # Generate executive summary
     executive_summary = metrics_calc.generate_executive_summary()
     
-    # Display key metrics
+    # Display main dashboard
     display_executive_dashboard(executive_summary, metrics_calc)
     
     # Navigation guidance
@@ -211,10 +194,16 @@ def main():
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 Data Quality")
     
-    stats = data_loader.get_summary_stats(df)
+    stats = data_loader.get_summary_stats(master_df, datasets)
     st.sidebar.metric("Total Pages", stats.get('total_pages', 0))
     st.sidebar.metric("Total Records", stats.get('total_records', 0))
     st.sidebar.metric("Avg Score", f"{stats.get('avg_score', 0):.1f}/10")
+    
+    # Show experience data availability
+    if stats.get('experience_records', 0) > 0:
+        st.sidebar.success(f"✅ Experience Data: {stats['experience_records']} records")
+    if stats.get('total_recommendations', 0) > 0:
+        st.sidebar.success(f"✅ Recommendations: {stats['total_recommendations']} items")
 
 def display_executive_dashboard(summary, metrics_calc):
     """Display the executive dashboard with key metrics"""
@@ -279,9 +268,14 @@ def display_executive_dashboard(summary, metrics_calc):
         # Calculate distinctiveness metrics
         tier_performance = metrics_calc.calculate_tier_performance()
         if not tier_performance.empty:
-            distinct_score = tier_performance['avg_score'].mean()
-            distinct_status = "✅ Yes" if distinct_score >= 7 else "⚠️ Partially" if distinct_score >= 5 else "❌ No"
-            st.metric("Distinctiveness", f"{distinct_score:.1f}/10", delta=distinct_status)
+            # Use the correct column name from the flattened tier performance result
+            score_col = 'avg_score_mean' if 'avg_score_mean' in tier_performance.columns else 'avg_score'
+            if score_col in tier_performance.columns:
+                distinct_score = tier_performance[score_col].mean()
+                distinct_status = "✅ Yes" if distinct_score >= 7 else "⚠️ Partially" if distinct_score >= 5 else "❌ No"
+                st.metric("Distinctiveness", f"{distinct_score:.1f}/10", delta=distinct_status)
+            else:
+                st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
         
         st.markdown("**Key Factors:**")
         st.markdown("- Unique value proposition clarity")
@@ -318,15 +312,23 @@ def display_executive_dashboard(summary, metrics_calc):
     st.markdown("## 📊 Tier Performance Analysis")
     
     if not tier_performance.empty:
-        # Display tier performance table
-        st.dataframe(
-            tier_performance.style.format({
-                'avg_score': '{:.1f}',
-                'avg_sentiment': '{:.1f}',
-                'avg_conversion': '{:.1f}'
-            }).background_gradient(subset=['avg_score'], cmap='RdYlGn', vmin=0, vmax=10),
-            use_container_width=True
-        )
+        # Display tier performance table with dynamic column formatting
+        format_dict = {}
+        gradient_cols = []
+        
+        # Build format dictionary based on actual columns that exist
+        for col in tier_performance.columns:
+            if col in ['avg_score', 'avg_sentiment', 'avg_conversion', 'avg_engagement']:
+                format_dict[col] = '{:.1f}'
+                if col == 'avg_score':
+                    gradient_cols.append(col)
+        
+        # Apply styling only to columns that exist
+        styled_df = tier_performance.style.format(format_dict)
+        if gradient_cols:
+            styled_df = styled_df.background_gradient(subset=gradient_cols, cmap='RdYlGn', vmin=0, vmax=10)
+        
+        st.dataframe(styled_df, use_container_width=True)
     else:
         st.info("📊 Tier performance data not available with current dataset.")
     
@@ -365,7 +367,8 @@ def display_executive_dashboard(summary, metrics_calc):
         for story in success_stories[:3]:  # Show top 3
             with st.expander(f"⭐ {story['page_id']} - Score: {story['score']:.1f}"):
                 st.markdown(f"**Tier:** {story['tier']}")
-                st.markdown(f"**Sentiment:** {story['sentiment']}")
+                if 'sentiment' in story:
+                    st.markdown(f"**Sentiment:** {story['sentiment']}")
                 
                 if story['key_strengths']:
                     st.markdown("**Key Strengths:**")

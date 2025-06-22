@@ -13,18 +13,46 @@ import json
 
 try:
     from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
 except ImportError:
-    print("Anthropic package not found. Please install it with: pip install anthropic")
-    raise
+    print("Anthropic package not found. Install with: pip install anthropic")
+    ANTHROPIC_AVAILABLE = False
+
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    print("OpenAI package not found. Install with: pip install openai")
+    OPENAI_AVAILABLE = False
 
 load_dotenv()
 
 class AIInterface:
-    """A class to handle interactions with the Anthropic API."""
+    """A class to handle interactions with AI APIs (Anthropic Claude and OpenAI GPT)."""
 
-    def __init__(self):
-        self.client = Anthropic()
+    def __init__(self, model_provider: str = "anthropic"):
+        """
+        Initialize AI interface with specified model provider.
+        
+        Args:
+            model_provider: "anthropic" or "openai"
+        """
+        self.model_provider = model_provider.lower()
         self.persona_parser = PersonaParser()
+        
+        # Initialize the appropriate client
+        if self.model_provider == "anthropic":
+            if not ANTHROPIC_AVAILABLE:
+                raise ImportError("Anthropic package not available")
+            self.anthropic_client = Anthropic()
+            self.openai_client = None
+        elif self.model_provider == "openai":
+            if not OPENAI_AVAILABLE:
+                raise ImportError("OpenAI package not available")
+            self.openai_client = OpenAI()
+            self.anthropic_client = None
+        else:
+            raise ValueError(f"Unsupported model provider: {model_provider}")
         
         # Find the project root directory (where audit_inputs is located)
         self.project_root = self._find_project_root()
@@ -32,6 +60,78 @@ class AIInterface:
         # Cache for parsed persona to avoid redundant parsing
         self._cached_persona_content = None
         self._cached_persona_attributes = None
+
+    @classmethod
+    def get_available_models(cls) -> dict:
+        """Get available models for each provider."""
+        models = {}
+        if ANTHROPIC_AVAILABLE:
+            models["anthropic"] = {
+                "claude-3-opus-20240229": "Claude 3 Opus (High Quality)",
+                "claude-3-sonnet-20240229": "Claude 3 Sonnet (Balanced)",
+                "claude-3-haiku-20240307": "Claude 3 Haiku (Fast)"
+            }
+        if OPENAI_AVAILABLE:
+            models["openai"] = {
+                "gpt-4.1-mini": "GPT-4.1 Mini (Cost Effective)",
+                "gpt-4-turbo": "GPT-4 Turbo (High Quality)",
+                "gpt-3.5-turbo": "GPT-3.5 Turbo (Fast)"
+            }
+        return models
+
+    def switch_provider(self, model_provider: str):
+        """Switch between AI providers."""
+        if model_provider.lower() == self.model_provider:
+            return  # Already using this provider
+        
+        self.model_provider = model_provider.lower()
+        
+        if self.model_provider == "anthropic":
+            if not ANTHROPIC_AVAILABLE:
+                raise ImportError("Anthropic package not available")
+            self.anthropic_client = Anthropic()
+            self.openai_client = None
+        elif self.model_provider == "openai":
+            if not OPENAI_AVAILABLE:
+                raise ImportError("OpenAI package not available")
+            self.openai_client = OpenAI()
+            self.anthropic_client = None
+
+    def _make_api_call(self, system_message: str, user_prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
+        """Make API call to the selected provider."""
+        retries = 3
+        for attempt in range(retries):
+            try:
+                if self.model_provider == "anthropic":
+                    message = self.anthropic_client.messages.create(
+                        model="claude-3-opus-20240229",
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        system=system_message,
+                        messages=[{"role": "user", "content": user_prompt}],
+                    )
+                    return message.content[0].text
+                
+                elif self.model_provider == "openai":
+                    response = self.openai_client.chat.completions.create(
+                        model="gpt-4.1-mini",
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        messages=[
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": user_prompt}
+                        ]
+                    )
+                    return response.choices[0].message.content
+                
+            except Exception as e:
+                logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
+                if attempt + 1 == retries:
+                    provider_name = "Anthropic" if self.model_provider == "anthropic" else "OpenAI"
+                    logging.error(f"Final {provider_name} API call attempt failed.")
+                    return f"Error: Could not generate response due to persistent {provider_name} API error."
+        
+        return "Error: Should not be reached."
 
     def _find_project_root(self) -> Path:
         """Find the project root directory by looking for audit_inputs folder."""
@@ -120,28 +220,7 @@ class AIInterface:
             **persona_vars
         )
         
-        retries = 3
-        for attempt in range(retries):
-            try:
-                message = self.client.messages.create(
-                    model="claude-3-opus-20240229",
-                    max_tokens=1500,
-                    temperature=0.6,
-                    system=system_message,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        }
-                    ],
-                )
-                return message.content[0].text
-            except Exception as e:
-                logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
-                if attempt + 1 == retries:
-                    logging.error("Final API call attempt failed. Could not generate experience report.")
-                    return "Error: Could not generate the experience report due to a persistent API error."
-        return "Error: Should not be reached."
+        return self._make_api_call(system_message, prompt, max_tokens=1500, temperature=0.6)
 
     def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology) -> str:
         """Generate hygiene scorecard using configurable prompts and YAML methodology."""
@@ -170,28 +249,7 @@ class AIInterface:
             **persona_vars
         )
         
-        retries = 3
-        for attempt in range(retries):
-            try:
-                message = self.client.messages.create(
-                    model="claude-3-opus-20240229",
-                    max_tokens=2000,
-                    temperature=0.3,
-                    system=system_message,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        }
-                    ],
-                )
-                return message.content[0].text
-            except Exception as e:
-                logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
-                if attempt + 1 == retries:
-                    logging.error("Final API call attempt failed. Could not generate hygiene scorecard.")
-                    return "Error: Could not generate the hygiene scorecard due to a persistent API error."
-        return "Error: Should not be reached."
+        return self._make_api_call(system_message, prompt, max_tokens=2000, temperature=0.3)
     
     def _get_criteria_for_page(self, page_content: str, methodology) -> str:
         """Get appropriate criteria based on page content and methodology."""

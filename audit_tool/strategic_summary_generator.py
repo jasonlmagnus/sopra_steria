@@ -238,6 +238,15 @@ class StrategicSummaryGenerator:
                     for channel_key, triggers in classification_triggers['offsite'].items():
                         if self.url_matches_triggers(url, triggers):
                             channel_name = f"Offsite - {triggers['name']}"
+                            # Ensure the key exists in classification dict
+                            if channel_name not in classification:
+                                # Map to existing keys
+                                if 'owned' in channel_key.lower():
+                                    channel_name = 'Offsite - Owned'
+                                elif 'influenced' in channel_key.lower():
+                                    channel_name = 'Offsite - Influenced'
+                                elif 'independent' in channel_key.lower():
+                                    channel_name = 'Offsite - Independent'
                             classification[channel_name].append(page)
                             classified = True
                             break

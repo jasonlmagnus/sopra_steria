@@ -15,86 +15,88 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def main():
-    st.title("👥 Persona Comparison")
+    """Main persona comparison page"""
+    st.set_page_config(page_title="Persona Comparison", page_icon="👥", layout="wide")
+    
+    # Get data from session state
+    if 'master_df' not in st.session_state:
+        st.error("❌ No data available. Please go to the main dashboard first to load data.")
+        return
+    
+    master_df = st.session_state['master_df']
+    datasets = st.session_state.get('datasets', {})
+    summary = st.session_state.get('summary', {})
+    
+    st.title("👥 Persona Comparison Analysis")
+    st.markdown("### Compare performance across different personas")
+    
+    # Check if we have persona data
+    if 'persona_id' not in master_df.columns:
+        st.warning("⚠️ No persona data available for comparison")
+        st.info("Persona comparison requires data with persona_id column")
+        return
+    
+    # Check number of personas
+    unique_personas = master_df['persona_id'].nunique()
+    if unique_personas < 2:
+        st.warning("⚠️ Need at least 2 personas for comparison analysis")
+        st.info(f"Currently have {unique_personas} persona(s) in the dataset")
+        return
     
     # Check if we have data
     if 'datasets' not in st.session_state or st.session_state['datasets'] is None:
         st.error("No audit data found. Please ensure data is loaded from the main dashboard.")
         return
     
-    datasets = st.session_state['datasets']
-    summary = st.session_state['summary']
     filtered_df = datasets['criteria']
     
     if filtered_df.empty:
         st.warning("No data matches the current filters.")
         return
     
-    # Check if we have multiple personas
-    if summary['total_personas'] < 2:
-        st.info("📊 Only one persona found. Upload additional personas to enable comparison analysis.")
-        return
-    
-    st.markdown(f"### 📊 Comparing {summary['total_personas']} Personas")
-    
     # Persona Performance Overview
     persona_summary = filtered_df.groupby('persona_id').agg({
-        'raw_score': ['mean', 'std', 'count', 'min', 'max'],
+        'avg_score': ['mean', 'std', 'count', 'min', 'max'],
         'page_id': 'nunique',
         'criterion_id': 'nunique'
     }).round(2)
-    persona_summary.columns = ['Avg Score', 'Std Dev', 'Evaluations', 'Min Score', 'Max Score', 'Pages', 'Criteria']
-    persona_summary = persona_summary.sort_values('Avg Score', ascending=False)
     
-    # Performance comparison chart
-    st.markdown("#### 📈 Performance Comparison")
+    # Flatten column names
+    persona_summary.columns = ['Avg Score', 'Std Dev', 'Evaluations', 'Min Score', 'Max Score', 'Pages', 'Criteria']
+    
+    # Add status column
+    persona_summary['Status'] = persona_summary['Avg Score'].apply(
+        lambda x: '🟢 Excellent' if x >= 8.0 else '🟡 Good' if x >= 6.0 else '🔴 Needs Work'
+    )
     
     col1, col2 = st.columns(2)
     
     with col1:
-        # Bar chart of average scores
-        fig_bar = px.bar(
-            x=persona_summary.index,
-            y=persona_summary['Avg Score'],
-            title="Average Score by Persona",
-            labels={'x': 'Persona', 'y': 'Average Score'},
-            color=persona_summary['Avg Score'],
-            color_continuous_scale='RdYlGn',
-            text=persona_summary['Avg Score']
-        )
-        fig_bar.update_traces(texttemplate='%{text:.1f}', textposition='outside')
-        fig_bar.update_layout(showlegend=False, yaxis=dict(range=[0, 10]))
-        st.plotly_chart(fig_bar, use_container_width=True)
+        st.subheader("📊 Persona Performance Summary")
+        st.dataframe(persona_summary, use_container_width=True)
     
     with col2:
-        # Score distribution comparison
-        fig_box = px.box(
-            filtered_df,
-            x='persona_id',
-            y='raw_score',
-            title="Score Distribution by Persona"
+        st.subheader("📈 Performance Comparison")
+        
+        # Create performance comparison chart
+        fig = px.bar(
+            x=persona_summary.index,
+            y=persona_summary['Avg Score'],
+            color=persona_summary['Avg Score'],
+            color_continuous_scale='RdYlGn',
+            title="Average Score by Persona"
         )
-        fig_box.update_layout(xaxis_title="Persona", yaxis_title="Score")
-        st.plotly_chart(fig_box, use_container_width=True)
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig, use_container_width=True)
     
-    # Detailed comparison table
-    st.markdown("#### 📋 Detailed Performance Metrics")
+    # Detailed criteria comparison
+    st.subheader("🎯 Criteria Performance Comparison")
     
-    # Add performance indicators
-    persona_summary['Status'] = persona_summary['Avg Score'].apply(
-        lambda x: '🟢 Excellent' if x >= 8.0 else '🟡 Good' if x >= 4.0 else '🔴 Needs Work'
-    )
-    
-    st.dataframe(persona_summary, use_container_width=True)
-    
-    # Criteria-level comparison
-    st.markdown("#### 🎯 Criteria Performance Comparison")
-    
-    # Create criteria heatmap
+    # Create criteria comparison matrix
     criteria_comparison = filtered_df.pivot_table(
+        values='avg_score',
         index='criterion_id',
         columns='persona_id',
-        values='raw_score',
         aggfunc='mean'
     ).round(2)
     
@@ -102,53 +104,76 @@ def main():
         # Display as heatmap
         fig_heatmap = px.imshow(
             criteria_comparison.values,
-            labels=dict(x="Persona", y="Criteria", color="Score"),
             x=criteria_comparison.columns,
             y=[c.replace('_', ' ').title() for c in criteria_comparison.index],
             color_continuous_scale='RdYlGn',
-            aspect="auto",
+            aspect='auto',
             title="Criteria Performance Heatmap"
         )
         fig_heatmap.update_layout(height=max(400, len(criteria_comparison) * 25))
         st.plotly_chart(fig_heatmap, use_container_width=True)
         
-        # Show top differences
-        st.markdown("#### 🔍 Biggest Performance Differences")
+        # Show detailed table
+        st.dataframe(criteria_comparison, use_container_width=True)
         
+        # Performance insights
         if len(criteria_comparison.columns) >= 2:
-            # Calculate variance across personas for each criterion
-            criteria_variance = criteria_comparison.var(axis=1).sort_values(ascending=False)
-            top_differences = criteria_variance.head(5)
+            st.subheader("🔍 Key Insights")
             
-            for criterion, variance in top_differences.items():
-                with st.expander(f"📊 {criterion.replace('_', ' ').title()} (Variance: {variance:.2f})"):
-                    criterion_data = criteria_comparison.loc[criterion]
+            # Find best and worst performing criteria for each persona
+            for persona in criteria_comparison.columns:
+                persona_data = criteria_comparison[persona].dropna()
+                if not persona_data.empty:
+                    best_criterion = persona_data.idxmax()
+                    worst_criterion = persona_data.idxmin()
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        best_persona = criterion_data.idxmax()
-                        worst_persona = criterion_data.idxmin()
-                        st.metric("Best Performer", f"{best_persona}: {criterion_data[best_persona]:.1f}")
-                        st.metric("Worst Performer", f"{worst_persona}: {criterion_data[worst_persona]:.1f}")
+                        st.markdown(f"**{persona} - Best Performance:**")
+                        st.success(f"• {best_criterion.replace('_', ' ').title()}: {persona_data[best_criterion]:.1f}/10")
                     
                     with col2:
-                        # Show specific examples for this criterion
-                        criterion_examples = filtered_df[filtered_df['criterion_id'] == criterion]
-                        if not criterion_examples.empty:
-                            best_example = criterion_examples.loc[criterion_examples['raw_score'].idxmax()]
-                            worst_example = criterion_examples.loc[criterion_examples['raw_score'].idxmin()]
-                            
-                            st.markdown("**Best Example:**")
-                            st.write(f"• Page: {best_example['url_slug'].replace('_', ' ').title()}")
-                            st.write(f"• Score: {best_example['raw_score']:.1f}/10")
-                            
-                            st.markdown("**Worst Example:**")
-                            st.write(f"• Page: {worst_example['url_slug'].replace('_', ' ').title()}")
-                            st.write(f"• Score: {worst_example['raw_score']:.1f}/10")
+                        st.markdown(f"**{persona} - Needs Improvement:**")
+                        st.warning(f"• {worst_criterion.replace('_', ' ').title()}: {persona_data[worst_criterion]:.1f}/10")
+        
+        # Criterion deep dive
+        st.subheader("🔬 Criterion Deep Dive")
+        
+        unique_criteria = criteria_comparison.index.tolist()
+        selected_criterion = st.selectbox(
+            "Select criterion for detailed analysis:",
+            unique_criteria,
+            format_func=lambda x: x.replace('_', ' ').title()
+        )
+        
+        if selected_criterion:
+            criterion_examples = filtered_df[filtered_df['criterion_id'] == selected_criterion]
+            
+            if not criterion_examples.empty:
+                st.markdown(f"#### Analysis for: {selected_criterion.replace('_', ' ').title()}")
+                
+                # Show best and worst examples
+                best_example = criterion_examples.loc[criterion_examples['avg_score'].idxmax()]
+                worst_example = criterion_examples.loc[criterion_examples['avg_score'].idxmin()]
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**🏆 Best Example:**")
+                    st.write(f"• **Page:** {best_example['url_slug'].replace('_', ' ').title()}")
+                    st.write(f"• **Persona:** {best_example['persona_id']}")
+                    st.write(f"• Score: {best_example['avg_score']:.1f}/10")
+                    st.write(f"• **Rationale:** {best_example['rationale'][:200]}...")
+                
+                with col2:
+                    st.markdown("**⚠️ Needs Improvement:**")
+                    st.write(f"• **Page:** {worst_example['url_slug'].replace('_', ' ').title()}")
+                    st.write(f"• **Persona:** {worst_example['persona_id']}")
+                    st.write(f"• Score: {worst_example['avg_score']:.1f}/10")
+                    st.write(f"• **Rationale:** {worst_example['rationale'][:200]}...")
     
     # Experience comparison (if available)
     if summary.get('has_experience_data') and datasets['experience'] is not None:
-        st.markdown("#### 👤 Experience Data Comparison")
+        st.subheader("👥 Experience Comparison")
         
         experience_df = datasets['experience']
         
@@ -196,40 +221,32 @@ def main():
             fig_conv.update_layout(showlegend=False)
             st.plotly_chart(fig_conv, use_container_width=True)
         
+        # Experience summary table
         st.dataframe(exp_comparison, use_container_width=True)
     
-    # Export comparison data
-    st.markdown("#### 📥 Export Comparison Data")
+    # Export options
+    st.subheader("📥 Export Comparison Data")
     
-    if st.button("📊 Generate Comparison Report"):
-        # Create comprehensive comparison report
-        report_content = f"# Persona Comparison Report\n\n"
-        report_content += f"**Personas Analyzed:** {summary['total_personas']}\n"
-        report_content += f"**Total Pages:** {summary['total_pages']}\n"
-        report_content += f"**Total Evaluations:** {summary['total_evaluations']}\n\n"
-        
-        report_content += "## Performance Summary\n\n"
-        for persona, data in persona_summary.iterrows():
-            report_content += f"### {persona}\n"
-            report_content += f"- **Average Score:** {data['Avg Score']:.1f}/10\n"
-            report_content += f"- **Pages Analyzed:** {int(data['Pages'])}\n"
-            report_content += f"- **Score Range:** {data['Min Score']:.1f} - {data['Max Score']:.1f}\n"
-            report_content += f"- **Status:** {data['Status']}\n\n"
-        
-        if summary.get('has_experience_data'):
-            report_content += "## Experience Data Summary\n\n"
-            for persona, data in exp_comparison.iterrows():
-                report_content += f"### {persona}\n"
-                report_content += f"- **Positive Sentiment:** {data['Positive Sentiment %']:.1f}%\n"
-                report_content += f"- **High Engagement:** {data['High Engagement %']:.1f}%\n"
-                report_content += f"- **High Conversion:** {data['High Conversion %']:.1f}%\n\n"
-        
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        persona_csv = persona_summary.to_csv().encode('utf-8')
         st.download_button(
-            "📥 Download Comparison Report",
-            report_content,
-            "persona_comparison_report.md",
-            "text/markdown"
+            "📊 Download Persona Summary",
+            persona_csv,
+            "persona_comparison.csv",
+            "text/csv"
         )
+    
+    with col2:
+        if not criteria_comparison.empty:
+            criteria_csv = criteria_comparison.to_csv().encode('utf-8')
+            st.download_button(
+                "🎯 Download Criteria Matrix",
+                criteria_csv,
+                "criteria_comparison.csv",
+                "text/csv"
+            )
 
 if __name__ == "__main__":
     main() 

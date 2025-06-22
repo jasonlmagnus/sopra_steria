@@ -24,7 +24,7 @@ def setup_logging(verbose: bool = False):
     )
 
 def run_audit(urls_file: str, persona_file: str, output_dir: str, 
-              generate_summary: bool = True, verbose: bool = False):
+              generate_summary: bool = True, verbose: bool = False, model_provider: str = "anthropic"):
     """Run complete audit pipeline"""
     
     setup_logging(verbose)
@@ -33,14 +33,15 @@ def run_audit(urls_file: str, persona_file: str, output_dir: str,
     try:
         # Initialize components
         logger.info("🚀 Starting Sopra Steria Brand Audit")
+        logger.info(f"🤖 Using AI Provider: {model_provider.upper()}")
         
         # Load methodology
         methodology = MethodologyParser()
         logger.info(f"📋 Loaded methodology: {methodology.get_metadata()['name']} v{methodology.get_metadata()['version']}")
         
-        # Initialize scraper and AI interface
+        # Initialize scraper and AI interface with selected provider
         scraper = Scraper()
-        ai_interface = AIInterface()
+        ai_interface = AIInterface(model_provider=model_provider)
         reporter = ReportGenerator(output_dir)
         
         # Load URLs and persona
@@ -155,6 +156,8 @@ def main():
     parser.add_argument('--urls', required=True, help='File containing URLs to audit')
     parser.add_argument('--persona', required=True, help='Persona file for evaluation context')
     parser.add_argument('--output', required=True, help='Output directory for reports')
+    parser.add_argument('--model', choices=['anthropic', 'openai'], default='anthropic', 
+                       help='AI model provider (default: anthropic)')
     parser.add_argument('--no-summary', action='store_true', help='Skip strategic summary generation')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
     
@@ -166,7 +169,8 @@ def main():
             persona_file=args.persona,
             output_dir=args.output,
             generate_summary=not args.no_summary,
-            verbose=args.verbose
+            verbose=args.verbose,
+            model_provider=args.model
         )
         
         print(f"\n🎉 Audit completed successfully!")

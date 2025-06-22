@@ -101,39 +101,92 @@ def main():
     
     with tab1:
         st.markdown("#### Performance by Criteria")
-        criteria_summary = filtered_df.groupby('criterion_id').agg({
-            'raw_score': ['mean', 'std', 'count', 'min', 'max'],
+        # Use the correct column name based on our unified data structure
+        criterion_col = 'criterion_code' if 'criterion_code' in filtered_df.columns else 'criterion_id'
+        
+        # Use the correct score column from unified CSV
+        score_col = None
+        if 'final_score' in filtered_df.columns:
+            score_col = 'final_score'
+        elif 'raw_score' in filtered_df.columns:
+            score_col = 'raw_score'
+        elif 'avg_score' in filtered_df.columns:
+            score_col = 'avg_score'
+        
+        if criterion_col not in filtered_df.columns or not score_col:
+            st.error("❌ Criteria analysis requires proper column structure")
+            return
+        
+        criteria_summary = filtered_df.groupby(criterion_col).agg({
+            score_col: ['mean', 'std', 'count', 'min', 'max'],
             'page_id': 'nunique'
         }).round(2)
-        criteria_summary.columns = ['Avg Score', 'Std Dev', 'Evaluations', 'Min Score', 'Max Score', 'Pages']
-        criteria_summary = criteria_summary.sort_values('Avg Score', ascending=False)
         
-        # Add performance indicators
-        criteria_summary['Status'] = criteria_summary['Avg Score'].apply(
-            lambda x: '🟢 Excellent' if x >= 8.0 else '🟡 Good' if x >= 4.0 else '🔴 Needs Work'
+        # Flatten column names
+        criteria_summary.columns = ['avg_score', 'std_dev', 'evaluations', 'min_score', 'max_score', 'pages_affected']
+        criteria_summary = criteria_summary.sort_values('avg_score')
+        
+        # Display as interactive table
+        st.dataframe(
+            criteria_summary,
+            use_container_width=True,
+            column_config={
+                "avg_score": st.column_config.NumberColumn("Average Score", format="%.1f"),
+                "std_dev": st.column_config.NumberColumn("Standard Deviation", format="%.2f"),
+                "evaluations": st.column_config.NumberColumn("Total Evaluations"),
+                "min_score": st.column_config.NumberColumn("Minimum Score", format="%.1f"),
+                "max_score": st.column_config.NumberColumn("Maximum Score", format="%.1f"),
+                "pages_affected": st.column_config.NumberColumn("Pages Affected")
+            }
         )
         
-        st.dataframe(criteria_summary, use_container_width=True)
-        
-        # Download criteria summary
-        criteria_csv = criteria_summary.to_csv().encode('utf-8')
-        st.download_button("📥 Download Criteria Summary", criteria_csv, "criteria_summary.csv", "text/csv")
+        # Quick stats
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Avg Overall Score", f"{filtered_df[score_col].mean():.1f}/10")
+        with col2:
+            if len(criteria_summary) > 0:
+                st.metric("Best Criterion", f"{criteria_summary.iloc[-1]['avg_score']:.1f}/10")
+            else:
+                st.metric("Best Criterion", "N/A")
+        with col3:
+            if len(criteria_summary) > 0:
+                st.metric("Worst Criterion", f"{criteria_summary.iloc[0]['avg_score']:.1f}/10")
+            else:
+                st.metric("Worst Criterion", "N/A")
+        with col4:
+            if len(criteria_summary) > 0:
+                st.metric("Score Range", f"{criteria_summary['avg_score'].max() - criteria_summary['avg_score'].min():.1f}")
+            else:
+                st.metric("Score Range", "N/A")
     
     with tab2:
         st.markdown("#### Performance by Page")
         page_summary = filtered_df.groupby('url_slug').agg({
-            'raw_score': ['mean', 'std', 'count', 'min', 'max'],
-            'criterion_id': 'nunique'
+            score_col: ['mean', 'std', 'count', 'min', 'max'],
+            criterion_col: 'nunique'
         }).round(2)
-        page_summary.columns = ['Avg Score', 'Std Dev', 'Evaluations', 'Min Score', 'Max Score', 'Criteria Count']
-        page_summary = page_summary.sort_values('Avg Score', ascending=False)
+        page_summary.columns = ['avg_score', 'std_dev', 'evaluations', 'min_score', 'max_score', 'criteria_count']
+        page_summary = page_summary.sort_values('avg_score', ascending=False)
         
         # Add performance indicators
-        page_summary['Status'] = page_summary['Avg Score'].apply(
+        page_summary['status'] = page_summary['avg_score'].apply(
             lambda x: '🟢 Excellent' if x >= 8.0 else '🟡 Good' if x >= 4.0 else '🔴 Needs Work'
         )
         
-        st.dataframe(page_summary, use_container_width=True)
+        st.dataframe(
+            page_summary,
+            use_container_width=True,
+            column_config={
+                "avg_score": st.column_config.NumberColumn("Average Score", format="%.1f"),
+                "std_dev": st.column_config.NumberColumn("Standard Deviation", format="%.2f"),
+                "evaluations": st.column_config.NumberColumn("Total Evaluations"),
+                "min_score": st.column_config.NumberColumn("Minimum Score", format="%.1f"),
+                "max_score": st.column_config.NumberColumn("Maximum Score", format="%.1f"),
+                "criteria_count": st.column_config.NumberColumn("Criteria Count"),
+                "status": st.column_config.TextColumn("Status")
+            }
+        )
         
         # Download page summary
         page_csv = page_summary.to_csv().encode('utf-8')
@@ -143,23 +196,37 @@ def main():
         st.markdown("#### Performance by Tier")
         if 'tier' in filtered_df.columns:
             tier_summary = filtered_df.groupby('tier').agg({
-                'raw_score': ['mean', 'std', 'count', 'min', 'max'],
-                'page_id': 'nunique',
-                'criterion_id': 'nunique'
+                score_col: ['mean', 'std', 'count'],
+                criterion_col: 'nunique'  # Use dynamic criterion column
             }).round(2)
-            tier_summary.columns = ['Avg Score', 'Std Dev', 'Evaluations', 'Min Score', 'Max Score', 'Pages', 'Criteria']
-            tier_summary = tier_summary.sort_values('Avg Score', ascending=False)
             
-            # Add performance indicators
-            tier_summary['Status'] = tier_summary['Avg Score'].apply(
-                lambda x: '🟢 Excellent' if x >= 8.0 else '🟡 Good' if x >= 4.0 else '🔴 Needs Work'
+            # Flatten column names
+            tier_summary.columns = ['avg_score', 'std_dev', 'evaluations', 'unique_criteria']
+            tier_summary = tier_summary.sort_values('avg_score', ascending=False)
+            
+            # Display as chart
+            fig = px.bar(
+                tier_summary.reset_index(), 
+                x='tier', 
+                y='avg_score',
+                title="Average Score by Tier",
+                color='avg_score',
+                color_continuous_scale='RdYlGn'
             )
+            fig.update_layout(height=400)
+            st.plotly_chart(fig, use_container_width=True)
             
-            st.dataframe(tier_summary, use_container_width=True)
-            
-            # Download tier summary
-            tier_csv = tier_summary.to_csv().encode('utf-8')
-            st.download_button("📥 Download Tier Summary", tier_csv, "tier_summary.csv", "text/csv")
+            # Tier stats table
+            st.dataframe(
+                tier_summary,
+                use_container_width=True,
+                column_config={
+                    "avg_score": st.column_config.NumberColumn("Average Score", format="%.1f"),
+                    "std_dev": st.column_config.NumberColumn("Standard Deviation", format="%.2f"),
+                    "evaluations": st.column_config.NumberColumn("Total Evaluations"),
+                    "unique_criteria": st.column_config.NumberColumn("Unique Criteria")
+                }
+            )
         else:
             st.info("Tier information not available")
     
@@ -224,19 +291,19 @@ def main():
         st.markdown("### 📈 Multi-Persona Comparison")
         
         persona_performance = filtered_df.groupby('persona_id').agg({
-            'raw_score': ['mean', 'count'],
+            score_col: ['mean', 'count'],
             'page_id': 'nunique'
         }).round(2)
-        persona_performance.columns = ['Avg Score', 'Evaluations', 'Pages']
-        persona_performance = persona_performance.sort_values('Avg Score', ascending=False)
+        persona_performance.columns = ['avg_score', 'evaluations', 'pages']
+        persona_performance = persona_performance.sort_values('avg_score', ascending=False)
         
         # Persona performance chart
         fig_persona = px.bar(
             x=persona_performance.index,
-            y=persona_performance['Avg Score'],
+            y=persona_performance['avg_score'],
             title="Average Score by Persona",
             labels={'x': 'Persona', 'y': 'Average Score'},
-            color=persona_performance['Avg Score'],
+            color=persona_performance['avg_score'],
             color_continuous_scale='RdYlGn'
         )
         fig_persona.update_layout(showlegend=False)

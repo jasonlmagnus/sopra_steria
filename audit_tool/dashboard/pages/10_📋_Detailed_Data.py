@@ -13,34 +13,75 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def main():
+    """Main detailed data page"""
+    st.set_page_config(page_title="Detailed Data", page_icon="📋", layout="wide")
+    
+    # Get data from session state
+    if 'master_df' not in st.session_state:
+        st.error("❌ No data available. Please go to the main dashboard first to load data.")
+        return
+    
+    master_df = st.session_state['master_df']
+    datasets = st.session_state.get('datasets', {})
+    
     st.title("📋 Detailed Data Explorer")
+    st.markdown("### Raw data access and detailed filtering")
     
-    # Check if we have data
-    if 'datasets' not in st.session_state or st.session_state['datasets'] is None:
-        st.error("No audit data found. Please ensure data is loaded from the main dashboard.")
-        return
+    # Sidebar filters
+    st.sidebar.header("🔍 Data Filters")
     
-    datasets = st.session_state['datasets']
-    summary = st.session_state['summary']
-    filtered_df = datasets['criteria']
+    # Persona filter
+    if 'persona_id' in master_df.columns:
+        personas = ['All'] + list(master_df['persona_id'].unique())
+        selected_persona = st.sidebar.selectbox("Persona", personas)
+        
+        if selected_persona != 'All':
+            filtered_df = master_df[master_df['persona_id'] == selected_persona]
+        else:
+            filtered_df = master_df
+    else:
+        filtered_df = master_df
     
-    if filtered_df.empty:
-        st.warning("No data matches the current filters.")
-        return
+    # Tier filter
+    if 'tier' in filtered_df.columns:
+        tiers = ['All'] + list(filtered_df['tier'].unique())
+        selected_tier = st.sidebar.selectbox("Tier", tiers)
+        
+        if selected_tier != 'All':
+            filtered_df = filtered_df[filtered_df['tier'] == selected_tier]
     
-    st.info("This tab provides comprehensive data export and detailed analysis capabilities.")
+    # Score filter
+    if 'avg_score' in filtered_df.columns:
+        min_score = st.sidebar.slider("Minimum Score", 0.0, 10.0, 0.0)
+        filtered_df = filtered_df[filtered_df['avg_score'] >= min_score]
     
-    # Show data summary
-    st.markdown("#### 📊 Data Summary")
+    # Data overview
+    st.subheader("📊 Data Overview")
+    
     col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
         st.metric("Total Records", len(filtered_df))
+    
     with col2:
-        st.metric("Unique Pages", filtered_df['page_id'].nunique())
+        if 'page_id' in filtered_df.columns:
+            st.metric("Unique Pages", filtered_df['page_id'].nunique())
+        else:
+            st.metric("Unique Pages", "N/A")
+    
     with col3:
-        st.metric("Unique Criteria", filtered_df['criterion_id'].nunique())
+        if 'criterion_id' in filtered_df.columns:
+            st.metric("Unique Criteria", filtered_df['criterion_id'].nunique())
+        else:
+            st.metric("Unique Criteria", "N/A")
+    
     with col4:
-        st.metric("Average Score", f"{filtered_df['raw_score'].mean():.2f}")
+        if 'avg_score' in filtered_df.columns:
+            st.metric("Average Score", f"{filtered_df['avg_score'].mean():.1f}")
+        else:
+            st.metric("Average Score", "N/A")
+    
+    st.info("This tab provides comprehensive data export and detailed analysis capabilities.")
     
     # Full data table with advanced filtering
     st.markdown("#### 🔍 Complete Dataset")
@@ -70,11 +111,13 @@ def main():
                 search_mask |= display_df[col].astype(str).str.contains(search_all, case=False, na=False)
         display_df = display_df[search_mask]
     
-    # Apply score range filter
-    display_df = display_df[
-        (display_df['raw_score'] >= score_range[0]) & 
-        (display_df['raw_score'] <= score_range[1])
-    ]
+    # Apply score range filter - use avg_score from unified CSV
+    score_col = 'avg_score' if 'avg_score' in display_df.columns else 'raw_score'
+    if score_col in display_df.columns:
+        display_df = display_df[
+            (display_df[score_col] >= score_range[0]) & 
+            (display_df[score_col] <= score_range[1])
+        ]
     
     # Apply persona filter
     if selected_personas:
@@ -87,26 +130,49 @@ def main():
     with col1:
         search_term = st.text_input("🔍 Search pages:", placeholder="Enter URL or page name...")
     with col2:
-        sort_by = st.selectbox("Sort by:", ['raw_score', 'persona_id', 'tier', 'criterion_id'])
+        sort_options = [col for col in [score_col, 'persona_id', 'tier', 'criterion_id'] if col in display_df.columns]
+        sort_by = st.selectbox("Sort by:", sort_options)
     with col3:
         sort_order = st.selectbox("Order:", ['Descending', 'Ascending'])
     
     # Filter and display data
-    if search_term:
-        display_df = display_df[display_df['url_slug'].str.contains(search_term, case=False, na=False)]
+    if search_term and 'url_slug' in display_df.columns:
+        display_df = display_df[display_df['url_slug'].astype(str).str.contains(search_term, case=False, na=False)]
     
     ascending = sort_order == 'Ascending'
-    display_df = display_df.sort_values(sort_by, ascending=ascending)
+    if sort_by in display_df.columns:
+        display_df = display_df.sort_values(sort_by, ascending=ascending)
     
-    # Format for display
-    display_columns = ['persona_id', 'url_slug', 'tier', 'criterion_id', 'raw_score', 'descriptor', 'rationale']
-    display_df_formatted = display_df[display_columns].copy()
-    display_df_formatted['url_slug'] = display_df_formatted['url_slug'].str.replace('_', ' ').str.title()
-    display_df_formatted['criterion_id'] = display_df_formatted['criterion_id'].str.replace('_', ' ').str.title()
-    display_df_formatted['tier'] = display_df_formatted['tier'].str.replace('_', ' ').str.title()
-    display_df_formatted.columns = ['Persona', 'Page', 'Category', 'Criterion', 'Score', 'Performance', 'AI Rationale']
+    # Format for display - handle missing columns gracefully
+    available_columns = ['persona_id', 'url_slug', 'tier', 'criterion_id', score_col, 'descriptor', 'rationale']
+    display_columns = [col for col in available_columns if col in display_df.columns]
     
-    st.dataframe(display_df_formatted, use_container_width=True, height=500)
+    if display_columns:
+        display_df_formatted = display_df[display_columns].copy()
+        
+        # Safely format string columns
+        if 'url_slug' in display_df_formatted.columns:
+            display_df_formatted['url_slug'] = display_df_formatted['url_slug'].astype(str).str.replace('_', ' ').str.title()
+        if 'criterion_id' in display_df_formatted.columns:
+            display_df_formatted['criterion_id'] = display_df_formatted['criterion_id'].astype(str).str.replace('_', ' ').str.title()
+        if 'tier' in display_df_formatted.columns:
+            display_df_formatted['tier'] = display_df_formatted['tier'].astype(str).str.replace('_', ' ').str.title()
+        
+        # Update column names
+        column_mapping = {
+            'persona_id': 'Persona',
+            'url_slug': 'Page',
+            'tier': 'Category',
+            'criterion_id': 'Criterion',
+            score_col: 'Score',
+            'descriptor': 'Performance',
+            'rationale': 'AI Rationale'
+        }
+        display_df_formatted = display_df_formatted.rename(columns=column_mapping)
+        
+        st.dataframe(display_df_formatted, use_container_width=True, height=500)
+    else:
+        st.error("No suitable columns found for display")
     
     # Enhanced export options
     st.markdown("#### 📥 Export Data")
@@ -115,13 +181,15 @@ def main():
         csv_data = display_df.to_csv(index=False).encode('utf-8')
         st.download_button("📄 Download Full CSV", csv_data, "full_audit_data.csv", "text/csv")
     with col2:
-        summary_data = display_df.groupby(['persona_id', 'url_slug'])['raw_score'].mean().reset_index()
-        summary_csv = summary_data.to_csv(index=False).encode('utf-8')
-        st.download_button("📊 Download Summary CSV", summary_csv, "audit_summary.csv", "text/csv")
+        if 'url_slug' in display_df.columns:
+            summary_data = display_df.groupby(['persona_id', 'url_slug'])[score_col].mean().reset_index()
+            summary_csv = summary_data.to_csv(index=False).encode('utf-8')
+            st.download_button("📊 Download Summary CSV", summary_csv, "audit_summary.csv", "text/csv")
     with col3:
-        rationale_data = display_df[['persona_id', 'url_slug', 'criterion_id', 'raw_score', 'rationale']]
-        rationale_csv = rationale_data.to_csv(index=False).encode('utf-8')
-        st.download_button("💭 Download Rationale CSV", rationale_csv, "audit_rationale.csv", "text/csv")
+        if all(col in display_df.columns for col in ['persona_id', 'url_slug', 'criterion_id', 'rationale']):
+            rationale_data = display_df[['persona_id', 'url_slug', 'criterion_id', score_col, 'rationale']]
+            rationale_csv = rationale_data.to_csv(index=False).encode('utf-8')
+            st.download_button("💭 Download Rationale CSV", rationale_csv, "audit_rationale.csv", "text/csv")
     
     # Additional export options
     st.markdown("#### 📊 Advanced Export Options")
@@ -131,7 +199,7 @@ def main():
         if st.button("📈 Export Performance Summary"):
             # Create performance summary
             perf_summary = display_df.groupby(['persona_id', 'tier']).agg({
-                'raw_score': ['mean', 'std', 'count', 'min', 'max']
+                score_col: ['mean', 'std', 'count', 'min', 'max']
             }).round(2)
             perf_summary.columns = ['_'.join(col).strip() for col in perf_summary.columns]
             perf_csv = perf_summary.reset_index().to_csv(index=False).encode('utf-8')
@@ -146,7 +214,7 @@ def main():
         if st.button("🎯 Export Criteria Analysis"):
             # Create criteria analysis
             criteria_analysis = display_df.groupby(['criterion_id', 'persona_id']).agg({
-                'raw_score': ['mean', 'count'],
+                score_col: ['mean', 'count'],
                 'descriptor': lambda x: (x == 'EXCELLENT').sum()
             }).round(2)
             criteria_analysis.columns = ['_'.join(col).strip() for col in criteria_analysis.columns]
@@ -173,10 +241,10 @@ def main():
         st.markdown("**Data Quality Summary:**")
         quality_info = {
             'Total Records': len(filtered_df),
-            'Missing Rationale': filtered_df['rationale'].isna().sum(),
-            'Score Range': f"{filtered_df['raw_score'].min():.1f} - {filtered_df['raw_score'].max():.1f}",
-            'Unique Pages': filtered_df['page_id'].nunique(),
-            'Unique Criteria': filtered_df['criterion_id'].nunique()
+            'Missing Rationale': filtered_df['rationale'].isna().sum() if 'rationale' in filtered_df.columns else 'N/A',
+            'Score Range': f"{filtered_df[score_col].min():.1f} - {filtered_df[score_col].max():.1f}" if score_col in filtered_df.columns else 'N/A',
+            'Unique Pages': filtered_df['page_id'].nunique() if 'page_id' in filtered_df.columns else 'N/A',
+            'Unique Criteria': filtered_df['criterion_id'].nunique() if 'criterion_id' in filtered_df.columns else 'N/A'
         }
         
         for key, value in quality_info.items():

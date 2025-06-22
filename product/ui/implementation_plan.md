@@ -1,4 +1,4 @@
-# Implementation Plan: Brand Audit Dashboard UI
+please review and update this# Implementation Plan: Brand Audit Dashboard UI
 
 ## 🎯 **PROGRESS UPDATE (June 21, 2025)**
 
@@ -9,6 +9,18 @@
 1. ✅ Created `audit_data/` folder structure for unified data storage
 2. ✅ Scaffolded complete Streamlit architecture with multiple dashboard variants
 3. ✅ Built comprehensive file structure in `audit_tool/dashboard/`
+
+### Phase 0 – Quick Wins 🚀 **NEW**
+
+| Task     | Description                                                                | Owner    | ETA    |
+| -------- | -------------------------------------------------------------------------- | -------- | ------ |
+| **P0-1** | Unified persona multiselect with **All Personas** option + count display   | FE Dev   | 0.5 d  |
+| **P0-2** | Session-state persistence of persona / tier / score filters                | FE Dev   | 0.25 d |
+| **P0-3** | Column aliasing `raw_score` ⇄ `final_score` to stop missing-column crashes | Data Eng | 0.25 d |
+| **P0-4** | Real-time counter tiles in Command Center (Personas · Pages · Evaluations) | FE Dev   | 0.25 d |
+| **P0-5** | `/healthz` endpoint + single launch script in README                       | DevOps   | 0.25 d |
+
+**Exit Criteria**: Dashboard loads with zero KeyErrors; persona filter persists across all pages; counters update live.
 
 ### Phase 1 – Data Packager ✅ **COMPLETE**
 
@@ -239,23 +251,10 @@
 
 ---
 
-## 🎯 **UPDATED PRIORITIES**
+## 🎯 **UPDATED PRIORITIES (June 22, 2025)**
 
-### **IMMEDIATE (Next 2 days)**:
+1. **Phase 0 – Quick Wins** (immediate)
+2. **Phase 4 – Critical Performance Optimisation** (persona caching – _already done_)
+3. **Phase 5 – Missing Insight Pages**
 
-1. ✅ **Fix persona parsing optimization** - 95% cost reduction **COMPLETED**
-2. ✅ **Implement audit state management** - Critical UX improvements **COMPLETED**
-3. 🔧 **Add persona dropdown selection** - Better UX for audit runner
-4. 🧪 **Complete current audit testing** - Validate what we have
-
-### **SHORT TERM (Next week)**:
-
-5. 🏗️ **Build 4 missing analysis pages** - Priority Actions, Journey Consistency, Gating Breaches, Evidence Gallery
-6. 🔧 **Enhance existing pages** - Evidence modals, advanced filtering
-
-### **MEDIUM TERM (Following week)**:
-
-7. 📈 **Add Run History** - Trending and historical analysis
-8. 🎨 **Polish & Deploy** - Mobile responsiveness, documentation
-
-**Reality**: We have a solid 40% foundation but need significant work to meet the full specification. The persona parsing fix alone will provide massive value.
+---

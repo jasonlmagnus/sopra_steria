@@ -401,6 +401,18 @@ def filter_data(persona=None, tier=None, score_range=None):
 - [ ] Performance optimization and QA testing
 - [ ] User acceptance testing and refinements
 
+### Phase 0: Quick Wins _(Immediate – 1-2 days)_
+
+| Task     | Description                                                                                                                                  | Success Metric                                                                         |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **P0-1** | **Unified Persona Selector** – replace ad-hoc tag list with a Multiselect containing an **☑️ All Personas** option and dynamic count display | All pages reflect identical persona filter; 'Current Selection' shows _x / n personas_ |
+| **P0-2** | Persist filter choices in `st.session_state` and apply inside `data_loader` so that every page and KPI tile respects the global filter       | Switching tabs does **not** reset persona or tier selection                            |
+| **P0-3** | Harmonise score column naming: create alias `raw_score → final_score` (or vice-versa) to stop `KeyError: 'final_score'` crashes              | Dashboard loads with zero missing-column errors                                        |
+| **P0-4** | Add real-time counter tiles in Command Center: **Personas selected · Pages filtered · Evaluations**                                          | Counters update instantly when slider / multiselect changes                            |
+| **P0-5** | Health-check endpoint (`/healthz`) + single launch command in README                                                                         | `curl /healthz` returns _ok_ while Streamlit is live                                   |
+
+> **Outcome** : marketing stakeholders can slice the entire dashboard by persona (or "All") without losing context; technical team eliminates the most frequent runtime exceptions.
+
 ---
 
 ## 8. Success Metrics

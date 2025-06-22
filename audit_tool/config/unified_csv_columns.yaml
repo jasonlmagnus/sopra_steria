@@ -1,0 +1,60 @@
+# Unified CSV Columns Configuration
+# Generated from: unified_audit_data.csv
+# Issue: Enhanced and regular unified files are identical (MD5: 0274365f688f69a060e68589d31a238d)
+
+unified_audit_data_columns:
+  - persona_id
+  - page_id
+  - url_slug
+  - url
+  - tier
+  - criterion_id
+  - criterion_code
+  - raw_score
+  - final_score
+  - descriptor
+  - rationale
+  - first_impression
+  - language_tone_feedback
+  - information_gaps
+  - trust_credibility_assessment
+  - business_impact_analysis
+  - effective_copy_examples
+  - ineffective_copy_examples
+  - overall_sentiment
+  - engagement_level
+  - conversion_likelihood
+  - slug
+  - audited_ts
+  - quick_win_flag
+  - critical_issue_flag
+  - success_flag
+  - sentiment_numeric
+  - engagement_numeric
+  - conversion_numeric
+  - avg_score
+
+# Column count: 30
+# File size: 1,021,465 bytes
+# Row count: 403 (including header)
+
+# Data Quality Issues - RESOLVED:
+data_quality_issues_resolved:
+  duplicate_files:
+    issue: "Enhanced and regular unified files were identical - pipeline bug"
+    resolution: "Removed duplicate enhanced_unified_audit_data.csv and fixed multi_persona_packager.py"
+    files_removed:
+      - enhanced_unified_audit_data.csv
+      - enhanced_unified_audit_data.parquet
+    code_changes:
+      - "Removed enhance_unified_dataset() method from multi_persona_packager.py"
+      - "Updated dashboard data_loader.py to use only unified_audit_data.csv"
+  
+  empty_criterion_columns:
+    issue: "criterion_id and criterion_code columns were empty in unified CSV"
+    root_cause: "multi_persona_packager.py was using wrong source column for criterion data"
+    resolution: "Fixed data pipeline to properly populate criterion columns from criteria_scores.csv"
+    code_changes:
+      - "Fixed criterion_id mapping in multi_persona_packager.py line 135"
+      - "Both criterion_id and criterion_code now populated with string values like 'corporate_positioning_alignment'"
+      - "Dashboard pages now work properly with criterion-based analysis" 

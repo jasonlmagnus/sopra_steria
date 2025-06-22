@@ -33,7 +33,7 @@ def get_persona_name(persona_content: str, filename: str = None) -> str:
         match = re.search(r"P\d+", filename)
     return match.group(0) if match else "default_persona"
 
-def run_audit(persona_file_path, urls_file_path, persona_name):
+def run_audit(persona_file_path, urls_file_path, persona_name, model_provider="anthropic"):
     """Runs the audit tool as a subprocess (inherits current working dir)."""
     # Create output directory for this persona
     output_dir = os.path.join("audit_outputs", persona_name)
@@ -48,7 +48,9 @@ def run_audit(persona_file_path, urls_file_path, persona_name):
         "--persona",
         persona_file_path,
         "--output",
-        output_dir
+        output_dir,
+        "--model",
+        model_provider
     ]
     process = subprocess.Popen(
         command,
@@ -75,6 +77,8 @@ def initialize_audit_state():
         st.session_state.total_urls = 0
     if 'persona_name' not in st.session_state:
         st.session_state.persona_name = ""
+    if 'selected_model' not in st.session_state:
+        st.session_state.selected_model = "openai"  # Default to cost-effective option
 
 def stop_audit():
     """Stop the currently running audit"""
@@ -144,6 +148,39 @@ def main():
             persona_content = persona_file.getvalue().decode("utf-8")
             persona_name = get_persona_name(persona_content, persona_file.name)
             st.info(f"Detected persona: **{persona_name}**")
+        
+        # Model Selection
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%); 
+                    padding: 1.5rem; border-radius: 1rem; margin-top: 1rem;
+                    border: 1px solid #93c5fd;">
+            <h3 style="color: #1e40af; margin: 0 0 1rem 0; font-family: 'Inter', sans-serif;">
+                🤖 Step 1.5: Select AI Model
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        model_options = {
+            "openai": "🔥 OpenAI GPT-4.1-Mini (Cost Effective)",
+            "anthropic": "🧠 Anthropic Claude-3-Opus (Premium Quality)"
+        }
+        
+        selected_model = st.radio(
+            "Choose your AI model provider:",
+            options=list(model_options.keys()),
+            format_func=lambda x: model_options[x],
+            index=0,  # Default to OpenAI
+            disabled=st.session_state.is_running,
+            help="OpenAI is more cost-effective for high-volume audits. Anthropic provides premium quality analysis."
+        )
+        
+        st.session_state.selected_model = selected_model
+        
+        # Show cost information
+        if selected_model == "openai":
+            st.info("💰 **Cost Effective Choice** - GPT-4.1-Mini offers excellent quality at lower cost")
+        else:
+            st.warning("💎 **Premium Choice** - Claude-3-Opus provides highest quality but at higher cost")
     
     with col2:
         st.markdown("""
@@ -230,7 +267,7 @@ def main():
     # Run audit process
     if st.session_state.is_running:
         st.markdown("---")
-        st.markdown("### 🔄 Audit in Progress")
+        st.markdown(f"### 🔄 Audit in Progress - Using {st.session_state.selected_model.upper()}")
         
         # Create progress indicators
         progress_bar = st.progress(0)
@@ -253,40 +290,21 @@ def main():
 
             persona_name = get_persona_name(persona_content, persona_file.name)
             
-            # Run audit with live logging
-            status_text.text(f"Starting audit for {persona_name}...")
+            # Run audit with live logging and selected model
+            status_text.text(f"Starting audit for {persona_name} using {st.session_state.selected_model.upper()}...")
             progress_bar.progress(10)
             
-            process = run_audit(persona_file_path, urls_file_path, persona_name)
+            process = run_audit(persona_file_path, urls_file_path, persona_name, st.session_state.selected_model)
             st.session_state.audit_process = process  # Store process for potential termination
             
-            # Stream logs – keep last 100 lines for smoother UI
+            # Stream logs using the same pattern as audit_runner_dashboard.py
             log_lines = []
-            url_count = 0
             
             for line in iter(process.stdout.readline, ''):
-                if not st.session_state.is_running:
-                    process.terminate()
-                    break
-                
                 log_lines.append(line.rstrip())
-                if len(log_lines) > 100:
+                if len(log_lines) > 100:  # Keep only the last 100 lines
                     log_lines = log_lines[-100:]
-                log_container.code('\n'.join(log_lines), language=None)
-                
-                if "Processing URL" in line or "Scraping" in line:
-                    url_count += 1
-                    if st.session_state.total_urls > 0:
-                        pct = int((url_count / st.session_state.total_urls) * 80) + 10
-                        pct = min(90, pct)
-                        progress_bar.progress(pct)
-                        status_text.text(f"Processing URL {url_count} of {st.session_state.total_urls}…")
-                
-                # Check for completion
-                if "Audit completed" in line or "Strategic summary generated" in line:
-                    progress_bar.progress(100)
-                    status_text.text("✅ Audit completed successfully!")
-                    break
+                log_container.code('\n'.join(log_lines))
             
             process.wait()
             

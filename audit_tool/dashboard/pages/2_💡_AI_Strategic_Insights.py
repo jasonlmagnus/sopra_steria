@@ -20,9 +20,10 @@ def main():
         st.error("No audit data found. Please ensure data is loaded from the main dashboard.")
         return
     
-    datasets = st.session_state['datasets']
+    datasets = st.session_state.get('datasets', {})
     summary = st.session_state['summary']
-    filtered_df = datasets['criteria']
+    master_df = st.session_state['master_df']
+    filtered_df = master_df  # Use master_df directly since it contains all the data
     
     if filtered_df.empty:
         st.warning("No data matches the current filters.")
@@ -32,10 +33,10 @@ def main():
     st.markdown("### 🧠 AI Analysis Summary")
     
     # Calculate key metrics for AI analysis
-    avg_score = filtered_df['raw_score'].mean()
+    avg_score = filtered_df['avg_score'].mean()
     total_pages = filtered_df['page_id'].nunique()
-    critical_issues = len(filtered_df[filtered_df['raw_score'] < 4.0])
-    excellent_examples = len(filtered_df[filtered_df['raw_score'] >= 8.0])
+    critical_issues = len(filtered_df[filtered_df['avg_score'] < 4.0])
+    excellent_examples = len(filtered_df[filtered_df['avg_score'] >= 8.0])
     
     # Generate AI insights based on data patterns
     if avg_score >= 7.5:
@@ -65,8 +66,18 @@ def main():
     st.markdown("### 🎯 Top Strategic Priorities")
     
     # Find worst performing criteria with highest impact
-    criteria_analysis = filtered_df.groupby('criterion_id').agg({
-        'raw_score': ['mean', 'count'],
+    # Use the correct column name based on our data structure
+    criterion_col = 'criterion_code' if 'criterion_code' in filtered_df.columns else 'criterion_id'
+    
+    if criterion_col not in filtered_df.columns:
+        st.error("❌ Criteria analysis requires proper column structure")
+        return
+    
+    # Use the correct score column name
+    score_col = 'avg_score'  # Use avg_score from unified data
+    
+    criteria_analysis = filtered_df.groupby(criterion_col).agg({
+        score_col: ['mean', 'count'],
         'page_id': 'nunique'
     }).round(2)
     criteria_analysis.columns = ['avg_score', 'evaluations', 'pages_affected']
@@ -92,19 +103,19 @@ def main():
             
             with col3:
                 # Get specific examples for this criterion
-                criterion_examples = filtered_df[filtered_df['criterion_id'] == criterion].sort_values('raw_score')
+                criterion_examples = filtered_df[filtered_df[criterion_col] == criterion].sort_values(score_col)
                 
                 if not criterion_examples.empty:
                     worst_example = criterion_examples.iloc[0]
                     st.markdown("**Worst Performing Page:**")
                     st.write(f"• {worst_example['url_slug'].replace('_', ' ').title()}")
-                    st.write(f"• Score: {worst_example['raw_score']:.1f}/10")
+                    st.write(f"• Score: {worst_example['avg_score']:.1f}/10")
                     
                     if len(criterion_examples) > 1:
                         best_example = criterion_examples.iloc[-1]
                         st.markdown("**Best Example:**")
                         st.write(f"• {best_example['url_slug'].replace('_', ' ').title()}")
-                        st.write(f"• Score: {best_example['raw_score']:.1f}/10")
+                        st.write(f"• Score: {best_example['avg_score']:.1f}/10")
             
             # AI-generated specific recommendations
             st.markdown("**🤖 AI Recommendation:**")
@@ -116,10 +127,10 @@ def main():
                 st.info(f"**OPTIMIZE:** Fine-tune this criterion across {int(data['pages_affected'])} pages to achieve excellence.")
     
     # Experience-Based Insights (if available)
-    if summary.get('has_experience_data') and datasets['experience'] is not None:
+    if summary.get('has_experience_data') and 'overall_sentiment' in filtered_df.columns:
         st.markdown("### 👥 Persona Experience Insights")
         
-        experience_df = datasets['experience']
+        experience_df = filtered_df  # Use master_df since it contains experience data
         
         # Sentiment analysis
         sentiment_breakdown = experience_df['overall_sentiment'].value_counts()
@@ -158,7 +169,7 @@ def main():
     
     # Find pages with mixed performance (some high, some low scores)
     page_variance = filtered_df.groupby('url_slug').agg({
-        'raw_score': ['mean', 'std', 'min', 'max', 'count']
+        'avg_score': ['mean', 'std', 'min', 'max', 'count']
     }).round(2)
     page_variance.columns = ['avg_score', 'std_score', 'min_score', 'max_score', 'criteria_count']
     
@@ -183,13 +194,13 @@ def main():
                     st.metric("Criteria Count", int(data['criteria_count']))
                 
                 # Show specific failing criteria for this page
-                page_criteria = filtered_df[filtered_df['url_slug'] == page].sort_values('raw_score')
-                failing_criteria = page_criteria[page_criteria['raw_score'] <= 4.0]
+                page_criteria = filtered_df[filtered_df['url_slug'] == page].sort_values('avg_score')
+                failing_criteria = page_criteria[page_criteria['avg_score'] <= 4.0]
                 
                 if not failing_criteria.empty:
                     st.markdown("**🎯 Focus Areas:**")
                     for _, criterion in failing_criteria.iterrows():
-                        st.write(f"• **{criterion['criterion_id'].replace('_', ' ').title()}**: {criterion['raw_score']:.1f}/10")
+                        st.write(f"• **{criterion[criterion_col].replace('_', ' ').title()}**: {criterion['avg_score']:.1f}/10")
                         if pd.notna(criterion['rationale']):
                             st.write(f"  *{criterion['rationale'][:100]}...*")
     else:

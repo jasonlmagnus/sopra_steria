@@ -31,60 +31,39 @@ def main():
     
     st.markdown("### 📊 Criteria Performance Distribution")
     
-    unique_criteria = filtered_df['criterion_id'].dropna().astype(str).unique()
-    selected_criterion = st.selectbox(
-        "Select criterion for detailed analysis:",
-        options=sorted(unique_criteria),
-        format_func=lambda x: str(x).replace('_', ' ').title()
-    )
-    
-    if selected_criterion:
-        criterion_data = filtered_df[filtered_df['criterion_id'] == selected_criterion]
+    # Criteria analysis using correct column names
+    if 'criterion_id' in filtered_df.columns:
+        unique_criteria = filtered_df['criterion_id'].dropna().astype(str).unique()
         
-        col1, col2 = st.columns(2)
+        # Criteria selector
+        selected_criteria = st.multiselect(
+            "Select Criteria to Analyze",
+            options=sorted(unique_criteria),
+            default=sorted(unique_criteria)[:5]  # Show first 5 by default
+        )
         
-        with col1:
-            # Score distribution for this criterion
-            fig_criterion_dist = px.histogram(
-                criterion_data,
-                x='raw_score',
-                color='persona_id',
-                title=f"Score Distribution: {selected_criterion.replace('_', ' ').title()}",
-                nbins=10,
-                barmode='overlay'
-            )
-            st.plotly_chart(fig_criterion_dist, use_container_width=True)
-        
-        with col2:
-            # Performance by page for this criterion
-            criterion_by_page = criterion_data.groupby('url_slug')['raw_score'].mean().sort_values(ascending=True)
-            fig_criterion_pages = px.bar(
-                x=criterion_by_page.values,
-                y=[slug.replace('_', ' ').title() for slug in criterion_by_page.index],
-                orientation='h',
-                title=f"Page Performance: {selected_criterion.replace('_', ' ').title()}",
-                color=criterion_by_page.values,
-                color_continuous_scale='RdYlGn'
-            )
-            fig_criterion_pages.update_layout(showlegend=False)
-            st.plotly_chart(fig_criterion_pages, use_container_width=True)
-        
-        # Show rationale examples for this criterion
-        st.markdown(f"### 💭 AI Rationale Examples for {selected_criterion.replace('_', ' ').title()}")
-        
-        # Get diverse examples (high, medium, low scores)
-        high_score = criterion_data[criterion_data['raw_score'] >= 7.0].sample(min(2, len(criterion_data[criterion_data['raw_score'] >= 7.0])))
-        med_score = criterion_data[(criterion_data['raw_score'] >= 4.0) & (criterion_data['raw_score'] < 7.0)].sample(min(2, len(criterion_data[(criterion_data['raw_score'] >= 4.0) & (criterion_data['raw_score'] < 7.0)])))
-        low_score = criterion_data[criterion_data['raw_score'] < 4.0].sample(min(2, len(criterion_data[criterion_data['raw_score'] < 4.0])))
-        
-        examples = pd.concat([high_score, med_score, low_score]).sort_values('raw_score', ascending=False)
-        
-        for _, row in examples.iterrows():
-            score_color = "🟢" if row['raw_score'] >= 7 else "🟡" if row['raw_score'] >= 4 else "🔴"
-            with st.expander(f"{score_color} {row['url_slug'].replace('_', ' ').title()} - Score: {row['raw_score']}/10"):
-                st.write(f"**Persona:** {row['persona_id']}")
-                st.write(f"**Performance:** {row['descriptor']}")
-                st.write(f"**AI Rationale:** {row['rationale']}")
+        if selected_criteria:
+            criteria_df = filtered_df[filtered_df['criterion_id'].isin(selected_criteria)]
+            
+            # Performance by criteria using correct column names
+            if 'raw_score' in criteria_df.columns:
+                st.subheader("📊 Performance by Criteria")
+                
+                criteria_performance = criteria_df.groupby('criterion_id').agg({
+                    'raw_score': ['mean', 'count', 'std']
+                }).round(2)
+                
+                # Flatten column names
+                criteria_performance.columns = ['_'.join(col).strip() for col in criteria_performance.columns]
+                criteria_performance = criteria_performance.sort_values('raw_score_mean', ascending=False)
+                
+                st.dataframe(criteria_performance)
+            else:
+                st.warning("No score data available for criteria analysis")
+        else:
+            st.info("Please select criteria to analyze")
+    else:
+        st.warning("No criterion_id column found in the data")
 
 if __name__ == "__main__":
     main() 

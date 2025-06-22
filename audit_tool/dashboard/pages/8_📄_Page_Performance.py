@@ -29,14 +29,49 @@ def main():
         st.warning("No data matches the current filters.")
         return
     
-    # Page performance overview
-    page_performance = filtered_df.groupby('url_slug').agg({
-        'raw_score': ['mean', 'std', 'min', 'max', 'count']
-    }).round(2)
-    page_performance.columns = ['Average', 'Std Dev', 'Min', 'Max', 'Evaluations']
-    page_performance = page_performance.sort_values('Average', ascending=False)
+    # Page performance analysis using correct column names
+    if len(filtered_df) > 0:
+        # Group by page_id instead of url_slug
+        groupby_col = 'page_id' if 'page_id' in filtered_df.columns else 'url'
+        
+        # Use the correct score column from unified CSV
+        score_col = None
+        if 'final_score' in filtered_df.columns:
+            score_col = 'final_score'
+        elif 'raw_score' in filtered_df.columns:
+            score_col = 'raw_score'
+        elif 'avg_score' in filtered_df.columns:
+            score_col = 'avg_score'
+        
+        # Build aggregation dict based on available columns from unified CSV
+        agg_dict = {}
+        if score_col:
+            agg_dict[score_col] = ['mean', 'count']
+        if 'overall_sentiment' in filtered_df.columns:
+            agg_dict['overall_sentiment'] = lambda x: (x == 'Positive').sum()
+        if 'conversion_likelihood' in filtered_df.columns:
+            agg_dict['conversion_likelihood'] = lambda x: (x == 'High').sum()
+        
+        if agg_dict:
+            page_performance = filtered_df.groupby(groupby_col).agg(agg_dict)
+            
+            # Flatten column names
+            page_performance.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in page_performance.columns]
+            
+            st.dataframe(page_performance.head(20))
+        else:
+            st.warning("No suitable columns found for page performance analysis")
+    else:
+        st.warning("No data available for analysis")
     
     # Best and worst performing pages
+    if score_col and 'url_slug' in filtered_df.columns:
+        page_performance = filtered_df.groupby('url_slug').agg({
+            score_col: ['mean', 'std', 'min', 'max', 'count']
+        }).round(2)
+        page_performance.columns = ['Average', 'Std Dev', 'Min', 'Max', 'Evaluations']
+        page_performance = page_performance.sort_values('Average', ascending=False)
+    
     col1, col2 = st.columns(2)
     
     with col1:
@@ -73,7 +108,7 @@ def main():
         # Page metrics
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Average Score", f"{page_data['raw_score'].mean():.2f}/10")
+            st.metric("Average Score", f"{page_data[score_col].mean():.2f}/10")
         with col2:
             st.metric("Total Evaluations", len(page_data))
         with col3:
@@ -87,13 +122,21 @@ def main():
         
         with col1:
             # Criteria performance for this page
-            criteria_scores = page_data.groupby('criterion_id')['raw_score'].mean().sort_values(ascending=True)
+            criteria_scores = page_data.groupby('criterion_code')[score_col].mean().sort_values(ascending=True)
+            
+            # Create a proper DataFrame for plotly
+            criteria_df = pd.DataFrame({
+                'criterion': [c.replace('_', ' ').title() for c in criteria_scores.index],
+                'score': criteria_scores.values
+            })
+            
             fig_page_criteria = px.bar(
-                x=criteria_scores.values,
-                y=[c.replace('_', ' ').title() for c in criteria_scores.index],
+                criteria_df,
+                x='score',
+                y='criterion',
                 orientation='h',
                 title=f"Criteria Performance: {selected_page.replace('_', ' ').title()}",
-                color=criteria_scores.values,
+                color='score',
                 color_continuous_scale='RdYlGn'
             )
             fig_page_criteria.update_layout(showlegend=False, height=400)
@@ -102,7 +145,7 @@ def main():
         with col2:
             # Persona comparison for this page
             if len(page_data['persona_id'].unique()) > 1:
-                persona_scores = page_data.groupby('persona_id')['raw_score'].mean()
+                persona_scores = page_data.groupby('persona_id')[score_col].mean()
                 fig_page_personas = px.bar(
                     x=persona_scores.index,
                     y=persona_scores.values,
@@ -121,9 +164,9 @@ def main():
         
         # Detailed evaluation results
         st.markdown("### 📋 Detailed Evaluation Results")
-        page_display = page_data[['persona_id', 'tier', 'criterion_id', 'raw_score', 'descriptor', 'rationale']].copy()
-        page_display['tier'] = page_display['tier'].str.replace('_', ' ').str.title()
-        page_display['criterion_id'] = page_display['criterion_id'].str.replace('_', ' ').str.title()
+        page_display = page_data[['persona_id', 'tier', 'criterion_code', score_col, 'descriptor', 'rationale']].copy()
+        page_display['tier'] = page_display['tier'].astype(str).str.replace('_', ' ').str.title()
+        page_display['criterion_code'] = page_display['criterion_code'].astype(str).str.replace('_', ' ').str.title()
         page_display.columns = ['Persona', 'Category', 'Criterion', 'Score', 'Performance', 'AI Rationale']
         
         st.dataframe(page_display, use_container_width=True, height=400)

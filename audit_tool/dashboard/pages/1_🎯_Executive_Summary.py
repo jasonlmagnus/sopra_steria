@@ -15,108 +15,134 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def main():
-    st.title("🎯 Executive Brand Health Summary")
+    """Main executive summary page"""
+    st.set_page_config(page_title="Executive Summary", page_icon="🎯", layout="wide")
     
-    # Check if we have data
-    if 'datasets' not in st.session_state or st.session_state['datasets'] is None:
-        st.error("No audit data found. Please ensure data is loaded from the main dashboard.")
-        st.info("💡 Return to the main page to load audit data")
+    # Get data from session state
+    if 'master_df' not in st.session_state or 'datasets' not in st.session_state:
+        st.error("❌ No data available. Please go to the main dashboard first to load data.")
         return
     
+    master_df = st.session_state['master_df']
     datasets = st.session_state['datasets']
-    summary = st.session_state['summary']
+    summary = st.session_state.get('summary', {})
     
-    # Get filtered data (apply any sidebar filters if they exist)
-    filtered_df = datasets['criteria']
-    master_df = datasets['master']
-    recommendations_df = datasets['recommendations']
+    st.title("🎯 Executive Summary")
+    st.markdown("### Strategic Overview & Key Performance Indicators")
     
-    # Hero metrics
+    # Persona filter
+    if 'persona_id' in master_df.columns:
+        personas = ['All'] + list(master_df['persona_id'].unique())
+        selected_persona = st.selectbox("Select Persona", personas)
+        
+        if selected_persona != 'All':
+            filtered_df = master_df[master_df['persona_id'] == selected_persona]
+        else:
+            filtered_df = master_df
+    else:
+        filtered_df = master_df
+        st.info("ℹ️ No persona filtering available")
+    
+    # Key metrics using correct column names from unified data
+    total_pages = len(filtered_df)
+    
+    # Use the correct score column from unified CSV
+    score_col = None
+    if 'final_score' in filtered_df.columns:
+        score_col = 'final_score'
+    elif 'raw_score' in filtered_df.columns:
+        score_col = 'raw_score'
+    elif 'avg_score' in filtered_df.columns:
+        score_col = 'avg_score'
+    
+    avg_score = filtered_df[score_col].mean() if score_col else 0
+    positive_sentiment = (filtered_df['overall_sentiment'] == 'Positive').sum() if 'overall_sentiment' in filtered_df.columns else 0
+    
+    # Display key metrics
     col1, col2, col3, col4 = st.columns(4)
-    
     with col1:
-        overall_avg = filtered_df['raw_score'].mean()
-        health_status = "🟢 Excellent" if overall_avg >= 7 else "🟡 Good" if overall_avg >= 4 else "🔴 Critical"
-        st.metric("Brand Health Score", f"{overall_avg:.1f}/10", help="Overall weighted average across all evaluations")
-        st.markdown(f"**Status:** {health_status}")
-    
+        st.metric("Total Pages", total_pages)
     with col2:
-        total_pages = filtered_df['page_id'].nunique()
-        critical_pages = len(filtered_df[filtered_df['raw_score'] < 4.0]['page_id'].unique())
-        st.metric("Pages Analyzed", total_pages)
-        st.metric("Critical Issues", critical_pages)
-    
+        st.metric("Average Score", f"{avg_score:.1f}/10")
     with col3:
-        if summary['has_experience_data']:
-            positive_sentiment = (filtered_df['overall_sentiment'] == 'Positive').sum()
-            total_with_sentiment = len(filtered_df['overall_sentiment'].dropna())
-            sentiment_pct = (positive_sentiment / total_with_sentiment * 100) if total_with_sentiment > 0 else 0
-            st.metric("Positive Sentiment", f"{sentiment_pct:.0f}%")
-            
-            high_conversion = (filtered_df['conversion_likelihood'] == 'High').sum()
-            conversion_pct = (high_conversion / total_with_sentiment * 100) if total_with_sentiment > 0 else 0
-            st.metric("High Conversion", f"{conversion_pct:.0f}%")
-        else:
-            pass_rate = (filtered_df['descriptor'].isin(['PASS', 'EXCELLENT'])).mean() * 100
-            st.metric("Success Rate", f"{pass_rate:.1f}%")
-    
+        st.metric("Positive Sentiment", f"{positive_sentiment}/{total_pages}")
     with col4:
-        if summary['has_recommendations']:
-            total_recs = summary['total_recommendations']
-            quick_wins = len(recommendations_df[recommendations_df['complexity'] == 'Low']) if recommendations_df is not None else 0
-            st.metric("Total Recommendations", total_recs)
-            st.metric("Quick Wins Available", quick_wins)
-        else:
-            excellent_count = (filtered_df['descriptor'] == 'EXCELLENT').sum()
-            st.metric("Excellence Examples", excellent_count)
+        conversion_high = (filtered_df['conversion_likelihood'] == 'High').sum() if 'conversion_likelihood' in filtered_df.columns else 0
+        st.metric("High Conversion", f"{conversion_high}/{total_pages}")
     
-    # Critical Issues Alert
-    critical_issues = filtered_df[filtered_df['raw_score'] < 4.0]
-    if not critical_issues.empty:
-        st.markdown("---")
-        st.markdown("### 🚨 Critical Issues Requiring Immediate Attention")
+    # Performance by tier using correct column names
+    if 'tier' in filtered_df.columns and score_col:
+        st.subheader("📊 Performance by Tier")
         
-        critical_pages = critical_issues.groupby('url_slug').agg({
-            'raw_score': 'mean',
-            'criterion_id': 'count'
-        }).sort_values('raw_score').head(3)
+        # Build aggregation dict based on available columns - use the correct score column
+        agg_dict = {score_col: ['mean', 'count']}
+        if 'overall_sentiment' in filtered_df.columns:
+            agg_dict['overall_sentiment'] = lambda x: (x == 'Positive').sum()
         
-        for page, data in critical_pages.iterrows():
-            st.error(f"**{page.replace('_', ' ').title()}** - Average Score: {data['raw_score']:.1f}/10 ({data['criterion_id']} failing criteria)")
+        tier_analysis = filtered_df.groupby('tier').agg(agg_dict).round(2)
+        
+        # Flatten column names
+        tier_analysis.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in tier_analysis.columns]
+        
+        st.dataframe(tier_analysis)
     
-    # Top Opportunities
+    # Critical Issues Alert - use correct score column
+    if score_col:
+        critical_issues = filtered_df[filtered_df[score_col] < 4.0]
+        if not critical_issues.empty:
+            st.markdown("---")
+            st.markdown("### 🚨 Critical Issues Requiring Immediate Attention")
+            
+            critical_pages = critical_issues.groupby('url_slug').agg({
+                score_col: 'mean',
+                'criterion_id': 'count'
+            }).sort_values(score_col).head(3)
+            
+            for page, data in critical_pages.iterrows():
+                st.error(f"**{page.replace('_', ' ').title()}** - Average Score: {data[score_col]:.1f}/10 ({data['criterion_id']} failing criteria)")
+    
+    # Top Opportunities - use correct score column
     st.markdown("---")
     st.markdown("### 🎯 Top 3 Improvement Opportunities")
     
     # Find worst performing criteria with highest impact
-    criteria_impact = filtered_df.groupby('criterion_id').agg({
-        'raw_score': ['mean', 'count'],
-        'page_id': 'nunique'
-    }).round(2)
-    criteria_impact.columns = ['avg_score', 'evaluations', 'pages_affected']
-    criteria_impact['impact_score'] = (10 - criteria_impact['avg_score']) * criteria_impact['pages_affected']
-    top_opportunities = criteria_impact.sort_values('impact_score', ascending=False).head(3)
+    criterion_col = 'criterion_code' if 'criterion_code' in filtered_df.columns else 'criterion_id'
+    
+    if criterion_col in filtered_df.columns and score_col:
+        criteria_impact = filtered_df.groupby(criterion_col).agg({
+            score_col: ['mean', 'count'],
+            'page_id': 'nunique'
+        }).round(2)
+        criteria_impact.columns = ['avg_score', 'evaluations', 'pages_affected']
+        criteria_impact['impact_score'] = (10 - criteria_impact['avg_score']) * criteria_impact['pages_affected']
+        top_opportunities = criteria_impact.sort_values('impact_score', ascending=False).head(3)
+    else:
+        top_opportunities = pd.DataFrame()
     
     col1, col2, col3 = st.columns(3)
     
-    for i, (criterion, data) in enumerate(top_opportunities.iterrows()):
-        with [col1, col2, col3][i]:
-            st.markdown(f"""
-            **{i+1}. {criterion.replace('_', ' ').title()}**
-            
-            - Current Score: {data['avg_score']:.1f}/10
-            - Pages Affected: {data['pages_affected']}
-            - Impact Score: {data['impact_score']:.1f}
-            """)
+    if not top_opportunities.empty:
+        for i, (criterion, data) in enumerate(top_opportunities.iterrows()):
+            if i < 3:  # Only show top 3
+                with [col1, col2, col3][i]:
+                    st.markdown(f"""
+                    **{i+1}. {criterion.replace('_', ' ').title()}**
+                    
+                    - Current Score: {data['avg_score']:.1f}/10
+                    - Pages Affected: {data['pages_affected']}
+                    - Impact Score: {data['impact_score']:.1f}
+                    """)
+    else:
+        st.info("📊 Opportunity analysis requires criteria data with proper column structure.")
     
     # Segmented Tier Analysis with Experience Data
     st.markdown("---")
     st.markdown("### 📊 Performance by Content Tier")
     
-    if summary['has_experience_data'] and master_df is not None:
+    if summary.get('has_experience_data', False) and master_df is not None and score_col:
         # Create comprehensive tier analysis with experience context
         tier_analysis = master_df.groupby('tier').agg({
-            'avg_score': 'mean',
+            score_col: 'mean',
             'overall_sentiment': lambda x: (x == 'Positive').sum() / len(x.dropna()) * 100 if len(x.dropna()) > 0 else 0,
             'engagement_level': lambda x: (x == 'High').sum() / len(x.dropna()) * 100 if len(x.dropna()) > 0 else 0,
             'conversion_likelihood': lambda x: (x == 'High').sum() / len(x.dropna()) * 100 if len(x.dropna()) > 0 else 0,
@@ -146,14 +172,14 @@ def main():
                     st.metric("High Conversion", f"{conversion_icon} {data['High Conversion %']:.0f}%")
                 
                 # Show best and worst performing pages in this tier
-                tier_pages = master_df[master_df['tier'] == tier].sort_values('avg_score', ascending=False)
+                tier_pages = master_df[master_df['tier'] == tier].sort_values(score_col, ascending=False)
                 if not tier_pages.empty:
                     col1, col2 = st.columns(2)
                     with col1:
                         best_page = tier_pages.iloc[0]
                         st.markdown("**🏆 Best Performing Page:**")
                         st.write(f"• {best_page['slug'].replace('_', ' ').title()}")
-                        st.write(f"• Score: {best_page['avg_score']:.1f}/10")
+                        st.write(f"• Score: {best_page[score_col]:.1f}/10")
                         if pd.notna(best_page['overall_sentiment']):
                             st.write(f"• Sentiment: {best_page['overall_sentiment']}")
                     
@@ -162,37 +188,39 @@ def main():
                             worst_page = tier_pages.iloc[-1]
                             st.markdown("**⚠️ Needs Attention:**")
                             st.write(f"• {worst_page['slug'].replace('_', ' ').title()}")
-                            st.write(f"• Score: {worst_page['avg_score']:.1f}/10")
+                            st.write(f"• Score: {worst_page[score_col]:.1f}/10")
                             if pd.notna(worst_page['overall_sentiment']):
                                 st.write(f"• Sentiment: {worst_page['overall_sentiment']}")
     else:
-        # Fallback tier analysis without experience data
-        tier_scores = filtered_df.groupby('tier').agg({
-            'raw_score': ['mean', 'count'],
-            'descriptor': lambda x: (x == 'EXCELLENT').sum()
-        }).round(2)
-        tier_scores.columns = ['Avg Score', 'Page Count', 'Excellence Count']
-        tier_scores = tier_scores.sort_values('Avg Score', ascending=False)
-        
-        for tier, data in tier_scores.iterrows():
-            tier_display = tier.replace('_', ' ').title()
-            score_color = "🟢" if data['Avg Score'] >= 7 else "🟡" if data['Avg Score'] >= 4 else "🔴"
-            st.markdown(f"{score_color} **{tier_display}**: {data['Avg Score']:.1f}/10 ({int(data['Page Count'])} pages, {int(data['Excellence Count'])} excellent)")
+        # Fallback tier analysis without experience data - use correct score column
+        if score_col:
+            tier_scores = filtered_df.groupby('tier').agg({
+                score_col: ['mean', 'count'],
+                'descriptor': lambda x: (x == 'EXCELLENT').sum()
+            }).round(2)
+            tier_scores.columns = ['Avg Score', 'Page Count', 'Excellence Count']
+            tier_scores = tier_scores.sort_values('Avg Score', ascending=False)
+            
+            for tier, data in tier_scores.iterrows():
+                tier_display = tier.replace('_', ' ').title()
+                score_color = "🟢" if data['Avg Score'] >= 7 else "🟡" if data['Avg Score'] >= 4 else "🔴"
+                st.markdown(f"{score_color} **{tier_display}**: {data['Avg Score']:.1f}/10 ({int(data['Page Count'])} pages, {int(data['Excellence Count'])} excellent)")
     
-    # Success Stories
+    # Success Stories - use correct score column
     st.markdown("---")
     st.markdown("### 🏆 Success Stories to Replicate")
     
-    excellent_examples = filtered_df[filtered_df['raw_score'] >= 8.0]
-    if not excellent_examples.empty:
-        success_stories = excellent_examples.groupby(['url_slug', 'criterion_id']).first().sort_values('raw_score', ascending=False).head(3)
-        
-        for i, ((page, criterion), data) in enumerate(success_stories.iterrows()):
-            with st.expander(f"🌟 Success #{i+1}: {page.replace('_', ' ').title()} - {criterion.replace('_', ' ').title()}"):
-                st.write(f"**Score:** {data['raw_score']}/10")
-                st.write(f"**Why it works:** {data['rationale']}")
-                if 'url' in data and pd.notna(data['url']):
-                    st.write(f"**URL:** {data['url']}")
+    if score_col:
+        excellent_examples = filtered_df[filtered_df[score_col] >= 8.0]
+        if not excellent_examples.empty:
+            success_stories = excellent_examples.groupby(['url_slug', 'criterion_id']).first().sort_values(score_col, ascending=False).head(3)
+            
+            for i, ((page, criterion), data) in enumerate(success_stories.iterrows()):
+                with st.expander(f"🌟 Success #{i+1}: {page.replace('_', ' ').title()} - {criterion.replace('_', ' ').title()}"):
+                    st.write(f"**Score:** {data[score_col]}/10")
+                    st.write(f"**Why it works:** {data['rationale']}")
+                    if 'url' in data and pd.notna(data['url']):
+                        st.write(f"**URL:** {data['url']}")
 
 if __name__ == "__main__":
     main() 

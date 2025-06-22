@@ -5,6 +5,11 @@ import tempfile
 import re
 import glob
 import shutil
+import sys
+from pathlib import Path
+
+# Add audit_tool to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def get_persona_name(persona_content: str) -> str:
     """Extracts the full persona name from the markdown content."""
@@ -21,8 +26,8 @@ def get_persona_name(persona_content: str) -> str:
         return match.group(0)
     return "default_persona"
 
-def run_audit(persona_file_path, urls_file_path, output_dir):
-    """Runs the audit tool as a subprocess."""
+def run_audit(persona_file_path, urls_file_path, output_dir, model_provider="anthropic"):
+    """Runs the audit tool as a subprocess with YAML methodology."""
     command = [
         "python",
         "-m",
@@ -32,7 +37,9 @@ def run_audit(persona_file_path, urls_file_path, output_dir):
         "--persona",
         persona_file_path,
         "--output",
-        output_dir
+        output_dir,
+        "--model",
+        model_provider
     ]
     process = subprocess.Popen(
         command,
@@ -74,7 +81,11 @@ def find_and_parse_reports(persona_name: str) -> dict:
     return results
 
 def main():
-    st.set_page_config(layout="wide")
+    st.set_page_config(
+        page_title="Sopra Steria Brand Audit Runner",
+        page_icon="🚀",
+        layout="wide"
+    )
 
     # --- SESSION STATE INITIALIZATION ---
     if 'is_running' not in st.session_state:
@@ -83,114 +94,190 @@ def main():
         st.session_state.results = None
     if 'urls_text' not in st.session_state:
         st.session_state.urls_text = ""
+    if 'selected_model' not in st.session_state:
+        st.session_state.selected_model = "openai"  # Default to cost-effective option
 
-    st.sidebar.title("Audit Configuration")
-
-    persona_file = st.sidebar.file_uploader(
-        "1. Upload Persona File",
-        type=['md'],
-        disabled=st.session_state.is_running
-    )
-
-    st.sidebar.subheader("2. Provide URLs to Audit")
+    # Header
+    st.title("🚀 Sopra Steria Brand Audit Runner")
+    st.markdown("**YAML-Driven Methodology** with **Dual AI Provider Support**")
     
-    def on_paste():
-        st.session_state.urls_text = st.session_state.pasted_urls
-
-    def on_upload():
-        if st.session_state.uploaded_url_file:
-            file_content = st.session_state.uploaded_url_file.getvalue().decode("utf-8")
-            urls_from_file = re.findall(r'https?://[^\s|)]+', file_content)
-            if urls_from_file:
-                st.session_state.urls_text = "\n".join(urls_from_file)
-        else:
-            st.session_state.urls_text = ""
-
-    tab1, tab2 = st.sidebar.tabs(["Paste List", "Upload File"])
-
-    with tab1:
-        st.text_area(
-            "Enter one URL per line...",
-            key="pasted_urls",
-            on_change=on_paste,
-            height=200,
-            disabled=st.session_state.is_running,
-        )
-
-    with tab2:
-        st.file_uploader(
-            "Upload a .txt or .md file with one URL per line.",
-            key="uploaded_url_file",
-            on_change=on_upload,
-            type=['txt', 'md'],
-            disabled=st.session_state.is_running
-        )
-
-    # Disable button if inputs are missing or if the audit is already running
-    disable_run_button = not persona_file or not st.session_state.urls_text or st.session_state.is_running
+    # Create two columns for layout
+    col1, col2 = st.columns([1, 2])
     
-    if st.sidebar.button("Run Audit", disabled=disable_run_button):
-        st.session_state.is_running = True
-        st.session_state.results = None # Clear previous results
+    with col1:
+        st.subheader("🎯 Audit Configuration")
         
-        temp_dir = tempfile.mkdtemp(prefix="audit_")
-        log_expander = st.expander("Audit Log", expanded=True)
-        log_container = log_expander.code(f"Preparing audit...", language="log")
-
-        try:
-            # Save uploaded files to the temporary directory
+        # Model Selection
+        st.markdown("### 🤖 AI Model Provider")
+        
+        model_options = {
+            "openai": "🔥 OpenAI GPT-4.1-Mini (Cost Effective)",
+            "anthropic": "🧠 Anthropic Claude-3-Opus (Premium Quality)"
+        }
+        
+        selected_model = st.radio(
+            "Choose your AI model:",
+            options=list(model_options.keys()),
+            format_func=lambda x: model_options[x],
+            index=0,  # Default to OpenAI
+            disabled=st.session_state.is_running,
+            help="OpenAI is more cost-effective for high-volume audits. Anthropic provides premium quality analysis."
+        )
+        
+        st.session_state.selected_model = selected_model
+        
+        # Show cost information
+        if selected_model == "openai":
+            st.info("💰 **Cost Effective Choice** - GPT-4.1-Mini offers excellent quality at lower cost")
+        else:
+            st.warning("💎 **Premium Choice** - Claude-3-Opus provides highest quality but at higher cost")
+        
+        st.markdown("---")
+        
+        # Persona Upload
+        st.markdown("### 📋 Persona File")
+        persona_file = st.file_uploader(
+            "Upload Persona File",
+            type=['md'],
+            disabled=st.session_state.is_running,
+            help="Upload a .md file containing your target persona definition"
+        )
+        
+        if persona_file:
+            st.success(f"✅ Loaded: {persona_file.name}")
             persona_content = persona_file.getvalue().decode("utf-8")
-            persona_file_path = os.path.join(temp_dir, persona_file.name)
-            with open(persona_file_path, "w", encoding="utf-8") as f:
-                f.write(persona_content)
+            persona_name = get_persona_name(persona_content)
+            st.info(f"**Detected Persona:** {persona_name}")
 
-            urls_file_path = os.path.join(temp_dir, "urls_to_audit.txt")
-            with open(urls_file_path, "w", encoding="utf-8") as f:
-                f.write(st.session_state.urls_text)
+        st.markdown("### 🌐 URLs to Audit")
+        
+        def on_paste():
+            st.session_state.urls_text = st.session_state.pasted_urls
 
-            st.session_state.persona_name = get_persona_name(persona_content)
-            
-            # Create output directory for this persona
-            output_dir = os.path.join("audit_outputs", st.session_state.persona_name)
-            os.makedirs(output_dir, exist_ok=True)
-
-            # --- RUN AUDIT & STREAM LOGS ---
-            log_container.text(f"Starting audit for {st.session_state.persona_name}...")
-            
-            process = run_audit(persona_file_path, urls_file_path, output_dir)
-
-            log_lines = []
-            for line in iter(process.stdout.readline, ''):
-                log_lines.append(line.rstrip())
-                if len(log_lines) > 100:  # Keep only the last 100 lines
-                    log_lines = log_lines[-100:]
-                log_container.code('\n'.join(log_lines))
-            
-            process.wait()
-            # --- END AUDIT ---
-            
-            if process.returncode == 0:
-                st.session_state.results = find_and_parse_reports(st.session_state.persona_name)
-                st.success("Audit complete!", icon="✅")
+        def on_upload():
+            if st.session_state.uploaded_url_file:
+                file_content = st.session_state.uploaded_url_file.getvalue().decode("utf-8")
+                urls_from_file = re.findall(r'https?://[^\s|)]+', file_content)
+                if urls_from_file:
+                    st.session_state.urls_text = "\n".join(urls_from_file)
             else:
-                st.error("Audit failed. Check the log for details.", icon="🚨")
-                st.session_state.results = None
+                st.session_state.urls_text = ""
 
-        except Exception as e:
-            st.error(f"An unexpected error occurred: {e}", icon="🚨")
-        finally:
-            st.session_state.is_running = False
-            # Clean up the temporary directory
-            if os.path.isdir(temp_dir):
-                shutil.rmtree(temp_dir)
+        tab1, tab2 = st.tabs(["📝 Paste URLs", "📁 Upload File"])
+
+        with tab1:
+            st.text_area(
+                "Enter one URL per line:",
+                key="pasted_urls",
+                on_change=on_paste,
+                height=200,
+                disabled=st.session_state.is_running,
+                placeholder="https://example.com\nhttps://example.com/about\nhttps://example.com/services"
+            )
+
+        with tab2:
+            st.file_uploader(
+                "Upload a .txt or .md file with URLs",
+                key="uploaded_url_file",
+                on_change=on_upload,
+                type=['txt', 'md'],
+                disabled=st.session_state.is_running,
+                help="Upload a file containing one URL per line"
+            )
+
+        # URL validation
+        if st.session_state.urls_text:
+            urls = [url.strip() for url in st.session_state.urls_text.split('\n') if url.strip()]
+            valid_urls = [url for url in urls if url.startswith(('http://', 'https://'))]
+            
+            st.markdown("#### 📊 URL Summary")
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.metric("Total URLs", len(urls))
+            with col_b:
+                st.metric("Valid URLs", len(valid_urls))
+            
+            if len(urls) != len(valid_urls):
+                st.warning(f"⚠️ {len(urls) - len(valid_urls)} invalid URLs detected")
+
+        # Disable button if inputs are missing or if the audit is already running
+        disable_run_button = not persona_file or not st.session_state.urls_text or st.session_state.is_running
+        
+        st.markdown("---")
+        
+        # Run Audit Button
+        if st.button(
+            f"🚀 Run Audit with {selected_model.upper()}", 
+            disabled=disable_run_button,
+            use_container_width=True,
+            type="primary"
+        ):
+            st.session_state.is_running = True
+            st.session_state.results = None # Clear previous results
             st.rerun()
 
-    st.title("Audit Results")
+    with col2:
+        st.subheader("📊 Audit Results & Live Log")
+        
+        # This top-level check ensures the main panel doesn't try to render
+        # while the audit logic is running in the script's main flow.
+        if st.session_state.is_running:
+            st.warning(f"🔄 **Audit Running** - Using {st.session_state.selected_model.upper()}")
+            
+            temp_dir = tempfile.mkdtemp(prefix="audit_")
+            log_expander = st.expander("📋 Live Audit Log", expanded=True)
+            log_container = log_expander.empty()
 
-    # This top-level check ensures the main panel doesn't try to render
-    # while the audit logic is running in the script's main flow.
-    if not st.session_state.is_running:
-        if st.session_state.results:
+            try:
+                # Save uploaded files to the temporary directory
+                persona_content = persona_file.getvalue().decode("utf-8")
+                persona_file_path = os.path.join(temp_dir, persona_file.name)
+                with open(persona_file_path, "w", encoding="utf-8") as f:
+                    f.write(persona_content)
+
+                urls_file_path = os.path.join(temp_dir, "urls_to_audit.txt")
+                with open(urls_file_path, "w", encoding="utf-8") as f:
+                    f.write(st.session_state.urls_text)
+
+                st.session_state.persona_name = get_persona_name(persona_content)
+                
+                # Create output directory for this persona
+                output_dir = os.path.join("audit_outputs", st.session_state.persona_name)
+                os.makedirs(output_dir, exist_ok=True)
+
+                # --- RUN AUDIT & STREAM LOGS ---
+                log_container.code(f"Starting audit for {st.session_state.persona_name} using {st.session_state.selected_model.upper()}...")
+                
+                process = run_audit(persona_file_path, urls_file_path, output_dir, st.session_state.selected_model)
+
+                log_lines = []
+                for line in iter(process.stdout.readline, ''):
+                    log_lines.append(line.rstrip())
+                    if len(log_lines) > 100:  # Keep only the last 100 lines
+                        log_lines = log_lines[-100:]
+                    log_container.code('\n'.join(log_lines))
+                
+                process.wait()
+                # --- END AUDIT ---
+                
+                if process.returncode == 0:
+                    st.session_state.results = find_and_parse_reports(st.session_state.persona_name)
+                    st.success("✅ Audit completed successfully!", icon="🎉")
+                    st.balloons()
+                else:
+                    st.error("❌ Audit failed. Check the log for details.", icon="🚨")
+                    st.session_state.results = None
+
+            except Exception as e:
+                st.error(f"💥 Unexpected error: {e}", icon="🚨")
+            finally:
+                st.session_state.is_running = False
+                # Clean up the temporary directory
+                if os.path.isdir(temp_dir):
+                    shutil.rmtree(temp_dir)
+                st.rerun()
+        
+        elif st.session_state.results:
             # --- DISPLAY SUMMARY REPORT ---
             if st.session_state.results["summary"]:
                 with st.expander("⭐ Strategic Summary Report", expanded=True):
@@ -200,9 +287,9 @@ def main():
                 st.warning("Strategic Summary report not found.")
 
             # --- DISPLAY INDIVIDUAL PAGE REPORTS ---
-            st.subheader("Individual Page Audits")
+            st.subheader("📄 Individual Page Audits")
             for slug, reports in st.session_state.results["pages"].items():
-                with st.expander(f"📄 {slug}"):
+                with st.expander(f"🔍 {slug}"):
                     exp_tab, score_tab = st.tabs(["Experience Report", "Hygiene Scorecard"])
                     
                     if "experience" in reports:
@@ -219,7 +306,7 @@ def main():
                     else:
                         score_tab.warning("Scorecard not found.")
         else:
-            st.info("Results will appear here after the audit is complete.", icon="ℹ️")
+            st.info("🎯 **Ready to Run Audit**\n\nResults will appear here after the audit completes. The YAML-driven methodology will automatically:\n\n- 🏗️ **Classify pages** into Tier 1/2/3 based on URL patterns\n- ⚖️ **Apply appropriate criteria** with proper brand/performance/authenticity weighting\n- 📊 **Generate strategic summary** with methodology-driven insights", icon="ℹ️")
 
 if __name__ == "__main__":
     main() 
