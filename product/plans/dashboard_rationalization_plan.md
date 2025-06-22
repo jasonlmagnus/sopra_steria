@@ -73,20 +73,84 @@
 
 ### **Phase 1: 6-Tab Consolidation (12 → 6)**
 
-| **New Tab**                 | **Consolidate These Pages**                | **Primary Question**                            | **Key Elements**                                             |
-| --------------------------- | ------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------ |
-| **🎯 Executive Dashboard**  | Main Dashboard + Executive Summary         | "How healthy is the brand right now?"           | Brand health score, critical alerts, strategic assessment    |
-| **👥 Persona Insights**     | Persona Comparison + Persona Experience    | "How do our personas feel and act?"             | Persona cards, sentiment analysis, engagement metrics        |
-| **📊 Content Matrix**       | Overview + Tier Analysis                   | "Where do we pass/fail across content types?"   | Interactive heatmap, tier performance, drill-down capability |
-| **💡 Opportunity & Impact** | AI Strategic Insights + Criteria Deep Dive | "Which gaps matter most and what should we do?" | Prioritized gaps, AI recommendations, impact estimates       |
-| **🌟 Success Library**      | Page Performance + Evidence Explorer       | "What already works that we can emulate?"       | Success cards, evidence browser, pattern analysis            |
-| **📋 Reports & Export**     | Detailed Data + Run Audit                  | "How do I analyze data and run new audits?"     | Data explorer, export tools, audit runner                    |
+| **New Tab**                 | **Consolidate These Pages**                | **Primary Question**                            | **Key Elements**                                                                                                                                   |
+| --------------------------- | ------------------------------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **🎯 Executive Dashboard**  | Main Dashboard + Executive Summary         | "How healthy is the brand right now?"           | **EXECUTIVE SUMMARY ONLY:** Brand health score, critical alerts, quick wins, top 3 opportunities, top 3 success stories, strategic recommendations |
+| **👥 Persona Insights**     | Persona Comparison + Persona Experience    | "How do our personas feel and act?"             | Persona filtering, persona cards, sentiment/engagement bars, cross-persona comparison, first impression quotes                                     |
+| **📊 Content Matrix**       | Overview + Tier Analysis                   | "Where do we pass/fail across content types?"   | **DETAILED ANALYSIS:** Tier performance tables, interactive heatmap, drill-down to page lists, content type analysis                               |
+| **💡 Opportunity & Impact** | AI Strategic Insights + Criteria Deep Dive | "Which gaps matter most and what should we do?" | **BEYOND TOP 3:** Detailed opportunity analysis, impact waterfall, AI action recommendations, criteria deep-dive                                   |
+| **🌟 Success Library**      | Page Performance + Evidence Explorer       | "What already works that we can emulate?"       | **BEYOND TOP 3:** Detailed success analysis, evidence browser, pattern analysis, copy examples                                                     |
+| **📋 Reports & Export**     | Detailed Data + Run Audit                  | "How do I analyze data and run new audits?"     | **RAW DATA:** Data tables, multi-format exports, custom reports, audit runner                                                                      |
 
-### **Phase 2: User Journey Flow**
+### **Phase 2: Content Distribution Strategy**
+
+#### **🎯 MAIN PAGE: EXECUTIVE SUMMARY FOCUS**
+
+**PHILOSOPHY:** Answer 5 key questions in 30 seconds for executive decision-making
+
+**KEEP IN MAIN PAGE:**
+
+- ✅ **Brand Health Score** (hero metric 0-10)
+- ✅ **Critical Issues Alert** (pages < 4.0 score)
+- ✅ **Quick Wins Count** (immediate opportunities)
+- ✅ **Success Pages Count** (high performers ≥ 7.7)
+- ✅ **Three Strategic Questions:** Are we distinct/resonating/converting?
+- ✅ **Top 3 Improvement Opportunities** (with impact scores)
+- ✅ **Top 3 Success Stories** (what's working)
+- ✅ **Strategic Recommendations** (AI-generated)
+- ✅ **Navigation guidance** to specialized tabs
+
+**REMOVE FROM MAIN PAGE:**
+
+- ❌ **Detailed tier performance tables** → Move to Content Matrix
+- ❌ **Persona filtering dropdown** → Move to Persona Insights
+- ❌ **Detailed evidence exploration** → Move to Success Library
+- ❌ **Raw data tables** → Move to Reports & Export
+- ❌ **Comprehensive opportunity analysis** → Move to Opportunity & Impact
+- ❌ **Detailed success story analysis** → Move to Success Library
+
+#### **📊 SPECIALIZED TABS: DEEP-DIVE ANALYSIS**
+
+**👥 Persona Insights:**
+
+- Persona filtering (removed from main)
+- Detailed persona performance comparison
+- Sentiment/engagement analysis by persona
+- First impression quotes and feedback
+
+**📊 Content Matrix:**
+
+- Detailed tier performance tables (removed from main)
+- Interactive content type heatmaps
+- Drill-down to individual page performance
+- Content gap analysis
+
+**💡 Opportunity & Impact:**
+
+- Comprehensive opportunity analysis (beyond top 3)
+- Detailed impact calculations and projections
+- AI-powered action recommendations with copy examples
+- Criteria-level deep-dive analysis
+
+**🌟 Success Library:**
+
+- Detailed success story analysis (beyond top 3)
+- Evidence browser with copy examples
+- Pattern analysis and success templates
+- "Apply Pattern" functionality
+
+**📋 Reports & Export:**
+
+- Raw data exploration (removed from main)
+- Multi-format export capabilities
+- Custom report generation
+- Audit runner integration
+
+### **Phase 3: User Journey Flow**
 
 ```mermaid
 graph TD
-    A[🎯 Executive Dashboard<br/>Brand Health Overview] --> B{What do I need?}
+    A[🎯 Executive Dashboard<br/>30-second brand health check] --> B{What do I need?}
 
     B -->|Understand Personas| C[👥 Persona Insights<br/>How personas feel & act]
     B -->|Find Content Issues| D[📊 Content Matrix<br/>Pass/fail by content type]
@@ -110,15 +174,27 @@ graph TD
 
 #### **Day 1-2: Executive Dashboard Enhancement**
 
-- [ ] **Merge Executive Summary functionality** into main dashboard
-- [ ] **Enhance strategic assessment** with distinct algorithms
-- [ ] **Improve critical issues alerting** with action buttons
-- [ ] **Add navigation guidance** to other tabs
+**FOCUS:** Transform main dashboard into focused 30-second executive summary
+
+- [ ] **REMOVE detailed elements** from main dashboard:
+  - [ ] Remove detailed tier performance tables → Move to Content Matrix
+  - [ ] Remove persona filtering dropdown → Move to Persona Insights
+  - [ ] Remove comprehensive data exploration → Move to Reports & Export
+- [ ] **ENHANCE executive summary elements:**
+  - [ ] Improve critical issues alerting with clear action guidance
+  - [ ] Enhance top 3 opportunities display with impact scores
+  - [ ] Improve top 3 success stories with key strengths
+  - [ ] Add strategic recommendations prominence
+- [ ] **ADD missing Executive Summary features:**
+  - [ ] Enhanced brand health calculation from Executive Summary
+  - [ ] Better opportunity identification algorithm
+  - [ ] Improved success story selection criteria
+- [ ] **ENHANCE navigation guidance** to specialized tabs
 
 **Files to Modify:**
 
-- `brand_health_command_center.py` (enhance)
-- `1_🎯_Executive_Summary.py` (archive/delete)
+- `brand_health_command_center.py` (streamline and enhance)
+- `1_🎯_Executive_Summary.py` (merge best features, then archive)
 
 #### **Day 3-5: Content Matrix Creation**
 
@@ -614,10 +690,13 @@ def test_performance_maintained():
 
 #### **User Experience Success**
 
-- **Improved navigation** - 12 pages → 6 focused tabs
-- **Faster insights** - < 30 seconds to identify top 3 opportunities
+- **Executive-focused main page** - Answer 5 key questions in 30 seconds
+- **Clear content separation** - Executive summary vs deep-dive analysis
+- **Improved navigation** - 12 pages → 6 focused tabs with clear purposes
+- **Faster insights** - < 30 seconds to identify brand health, critical issues, and top opportunities
+- **Logical user journey** - Main page → Specialized tabs for detailed analysis
 - **Evidence-based recommendations** - all insights backed by source data
-- **Cross-persona comparison** - maintained throughout consolidated interface
+- **Cross-persona comparison** - maintained in dedicated Persona Insights tab
 
 ---
 
