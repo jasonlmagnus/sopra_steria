@@ -191,6 +191,177 @@ graph TD
 
 ---
 
+## ⚖️ **ARCHITECTURAL PRINCIPLES & CONSTRAINTS**
+
+### **🎯 CRITICAL PRINCIPLES TO PRESERVE**
+
+#### **1. YAML-Driven Configuration (NON-NEGOTIABLE)**
+
+```python
+# MUST PRESERVE: All methodology comes from YAML
+from audit_tool.methodology_parser import MethodologyParser
+methodology = MethodologyParser.load_methodology()
+
+# ❌ DON'T: Hardcode criteria, scoring thresholds, or business rules
+# ✅ DO: Maintain dynamic methodology loading across all consolidated tabs
+# ✅ DO: Preserve configurability - methodology changes should affect all tabs
+```
+
+#### **2. Persona-Centric Architecture (CORE VALUE PROP)**
+
+```python
+# MUST PRESERVE: Every analysis is persona-aware
+from audit_tool.models import Persona, PageData, AuditResult
+from audit_tool.multi_persona_packager import MultiPersonaPackager
+
+# ❌ DON'T: Break persona filtering across consolidated tabs
+# ❌ DON'T: Lose persona-specific scoring algorithms
+# ✅ DO: Maintain cross-persona comparison capabilities
+# ✅ DO: Preserve persona-specific recommendations
+```
+
+#### **3. AI-Powered Strategic Generation (DIFFERENTIATOR)**
+
+```python
+# MUST PRESERVE: AI-generated insights, not hardcoded summaries
+from audit_tool.strategic_summary_generator import StrategicSummaryGenerator
+from audit_tool.ai_interface import AIInterface
+
+# ❌ DON'T: Replace AI insights with static text
+# ❌ DON'T: Break Anthropic + OpenAI fallback logic
+# ✅ DO: Maintain template-based generation (Jinja2)
+# ✅ DO: Preserve multi-provider AI support
+```
+
+#### **4. Evidence-Based Insights (CREDIBILITY)**
+
+```python
+# MUST PRESERVE: Every recommendation backed by evidence
+def get_success_stories():
+    return pages.filter(score >= 7.7).with_evidence()
+
+# ❌ DON'T: Show insights without supporting evidence
+# ❌ DON'T: Lose "drill-down" capability to source data
+# ✅ DO: Maintain copy examples (effective/ineffective)
+# ✅ DO: Preserve evidence trail for all recommendations
+```
+
+### **🔧 DATA MODEL INTEGRITY (CRITICAL)**
+
+#### **5. Core Data Structures (UNCHANGEABLE)**
+
+```python
+# MUST PRESERVE: These data models are used throughout pipeline
+@dataclass
+class PageData:
+    url: str
+    html_content: str
+    metadata: Dict
+    images: List[str]
+    links: List[str]
+
+@dataclass
+class Persona:
+    name: str
+    role: str
+    industry: str
+    priorities: List[str]
+    pain_points: List[str]
+
+# ❌ DON'T: Modify core data structures
+# ❌ DON'T: Break the PageData → Analysis → Recommendations pipeline
+# ✅ DO: Preserve scoring pipeline: CriterionScore → PageScore → AuditResult
+```
+
+#### **6. Multi-Format Data Compatibility (INTEGRATION)**
+
+```python
+# MUST PRESERVE: Export format consistency
+@st.cache_data
+def load_unified_audit_data():
+    return pd.read_parquet('audit_data/unified_audit_data.parquet')
+
+# ❌ DON'T: Break parquet/CSV compatibility
+# ❌ DON'T: Change unified dataset schema
+# ✅ DO: Maintain backward compatibility with existing audit runs
+# ✅ DO: Preserve export formats for external systems
+```
+
+### **⚡ PERFORMANCE & SCALABILITY**
+
+#### **7. Existing Optimizations (PRESERVE)**
+
+```python
+# MUST PRESERVE: Performance optimizations
+@st.cache_data
+def load_methodology():
+    return MethodologyParser.load_methodology()
+
+# ❌ DON'T: Reload data on every tab switch
+# ❌ DON'T: Break existing caching mechanisms
+# ✅ DO: Load data once, use everywhere
+# ✅ DO: Maintain lazy loading for large datasets
+```
+
+#### **8. Component Reuse Over Rewrite (EFFICIENCY)**
+
+```python
+# MUST REUSE: Existing tested components
+from audit_tool.dashboard.components.metrics_calculator import BrandHealthMetricsCalculator
+from audit_tool.dashboard.components.tier_analyzer import TierAnalyzer
+from audit_tool.tier_classifier import TierClassifier
+
+# ❌ DON'T: Rewrite existing calculation logic
+# ❌ DON'T: Duplicate functionality across tabs
+# ✅ DO: Reuse metrics_calculator.py, tier_analyzer.py
+# ✅ DO: Maintain calculation consistency across tabs
+```
+
+### **🛡️ ERROR HANDLING & RESILIENCE**
+
+#### **9. Robust Error Handling (STABILITY)**
+
+```python
+# MUST PRESERVE: Error handling patterns
+try:
+    audit_result = audit_tool.run_audit(urls, persona)
+except Exception as e:
+    logger.error(f"Audit failed: {e}")
+    return fallback_result
+
+# ❌ DON'T: Introduce fragile code
+# ❌ DON'T: Break graceful degradation
+# ✅ DO: Preserve logging infrastructure
+# ✅ DO: Maintain fallback mechanisms when AI services fail
+```
+
+### **🔄 IMPLEMENTATION CONSTRAINTS**
+
+#### **10. Archive, Don't Delete (SAFETY)**
+
+```bash
+# IMPLEMENTATION RULE: Always archive, never delete
+mkdir -p audit_tool/dashboard/pages/archive/
+mv old_page.py audit_tool/dashboard/pages/archive/
+
+# ❌ DON'T: Delete existing pages during consolidation
+# ❌ DON'T: Risk data loss
+# ✅ DO: Move to archive folder for rollback capability
+# ✅ DO: Test each consolidation before archiving
+```
+
+#### **11. Backward Compatibility (STABILITY)**
+
+```python
+# MUST MAINTAIN: API contracts and data formats
+# ❌ DON'T: Break existing audit run compatibility
+# ❌ DON'T: Change API contracts if external systems consume data
+# ✅ DO: Maintain CSV/parquet structure consistency
+# ✅ DO: Preserve session state management patterns
+```
+
+---
+
 ## 🔧 **TECHNICAL IMPLEMENTATION DETAILS**
 
 ### **Navigation Structure Update**
@@ -207,26 +378,68 @@ PAGES = {
 }
 ```
 
-### **Session State Management**
+### **Session State Management (Enhanced with Existing Architecture)**
 
 ```python
-# Centralized data flow
-if 'datasets' not in st.session_state:
-    st.session_state['datasets'] = load_all_data()
-if 'current_tab' not in st.session_state:
-    st.session_state['current_tab'] = 'executive'
-if 'filters' not in st.session_state:
-    st.session_state['filters'] = {'persona': 'All', 'tier': 'All'}
+# PRESERVE existing data loading patterns
+@st.cache_data
+def load_unified_audit_data():
+    """Load the main audit dataset - PRESERVE existing structure"""
+    return pd.read_parquet('audit_data/unified_audit_data.parquet')
+
+@st.cache_data
+def load_unified_experience_data():
+    """Load experience metrics - PRESERVE existing structure"""
+    return pd.read_parquet('audit_data/unified_experience_data.parquet')
+
+@st.cache_data
+def load_methodology():
+    """Load YAML methodology - CRITICAL to preserve"""
+    from audit_tool.methodology_parser import MethodologyParser
+    return MethodologyParser.load_methodology()
+
+# Enhanced session state with existing data structures
+if 'unified_audit_data' not in st.session_state:
+    st.session_state['unified_audit_data'] = load_unified_audit_data()
+if 'unified_experience_data' not in st.session_state:
+    st.session_state['unified_experience_data'] = load_unified_experience_data()
+if 'methodology' not in st.session_state:
+    st.session_state['methodology'] = load_methodology()
+if 'current_persona_filter' not in st.session_state:
+    st.session_state['current_persona_filter'] = 'All'
+if 'current_tier_filter' not in st.session_state:
+    st.session_state['current_tier_filter'] = 'All'
 ```
 
-### **Component Reusability**
+### **Component Reusability (Existing Tested Components)**
 
 ```python
-# Shared components across tabs
-from components.metrics_calculator import BrandHealthMetricsCalculator
-from components.data_loader import BrandHealthDataLoader
-from components.chart_generator import ChartGenerator
-from components.export_manager import ExportManager
+# REUSE existing components - don't rewrite
+from audit_tool.dashboard.components.metrics_calculator import BrandHealthMetricsCalculator
+from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
+from audit_tool.dashboard.components.tier_analyzer import TierAnalyzer
+from audit_tool.tier_classifier import TierClassifier
+from audit_tool.strategic_summary_generator import StrategicSummaryGenerator
+from audit_tool.ai_interface import AIInterface
+
+# Consolidated tab pattern - reuse existing logic
+def create_consolidated_tab(tab_name, data_source, persona_filter):
+    """Template for consolidated tabs preserving existing components"""
+
+    # PRESERVE: Existing data loading
+    loader = BrandHealthDataLoader()
+    filtered_data = loader.filter_by_persona(data_source, persona_filter)
+
+    # PRESERVE: Existing calculations
+    calculator = BrandHealthMetricsCalculator(filtered_data)
+    metrics = calculator.calculate_all_metrics()
+
+    # PRESERVE: Existing AI generation
+    if tab_name == "strategic_insights":
+        generator = StrategicSummaryGenerator()
+        insights = generator.generate_insights(filtered_data, persona_filter)
+
+    return metrics, insights
 ```
 
 ---
@@ -256,7 +469,7 @@ from components.export_manager import ExportManager
 
 ---
 
-## 🚨 **RISK MITIGATION**
+## 🚨 **RISK MITIGATION & TESTING**
 
 ### **Implementation Risks**
 
@@ -264,6 +477,7 @@ from components.export_manager import ExportManager
 - **User Disruption**: Implement feature flags for gradual rollout
 - **Integration Issues**: Test consolidated components thoroughly
 - **Performance Impact**: Monitor page load times during consolidation
+- **Architecture Violation**: Risk of breaking YAML/persona/AI principles
 
 ### **Mitigation Strategies**
 
@@ -276,6 +490,91 @@ mv audit_tool/dashboard/pages/1_🎯_Executive_Summary.py audit_tool/dashboard/p
 
 # Implement feature flags
 ENABLE_NEW_DASHBOARD = os.getenv('ENABLE_NEW_DASHBOARD', 'false').lower() == 'true'
+```
+
+### **🧪 ARCHITECTURAL COMPLIANCE TESTING CHECKLIST**
+
+#### **Pre-Consolidation Tests (Before Each Tab Merge)**
+
+```python
+# Test 1: YAML Methodology Loading
+def test_yaml_methodology_preserved():
+    methodology = MethodologyParser.load_methodology()
+    assert methodology is not None
+    assert 'criteria' in methodology
+    assert 'personas' in methodology
+
+# Test 2: Persona Filtering Functionality
+def test_persona_filtering_works():
+    data = load_unified_audit_data()
+    filtered = filter_by_persona(data, "The Technical Influencer")
+    assert len(filtered) > 0
+    assert all(row['persona_id'] == "The Technical Influencer" for _, row in filtered.iterrows())
+
+# Test 3: AI Interface Connectivity
+def test_ai_interface_functional():
+    ai = AIInterface()
+    response = ai.generate_strategic_summary(test_data, test_persona)
+    assert response is not None
+    assert len(response) > 0
+
+# Test 4: Existing Component Integration
+def test_existing_components_work():
+    calculator = BrandHealthMetricsCalculator(test_data)
+    metrics = calculator.calculate_all_metrics()
+    assert 'brand_health_score' in metrics
+    assert 'critical_issues' in metrics
+```
+
+#### **Post-Consolidation Tests (After Each Tab Creation)**
+
+```python
+# Test 5: Data Pipeline Integrity
+def test_data_pipeline_intact():
+    # PageData → Analysis → Recommendations flow
+    page_data = PageData(url="test", html_content="test")
+    analysis = analyze_page(page_data, persona)
+    recommendations = generate_recommendations(analysis)
+    assert recommendations is not None
+
+# Test 6: Cross-Tab Data Consistency
+def test_cross_tab_consistency():
+    # Same data should show same metrics across tabs
+    exec_metrics = executive_tab.get_metrics()
+    content_metrics = content_matrix_tab.get_metrics()
+    assert exec_metrics['brand_health_score'] == content_metrics['brand_health_score']
+
+# Test 7: Evidence Trail Preservation
+def test_evidence_trail_maintained():
+    success_story = get_success_story(page_id="test123")
+    assert 'evidence' in success_story
+    assert 'effective_copy_examples' in success_story['evidence']
+```
+
+#### **Integration Tests (Final Validation)**
+
+```python
+# Test 8: Multi-Persona Comparison
+def test_multi_persona_comparison():
+    personas = ["Technical Influencer", "Strategic Business Leader"]
+    comparison = generate_persona_comparison(personas)
+    assert len(comparison) == 2
+    assert all(p in comparison for p in personas)
+
+# Test 9: Export Format Compatibility
+def test_export_compatibility():
+    # Ensure consolidated data exports match existing format
+    exported = export_to_csv(consolidated_data)
+    original = load_existing_export()
+    assert exported.columns.equals(original.columns)
+
+# Test 10: Performance Benchmarks
+def test_performance_maintained():
+    import time
+    start = time.time()
+    load_consolidated_dashboard()
+    load_time = time.time() - start
+    assert load_time < 5.0  # Should load within 5 seconds
 ```
 
 ---
@@ -297,12 +596,28 @@ ENABLE_NEW_DASHBOARD = os.getenv('ENABLE_NEW_DASHBOARD', 'false').lower() == 'tr
 - **Stakeholder Reviews**: Weekly check-ins
 - **Documentation Updates**: Update all references to old page structure
 
-### **Success Criteria**
+### **Success Criteria (Architectural Compliance)**
+
+#### **Functional Success**
 
 - **Zero functionality loss** during consolidation
-- **Improved user experience** metrics
-- **Positive stakeholder feedback** on new flow
-- **Technical debt reduction** through code consolidation
+- **All AI insights preserved** - strategic summaries still AI-generated
+- **Persona filtering works** across all consolidated tabs
+- **YAML methodology loading** maintained throughout
+
+#### **Technical Success**
+
+- **Existing components reused** - no rewrite of metrics_calculator.py, tier_analyzer.py
+- **Data pipeline integrity** - PageData → Analysis → Recommendations flow preserved
+- **Performance maintained** - no slower loading due to consolidation
+- **Backward compatibility** - existing audit runs still load correctly
+
+#### **User Experience Success**
+
+- **Improved navigation** - 12 pages → 6 focused tabs
+- **Faster insights** - < 30 seconds to identify top 3 opportunities
+- **Evidence-based recommendations** - all insights backed by source data
+- **Cross-persona comparison** - maintained throughout consolidated interface
 
 ---
 
