@@ -201,8 +201,8 @@ def main():
                     st.markdown("**🎯 Focus Areas:**")
                     for _, criterion in failing_criteria.iterrows():
                         st.write(f"• **{criterion[criterion_col].replace('_', ' ').title()}**: {criterion['avg_score']:.1f}/10")
-                        if pd.notna(criterion['rationale']):
-                            st.write(f"  *{criterion['rationale'][:100]}...*")
+                        if pd.notna(criterion['evidence']):
+                            st.write(f"  *{criterion['evidence'][:100]}...*")
     else:
         st.info("No obvious quick wins identified. Focus on systematic improvements across priority criteria.")
     

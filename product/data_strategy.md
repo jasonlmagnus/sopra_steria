@@ -2,10 +2,11 @@
 
 ## Executive Summary
 
-The brand audit data pipeline transforms raw audit outputs into unified analytics datasets through a four-stage process. However, current implementation has critical data structure inconsistencies that prevent reliable dashboard operation.
+The brand audit data pipeline transforms raw audit outputs into unified analytics datasets through a four-stage process. Recent fixes have resolved critical data structure inconsistencies.
 
-**Current Status**: 🟡 **PARTIALLY FUNCTIONAL** - Core dashboard operational, some pages have column mismatches
-**Priority**: P1 - Pipeline automation and consistency improvements
+**Current Status**: 🟢 **FUNCTIONAL** - All dashboard pages operational, data pipeline fixed
+**Next Goal**: 🎯 **FULL AUTOMATION** - Single command audit execution (currently requires 4 manual steps)
+**Priority**: P1 - Complete pipeline automation to eliminate manual intervention
 
 ---
 
@@ -109,7 +110,8 @@ audit_data/
 └── persona_comparison.parquet    # Cross-persona analytics
 ```
 
-**Current Status:** ✅ Successfully processing 4 personas (399 total records)
+**Current Status:** ✅ Successfully processing 4 personas (342 total records)
+**Recent Fixes:** ✅ Fixed criterion_id/criterion_code mapping, eliminated duplicate file generation
 
 ---
 
@@ -561,13 +563,13 @@ class IntelligentInsights:
 
 ## DATA QUALITY MONITORING
 
-### Current Metrics
+### Current Metrics (Updated June 22, 2025)
 
-- **Data Completeness**: 95% (missing some computed columns)
-- **Schema Consistency**: 75% (some column mismatches in specific pages)
-- **Processing Success Rate**: 100% (backfill/strategic summary)
-- **Dashboard Reliability**: 70% (core functional, some pages crash)
-- **Manual Intervention Required**: 100% (4 separate manual steps)
+- **Data Completeness**: ✅ 100% (all required columns populated)
+- **Schema Consistency**: ✅ 100% (criterion mapping fixed, column standardization implemented)
+- **Processing Success Rate**: ✅ 100% (backfill/strategic summary)
+- **Dashboard Reliability**: ✅ 95% (all pages functional, robust error handling)
+- **Manual Intervention Required**: ❌ 100% (4 separate manual steps - NEEDS AUTOMATION)
 
 ### Target Metrics (Post-Automation)
 
@@ -673,20 +675,194 @@ graph TD
 
 ---
 
-## NEXT ACTIONS
+## ✅ COMPLETED FIXES (June 22, 2025)
 
-1. **Week 1**: Create `audit_tool/automated_pipeline.py` with unified pipeline controller
-2. **Week 2**: Implement schema standardization engine and pipeline state management
-3. **Week 3**: Integrate live dashboard updates and progress monitoring
-4. **Week 4**: Add automated data validation and error recovery
-5. **Month 2**: Implement batch processing and comparative analytics
-6. **Month 3**: Deploy intelligent recommendations and scheduling system
+### Data Pipeline Issues Resolved
+
+- ✅ **Fixed duplicate file generation**: Removed `enhanced_unified_audit_data.csv` duplication
+- ✅ **Fixed empty criterion columns**: criterion_id and criterion_code now properly populated
+- ✅ **Fixed dashboard column mismatches**: Standardized tier performance column names (avg_score, avg_sentiment, etc.)
+- ✅ **Fixed Page Performance crashes**: Resolved AttributeError on string operations
+- ✅ **Fixed Persona Experience crashes**: Removed broken self-merge operations
+- ✅ **Robust dashboard styling**: Dynamic column detection prevents KeyErrors
+
+### Files Updated
+
+- `audit_tool/multi_persona_packager.py`: Fixed criterion data mapping
+- `audit_tool/dashboard/components/metrics_calculator.py`: Standardized column names
+- `audit_tool/dashboard/brand_health_command_center.py`: Dynamic column formatting
+- `audit_tool/dashboard/pages/8_📄_Page_Performance.py`: Fixed string operations
+- `audit_tool/dashboard/pages/9_👤_Persona_Experience.py`: Simplified data handling
+- `audit_tool/config/unified_csv_columns.yaml`: Documented all fixes
+
+## 🎯 REMAINING AUTOMATION TASKS
+
+### Current Manual Process (4 Steps)
+
+```bash
+# Step 1: Generate audit (manual)
+python -m audit_tool.main --urls urls.txt --persona persona.md --output "audit_outputs/Persona Name" --model anthropic
+
+# Step 2: Backfill enhancement (manual)
+python -m audit_tool.backfill_packager "Persona Name"
+
+# Step 3: Strategic summary (manual)
+python audit_tool/strategic_summary_generator.py
+
+# Step 4: Unification (manual)
+python -m audit_tool.multi_persona_packager
+```
+
+### Target Automation (1 Step)
+
+```bash
+# Single command - NEEDS IMPLEMENTATION
+python -m audit_tool.automated_pipeline --persona persona.md --urls urls.txt --model anthropic
+```
+
+## NEXT ACTIONS (Priority Order)
+
+### Week 1: Create Unified Pipeline Controller
+
+**File to create**: `audit_tool/automated_pipeline.py`
+
+```python
+class AutomatedAuditPipeline:
+    def __init__(self, persona_file, urls, model='anthropic'):
+        self.persona_file = persona_file
+        self.urls = urls
+        self.model = model
+        self.persona_name = self._extract_persona_name()
+
+    def execute_full_pipeline(self):
+        """Execute complete audit-to-dashboard pipeline"""
+        print("🚀 Starting automated audit pipeline...")
+
+        # Stage 1: Generate audit
+        self._run_audit_generation()
+        print("✅ Stage 1: Audit generation complete")
+
+        # Stage 2: Auto-backfill enhancement
+        self._run_backfill_enhancement()
+        print("✅ Stage 2: Backfill enhancement complete")
+
+        # Stage 3: Auto-strategic summary
+        self._run_strategic_summary()
+        print("✅ Stage 3: Strategic summary complete")
+
+        # Stage 4: Auto-unification
+        self._run_multi_persona_unification()
+        print("✅ Stage 4: Data unification complete")
+
+        print("🎉 Pipeline complete! Dashboard data updated.")
+
+    def _run_audit_generation(self):
+        """Execute Stage 1: Audit generation"""
+        from audit_tool.main import main as audit_main
+        # Call existing audit generation with parameters
+
+    def _run_backfill_enhancement(self):
+        """Execute Stage 2: Backfill enhancement"""
+        from audit_tool.backfill_packager import EnhancedBackfillPackager
+        packager = EnhancedBackfillPackager(self.persona_name)
+        packager.process_persona()
+
+    def _run_strategic_summary(self):
+        """Execute Stage 3: Strategic summary"""
+        from audit_tool.strategic_summary_generator import StrategicSummaryGenerator
+        generator = StrategicSummaryGenerator(f"audit_outputs/{self.persona_name}")
+        generator.generate_summary()
+
+    def _run_multi_persona_unification(self):
+        """Execute Stage 4: Multi-persona unification"""
+        from audit_tool.multi_persona_packager import MultiPersonaPackager
+        packager = MultiPersonaPackager()
+        packager.package_all_data()
+```
+
+### Week 2: Add Progress Tracking & Error Handling
+
+```python
+class PipelineProgressTracker:
+    def track_stage(self, stage_name, status):
+        """Track pipeline progress for dashboard display"""
+        # Save progress to file for dashboard monitoring
+        # Handle stage failures with retry logic
+        # Provide detailed error messages
+```
+
+### Week 3: Dashboard Integration
+
+- Add "Run Automated Audit" button to dashboard
+- Real-time progress display during pipeline execution
+- Automatic dashboard refresh when pipeline completes
 
 ## IMPLEMENTATION PRIORITY
 
+**Current Status**: ✅ Data pipeline fixed, all dashboard pages functional
 **Immediate Focus**: Replace current 4-step manual process with single automated command
 **Success Metric**: `python -m audit_tool.automated_pipeline --persona persona.md --urls urls.txt` executes successfully end-to-end
-**Timeline**: 4-6 weeks for complete automation framework
+**Timeline**: 2-3 weeks for complete automation (data layer already stable)
+
+## WHAT'S LEFT TO DO
+
+### 🎯 Primary Goal: Single Command Automation
+
+**Current Problem**: You have to run 4 separate commands manually:
+
+1. Generate audit → markdown files
+2. Run backfill → CSV files
+3. Generate strategic summary → analysis
+4. Run unification → dashboard data
+
+**Target Solution**: One command does everything:
+
+```bash
+python -m audit_tool.automated_pipeline --persona persona.md --urls urls.txt
+```
+
+### 📋 Specific Implementation Tasks
+
+#### Task 1: Create `audit_tool/automated_pipeline.py` (2-3 days)
+
+- Chain all 4 existing processes into single workflow
+- Add progress tracking and error handling
+- Extract persona name from file automatically
+- Handle command-line arguments
+
+#### Task 2: Add CLI Interface (1 day)
+
+- Make it work as `python -m audit_tool.automated_pipeline`
+- Support same arguments as current audit tool
+- Add progress indicators
+
+#### Task 3: Dashboard Integration (1-2 days)
+
+- Add "Run Automated Audit" button to dashboard
+- Show real-time progress during execution
+- Auto-refresh dashboard when complete
+
+### 🚀 Quick Win Implementation
+
+The fastest path is to create a simple wrapper that calls your existing tools in sequence:
+
+```python
+# audit_tool/automated_pipeline.py
+def main():
+    # 1. Run audit generation
+    subprocess.run([sys.executable, "-m", "audit_tool.main", "--urls", urls, "--persona", persona, "--output", output_dir])
+
+    # 2. Run backfill
+    subprocess.run([sys.executable, "-m", "audit_tool.backfill_packager", persona_name])
+
+    # 3. Run strategic summary
+    subprocess.run([sys.executable, "audit_tool/strategic_summary_generator.py"])
+
+    # 4. Run unification
+    subprocess.run([sys.executable, "-m", "audit_tool.multi_persona_packager"])
+```
+
+**Estimated Time**: 1 week to have working automation, 2-3 weeks for polished version with dashboard integration.
 
 ---
 

@@ -104,7 +104,7 @@ def main():
     
     if search_all:
         # Search across multiple text columns
-        search_columns = ['url_slug', 'criterion_id', 'tier', 'rationale']
+        search_columns = ['url_slug', 'criterion_id', 'tier', 'evidence']
         search_mask = pd.Series([False] * len(display_df))
         for col in search_columns:
             if col in display_df.columns:
@@ -144,7 +144,7 @@ def main():
         display_df = display_df.sort_values(sort_by, ascending=ascending)
     
     # Format for display - handle missing columns gracefully
-    available_columns = ['persona_id', 'url_slug', 'tier', 'criterion_id', score_col, 'descriptor', 'rationale']
+    available_columns = ['persona_id', 'url_slug', 'tier', 'criterion_id', score_col, 'descriptor', 'evidence']
     display_columns = [col for col in available_columns if col in display_df.columns]
     
     if display_columns:
@@ -166,7 +166,7 @@ def main():
             'criterion_id': 'Criterion',
             score_col: 'Score',
             'descriptor': 'Performance',
-            'rationale': 'AI Rationale'
+            'evidence': 'AI Evidence'
         }
         display_df_formatted = display_df_formatted.rename(columns=column_mapping)
         
@@ -186,10 +186,10 @@ def main():
             summary_csv = summary_data.to_csv(index=False).encode('utf-8')
             st.download_button("📊 Download Summary CSV", summary_csv, "audit_summary.csv", "text/csv")
     with col3:
-        if all(col in display_df.columns for col in ['persona_id', 'url_slug', 'criterion_id', 'rationale']):
-            rationale_data = display_df[['persona_id', 'url_slug', 'criterion_id', score_col, 'rationale']]
-            rationale_csv = rationale_data.to_csv(index=False).encode('utf-8')
-            st.download_button("💭 Download Rationale CSV", rationale_csv, "audit_rationale.csv", "text/csv")
+        if all(col in display_df.columns for col in ['persona_id', 'url_slug', 'criterion_id', 'evidence']):
+            evidence_data = display_df[['persona_id', 'url_slug', 'criterion_id', score_col, 'evidence']]
+            evidence_csv = evidence_data.to_csv(index=False).encode('utf-8')
+            st.download_button("💭 Download Evidence CSV", evidence_csv, "audit_evidence.csv", "text/csv")
     
     # Additional export options
     st.markdown("#### 📊 Advanced Export Options")
@@ -241,7 +241,7 @@ def main():
         st.markdown("**Data Quality Summary:**")
         quality_info = {
             'Total Records': len(filtered_df),
-            'Missing Rationale': filtered_df['rationale'].isna().sum() if 'rationale' in filtered_df.columns else 'N/A',
+            'Missing Rationale': filtered_df['evidence'].isna().sum() if 'evidence' in filtered_df.columns else 'N/A',
             'Score Range': f"{filtered_df[score_col].min():.1f} - {filtered_df[score_col].max():.1f}" if score_col in filtered_df.columns else 'N/A',
             'Unique Pages': filtered_df['page_id'].nunique() if 'page_id' in filtered_df.columns else 'N/A',
             'Unique Criteria': filtered_df['criterion_id'].nunique() if 'criterion_id' in filtered_df.columns else 'N/A'

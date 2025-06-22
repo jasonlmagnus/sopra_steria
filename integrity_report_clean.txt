@@ -1,0 +1,101 @@
+============================================================
+DASHBOARD INTEGRITY CHECK REPORT
+============================================================
+
+📊 SUMMARY
+   Files Checked: 14
+   Files with Issues: 0
+   Clean Files: 14
+   Total Issues: 0
+
+📋 AVAILABLE COLUMNS (35)
+   audited_ts                | avg_score                 | brand_percentage         
+   business_impact_analysis  | conversion_likelihood     | conversion_numeric       
+   criterion_code            | criterion_id              | critical_issue_flag      
+   descriptor                | effective_copy_examples   | engagement_level         
+   engagement_numeric        | evidence                  | final_score              
+   first_impression          | ineffective_copy_examples | information_gaps         
+   language_tone_feedback    | overall_sentiment         | page_id                  
+   performance_percentage    | persona_id                | quick_win_flag           
+   raw_score                 | sentiment_numeric         | slug                     
+   success_flag              | tier                      | tier_name                
+   tier_weight               | tier_weighted_score       | trust_credibility_assessment
+   url                       | url_slug                 
+
+🔍 DETAILED RESULTS
+----------------------------------------
+✅ brand_health_command_center.py
+   Total References: 0
+   Valid References: 0
+   Issues: 0
+
+✅ tier_analyzer.py
+   Total References: 11
+   Valid References: 11
+   Issues: 0
+
+✅ metrics_calculator.py
+   Total References: 39
+   Valid References: 39
+   Issues: 0
+
+✅ 6_🏗️_Tier_Analysis.py
+   Total References: 10
+   Valid References: 10
+   Issues: 0
+
+✅ 11_🚀_Run_Audit.py
+   Total References: 0
+   Valid References: 0
+   Issues: 0
+
+✅ 1_🎯_Executive_Summary.py
+   Total References: 15
+   Valid References: 15
+   Issues: 0
+
+✅ 8_🔍_Evidence_Explorer.py
+   Total References: 19
+   Valid References: 19
+   Issues: 0
+
+✅ 7_📄_Page_Performance.py
+   Total References: 12
+   Valid References: 12
+   Issues: 0
+
+✅ 5_👤_Persona_Experience.py
+   Total References: 4
+   Valid References: 4
+   Issues: 0
+
+✅ 9_🎯_Criteria_Deep_Dive.py
+   Total References: 5
+   Valid References: 5
+   Issues: 0
+
+✅ 4_👥_Persona_Comparison.py
+   Total References: 4
+   Valid References: 4
+   Issues: 0
+
+✅ 2_📊_Overview.py
+   Total References: 14
+   Valid References: 14
+   Issues: 0
+
+✅ 10_📋_Detailed_Data.py
+   Total References: 24
+   Valid References: 24
+   Issues: 0
+
+✅ 3_💡_AI_Strategic_Insights.py
+   Total References: 5
+   Valid References: 5
+   Issues: 0
+
+💡 RECOMMENDATIONS
+----------------------------------------
+✅ All dashboard files are using valid column references!
+
+============================================================

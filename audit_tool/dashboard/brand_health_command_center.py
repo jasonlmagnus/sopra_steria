@@ -220,7 +220,7 @@ def display_executive_dashboard(summary, metrics_calc):
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-value {status_class}">
-                {brand_health['emoji']} {brand_health['score']}/10
+                {brand_health['emoji']} {brand_health['raw_score']}/10
             </div>
             <div class="metric-label">Brand Health Score - {brand_health['status']}</div>
         </div>
@@ -301,7 +301,7 @@ def display_executive_dashboard(summary, metrics_calc):
         convert_status = "✅ Yes" if conversion['status'] == 'High' else "⚠️ Partially" if conversion['status'] == 'Medium' else "❌ No"
         
         st.metric("Conversion Readiness", conversion['status'], delta=convert_status)
-        st.metric("Conversion Score", f"{conversion['score']:.1f}/10")
+        st.metric("Conversion Score", f"{conversion['raw_score']:.1f}/10")
         
         st.markdown("**Conversion Factors:**")
         st.markdown("- Call-to-action effectiveness")
@@ -365,7 +365,7 @@ def display_executive_dashboard(summary, metrics_calc):
         st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 8.0)")
         
         for story in success_stories[:3]:  # Show top 3
-            with st.expander(f"⭐ {story['page_id']} - Score: {story['score']:.1f}"):
+            with st.expander(f"⭐ {story['page_id']} - Score: {story['raw_score']:.1f}"):
                 st.markdown(f"**Tier:** {story['tier']}")
                 if 'sentiment' in story:
                     st.markdown(f"**Sentiment:** {story['sentiment']}")
@@ -378,7 +378,7 @@ def display_executive_dashboard(summary, metrics_calc):
                 if story['url']:
                     st.markdown(f"**URL:** {story['url']}")
     else:
-        st.warning("⚠️ No pages currently scoring 8.0 or above. Focus on improvement opportunities.")
+        st.warning("⚠️ No pages currently scoring 7.7 or above. Focus on improvement opportunities.")
     
     # Strategic Recommendations
     if summary['recommendations']:

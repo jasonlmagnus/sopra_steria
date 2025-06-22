@@ -162,14 +162,20 @@ def main():
                     st.write(f"• **Page:** {best_example['url_slug'].replace('_', ' ').title()}")
                     st.write(f"• **Persona:** {best_example['persona_id']}")
                     st.write(f"• Score: {best_example['avg_score']:.1f}/10")
-                    st.write(f"• **Rationale:** {best_example['rationale'][:200]}...")
+                    if pd.notna(best_example['evidence']):
+                        st.write(f"• **Evidence:** {best_example['evidence'][:200]}...")
+                    else:
+                        st.write("• **Evidence:** No evidence available")
                 
                 with col2:
                     st.markdown("**⚠️ Needs Improvement:**")
                     st.write(f"• **Page:** {worst_example['url_slug'].replace('_', ' ').title()}")
                     st.write(f"• **Persona:** {worst_example['persona_id']}")
                     st.write(f"• Score: {worst_example['avg_score']:.1f}/10")
-                    st.write(f"• **Rationale:** {worst_example['rationale'][:200]}...")
+                    if pd.notna(worst_example['evidence']):
+                        st.write(f"• **Evidence:** {worst_example['evidence'][:200]}...")
+                    else:
+                        st.write("• **Evidence:** No evidence available")
     
     # Experience comparison (if available)
     if summary.get('has_experience_data') and datasets['experience'] is not None:

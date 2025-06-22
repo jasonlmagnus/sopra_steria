@@ -25,7 +25,7 @@ class BrandHealthMetricsCalculator:
             logger.warning("Missing required column: page_id")
         
         # Check for at least one score column
-        score_cols = ['score', 'raw_score', 'final_score']
+        score_cols = ['raw_score', 'raw_score', 'final_score']
         has_score = any(col in self.df.columns for col in score_cols)
         if not has_score:
             logger.warning(f"Missing score columns. Expected one of: {score_cols}")
@@ -37,8 +37,8 @@ class BrandHealthMetricsCalculator:
             return self.df['raw_score'].mean()
         elif 'final_score' in self.df.columns:
             return self.df['final_score'].mean()
-        elif 'score' in self.df.columns:
-            return self.df['score'].mean()
+        elif 'raw_score' in self.df.columns:
+            return self.df['raw_score'].mean()
         
         logger.warning("No score column found for brand health calculation")
         return 0.0
@@ -63,9 +63,9 @@ class BrandHealthMetricsCalculator:
         elif 'final_score' in self.df.columns:
             critical_pages = self.df[self.df['final_score'] < 4.0]
             score_col = 'final_score'
-        elif 'score' in self.df.columns:
-            critical_pages = self.df[self.df['score'] < 4.0]
-            score_col = 'score'
+        elif 'raw_score' in self.df.columns:
+            critical_pages = self.df[self.df['raw_score'] < 4.0]
+            score_col = 'raw_score'
         else:
             critical_pages = pd.DataFrame()
             score_col = None
@@ -103,15 +103,15 @@ class BrandHealthMetricsCalculator:
         
         # If no specific conversion columns, use score-based approach
         if not available_cols:
-            # Use the main score column (either 'final_score', 'score', or 'raw_score')
+            # Use the main score column (either 'final_score', 'raw_score', or 'raw_score')
             score_col = None
-            for col in ['final_score', 'score', 'raw_score']:
+            for col in ['final_score', 'raw_score', 'raw_score']:
                 if col in self.df.columns:
                     score_col = col
                     break
             
             if score_col is None:
-                return {'score': 0, 'status': 'Unknown', 'color': 'gray'}
+                return {'raw_score': 0, 'status': 'Unknown', 'color': 'gray'}
             
             # Calculate average score for conversion readiness
             conversion_score = self.df[score_col].mean()
@@ -126,13 +126,13 @@ class BrandHealthMetricsCalculator:
             if not numeric_cols:
                 # Fallback to score column
                 score_col = None
-                for col in ['final_score', 'score', 'raw_score']:
+                for col in ['final_score', 'raw_score', 'raw_score']:
                     if col in self.df.columns:
                         score_col = col
                         break
                 
                 if score_col is None:
-                    return {'score': 0, 'status': 'Unknown', 'color': 'gray'}
+                    return {'raw_score': 0, 'status': 'Unknown', 'color': 'gray'}
                 
                 conversion_score = self.df[score_col].mean()
             else:
@@ -146,7 +146,7 @@ class BrandHealthMetricsCalculator:
             status, color = "Low", "red"
         
         return {
-            'score': conversion_score,
+            'raw_score': conversion_score,
             'status': status,
             'color': color
         }
@@ -238,33 +238,64 @@ class BrandHealthMetricsCalculator:
             return pd.DataFrame()
     
     def get_top_opportunities(self, limit: int = 5) -> List[Dict]:
-        """Get top improvement opportunities"""
-        if 'potential_impact' not in self.df.columns:
-            return []
-        
-        # Sort by potential impact and get top opportunities
-        opportunities = self.df.nlargest(limit, 'potential_impact')
-        
-        # Find the correct score column - prioritize raw_score for unified data
+        """Get top improvement opportunities based on score gaps and tier importance"""
+        # Find the correct score column
         score_col = None
-        for col in ['raw_score', 'score', 'final_score']:
+        for col in ['avg_score', 'raw_score', 'final_score']:
             if col in self.df.columns:
                 score_col = col
                 break
         
+        if score_col is None or 'tier_weight' not in self.df.columns:
+            return []
+        
+        # Aggregate by page to avoid duplicates (unified dataset has multiple rows per page)
+        page_agg = self.df.groupby('page_id').agg({
+            score_col: 'mean',  # Use avg_score which should be consistent per page
+            'tier_weight': 'first',  # Tier weight should be same for all criteria of a page
+            'tier': 'first',
+            'tier_name': 'first', 
+            'url': 'first',
+            'url_slug': 'first'
+        }).reset_index()
+        
+        # Calculate opportunity score: (10 - current_score) * tier_weight
+        # Higher opportunity score = bigger gap in more important pages
+        page_agg['opportunity_score'] = (10 - page_agg[score_col]) * page_agg['tier_weight']
+        
+        # Filter to pages with meaningful improvement potential (score < 7.5)
+        improvement_candidates = page_agg[page_agg[score_col] < 7.5]
+        
+        if improvement_candidates.empty:
+            return []
+        
+        # Get top opportunities by opportunity score
+        opportunities = improvement_candidates.nlargest(limit, 'opportunity_score')
+        
         result = []
         for _, row in opportunities.iterrows():
+            # Calculate effort level based on current score
+            current_score = row.get(score_col, 0)
+            if current_score < 3.0:
+                effort_level = "High"
+            elif current_score < 5.0:
+                effort_level = "Medium"
+            else:
+                effort_level = "Low"
+            
             result.append({
                 'page_id': row.get('page_id', 'Unknown'),
                 'url': row.get('url', ''),
-                'current_score': row.get(score_col, 0) if score_col else 0,
-                'potential_impact': row.get('potential_impact', 0),
-                'recommendation': row.get('recommendation', 'No recommendation available')
+                'current_score': current_score,
+                'potential_impact': round(row.get('opportunity_score', 0), 1),
+                'effort_level': effort_level,
+                'tier': row.get('tier', 'Unknown'),
+                'recommendation': f"Improve {row.get('tier_name', 'page')} content - current score {current_score:.1f}/10"
             })
         
         return result
     
-    def calculate_success_stories(self, min_score: float = 8.0) -> List[Dict]:
+    def calculate_success_stories(self, min_score: float = 7.7) -> List[Dict]:
         """Get success stories (high-performing pages)"""
         # Use avg_score as the primary score column for unified data
         if 'avg_score' in self.df.columns:
@@ -283,7 +314,7 @@ class BrandHealthMetricsCalculator:
             story = {
                 'page_id': row.get('page_id', 'Unknown'),
                 'url': row.get('url', ''),
-                'score': row.get(score_col, 0),
+                'raw_score': row.get(score_col, 0),
                 'tier': row.get('tier', 'Unknown'),
                 'key_strengths': self._extract_key_strengths(row)
             }
@@ -330,7 +361,7 @@ class BrandHealthMetricsCalculator:
         
         # Find the correct score column - prioritize final_score for our data
         score_col = None
-        for col in ['final_score', 'score', 'raw_score']:
+        for col in ['final_score', 'raw_score', 'raw_score']:
             if col in self.df.columns:
                 score_col = col
                 break
@@ -379,7 +410,7 @@ class BrandHealthMetricsCalculator:
         
         return {
             'brand_health': {
-                'score': round(brand_health, 1),
+                'raw_score': round(brand_health, 1),
                 'status': status,
                 'emoji': emoji
             },
@@ -407,11 +438,16 @@ class BrandHealthMetricsCalculator:
             if critical_count > 0:
                 recommendations.append(f"Address {critical_count} critical pages scoring below 4.0")
         
-        # Quick wins recommendation (unified dataset approach)
-        if 'quick_win_potential' in self.df.columns:
-            quick_wins = len(self.df[self.df['quick_win_potential'] == True])
+        # Quick wins recommendation using quick_win_flag from unified dataset
+        if 'quick_win_flag' in self.df.columns and score_col in self.df.columns:
+            quick_wins = len(self.df[self.df['quick_win_flag'] == True])
             if quick_wins > 0:
                 recommendations.append(f"Implement {quick_wins} quick wins for immediate impact")
+            else:
+                # Fallback: identify potential quick wins from score range
+                potential_wins = len(self.df[(self.df[score_col] >= 4.0) & (self.df[score_col] < 7.0)])
+                if potential_wins > 0:
+                    recommendations.append(f"Focus on {potential_wins} moderate-scoring pages for quick improvements")
         elif score_col in self.df.columns:
             # Fallback: identify potential quick wins
             potential_wins = len(self.df[(self.df[score_col] >= 4.0) & (self.df[score_col] < 7.0)])
@@ -428,10 +464,10 @@ class BrandHealthMetricsCalculator:
         return recommendations[:3]  # Top 3 recommendations
     
     def _calculate_success_pages(self) -> int:
-        """Calculate number of success pages (score >= 8)"""
+        """Calculate number of success pages (score >= 7.7)"""
         # Find the correct score column - prioritize final_score for our data
         score_col = None
-        for col in ['final_score', 'score', 'raw_score']:
+        for col in ['final_score', 'raw_score', 'raw_score']:
             if col in self.df.columns:
                 score_col = col
                 break
@@ -439,4 +475,4 @@ class BrandHealthMetricsCalculator:
         if score_col is None:
             return 0
         
-        return len(self.df[self.df[score_col] >= 8.0]) 
+        return len(self.df[self.df[score_col] >= 7.7]) 

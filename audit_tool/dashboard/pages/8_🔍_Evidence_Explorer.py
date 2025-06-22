@@ -85,9 +85,9 @@ def main():
     display_df = filtered_df.copy()
     
     # Apply search filter
-    if search_query and 'rationale' in display_df.columns:
+    if search_query and 'evidence' in display_df.columns:
         display_df = display_df[
-            display_df['rationale'].str.contains(search_query, case=False, na=False)
+            display_df['evidence'].str.contains(search_query, case=False, na=False)
         ]
     
     # Apply score filter
@@ -175,20 +175,20 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Evidence/Rationale
-                if pd.notna(row.get('rationale')):
-                    st.markdown("**🤖 AI Rationale:**")
-                    rationale = str(row['rationale'])
+                if pd.notna(row.get('evidence')):
+                    st.markdown("**🤖 AI Evidence:**")
+                    evidence = str(row['evidence'])
                     if search_query:
                         # Highlight search terms
-                        highlighted = rationale.replace(
+                        highlighted = evidence.replace(
                             search_query, 
                             f"**{search_query}**"
                         )
                         st.markdown(highlighted)
                     else:
-                        st.markdown(rationale)
+                        st.markdown(evidence)
                 else:
-                    st.markdown("*No rationale available*")
+                    st.markdown("*No evidence available*")
                 
                 # Additional details
                 col1, col2, col3 = st.columns(3)
@@ -222,8 +222,8 @@ def main():
         )
         
         # Truncate rationale for table view
-        if 'rationale' in table_data.columns:
-            table_data['Evidence Summary'] = table_data['rationale'].apply(
+        if 'evidence' in table_data.columns:
+            table_data['Evidence Summary'] = table_data['evidence'].apply(
                 lambda x: str(x)[:100] + "..." if pd.notna(x) and len(str(x)) > 100 else str(x)
             )
         
@@ -283,8 +283,8 @@ def main():
                 report_content += f"## {page_name} - {criterion_name}\n"
                 report_content += f"**Score:** {row['raw_score']:.1f}/10\n\n"
                 
-                if pd.notna(row.get('rationale')):
-                    report_content += f"**AI Rationale:**\n{row['rationale']}\n\n"
+                if pd.notna(row.get('evidence')):
+                    report_content += f"**AI Rationale:**\n{row['evidence']}\n\n"
                 
                 if 'url' in row and pd.notna(row['url']):
                     report_content += f"**URL:** {row['url']}\n\n"

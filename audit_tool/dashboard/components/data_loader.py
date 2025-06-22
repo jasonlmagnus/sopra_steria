@@ -17,8 +17,8 @@ class BrandHealthDataLoader:
     """Enhanced data loader with proper type handling and derived metrics"""
     
     def __init__(self, audit_outputs_dir: str = "audit_outputs"):
-        self.audit_outputs_dir = Path(audit_outputs_dir)
-        self.unified_data_dir = Path("audit_data")
+        self.audit_outputs_dir = Path("../../audit_outputs")
+        self.unified_data_dir = Path("../../audit_data")
         
     def safe_sort_unique(self, series):
         """Handle mixed float/string types in sorting"""
@@ -43,8 +43,8 @@ class BrandHealthDataLoader:
                         df['avg_score'] = df['final_score']
                     elif 'raw_score' in df.columns:
                         df['avg_score'] = df['raw_score']
-                    elif 'score' in df.columns:
-                        df['avg_score'] = df['score']
+                    elif 'raw_score' in df.columns:
+                        df['avg_score'] = df['raw_score']
                 
                 return df
             
@@ -157,7 +157,7 @@ class BrandHealthDataLoader:
                     'optional_cols': ['slug', 'persona', 'audited_ts']
                 },
                 'criteria_scores.csv': {
-                    'required_cols': ['page_id', 'criterion_code', 'score'],
+                    'required_cols': ['page_id', 'criterion_code', 'raw_score'],
                     'optional_cols': ['criterion_name', 'evidence', 'weight_pct', 'tier', 'descriptor']
                 },
                 'recommendations.csv': {
@@ -277,14 +277,14 @@ class BrandHealthDataLoader:
         """Add calculated fields and derived metrics"""
         try:
             # Ensure numeric columns
-            numeric_cols = ['final_score', 'score', 'weight_pct', 'conversion_likelihood']
+            numeric_cols = ['final_score', 'raw_score', 'weight_pct', 'conversion_likelihood']
             for col in numeric_cols:
                 if col in df.columns:
                     df[col] = pd.to_numeric(df[col], errors='coerce')
             
             # Criterion gap (10 - score)
-            if 'score' in df.columns:
-                df['criterion_gap'] = 10 - df['score']
+            if 'raw_score' in df.columns:
+                df['criterion_gap'] = 10 - df['raw_score']
             
             # Effort level based on evidence length
             if 'evidence' in df.columns:

@@ -8,12 +8,16 @@ unified_audit_data_columns:
   - url_slug
   - url
   - tier
+  - tier_name
+  - tier_weight
+  - brand_percentage
+  - performance_percentage
   - criterion_id
   - criterion_code
   - raw_score
   - final_score
   - descriptor
-  - rationale
+  - evidence
   - first_impression
   - language_tone_feedback
   - information_gaps
@@ -33,8 +37,9 @@ unified_audit_data_columns:
   - engagement_numeric
   - conversion_numeric
   - avg_score
+  - tier_weighted_score
 
-# Column count: 30
+# Column count: 35
 # File size: 1,021,465 bytes
 # Row count: 403 (including header)
 

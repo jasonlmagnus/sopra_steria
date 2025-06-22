@@ -14,6 +14,9 @@ from pathlib import Path
 # Add audit_tool to path for imports
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
+# Import components
+from components.tier_analyzer import TierAnalyzer
+
 def main():
     """Main executive summary page"""
     st.set_page_config(page_title="Executive Summary", page_icon="🎯", layout="wide")
@@ -29,6 +32,24 @@ def main():
     
     st.title("🎯 Executive Summary")
     st.markdown("### Strategic Overview & Key Performance Indicators")
+    
+    # Initialize tier analyzer for methodology-based scoring
+    tier_analyzer = TierAnalyzer(master_df)
+    brand_health = tier_analyzer.calculate_overall_brand_health()
+    
+    # Display tier-weighted brand health score prominently
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
+            "🎯 Overall Brand Health",
+            f"{brand_health['raw_score']:.1f}/10",
+            help="Tier-weighted score based on methodology: Brand Positioning (30%), Value Propositions (50%), Functional Content (20%)"
+        )
+    with col2:
+        st.metric("📊 Brand Status", brand_health['status'])
+    with col3:
+        total_pages_analyzed = master_df['page_id'].nunique() if 'page_id' in master_df.columns else len(master_df)
+        st.metric("📄 Pages Analyzed", total_pages_analyzed)
     
     # Persona filter
     if 'persona_id' in master_df.columns:
@@ -56,19 +77,13 @@ def main():
         score_col = 'avg_score'
     
     avg_score = filtered_df[score_col].mean() if score_col else 0
-    positive_sentiment = (filtered_df['overall_sentiment'] == 'Positive').sum() if 'overall_sentiment' in filtered_df.columns else 0
     
     # Display key metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     with col1:
         st.metric("Total Pages", total_pages)
     with col2:
         st.metric("Average Score", f"{avg_score:.1f}/10")
-    with col3:
-        st.metric("Positive Sentiment", f"{positive_sentiment}/{total_pages}")
-    with col4:
-        conversion_high = (filtered_df['conversion_likelihood'] == 'High').sum() if 'conversion_likelihood' in filtered_df.columns else 0
-        st.metric("High Conversion", f"{conversion_high}/{total_pages}")
     
     # Performance by tier using correct column names
     if 'tier' in filtered_df.columns and score_col:
@@ -218,7 +233,7 @@ def main():
             for i, ((page, criterion), data) in enumerate(success_stories.iterrows()):
                 with st.expander(f"🌟 Success #{i+1}: {page.replace('_', ' ').title()} - {criterion.replace('_', ' ').title()}"):
                     st.write(f"**Score:** {data[score_col]}/10")
-                    st.write(f"**Why it works:** {data['rationale']}")
+                    st.write(f"**Why it works:** {data['evidence']}")
                     if 'url' in data and pd.notna(data['url']):
                         st.write(f"**URL:** {data['url']}")
 

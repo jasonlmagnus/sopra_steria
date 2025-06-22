@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Multi-Persona Data Packager for Brand Audit Tool
-Combines all persona analyses into a single comparable dataset
+Combines all persona analyses into a single comparable dataset with tier intelligence
 """
 
 import pandas as pd
@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 import hashlib
 import logging
+from tier_classifier import TierClassifier, quick_classify_from_url_list
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,9 @@ class MultiPersonaPackager:
         self.project_root = current_dir.parent
         self.audit_outputs_dir = self.project_root / "audit_outputs"
         self.output_dir = self.project_root / "audit_data"
+        
+        # Initialize tier classifier
+        self.tier_classifier = TierClassifier()
         
     def get_available_personas(self) -> List[str]:
         """Get list of available persona analyses"""
@@ -128,20 +132,28 @@ class MultiPersonaPackager:
                     if not exp_match.empty:
                         experience_data = exp_match.iloc[0].to_dict()
                 
+                # Get URL and classify tier intelligently
+                url = page_data.get('url', criteria_row.get('url', ''))
+                tier_name, tier_config = self.tier_classifier.classify_url(url)
+                
                 # Create comprehensive row with all required columns
                 row = {
                     # Core audit data
                     'persona_id': persona,
                     'page_id': page_id,
                     'url_slug': page_data.get('slug', page_id),
-                    'url': page_data.get('url', criteria_row.get('url', '')),
-                    'tier': page_data.get('tier', criteria_row.get('tier', 'Unknown')),
+                    'url': url,
+                    'tier': tier_name,  # Use intelligent tier classification
+                    'tier_name': tier_config.get('name', tier_name),
+                    'tier_weight': tier_config.get('weight_in_onsite', 0.33),
+                    'brand_percentage': tier_config.get('brand_percentage', 50),
+                    'performance_percentage': tier_config.get('performance_percentage', 50),
                     'criterion_id': criteria_row.get('criterion_code', ''),  # Use criterion_code as the ID
                     'criterion_code': criteria_row.get('criterion_code', ''),  # Dashboard expects this
                     'raw_score': criteria_row.get('score', 0),
                     'final_score': criteria_row.get('score', 0),  # Dashboard expects this
                     'descriptor': criteria_row.get('descriptor', ''),
-                    'rationale': criteria_row.get('rationale', ''),
+                    'evidence': criteria_row.get('evidence', ''),
                     
                     # Experience data (merged from experience.csv)
                     'first_impression': experience_data.get('first_impression', ''),
@@ -167,6 +179,10 @@ class MultiPersonaPackager:
                 
                 # Add numeric mappings for text fields
                 row.update(self._create_numeric_mappings(row))
+                
+                # Calculate tier-weighted score
+                page_scores = {criteria_row.get('criterion_code', ''): criteria_row.get('score', 0)}
+                row['tier_weighted_score'] = self.tier_classifier.calculate_tier_weighted_score(page_scores, tier_name)
                 
                 data_rows.append(row)
             

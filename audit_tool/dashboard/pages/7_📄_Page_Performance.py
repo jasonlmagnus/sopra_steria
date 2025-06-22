@@ -164,10 +164,10 @@ def main():
         
         # Detailed evaluation results
         st.markdown("### 📋 Detailed Evaluation Results")
-        page_display = page_data[['persona_id', 'tier', 'criterion_code', score_col, 'descriptor', 'rationale']].copy()
+        page_display = page_data[['persona_id', 'tier', 'criterion_code', score_col, 'descriptor', 'evidence']].copy()
         page_display['tier'] = page_display['tier'].astype(str).str.replace('_', ' ').str.title()
         page_display['criterion_code'] = page_display['criterion_code'].astype(str).str.replace('_', ' ').str.title()
-        page_display.columns = ['Persona', 'Category', 'Criterion', 'Score', 'Performance', 'AI Rationale']
+        page_display.columns = ['Persona', 'Category', 'Criterion', 'Score', 'Performance', 'AI Evidence']
         
         st.dataframe(page_display, use_container_width=True, height=400)
 
