@@ -17,8 +17,8 @@ class BrandHealthDataLoader:
     """Enhanced data loader with proper type handling and derived metrics"""
     
     def __init__(self, audit_outputs_dir: str = "audit_outputs"):
-        self.audit_outputs_dir = Path("../../audit_outputs")
-        self.unified_data_dir = Path("../../audit_data")
+        self.audit_outputs_dir = Path("audit_outputs")
+        self.unified_data_dir = Path("audit_data")
         
     def safe_sort_unique(self, series):
         """Handle mixed float/string types in sorting"""

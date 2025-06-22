@@ -198,8 +198,35 @@ def apply_content_filters(master_df):
     return filtered_df
 
 def display_performance_overview(metrics_calc, filtered_df):
-    """Display high-level performance overview (from Overview page)"""
+    """Display high-level performance overview with business context"""
     st.markdown("## 📈 Performance Overview")
+    
+    # Add business impact context at the top
+    if 'avg_score' in filtered_df.columns:
+        avg_score = filtered_df['avg_score'].mean()
+        total_pages = len(filtered_df['page_id'].unique()) if 'page_id' in filtered_df.columns else len(filtered_df)
+        poor_performers = len(filtered_df[filtered_df['avg_score'] < 6.0])
+        
+        # Content performance status
+        if avg_score >= 8:
+            business_impact = "🚀 Strong content performance across pages"
+            impact_color = "green"
+        elif avg_score >= 6:
+            business_impact = f"⚠️ {poor_performers} pages need improvement"
+            impact_color = "orange"
+        else:
+            business_impact = f"🚨 {poor_performers} pages require attention"
+            impact_color = "red"
+        
+        st.markdown(f"""
+        <div style="background: #f8f9fa; border-left: 4px solid {impact_color}; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <h4 style="margin: 0; color: #333;">💡 Content Status</h4>
+            <p style="margin: 8px 0; color: {impact_color}; font-weight: bold;">{business_impact}</p>
+            <p style="margin: 5px 0; font-size: 14px;">
+                <strong>Focus:</strong> Prioritize pages scoring below 6.0 for maximum impact
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Calculate key performance metrics
     if 'avg_score' in filtered_df.columns:

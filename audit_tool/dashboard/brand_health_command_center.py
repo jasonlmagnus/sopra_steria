@@ -203,40 +203,146 @@ def main():
 def display_executive_dashboard(summary, metrics_calc):
     """Display the focused executive dashboard - 30-second overview"""
     
+    # Add tier filtering at the top
+    st.markdown("### 🎯 Strategic Focus")
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        tier_filter = st.selectbox(
+            "Focus on Content Tier:",
+            ["All Tiers", "Tier 1 (Strategic)", "Tier 2 (Tactical)", "Tier 3 (Operational)"],
+            help="Filter analysis by content strategy tier"
+        )
+    
+    with col2:
+        if tier_filter != "All Tiers":
+            st.info(f"📊 Showing {tier_filter} analysis")
+    
+    # Business Impact Summary - The "So What?" Section
+    st.markdown("## 🎯 Executive Summary")
+    
+    # Get brand health data first
+    brand_health = summary['brand_health']
+    
+    # Calculate key business metrics
+    brand_score = brand_health['raw_score']
+    critical_count = summary['key_metrics']['critical_issues']
+    quick_wins = summary['key_metrics']['quick_wins']
+    
+    # Determine overall status and priority
+    if brand_score >= 8:
+        status_message = "Strong brand performance across key metrics"
+        impact_color = "green"
+        impact_icon = "🚀"
+        priority = "MAINTAIN"
+    elif brand_score >= 6:
+        status_message = "Solid foundation with room for improvement"
+        impact_color = "orange" 
+        impact_icon = "⚠️"
+        priority = "OPTIMIZE"
+    else:
+        status_message = "Significant improvement opportunities identified"
+        impact_color = "red"
+        impact_icon = "🚨"
+        priority = "URGENT"
+    
+    st.markdown(f"""
+    <div class="business-impact-summary" style="
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 5px solid {impact_color};
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+    ">
+        <h3 style="margin: 0 0 10px 0; color: #333;">
+            {impact_icon} <strong>{status_message}</strong>
+        </h3>
+        <p style="font-size: 16px; margin: 10px 0; color: {impact_color};">
+            <strong>Priority Level: {priority}</strong>
+        </p>
+        <p style="margin: 5px 0;">
+            • <strong>{critical_count} critical issues</strong> need immediate attention
+        </p>
+        <p style="margin: 5px 0;">
+            • <strong>{quick_wins} quick wins</strong> identified for fast improvements
+        </p>
+        <p style="margin: 5px 0;">
+            • <strong>Overall Score:</strong> {brand_score:.1f}/10 ({brand_health['status']})
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # EXECUTIVE QUESTION 1: How healthy is our brand?
     st.markdown("## 🏥 Brand Health Overview")
-    
-    brand_health = summary['brand_health']
     
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     
     with col1:
         status_class = f"status-{brand_health['status'].lower()}"
+        # Show actual performance context
+        score = brand_health['raw_score']
+        if score >= 8:
+            impact_text = "🚀 Strong performance across criteria"
+            impact_color = "green"
+        elif score >= 6:
+            impact_text = "⚠️ Room for improvement identified"
+            impact_color = "orange"
+        else:
+            impact_text = "🚨 Multiple issues need attention"
+            impact_color = "red"
+            
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-value {status_class}">
                 {brand_health['emoji']} {brand_health['raw_score']}/10
             </div>
             <div class="metric-label">Overall Brand Health - {brand_health['status']}</div>
+            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
+                💡 {impact_text}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         critical_count = summary['key_metrics']['critical_issues']
         card_class = "critical" if critical_count > 0 else ""
+        
+        # Show actual critical issue context
+        if critical_count > 0:
+            impact_text = f"Requires immediate attention"
+            impact_color = "red"
+        else:
+            impact_text = "✅ No critical issues found"
+            impact_color = "green"
+            
         st.markdown(f"""
         <div class="metric-card {card_class}">
             <div class="metric-value">🚨 {critical_count}</div>
             <div class="metric-label">Critical Issues</div>
+            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
+                💡 {impact_text}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         quick_wins = summary['key_metrics']['quick_wins']
+        
+        # Show quick win context
+        if quick_wins > 0:
+            impact_text = f"Ready for implementation"
+            impact_color = "green"
+        else:
+            impact_text = "No quick wins identified"
+            impact_color = "gray"
+            
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-value">⚡ {quick_wins}</div>
             <div class="metric-label">Quick Wins</div>
+            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
+                💡 {impact_text}
+            </div>
         </div>
         """, unsafe_allow_html=True)
     
