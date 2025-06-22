@@ -7,23 +7,32 @@ import glob
 import shutil
 
 def get_persona_name(persona_content: str) -> str:
-    """Extracts the persona name from the markdown content to find the output dir."""
+    """Extracts the full persona name from the markdown content."""
+    lines = persona_content.strip().split('\n')
+    if lines:
+        first_line = lines[0].strip()
+        if first_line.startswith("Persona Brief:"):
+            return first_line.replace("Persona Brief:", "").strip()
+        elif first_line and not first_line.startswith('#'):
+            return first_line
+    # Fallback to P-number for directory safety if name extraction fails
     match = re.search(r"P\d+", persona_content)
     if match:
         return match.group(0)
-    # Fallback for safe directory naming if no P-number is found
     return "default_persona"
 
-def run_audit(persona_file_path, urls_file_path):
+def run_audit(persona_file_path, urls_file_path, output_dir):
     """Runs the audit tool as a subprocess."""
     command = [
         "python",
         "-m",
         "audit_tool.main",
+        "--urls",
+        urls_file_path,
         "--persona",
         persona_file_path,
-        "--file",
-        urls_file_path,
+        "--output",
+        output_dir
     ]
     process = subprocess.Popen(
         command,
@@ -140,16 +149,22 @@ def main():
                 f.write(st.session_state.urls_text)
 
             st.session_state.persona_name = get_persona_name(persona_content)
+            
+            # Create output directory for this persona
+            output_dir = os.path.join("audit_outputs", st.session_state.persona_name)
+            os.makedirs(output_dir, exist_ok=True)
 
             # --- RUN AUDIT & STREAM LOGS ---
             log_container.text(f"Starting audit for {st.session_state.persona_name}...")
             
-            log_content = ""
-            process = run_audit(persona_file_path, urls_file_path)
+            process = run_audit(persona_file_path, urls_file_path, output_dir)
 
+            log_lines = []
             for line in iter(process.stdout.readline, ''):
-                log_content += line
-                log_container.text(log_content)
+                log_lines.append(line.rstrip())
+                if len(log_lines) > 100:  # Keep only the last 100 lines
+                    log_lines = log_lines[-100:]
+                log_container.code('\n'.join(log_lines))
             
             process.wait()
             # --- END AUDIT ---

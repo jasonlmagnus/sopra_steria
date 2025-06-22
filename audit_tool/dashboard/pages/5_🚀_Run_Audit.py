@@ -19,39 +19,43 @@ from datetime import datetime
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def get_persona_name(persona_content: str, filename: str = None) -> str:
-    """Extracts the persona name from the markdown content to find the output dir."""
-    # Try to extract from content first
+    """Extract a human-readable persona name; fall back to P-number."""
+    lines = persona_content.strip().split('\n')
+    if lines:
+        first = lines[0].strip()
+        if first.startswith("Persona Brief:"):
+            return first.replace("Persona Brief:", "").strip()
+        if first and not first.startswith('#'):
+            return first
+    # fallback to P1, P2 etc.
     match = re.search(r"P\d+", persona_content)
-    if match:
-        return match.group(0)
-    
-    # Fall back to filename
-    if filename:
+    if not match and filename:
         match = re.search(r"P\d+", filename)
-        if match:
-            return match.group(0)
-    
-    return "default_persona"
+    return match.group(0) if match else "default_persona"
 
 def run_audit(persona_file_path, urls_file_path, persona_name):
-    """Runs the audit tool as a subprocess."""
-    project_root = Path(__file__).parent.parent.parent
+    """Runs the audit tool as a subprocess (inherits current working dir)."""
+    # Create output directory for this persona
+    output_dir = os.path.join("audit_outputs", persona_name)
+    os.makedirs(output_dir, exist_ok=True)
+    
     command = [
         "python",
         "-m",
         "audit_tool.main",
+        "--urls",
+        urls_file_path,
         "--persona",
         persona_file_path,
-        "--file",
-        urls_file_path,
+        "--output",
+        output_dir
     ]
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        encoding='utf-8',
-        cwd=str(project_root)
+        encoding='utf-8'
     )
     return process
 
@@ -256,32 +260,27 @@ def main():
             process = run_audit(persona_file_path, urls_file_path, persona_name)
             st.session_state.audit_process = process  # Store process for potential termination
             
-            # Stream logs - keep last 50 lines for better performance
+            # Stream logs – keep last 100 lines for smoother UI
             log_lines = []
             url_count = 0
             
             for line in iter(process.stdout.readline, ''):
-                # Check if audit was stopped
                 if not st.session_state.is_running:
                     process.terminate()
                     break
-                    
+                
                 log_lines.append(line.rstrip())
-                # Keep only last 50 lines to prevent memory issues and UI slowdown
-                if len(log_lines) > 50:
-                    log_lines = log_lines[-50:]
+                if len(log_lines) > 100:
+                    log_lines = log_lines[-100:]
+                log_container.code('\n'.join(log_lines), language=None)
                 
-                # Display in code block with limited height
-                log_text = '\n'.join(log_lines)
-                log_container.code(log_text, language=None)
-                
-                # Update progress based on log content
                 if "Processing URL" in line or "Scraping" in line:
                     url_count += 1
                     if st.session_state.total_urls > 0:
-                        progress = min(90, int((url_count / st.session_state.total_urls) * 80) + 10)
-                        progress_bar.progress(progress)
-                        status_text.text(f"Processing URL {url_count} of {st.session_state.total_urls}...")
+                        pct = int((url_count / st.session_state.total_urls) * 80) + 10
+                        pct = min(90, pct)
+                        progress_bar.progress(pct)
+                        status_text.text(f"Processing URL {url_count} of {st.session_state.total_urls}…")
                 
                 # Check for completion
                 if "Audit completed" in line or "Strategic summary generated" in line:
