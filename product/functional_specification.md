@@ -1,8 +1,9 @@
 # Functional Specification: Persona Experience & Brand Audit Tool
 
-**Status: ✅ ENHANCED - UX Strategy Implementation Complete**
+**Status: ✅ FUNCTIONAL - Core Pipeline Operational**
 
-**Latest Enhancement:** Executive Dashboard with story-driven UX implementing comprehensive data pipeline transformation.
+**Current Reality:** Manual 4-stage process with all components working. Dashboard fully operational.
+**Latest Enhancement:** Fixed data pipeline issues, standardized schema, eliminated column mismatches.
 
 ## 1. Overview
 
@@ -16,107 +17,161 @@ The system is a Python command-line application that audits a list of URLs from 
 
 ### 1.1. High-Level Architecture
 
-The application follows a modular, orchestrated design. A central `main.py` script coordinates the work of specialized modules for scraping, analysis, scoring, and reporting in a clear, linear flow.
+The application follows a modular, 4-stage design with manual orchestration between stages.
 
-- **Technology Stack:** Python 3.10+, Requests, BeautifulSoup4, Anthropic SDK, Jinja2, PyYAML.
-- **Execution Flow:**
-  1.  Initialize with a persona file and a file containing a list of URLs.
-  2.  Load the scoring `Methodology` from YAML configuration.
-  3.  **Loop through URLs:** For each URL:
-      a. **Scrape:** Collect page content with caching.
-      b. **Generate Narrative:** Create the persona-driven qualitative report using configurable templates.
-      c. **Generate Scorecard:** Create the quantitative scorecard based on YAML methodology.
-      d. **Write Reports:** Save the two generated reports to disk.
-  4.  **Summarize:** After the loop, aggregate all generated reports to produce and save a final `Strategic_Summary.md`.
+- **Technology Stack:** Python 3.10+, Requests, BeautifulSoup4, Anthropic SDK, OpenAI SDK, PyYAML, Pandas.
+- **Current Execution Flow (Manual 4-Stage Process):**
+  1.  **Stage 1 - Audit Generation:** `python -m audit_tool.main` generates markdown scorecards and experience reports.
+  2.  **Stage 2 - Data Enhancement:** `python -m audit_tool.backfill_packager` converts markdown to structured CSV files.
+  3.  **Stage 3 - Strategic Summary:** `python strategic_summary_generator.py` creates executive-level insights.
+  4.  **Stage 4 - Data Unification:** `python -m audit_tool.multi_persona_packager` generates unified parquet files for dashboard.
+
+### 1.2. Current Limitations
+
+- **Manual Process:** Requires 4 separate command executions
+- **No Automation:** Each stage must be run manually in sequence
+- **Error Handling:** No automated recovery between stages
+- **Progress Tracking:** No visibility into pipeline execution status
 
 ## 2. Component Specification
 
 ### 2.1. Main Orchestrator (`main.py`)
 
-- **Purpose:** Entry point and controller of the application.
-- **Interface:** Accepts command-line arguments: `python -m audit_tool.main --persona <path> --file <path>`.
+- **Purpose:** Entry point and controller of the application via `BrandAuditTool` class.
+- **Interface:** Accepts command-line arguments: `python -m audit_tool.main --urls <path> --persona <path> --output <path> --model <provider>`.
 - **Logic:**
-  1.  Parses arguments.
-  2.  Initializes all necessary components (`Scraper`, `AIInterface`, `MethodologyParser`, `NarrativeGenerator`, `ScorecardGenerator`, `SummaryGenerator`, `Reporter`).
-  3.  Loops through the URLs provided in the file. Inside the loop, it calls the appropriate generators and reporter methods for each URL.
-  4.  After the loop, it calls the `SummaryGenerator` and `Reporter` to create the final summary.
+  1.  Parses arguments and initializes `BrandAuditTool`.
+  2.  Initializes components (`Scraper`, `AIInterface`, `MethodologyParser`, `PersonaParser`).
+  3.  Loads persona and creates output directory.
+  4.  Loops through URLs: scrapes content, generates hygiene scorecard and experience report via `AIInterface`.
+  5.  Saves markdown reports to persona-specific directory.
+  6.  Generates strategic summary using `StrategicSummaryGenerator`.
 
 ### 2.2. Scraper Module (`scraper.py`)
 
-- **Purpose:** To fetch web content.
+- **Purpose:** To fetch web content with caching support.
 - **Functions:**
-  - `fetch_page(url: str) -> PageData`:
-    - Uses `requests` and `BeautifulSoup` to get page content.
-    - Implements a simple file-based cache to speed up development.
-    - Returns a `PageData` object containing the URL and raw text content.
+  - `scrape_url(url: str) -> PageData`:
+    - Uses `requests` and `BeautifulSoup` to extract page content.
+    - Implements file-based caching to improve performance.
+    - Handles 404s and technical issues gracefully.
+    - Returns a `PageData` object containing URL, raw text, and metadata.
 
 ### 2.3. AI Module (`ai_interface.py`)
 
-- **Purpose:** To abstract all interactions with the Anthropic LLM API.
+- **Purpose:** To abstract all interactions with multiple AI providers (Anthropic Claude, OpenAI).
 - **Functions:**
-  - `generate_narrative(persona_content: str, page_text: str) -> str`:
-    - Constructs a detailed prompt instructing the AI to adopt the specified persona and analyze the provided text from that point of view.
+  - `generate_hygiene_scorecard(url: str, page_content: str, persona_content: str, methodology: Any) -> str`:
+    - Constructs methodology-specific prompts for hygiene scorecard generation.
+    - Supports both Anthropic and OpenAI providers.
+    - Returns the generated Markdown scorecard as a string.
+  - `generate_experience_report(url: str, page_content: str, persona_content: str, methodology: Any) -> str`:
+    - Constructs persona-specific prompts for experience report generation.
+    - Uses provider-specific prompt formatting.
     - Returns the generated Markdown narrative as a string.
-  - `get_subjective_score(criterion_name: str, page_text: str) -> float`:
-    - Constructs a highly-constrained prompt asking for a single numerical score (0.0-10.0) for a given criterion.
-    - Returns a single float.
-  - `generate_strategic_summary(compiled_text: str) -> str`:
-    - Takes the concatenated text of all narrative reports for a persona.
-    - Asks the AI to perform a thematic analysis and return a raw, valid JSON object containing an `executive_summary`, `key_strengths`, and `key_weaknesses`.
+  - `generate_strategic_summary(persona_name: str, scorecard_data: List[Dict], methodology: Any) -> str`:
+    - Takes aggregated scorecard data and generates executive-level insights.
+    - Integrates with methodology configuration for consistent analysis.
+    - Returns comprehensive strategic summary as Markdown.
 
 ### 2.4. Generators Module (`generators.py`)
 
-- **Purpose:** To create the content for all reports.
+- **Purpose:** To create structured markdown reports from audit data.
 - **Classes:**
-  - `NarrativeGenerator`: A lightweight wrapper that calls `ai_interface.generate_narrative`.
-  - `ScorecardGenerator`: Classifies the page (e.g., Onsite Tier 1), then iterates through the relevant criteria from the methodology, calling `ai_interface.get_subjective_score` for each. It calculates a final weighted score and returns a structured `Scorecard` object.
-  - `SummaryGenerator`: Orchestrates the final summary. It has private methods to parse all generated scorecards and narrative reports from the filesystem. It calls `ai_interface.generate_strategic_summary` to get the qualitative analysis and then aggregates all data into a `SummaryReport` object. It includes a robust helper function to parse the AI's JSON output.
+  - `HygieneScorecard`: Generates hygiene scorecards in markdown format with criteria scores, evidence, and recommendations.
+  - `ExperienceReport`: Generates experience reports with persona-specific insights, sentiment metrics, and recommendations.
+  - `StrategicSummary`: Generates strategic summaries with executive insights, key findings, and actionable recommendations.
+- **Functions:**
+  - `parse_ai_scorecard(markdown: str) -> Dict[str, Any]`: Parses AI-generated scorecard markdown into structured data.
+  - `parse_ai_experience_report(markdown: str) -> Dict[str, Any]`: Parses AI-generated experience reports into structured data.
 
 ### 2.5. Reporting Module (`reporter.py`)
 
-- **Purpose:** To write the generated report objects to markdown files using Jinja2 templates.
+- **Purpose:** To write generated reports to markdown files using templates.
 - **Functions:**
-  - `write_narrative_report(...)`: Writes the narrative string to a `.md` file.
-  - `write_scorecard(...)`: Renders a `Scorecard` object using the `scorecard_template.md`.
-  - `write_summary_report(...)`: Renders a `SummaryReport` object using the `summary_template.md`.
+  - `save_report(content: str, filepath: str)`: Saves content to specified file path.
+  - Template-based rendering for consistent report formatting.
+
+### 2.6. Additional Core Modules
+
+#### MethodologyParser (`methodology_parser.py`)
+
+- **Purpose:** Loads and parses YAML methodology configuration.
+- **Functions:**
+  - `parse() -> Methodology`: Converts YAML config into structured Python objects.
+  - `get_tier_criteria(tier_name: str)`: Returns criteria for specific tier.
+
+#### PersonaParser (`persona_parser.py`)
+
+- **Purpose:** Extracts persona attributes from markdown files.
+- **Functions:**
+  - `extract_attributes_from_content(content: str) -> Persona`: Parses persona definitions.
+
+#### TierClassifier (`tier_classifier.py`)
+
+- **Purpose:** Classifies URLs into appropriate tiers using regex patterns.
+- **Functions:**
+  - `classify_url(url: str) -> Tuple[str, Dict]`: Determines tier and configuration.
+
+#### EnhancedBackfillPackager (`backfill_packager.py`)
+
+- **Purpose:** Processes markdown reports into structured CSV data.
+- **Functions:**
+  - `process_persona(persona_name: str)`: Generates enhanced CSV files from markdown.
+
+#### StrategicSummaryGenerator (`strategic_summary_generator.py`)
+
+- **Purpose:** Creates executive-level strategic summaries.
+- **Functions:**
+  - `generate_full_report() -> Tuple[str, List, Dict]`: Aggregates data and generates insights.
+
+#### MultiPersonaPackager (`multi_persona_packager.py`)
+
+- **Purpose:** Unifies data across multiple personas for dashboard consumption.
+- **Functions:**
+  - `process_all_personas()`: Creates unified parquet files for cross-persona analysis.
 
 ## 3. Data Flow Diagram
+
+### Current Implementation (Manual 4-Stage Process)
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Main
+    participant BrandAuditTool
     participant Scraper
-    participant Generators
-    participant Reporter
     participant AIInterface
+    participant BackfillPackager
+    participant StrategicSummaryGenerator
+    participant MultiPersonaPackager
 
-    User->>Main: Executes with --persona and --file
-    Main->>Main: Initializes all components
+    User->>BrandAuditTool: python -m audit_tool.main --urls --persona
+    BrandAuditTool->>BrandAuditTool: Initialize components
 
     loop For Each URL
-        Main->>Scraper: fetch_page(url)
-        Scraper-->>Main: Returns PageData object
+        BrandAuditTool->>Scraper: scrape_url(url)
+        Scraper-->>BrandAuditTool: Returns PageData
 
-        Main->>Generators: create_report(persona, page_data)
-        Generators->>AIInterface: generate_narrative(persona, text)
-        AIInterface-->>Generators: Returns narrative_string
+        BrandAuditTool->>AIInterface: generate_hygiene_scorecard(...)
+        AIInterface-->>BrandAuditTool: Returns scorecard_md
 
-        Main->>Generators: create_scorecard(page_data)
-        Generators->>AIInterface: get_subjective_score(...)
-        AIInterface-->>Generators: Returns score
-        Generators-->>Main: Returns Scorecard object
+        BrandAuditTool->>AIInterface: generate_experience_report(...)
+        AIInterface-->>BrandAuditTool: Returns experience_md
 
-        Main->>Reporter: write_narrative_report(...)
-        Main->>Reporter: write_scorecard(...)
+        BrandAuditTool->>BrandAuditTool: Save markdown files
     end
 
-    Main->>Generators: create_summary()
-    Generators->>AIInterface: generate_strategic_summary(...)
-    AIInterface-->>Generators: Returns summary_json
-    Generators-->>Main: Returns SummaryReport object
+    Note over User: MANUAL STEP 2
+    User->>BackfillPackager: python -m audit_tool.backfill_packager
+    BackfillPackager-->>BackfillPackager: Generate CSV files
 
-    Main->>Reporter: write_summary_report(...)
+    Note over User: MANUAL STEP 3
+    User->>StrategicSummaryGenerator: python strategic_summary_generator.py
+    StrategicSummaryGenerator-->>StrategicSummaryGenerator: Generate Strategic_Summary.md
+
+    Note over User: MANUAL STEP 4
+    User->>MultiPersonaPackager: python -m audit_tool.multi_persona_packager
+    MultiPersonaPackager-->>MultiPersonaPackager: Generate unified parquet files
 ```
 
 ## 4. Error Handling

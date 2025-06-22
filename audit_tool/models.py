@@ -1,119 +1,240 @@
 """
-This module defines the data structures used for passing data between modules.
+Data Models for Brand Audit Tool
+
+STATUS: ACTIVE
+
+This module defines the core data models used throughout the brand audit tool:
+1. Structured data classes for audit data representation
+2. Type definitions for consistent data handling
+3. Data validation and transformation utilities
+4. Object-relational mapping for data persistence
+5. Serialization/deserialization support for data exchange
+
+The models provide a consistent data structure across the application,
+ensuring type safety and enabling efficient data processing and analysis.
 """
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+
+import re
+import json
+import logging
+from dataclasses import dataclass, field, asdict
+from typing import Dict, List, Any, Optional, Union
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class PageData:
-    """
-    A dataclass to hold the scraped data from a single URL.
-    """
+    """Data class representing a scraped web page."""
+    
     url: str
+    title: str
     raw_text: str
+    html: str
+    meta_description: str = ""
+    meta_keywords: str = ""
+    h1_tags: List[str] = field(default_factory=list)
+    h2_tags: List[str] = field(default_factory=list)
+    images: List[Dict[str, str]] = field(default_factory=list)
+    links: List[Dict[str, str]] = field(default_factory=list)
     is_404: bool = False
-    objective_findings: Dict[str, any] = field(default_factory=dict)
+    scrape_time: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
+    
+    def to_json(self) -> str:
+        """Convert to JSON string."""
+        data = self.to_dict()
+        data['scrape_time'] = data['scrape_time'].isoformat()
+        return json.dumps(data)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'PageData':
+        """Create from dictionary."""
+        if 'scrape_time' in data and isinstance(data['scrape_time'], str):
+            data['scrape_time'] = datetime.fromisoformat(data['scrape_time'])
+        return cls(**data)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> 'PageData':
+        """Create from JSON string."""
+        data = json.loads(json_str)
+        return cls.from_dict(data)
 
 @dataclass
-class Criterion:
-    """Represents a single scoring criterion from the methodology."""
-    name: str
-    weight: float
-    category: str = "general"  # brand, performance, authenticity, sentiment
-    requirements: List[str] = field(default_factory=list)
-    criterion_id: str = ""
-    description: str = ""
-
-@dataclass
-class Tier:
-    """Represents a scoring tier (e.g., Tier 1, Tier 2) from the methodology."""
-    name: str
-    criteria: List[Criterion]
-    weight: float  # The weight of this tier in the final onsite score
-    brand_percentage: int = 50
-    performance_percentage: int = 50
-    triggers: List[str] = field(default_factory=list)
-    examples: List[str] = field(default_factory=list)
-
-@dataclass
-class OffsiteChannel:
-    """Represents an offsite channel type (e.g., Owned, Influenced)."""
-    name: str
-    criteria: List[Criterion]
-    weight: float  # The weight of this channel in the final offsite score
-    brand_percentage: int = 50
-    performance_percentage: int = 0
-    authenticity_percentage: int = 0
-    sentiment_percentage: int = 0
-    examples: List[str] = field(default_factory=list)
-
-@dataclass
-class Methodology:
-    """Represents the entire scoring methodology, composed of multiple tiers."""
-    tiers: List[Tier]
-    offsite_channels: List[OffsiteChannel]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    scoring_config: Dict[str, Any] = field(default_factory=dict)
-    calculation_config: Dict[str, Any] = field(default_factory=dict)
-    gating_rules: Dict[str, Any] = field(default_factory=dict)
-    brand_messaging: Dict[str, Any] = field(default_factory=dict)
-    validation_flags: Dict[str, Any] = field(default_factory=dict)
-    quality_penalties: Dict[str, Any] = field(default_factory=dict)
-    evidence_requirements: Dict[str, Any] = field(default_factory=dict)
-
-@dataclass
-class ScoredCriterion:
-    """Represents a single criterion after it has been scored."""
-    name: str
-    weight: float
+class CriterionScore:
+    """Data class representing a criterion score."""
+    
+    page_id: str
+    criterion_code: str
+    criterion_name: str
     score: float
-    notes: str = ""
     evidence: str = ""
-    category: str = "general"
-    penalties_applied: List[str] = field(default_factory=list)
+    weight: float = 1.0
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
 
 @dataclass
-class Scorecard:
-    """Represents the final, calculated scorecard for a URL."""
+class PageScore:
+    """Data class representing a page score."""
+    
+    page_id: str
     url: str
+    tier: str
     final_score: float
-    tier_name: str  # For onsite, this is Tier 1/2/3. For offsite, this is Owned/Influenced/Independent.
-    scored_criteria: List[ScoredCriterion]
-    brand_consistency_check: Dict[str, Any] = field(default_factory=dict)
-    gating_rules_applied: List[str] = field(default_factory=list)
-    quality_penalties: List[str] = field(default_factory=list)
+    criteria_scores: List[CriterionScore] = field(default_factory=list)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        data = asdict(self)
+        data['criteria_scores'] = [cs.to_dict() for cs in self.criteria_scores]
+        return data
+    
+    def calculate_final_score(self) -> float:
+        """Calculate the final score based on weighted criteria scores."""
+        if not self.criteria_scores:
+            return 0.0
+        
+        total_weight = sum(cs.weight for cs in self.criteria_scores)
+        if total_weight == 0:
+            return 0.0
+        
+        weighted_sum = sum(cs.score * cs.weight for cs in self.criteria_scores)
+        return weighted_sum / total_weight
 
 @dataclass
-class AggregatedTierScore:
-    """Holds the aggregated score for a single tier."""
-    tier_name: str
-    average_score: float
-    page_count: int
-
-@dataclass
-class AggregatedOffsiteScore:
-    """Holds the aggregated score for a single offsite channel."""
-    channel_name: str
-    average_score: float
-    page_count: int
-
-@dataclass
-class RankedPage:
-    """Represents a page in a ranked list."""
+class ExperienceMetric:
+    """Data class representing an experience metric."""
+    
+    page_id: str
     url: str
-    score: float
+    persona: str
+    sentiment: str  # Positive, Neutral, Negative
+    engagement: str  # High, Medium, Low
+    conversion: str  # High, Medium, Low
+    first_impression: str = ""
+    content_relevance: str = ""
+    brand_perception: str = ""
+    journey_analysis: str = ""
+    emotional_response: str = ""
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
 
 @dataclass
-class SummaryReport:
-    """Holds all the data for the final strategic summary report."""
-    persona_name: str
-    overall_score: float
-    onsite_score: float
-    offsite_score: float
-    tier_scores: List[AggregatedTierScore]
-    offsite_scores: List[AggregatedOffsiteScore]
-    top_performing_pages: List[RankedPage]
-    bottom_performing_pages: List[RankedPage]
-    executive_summary: str
-    key_strengths: List[str]
-    key_weaknesses: List[str] 
+class Recommendation:
+    """Data class representing a recommendation."""
+    
+    page_id: str
+    url: str
+    persona: str
+    recommendation: str
+    category: str = ""  # e.g., Content, Design, UX, Brand, Technical
+    priority: int = 2  # 1 (high) to 3 (low)
+    effort: int = 2  # 1 (low) to 3 (high)
+    impact: int = 2  # 1 (low) to 3 (high)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
+    
+    @property
+    def value_score(self) -> float:
+        """Calculate value score (impact / effort)."""
+        if self.effort == 0:
+            return 0.0
+        return self.impact / self.effort
+
+@dataclass
+class AuditResult:
+    """Data class representing an audit result."""
+    
+    persona: str
+    pages: List[Dict[str, Any]] = field(default_factory=list)
+    criteria: List[Dict[str, Any]] = field(default_factory=list)
+    experience: List[Dict[str, Any]] = field(default_factory=list)
+    recommendations: List[Dict[str, Any]] = field(default_factory=list)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
+    
+    def to_json(self) -> str:
+        """Convert to JSON string."""
+        return json.dumps(self.to_dict())
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'AuditResult':
+        """Create from dictionary."""
+        return cls(**data)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> 'AuditResult':
+        """Create from JSON string."""
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
+def sanitize_page_id(url: str) -> str:
+    """
+    Convert a URL to a safe page ID.
+    
+    Args:
+        url: The URL to convert
+        
+    Returns:
+        A safe page ID
+    """
+    # Remove protocol
+    page_id = url.replace('https://', '').replace('http://', '')
+    
+    # Replace special characters
+    page_id = re.sub(r'[^a-zA-Z0-9_]', '_', page_id)
+    
+    # Remove consecutive underscores
+    page_id = re.sub(r'_+', '_', page_id)
+    
+    # Remove trailing underscore
+    page_id = page_id.rstrip('_')
+    
+    return page_id
+
+def get_sentiment_score(sentiment: str) -> float:
+    """
+    Convert sentiment string to numeric score.
+    
+    Args:
+        sentiment: Sentiment string (Positive, Neutral, Negative)
+        
+    Returns:
+        Numeric score (0.0 to 10.0)
+    """
+    sentiment_map = {
+        "positive": 8.0,
+        "neutral": 5.0,
+        "negative": 2.0
+    }
+    
+    return sentiment_map.get(sentiment.lower(), 5.0)
+
+def get_engagement_score(engagement: str) -> float:
+    """
+    Convert engagement string to numeric score.
+    
+    Args:
+        engagement: Engagement string (High, Medium, Low)
+        
+    Returns:
+        Numeric score (0.0 to 10.0)
+    """
+    engagement_map = {
+        "high": 8.0,
+        "medium": 5.0,
+        "low": 2.0
+    }
+    
+    return engagement_map.get(engagement.lower(), 5.0)

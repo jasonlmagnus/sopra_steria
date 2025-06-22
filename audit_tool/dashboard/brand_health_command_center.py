@@ -339,7 +339,10 @@ def display_executive_dashboard(summary, metrics_calc):
     
     if opportunities:
         for i, opp in enumerate(opportunities, 1):
-            with st.expander(f"#{i} - {opp['page_id']} (Impact: {opp['potential_impact']:.1f})"):
+            # Use the friendly title from metrics calculator
+            page_title = opp.get('page_title', 'Unknown Page')
+            
+            with st.expander(f"#{i} - {page_title} (Impact: {opp['potential_impact']:.1f})"):
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
@@ -351,8 +354,9 @@ def display_executive_dashboard(summary, metrics_calc):
                 with col3:
                     st.metric("Page Tier", opp['tier'])
                 
+                st.markdown(f"**💡 Recommendation:** {opp['recommendation']}")
                 if opp['url']:
-                    st.markdown(f"**URL:** {opp['url']}")
+                    st.markdown(f"**🔗 URL:** {opp['url']}")
     else:
         st.info("📈 No specific opportunities identified with current data structure.")
     
@@ -362,21 +366,30 @@ def display_executive_dashboard(summary, metrics_calc):
     success_stories = metrics_calc.calculate_success_stories()
     
     if success_stories:
-        st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 8.0)")
+        st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 7.7)")
         
         for story in success_stories[:3]:  # Show top 3
-            with st.expander(f"⭐ {story['page_id']} - Score: {story['raw_score']:.1f}"):
-                st.markdown(f"**Tier:** {story['tier']}")
-                if 'sentiment' in story:
-                    st.markdown(f"**Sentiment:** {story['sentiment']}")
+            # Use the friendly title from metrics calculator
+            page_title = story.get('page_title', 'Unknown Page')
+            
+            with st.expander(f"⭐ {page_title} - Score: {story['raw_score']:.1f}"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown(f"**🎯 Score:** {story['raw_score']:.1f}/10")
+                    st.markdown(f"**📊 Tier:** {story['tier']}")
+                
+                with col2:
+                    # Additional metrics could go here if needed
+                    pass
                 
                 if story['key_strengths']:
-                    st.markdown("**Key Strengths:**")
+                    st.markdown("**✨ Key Strengths:**")
                     for strength in story['key_strengths']:
-                        st.markdown(f"- {strength}")
+                        st.markdown(f"• {strength}")
                 
                 if story['url']:
-                    st.markdown(f"**URL:** {story['url']}")
+                    st.markdown(f"**🔗 URL:** {story['url']}")
     else:
         st.warning("⚠️ No pages currently scoring 7.7 or above. Focus on improvement opportunities.")
     

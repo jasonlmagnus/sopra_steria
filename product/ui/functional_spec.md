@@ -1,3 +1,5 @@
+_Status: Active • Last-verified: 2025-06-22 • Owner: @frontend_dev_
+
 # Functional Specification: Brand Audit Dashboard UI
 
 ## 1. Overview
@@ -64,3 +66,5 @@ The dashboard is a multi-page Streamlit application. Pages are:
 - Dashboard first paint <2 s on 50k ScoreFact rows (local laptop).
 - Memory footprint <1 GB.
 - Tested on Chrome, Safari, Edge latest versions.
+
+**Note:** UI layer only – complements the core functional spec at [../functional_specification.md](../functional_specification.md).

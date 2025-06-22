@@ -1,3 +1,7 @@
+_Status: Active • Last-verified: 2025-06-22 • Owner: @design_lead_
+
+**Note:** This document is a UI-specific supplement. For the master product requirements covering the full pipeline, see [../brand_audit_tool_prd.md](../brand_audit_tool_prd.md).
+
 ## Product Requirements Document: Brand Audit Dashboard UI
 
 ### 1. Purpose

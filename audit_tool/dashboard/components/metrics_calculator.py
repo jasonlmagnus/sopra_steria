@@ -283,8 +283,13 @@ class BrandHealthMetricsCalculator:
             else:
                 effort_level = "Low"
             
+            # Create a friendly page title from URL slug
+            url_slug = row.get('url_slug', '')
+            page_title = self._create_friendly_title(url_slug)
+            
             result.append({
                 'page_id': row.get('page_id', 'Unknown'),
+                'page_title': page_title,
                 'url': row.get('url', ''),
                 'current_score': current_score,
                 'potential_impact': round(row.get('opportunity_score', 0), 1),
@@ -311,8 +316,13 @@ class BrandHealthMetricsCalculator:
         
         result = []
         for _, row in success_pages.iterrows():
+            # Create a friendly page title from URL slug
+            url_slug = row.get('url_slug', '')
+            page_title = self._create_friendly_title(url_slug)
+            
             story = {
                 'page_id': row.get('page_id', 'Unknown'),
+                'page_title': page_title,
                 'url': row.get('url', ''),
                 'raw_score': row.get(score_col, 0),
                 'tier': row.get('tier', 'Unknown'),
@@ -353,6 +363,63 @@ class BrandHealthMetricsCalculator:
             strengths.append("Strong performance score")
         
         return strengths if strengths else ["High-performing page"]
+    
+    def _create_friendly_title(self, url_slug: str) -> str:
+        """Create a user-friendly title from URL slug"""
+        if not url_slug:
+            return "Unknown Page"
+        
+        # Remove common prefixes
+        title = url_slug.replace('www', '').replace('https', '').replace('http', '')
+        
+        # Handle specific patterns
+        if 'soprasteria' in title:
+            if 'newsroom' in title and 'blog' in title:
+                if 'details' in title:
+                    # Extract blog post title
+                    parts = title.split('details')
+                    if len(parts) > 1:
+                        blog_title = parts[1].replace('-', ' ').title()
+                        return f"Blog: {blog_title[:50]}..."
+                return "Sopra Steria Blog"
+            elif 'newsroom' in title and 'press-releases' in title:
+                return "Press Release"
+            elif 'industries' in title:
+                if 'financial-services' in title:
+                    return "Financial Services Industry Page"
+                elif 'retail-logistics-telecom' in title:
+                    return "Retail & Logistics Industry Page"
+                return "Industry Page"
+            elif 'whatwedo' in title:
+                if 'data-ai' in title:
+                    return "Data & AI Services"
+                elif 'digital-themes' in title:
+                    return "Digital Transformation Services"
+                elif 'management-digital-transformation' in title:
+                    return "Management Consulting"
+                return "Services Page"
+            elif 'about-us' in title:
+                if 'history' in title:
+                    return "Company History"
+                elif 'corporate-responsibility' in title:
+                    return "Corporate Responsibility"
+                return "About Us"
+            elif title.endswith('be'):
+                return "Sopra Steria Belgium Homepage"
+            elif title.endswith('nl'):
+                return "Sopra Steria Netherlands Homepage"
+            elif title.endswith('com'):
+                return "Sopra Steria Global Homepage"
+        elif 'linkedin' in title:
+            return "LinkedIn Company Page"
+        elif 'youtube' in title:
+            return "YouTube Channel"
+        elif 'nldigital' in title:
+            return "NL Digital Directory"
+        
+        # Fallback: clean up the slug
+        clean_title = title.replace('-', ' ').replace('_', ' ').title()
+        return clean_title[:60] + "..." if len(clean_title) > 60 else clean_title
     
     def calculate_persona_comparison(self) -> pd.DataFrame:
         """Calculate metrics for persona comparison"""

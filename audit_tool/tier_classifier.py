@@ -1,216 +1,312 @@
 """
-Tier Classification Engine
-Maps URLs to content tiers based on Sopra Steria Brand Audit Methodology
+Tier Classifier for Brand Audit Tool
+
+STATUS: ACTIVE
+
+This module provides URL classification functionality that:
+1. Determines the appropriate tier (Tier 1, 2, 3) for onsite content
+2. Classifies offsite content into channel types (Owned, Influenced, Independent)
+3. Applies pattern matching and rule-based classification
+4. Supports the methodology-driven evaluation approach
+5. Enables consistent scoring across different content types
+
+The classifier uses URL patterns, content indicators, and predefined rules
+to ensure appropriate evaluation criteria are applied to each digital touchpoint.
 """
 
 import re
-from typing import Dict, Tuple, Optional
-import yaml
-from pathlib import Path
+import logging
+from typing import Tuple, Dict, Any, List, Optional
+from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 class TierClassifier:
-    """Classifies pages into content tiers based on URL patterns and content analysis"""
+    """Classifies URLs into appropriate tiers and channel types."""
     
-    def __init__(self, methodology_path: str = "audit_tool/config/methodology.yaml"):
-        self.methodology_path = Path(methodology_path)
-        self.tier_config = self._load_tier_config()
-        
-    def _load_tier_config(self) -> Dict:
-        """Load tier configuration from methodology.yaml"""
-        try:
-            with open(self.methodology_path, 'r') as f:
-                methodology = yaml.safe_load(f)
-            return methodology.get('classification', {}).get('onsite', {})
-        except Exception as e:
-            print(f"Warning: Could not load methodology config: {e}")
-            return self._get_default_tier_config()
-    
-    def _get_default_tier_config(self) -> Dict:
-        """Fallback tier configuration based on methodology"""
-        return {
-            'tier_1': {
-                'name': 'Brand Positioning',
-                'weight_in_onsite': 0.3,
-                'brand_percentage': 80,
-                'performance_percentage': 20,
-                'url_patterns': [
-                    r'.*/(index|home)?/?$',  # Homepage
-                    r'.*/about.*',           # About pages
-                    r'.*/corporate.*',       # Corporate pages
-                    r'.*/history.*',         # History pages
-                    r'.*/responsibility.*'   # CSR pages
-                ],
-                'content_triggers': [
-                    'the world is how we shape it',
-                    'about us',
-                    'corporate responsibility',
-                    'our story',
-                    'our mission'
-                ]
-            },
-            'tier_2': {
-                'name': 'Value Propositions', 
-                'weight_in_onsite': 0.5,
-                'brand_percentage': 50,
-                'performance_percentage': 50,
-                'url_patterns': [
-                    r'.*/services/.*',       # Service pages
-                    r'.*/industries/.*',     # Industry pages
-                    r'.*/solutions/.*',      # Solution pages
-                    r'.*/what-we-do/.*',     # What we do pages
-                    r'.*/transformation/.*', # Transformation pages
-                    r'.*/consulting/.*'      # Consulting pages
-                ],
-                'content_triggers': [
-                    'ai services',
-                    'financial services', 
-                    'cloud solutions',
-                    'digital transformation',
-                    'cybersecurity'
-                ]
-            },
-            'tier_3': {
-                'name': 'Functional Content',
-                'weight_in_onsite': 0.2, 
-                'brand_percentage': 30,
-                'performance_percentage': 70,
-                'url_patterns': [
-                    r'.*/blog.*',           # Blog posts
-                    r'.*/news.*',           # News/press
-                    r'.*/press.*',          # Press releases
-                    r'.*/events.*',         # Events
-                    r'.*/insights.*',       # Insights
-                    r'.*/case-stud.*',      # Case studies
-                    r'.*/white-paper.*',    # White papers
-                    r'.*/newsroom.*'        # Newsroom
-                ],
-                'content_triggers': [
-                    'blog',
-                    'press release',
-                    'case study',
-                    'white paper',
-                    'thought leadership'
-                ]
-            }
-        }
-    
-    def classify_url(self, url: str, content: str = "") -> Tuple[str, Dict]:
+    def __init__(self, methodology_config: Dict[str, Any] = None):
         """
-        Classify a URL into a content tier
+        Initialize with optional methodology configuration.
+        
+        Args:
+            methodology_config: Dictionary containing classification rules
+        """
+        self.config = methodology_config or {}
+        
+        # Default classification patterns if not provided in config
+        self.tier_patterns = self.config.get('tier_patterns', {
+            'tier_1': [
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/?$',  # Homepage
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/about-us/?$',  # About pages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/industries/?$',  # Industry overview
+            ],
+            'tier_2': [
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/industries/[^/]+/?$',  # Industry pages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/what-we-do/[^/]+/?$',  # Service pages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/about-us/[^/]+/?$',  # About subpages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/newsroom/[^/]+/?$',  # News section
+            ],
+            'tier_3': [
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/industries/[^/]+/[^/]+/?',  # Deep industry pages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/what-we-do/[^/]+/[^/]+/?',  # Deep service pages
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/newsroom/[^/]+/details/[^/]+/?$',  # News articles
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)/contact-us/?',  # Contact pages
+            ]
+        })
+        
+        # Default channel patterns
+        self.channel_patterns = self.config.get('channel_patterns', {
+            'owned': [
+                r'^https?://(?:www\.)?soprasteria\.(?:com|be|nl)',  # Main websites
+                r'^https?://(?:www\.)?youtube\.com/SopraSteria',  # YouTube channel
+            ],
+            'influenced': [
+                r'^https?://(?:www\.)?linkedin\.com/company/soprasteria',  # LinkedIn
+                r'^https?://(?:www\.)?twitter\.com/soprasteria',  # Twitter
+                r'^https?://(?:www\.)?facebook\.com/soprasteria',  # Facebook
+            ],
+            'independent': [
+                r'^https?://(?:www\.)?nl\.digital\.nl',  # Industry sites
+                r'^https?://(?:www\.)?(?!soprasteria)[^/]+\.[^/]+/.*sopra.*steria',  # Mentions on other sites
+            ]
+        })
+        
+        # Default fallback tiers
+        self.default_tier = 'tier_2'
+        self.default_channel = 'owned'
+    
+    def classify_url(self, url: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Classify a URL into the appropriate tier or channel.
         
         Args:
             url: The URL to classify
-            content: Optional page content for additional classification
             
         Returns:
             Tuple of (tier_name, tier_config)
         """
-        url_lower = url.lower()
-        content_lower = content.lower() if content else ""
+        logger.debug(f"Classifying URL: {url}")
         
-        # Check each tier in priority order (1, 2, 3)
-        for tier_key in ['tier_1', 'tier_2', 'tier_3']:
-            tier_config = self.tier_config.get(tier_key, {})
+        # Check if this is an onsite or offsite URL
+        if self._is_onsite(url):
+            return self._classify_onsite(url)
+        else:
+            return self._classify_offsite(url)
+    
+    def _is_onsite(self, url: str) -> bool:
+        """
+        Determine if a URL is onsite or offsite.
+        
+        Args:
+            url: The URL to check
             
-            # Check URL patterns
-            url_patterns = tier_config.get('url_patterns', [])
-            for pattern in url_patterns:
-                if re.search(pattern, url_lower):
-                    return tier_key, tier_config
+        Returns:
+            True if onsite, False if offsite
+        """
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc.lower()
+        
+        # Check if domain is a Sopra Steria domain
+        onsite_domains = [
+            'soprasteria.com',
+            'soprasteria.be',
+            'soprasteria.nl',
+            'www.soprasteria.com',
+            'www.soprasteria.be',
+            'www.soprasteria.nl'
+        ]
+        
+        return any(domain == d or domain.endswith('.' + d) for d in onsite_domains)
+    
+    def _classify_onsite(self, url: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Classify an onsite URL into the appropriate tier.
+        
+        Args:
+            url: The URL to classify
             
-            # Check content triggers if content provided
-            if content:
-                content_triggers = tier_config.get('content_triggers', [])
-                for trigger in content_triggers:
-                    if trigger.lower() in content_lower:
-                        return tier_key, tier_config
+        Returns:
+            Tuple of (tier_name, tier_config)
+        """
+        # Check each tier pattern
+        for tier_name, patterns in self.tier_patterns.items():
+            for pattern in patterns:
+                if re.match(pattern, url, re.IGNORECASE):
+                    logger.debug(f"URL {url} classified as {tier_name}")
+                    return tier_name, self._get_tier_config(tier_name)
         
-        # Default to tier_2 if no match found
-        return 'tier_2', self.tier_config.get('tier_2', {})
+        # If no match, use default tier
+        logger.debug(f"URL {url} defaulted to {self.default_tier}")
+        return self.default_tier, self._get_tier_config(self.default_tier)
     
-    def get_tier_criteria_weights(self, tier_name: str) -> Dict[str, float]:
-        """Get the brand/performance split for a tier"""
-        tier_config = self.tier_config.get(tier_name, {})
-        return {
-            'brand_weight': tier_config.get('brand_percentage', 50) / 100,
-            'performance_weight': tier_config.get('performance_percentage', 50) / 100,
-            'tier_weight': tier_config.get('weight_in_onsite', 0.33)
-        }
+    def _classify_offsite(self, url: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Classify an offsite URL into the appropriate channel.
+        
+        Args:
+            url: The URL to classify
+            
+        Returns:
+            Tuple of (channel_name, channel_config)
+        """
+        # Check each channel pattern
+        for channel_name, patterns in self.channel_patterns.items():
+            for pattern in patterns:
+                if re.match(pattern, url, re.IGNORECASE):
+                    logger.debug(f"URL {url} classified as {channel_name}")
+                    return channel_name, self._get_channel_config(channel_name)
+        
+        # If no match, use default channel
+        logger.debug(f"URL {url} defaulted to {self.default_channel}")
+        return self.default_channel, self._get_channel_config(self.default_channel)
     
-    def calculate_tier_weighted_score(self, page_scores: Dict, tier_name: str) -> float:
-        """Calculate tier-weighted score for a page"""
-        weights = self.get_tier_criteria_weights(tier_name)
+    def _get_tier_config(self, tier_name: str) -> Dict[str, Any]:
+        """
+        Get the configuration for a tier.
         
-        # Get brand and performance criteria scores
-        brand_criteria = ['corporate_positioning_alignment', 'brand_differentiation', 
-                         'emotional_resonance', 'visual_brand_integrity',
-                         'regional_narrative_integration', 'brand_message_consistency']
+        Args:
+            tier_name: The name of the tier
+            
+        Returns:
+            Dictionary of tier configuration
+        """
+        # Get tier configuration from methodology config
+        if self.config and 'classification' in self.config:
+            tier_config = self.config.get('classification', {}).get('onsite', {}).get(tier_name, {})
+            if tier_config:
+                return tier_config
         
-        performance_criteria = ['strategic_clarity', 'trust_credibility_signals',
-                              'strategic_value_clarity', 'solution_sophistication',
-                              'executive_relevance', 'business_value_focus']
-        
-        brand_scores = [page_scores.get(c, 0) for c in brand_criteria if c in page_scores]
-        performance_scores = [page_scores.get(c, 0) for c in performance_criteria if c in page_scores]
-        
-        brand_avg = sum(brand_scores) / len(brand_scores) if brand_scores else 0
-        performance_avg = sum(performance_scores) / len(performance_scores) if performance_scores else 0
-        
-        # Apply tier-specific weighting
-        tier_score = (brand_avg * weights['brand_weight'] + 
-                     performance_avg * weights['performance_weight'])
-        
-        return tier_score
-    
-    def get_all_tier_info(self) -> Dict:
-        """Get complete tier configuration information"""
-        return {
-            tier_key: {
-                'name': config.get('name', tier_key),
-                'weight': config.get('weight_in_onsite', 0.33),
-                'brand_split': config.get('brand_percentage', 50),
-                'performance_split': config.get('performance_percentage', 50),
-                'description': f"{config.get('name', tier_key)} ({config.get('brand_percentage', 50)}% brand, {config.get('performance_percentage', 50)}% performance)"
+        # Default tier configurations
+        default_configs = {
+            'tier_1': {
+                'name': 'TIER 1 - BRAND POSITIONING',
+                'weight_in_onsite': 0.3,
+                'brand_percentage': 80,
+                'performance_percentage': 20
+            },
+            'tier_2': {
+                'name': 'TIER 2 - VALUE PROPOSITIONS',
+                'weight_in_onsite': 0.5,
+                'brand_percentage': 50,
+                'performance_percentage': 50
+            },
+            'tier_3': {
+                'name': 'TIER 3 - FUNCTIONAL CONTENT',
+                'weight_in_onsite': 0.2,
+                'brand_percentage': 30,
+                'performance_percentage': 70
             }
-            for tier_key, config in self.tier_config.items()
         }
-
-# URL Classification Helper based on audit_urls.md
-URL_TIER_MAPPING = {
-    # Tier 1 - Brand Positioning
-    'soprasteria.nl': 'tier_1',
-    'soprasteria.be': 'tier_1', 
-    'soprasteria.com': 'tier_1',
-    'corporate-responsibility': 'tier_1',
-    'history': 'tier_1',
+        
+        return default_configs.get(tier_name, default_configs['tier_2'])
     
-    # Tier 2 - Value Propositions  
-    'generative-ai': 'tier_2',
-    'microsoft-azure': 'tier_2',
-    'operations-automation': 'tier_2',
-    'financial-services': 'tier_2',
-    'retail-logistics': 'tier_2',
+    def _get_channel_config(self, channel_name: str) -> Dict[str, Any]:
+        """
+        Get the configuration for a channel.
+        
+        Args:
+            channel_name: The name of the channel
+            
+        Returns:
+            Dictionary of channel configuration
+        """
+        # Get channel configuration from methodology config
+        if self.config and 'classification' in self.config:
+            channel_config = self.config.get('classification', {}).get('offsite', {}).get(channel_name, {})
+            if channel_config:
+                return channel_config
+        
+        # Default channel configurations
+        default_configs = {
+            'owned': {
+                'name': 'Owned Channels',
+                'weight_in_offsite': 0.4,
+                'brand_percentage': 60,
+                'performance_percentage': 40
+            },
+            'influenced': {
+                'name': 'Influenced Channels',
+                'weight_in_offsite': 0.35,
+                'brand_percentage': 40,
+                'authenticity_percentage': 60
+            },
+            'independent': {
+                'name': 'Independent Channels',
+                'weight_in_offsite': 0.25,
+                'brand_percentage': 20,
+                'sentiment_percentage': 80
+            }
+        }
+        
+        return default_configs.get(channel_name, default_configs['owned'])
     
-    # Tier 3 - Functional Content
-    'press-releases': 'tier_3',
-    'blog': 'tier_3',
-    'newsroom': 'tier_3'
-}
-
-def quick_classify_from_url_list(url: str) -> str:
-    """Quick classification based on known URL patterns from audit_urls.md"""
-    url_lower = url.lower()
+    def get_tier_examples(self, tier_name: str) -> List[str]:
+        """
+        Get example URLs for a specific tier.
+        
+        Args:
+            tier_name: The name of the tier
+            
+        Returns:
+            List of example URLs
+        """
+        # Get examples from methodology config
+        if self.config and 'classification' in self.config:
+            examples = self.config.get('classification', {}).get('onsite', {}).get(tier_name, {}).get('examples', [])
+            if examples:
+                return examples
+        
+        # Default examples
+        default_examples = {
+            'tier_1': [
+                'https://www.soprasteria.com',
+                'https://www.soprasteria.be',
+                'https://www.soprasteria.nl'
+            ],
+            'tier_2': [
+                'https://www.soprasteria.be/industries/financial-services',
+                'https://www.soprasteria.be/what-we-do/data-ai',
+                'https://www.soprasteria.nl/newsroom/blog'
+            ],
+            'tier_3': [
+                'https://www.soprasteria.be/what-we-do/data-ai/data-science-and-ai/the-future-of-generative-ai',
+                'https://www.soprasteria.nl/newsroom/blog/details/interacting-with-large-language-models',
+                'https://www.soprasteria.be/contact-us'
+            ]
+        }
+        
+        return default_examples.get(tier_name, [])
     
-    for pattern, tier in URL_TIER_MAPPING.items():
-        if pattern in url_lower:
-            return tier
-    
-    # Default classification logic
-    if any(x in url_lower for x in ['/', 'about', 'corporate', 'history']):
-        return 'tier_1'
-    elif any(x in url_lower for x in ['services', 'industries', 'solutions', 'what-we-do']):
-        return 'tier_2'
-    elif any(x in url_lower for x in ['blog', 'news', 'press', 'insights']):
-        return 'tier_3'
-    else:
-        return 'tier_2'  # Default to value propositions 
+    def get_channel_examples(self, channel_name: str) -> List[str]:
+        """
+        Get example URLs for a specific channel.
+        
+        Args:
+            channel_name: The name of the channel
+            
+        Returns:
+            List of example URLs
+        """
+        # Get examples from methodology config
+        if self.config and 'classification' in self.config:
+            examples = self.config.get('classification', {}).get('offsite', {}).get(channel_name, {}).get('examples', [])
+            if examples:
+                return examples
+        
+        # Default examples
+        default_examples = {
+            'owned': [
+                'https://www.youtube.com/SopraSteria_Benelux',
+                'https://www.soprasteria.be/newsroom/press-releases'
+            ],
+            'influenced': [
+                'https://www.linkedin.com/company/soprasteria-benelux',
+                'https://twitter.com/soprasteria'
+            ],
+            'independent': [
+                'https://www.nl.digital.nl/leden/sopra-steria-nederland-b-v',
+                'https://www.techzine.be/nieuws/devops/30183/sopra-steria-helpt-bedrijven-met-ai-implementatie/'
+            ]
+        }
+        
+        return default_examples.get(channel_name, [])

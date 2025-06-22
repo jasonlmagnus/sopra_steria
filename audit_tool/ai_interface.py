@@ -1,369 +1,421 @@
 """
-This module handles all interactions with third-party AI APIs.
+AI Interface for Brand Audit Tool
+
+STATUS: ACTIVE
+
+This module provides a unified interface to AI services that:
+1. Connects to various AI providers (OpenAI, Anthropic, etc.)
+2. Generates hygiene scorecards with brand evaluation criteria
+3. Creates persona-specific experience reports
+4. Produces strategic summaries and recommendations
+5. Handles prompt engineering and response parsing
+
+The interface abstracts away the complexities of working with different
+AI providers, ensuring consistent outputs regardless of the underlying model.
 """
+
 import os
-import logging
-from dotenv import load_dotenv
-from datetime import datetime
-from pathlib import Path
-from .models import PageData
-from .persona_parser import PersonaParser
-from .methodology_parser import MethodologyParser
+import re
 import json
+import logging
+import requests
+from typing import Dict, List, Any, Optional, Union
 
-try:
-    from anthropic import Anthropic
-    ANTHROPIC_AVAILABLE = True
-except ImportError:
-    print("Anthropic package not found. Install with: pip install anthropic")
-    ANTHROPIC_AVAILABLE = False
+from .methodology_parser import MethodologyParser
 
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    print("OpenAI package not found. Install with: pip install openai")
-    OPENAI_AVAILABLE = False
-
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 class AIInterface:
-    """A class to handle interactions with AI APIs (Anthropic Claude and OpenAI GPT)."""
-
+    """Interface for AI services used in brand audits."""
+    
     def __init__(self, model_provider: str = "anthropic"):
         """
-        Initialize AI interface with specified model provider.
+        Initialize with model provider.
         
         Args:
-            model_provider: "anthropic" or "openai"
+            model_provider: The AI provider to use ("anthropic" or "openai")
         """
-        self.model_provider = model_provider.lower()
-        self.persona_parser = PersonaParser()
+        self.model_provider = model_provider
         
-        # Initialize the appropriate client
+        # Load API keys from environment
+        self.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+        self.openai_api_key = os.environ.get("OPENAI_API_KEY")
+        
+        # Set default models
+        self.anthropic_model = "claude-3-opus-20240229"
+        self.openai_model = "gpt-4-turbo"
+        
+        # Validate API keys
+        if model_provider == "anthropic" and not self.anthropic_api_key:
+            logger.warning("Anthropic API key not found in environment variables")
+        elif model_provider == "openai" and not self.openai_api_key:
+            logger.warning("OpenAI API key not found in environment variables")
+    
+    def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology: MethodologyParser) -> str:
+        """
+        Generate a hygiene scorecard for a URL.
+        
+        Args:
+            url: The URL to evaluate
+            page_content: The content of the page
+            persona_content: The persona markdown content
+            methodology: The methodology parser instance
+            
+        Returns:
+            Markdown formatted hygiene scorecard
+        """
+        logger.info(f"Generating hygiene scorecard for {url}")
+        
+        # Get tier information
+        tier_name, tier_config = methodology.classify_url(url)
+        
+        # Get criteria for this tier
+        criteria = methodology.get_criteria_for_tier(tier_name)
+        
+        # Construct prompt
+        prompt = self._construct_hygiene_prompt(
+            url=url,
+            page_content=page_content,
+            persona_content=persona_content,
+            tier_name=tier_name,
+            tier_config=tier_config,
+            criteria=criteria
+        )
+        
+        # Generate response
+        response = self._generate_ai_response(prompt)
+        
+        return response
+    
+    def generate_experience_report(self, url: str, page_content: str, persona_content: str, methodology: MethodologyParser) -> str:
+        """
+        Generate an experience report for a URL.
+        
+        Args:
+            url: The URL to evaluate
+            page_content: The content of the page
+            persona_content: The persona markdown content
+            methodology: The methodology parser instance
+            
+        Returns:
+            Markdown formatted experience report
+        """
+        logger.info(f"Generating experience report for {url}")
+        
+        # Get tier information
+        tier_name, tier_config = methodology.classify_url(url)
+        
+        # Construct prompt
+        prompt = self._construct_experience_prompt(
+            url=url,
+            page_content=page_content,
+            persona_content=persona_content,
+            tier_name=tier_name,
+            tier_config=tier_config
+        )
+        
+        # Generate response
+        response = self._generate_ai_response(prompt)
+        
+        return response
+    
+    def generate_strategic_summary(self, persona_name: str, scorecard_data: List[Dict], methodology: MethodologyParser) -> str:
+        """
+        Generate a strategic summary from scorecard data.
+        
+        Args:
+            persona_name: The name of the persona
+            scorecard_data: List of scorecard data dictionaries
+            methodology: The methodology parser instance
+            
+        Returns:
+            Markdown formatted strategic summary
+        """
+        logger.info(f"Generating strategic summary for {persona_name}")
+        
+        # Construct prompt
+        prompt = self._construct_summary_prompt(
+            persona_name=persona_name,
+            scorecard_data=scorecard_data,
+            methodology=methodology
+        )
+        
+        # Generate response
+        response = self._generate_ai_response(prompt)
+        
+        return response
+    
+    def _construct_hygiene_prompt(self, url: str, page_content: str, persona_content: str, 
+                                 tier_name: str, tier_config: Dict[str, Any], 
+                                 criteria: List[Dict[str, Any]]) -> str:
+        """
+        Construct the prompt for hygiene scorecard generation.
+        
+        Args:
+            url: The URL to evaluate
+            page_content: The content of the page
+            persona_content: The persona markdown content
+            tier_name: The tier name
+            tier_config: The tier configuration
+            criteria: The criteria for this tier
+            
+        Returns:
+            Formatted prompt
+        """
+        # Format criteria for prompt
+        criteria_text = ""
+        for criterion in criteria:
+            criteria_text += f"- {criterion['name']}: {criterion['description']}\n"
+        
+        # Construct prompt
+        prompt = f"""
+You are a brand audit expert evaluating digital content for Sopra Steria.
+
+# URL
+{url}
+
+# Page Content
+{page_content[:10000]}  # Truncate to avoid token limits
+
+# Persona
+{persona_content}
+
+# Tier Classification
+This URL is classified as: {tier_config.get('name', tier_name.upper())}
+
+# Evaluation Criteria
+{criteria_text}
+
+# Task
+Generate a detailed brand hygiene scorecard for this URL from the perspective of the persona.
+For each criterion, provide:
+1. A score from 0-10 (where 10 is excellent)
+2. Specific evidence from the page content that justifies the score
+3. Brief explanation of how well the content meets the criterion for this persona
+
+Then provide an overall score and 3-5 specific recommendations for improvement.
+
+Format your response as a markdown document with the following sections:
+1. Title: "Brand Hygiene Scorecard for [Persona Name]"
+2. URL section
+3. Introduction
+4. Criteria Scores (in a table with columns for Criterion, Score, and Evidence)
+5. Overall Assessment with Final Score
+6. Recommendations (numbered list)
+
+Be specific, objective, and focus on how well the content meets the needs of the persona.
+"""
+        
+        return prompt
+    
+    def _construct_experience_prompt(self, url: str, page_content: str, persona_content: str,
+                                    tier_name: str, tier_config: Dict[str, Any]) -> str:
+        """
+        Construct the prompt for experience report generation.
+        
+        Args:
+            url: The URL to evaluate
+            page_content: The content of the page
+            persona_content: The persona markdown content
+            tier_name: The tier name
+            tier_config: The tier configuration
+            
+        Returns:
+            Formatted prompt
+        """
+        # Construct prompt
+        prompt = f"""
+You are a brand experience analyst evaluating digital content for Sopra Steria.
+
+# URL
+{url}
+
+# Page Content
+{page_content[:10000]}  # Truncate to avoid token limits
+
+# Persona
+{persona_content}
+
+# Tier Classification
+This URL is classified as: {tier_config.get('name', tier_name.upper())}
+
+# Task
+Generate a detailed brand experience report for this URL from the perspective of the persona.
+Analyze how the content would be experienced by this specific persona, considering:
+
+1. First Impressions: What would the persona notice first? How would they feel?
+2. Content Relevance: How relevant is the content to the persona's needs and priorities?
+3. Brand Perception: How would this content affect the persona's perception of the Sopra Steria brand?
+4. Journey Analysis: What would be the persona's likely path through this content? Where might they get stuck or confused?
+5. Emotional Response: What emotions would the content evoke in this persona?
+
+Then provide:
+1. Overall sentiment (Positive, Neutral, or Negative)
+2. Engagement level (High, Medium, or Low)
+3. Conversion likelihood (High, Medium, or Low)
+4. 3-5 specific recommendations for improving the experience for this persona
+
+Format your response as a markdown document with the following sections:
+1. Title: "Brand Experience Report for [Persona Name]"
+2. URL section
+3. Introduction
+4. Analysis sections (First Impressions, Content Relevance, Brand Perception, Journey Analysis, Emotional Response)
+5. Experience Metrics (Sentiment, Engagement, Conversion)
+6. Recommendations (numbered list)
+
+Be specific, empathetic, and focus on the persona's likely experience with this content.
+"""
+        
+        return prompt
+    
+    def _construct_summary_prompt(self, persona_name: str, scorecard_data: List[Dict], 
+                                 methodology: MethodologyParser) -> str:
+        """
+        Construct the prompt for strategic summary generation.
+        
+        Args:
+            persona_name: The name of the persona
+            scorecard_data: List of scorecard data dictionaries
+            methodology: The methodology parser instance
+            
+        Returns:
+            Formatted prompt
+        """
+        # Format scorecard data for prompt
+        data_text = json.dumps(scorecard_data, indent=2)
+        
+        # Construct prompt
+        prompt = f"""
+You are a strategic brand consultant analyzing audit data for Sopra Steria.
+
+# Persona
+{persona_name}
+
+# Audit Data
+{data_text[:15000]}  # Truncate to avoid token limits
+
+# Task
+Generate a strategic summary of the brand audit results for this persona.
+Analyze the data to identify:
+
+1. Overall brand health score and what it means
+2. Key strengths and weaknesses across the digital estate
+3. Patterns and trends in the data
+4. Strategic implications for the brand
+5. Prioritized recommendations for improvement
+
+Format your response as a markdown document with the following sections:
+1. Title: "Strategic Brand Audit Summary for [Persona Name]"
+2. Executive Summary (1-2 paragraphs)
+3. Key Findings (bullet points)
+4. Strengths (bullet points)
+5. Weaknesses (bullet points)
+6. Strategic Recommendations (numbered list with bold headings)
+7. Next Steps (numbered list)
+
+Be strategic, insightful, and focus on actionable recommendations that will improve the brand experience for this persona.
+"""
+        
+        return prompt
+    
+    def _generate_ai_response(self, prompt: str) -> str:
+        """
+        Generate a response from the AI model.
+        
+        Args:
+            prompt: The prompt to send to the AI
+            
+        Returns:
+            The AI's response
+        """
         if self.model_provider == "anthropic":
-            if not ANTHROPIC_AVAILABLE:
-                raise ImportError("Anthropic package not available")
-            self.anthropic_client = Anthropic()
-            self.openai_client = None
+            return self._generate_anthropic_response(prompt)
         elif self.model_provider == "openai":
-            if not OPENAI_AVAILABLE:
-                raise ImportError("OpenAI package not available")
-            self.openai_client = OpenAI()
-            self.anthropic_client = None
+            return self._generate_openai_response(prompt)
         else:
-            raise ValueError(f"Unsupported model provider: {model_provider}")
+            raise ValueError(f"Unsupported model provider: {self.model_provider}")
+    
+    def _generate_anthropic_response(self, prompt: str) -> str:
+        """
+        Generate a response from Anthropic's Claude.
         
-        # Find the project root directory (where audit_inputs is located)
-        self.project_root = self._find_project_root()
+        Args:
+            prompt: The prompt to send to Claude
+            
+        Returns:
+            Claude's response
+        """
+        if not self.anthropic_api_key:
+            raise ValueError("Anthropic API key not found")
         
-        # Cache for parsed persona to avoid redundant parsing
-        self._cached_persona_content = None
-        self._cached_persona_attributes = None
-
-    @classmethod
-    def get_available_models(cls) -> dict:
-        """Get available models for each provider."""
-        models = {}
-        if ANTHROPIC_AVAILABLE:
-            models["anthropic"] = {
-                "claude-3-opus-20240229": "Claude 3 Opus (High Quality)",
-                "claude-3-sonnet-20240229": "Claude 3 Sonnet (Balanced)",
-                "claude-3-haiku-20240307": "Claude 3 Haiku (Fast)"
+        try:
+            headers = {
+                "x-api-key": self.anthropic_api_key,
+                "content-type": "application/json"
             }
-        if OPENAI_AVAILABLE:
-            models["openai"] = {
-                "gpt-4.1-mini": "GPT-4.1 Mini (Cost Effective)",
-                "gpt-4-turbo": "GPT-4 Turbo (High Quality)",
-                "gpt-3.5-turbo": "GPT-3.5 Turbo (Fast)"
+            
+            data = {
+                "model": self.anthropic_model,
+                "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
+                "max_tokens_to_sample": 4000,
+                "temperature": 0.2
             }
-        return models
-
-    def switch_provider(self, model_provider: str):
-        """Switch between AI providers."""
-        if model_provider.lower() == self.model_provider:
-            return  # Already using this provider
-        
-        self.model_provider = model_provider.lower()
-        
-        if self.model_provider == "anthropic":
-            if not ANTHROPIC_AVAILABLE:
-                raise ImportError("Anthropic package not available")
-            self.anthropic_client = Anthropic()
-            self.openai_client = None
-        elif self.model_provider == "openai":
-            if not OPENAI_AVAILABLE:
-                raise ImportError("OpenAI package not available")
-            self.openai_client = OpenAI()
-            self.anthropic_client = None
-
-    def _make_api_call(self, system_message: str, user_prompt: str, max_tokens: int = 2000, temperature: float = 0.3) -> str:
-        """Make API call to the selected provider."""
-        retries = 3
-        for attempt in range(retries):
-            try:
-                if self.model_provider == "anthropic":
-                    message = self.anthropic_client.messages.create(
-                        model="claude-3-opus-20240229",
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        system=system_message,
-                        messages=[{"role": "user", "content": user_prompt}],
-                    )
-                    return message.content[0].text
-                
-                elif self.model_provider == "openai":
-                    response = self.openai_client.chat.completions.create(
-                        model="gpt-4.1-mini",
-                        max_tokens=max_tokens,
-                        temperature=temperature,
-                        messages=[
-                            {"role": "system", "content": system_message},
-                            {"role": "user", "content": user_prompt}
-                        ]
-                    )
-                    return response.choices[0].message.content
-                
-            except Exception as e:
-                logging.warning(f"API call failed on attempt {attempt + 1} of {retries}. Error: {e}")
-                if attempt + 1 == retries:
-                    provider_name = "Anthropic" if self.model_provider == "anthropic" else "OpenAI"
-                    logging.error(f"Final {provider_name} API call attempt failed.")
-                    return f"Error: Could not generate response due to persistent {provider_name} API error."
-        
-        return "Error: Should not be reached."
-
-    def _find_project_root(self) -> Path:
-        """Find the project root directory by looking for audit_inputs folder."""
-        current_path = Path(__file__).parent
-        
-        # Go up directories until we find audit_inputs
-        while current_path != current_path.parent:
-            if (current_path / "audit_inputs").exists():
-                return current_path
-            current_path = current_path.parent
-        
-        # If not found, assume current working directory
-        if (Path.cwd() / "audit_inputs").exists():
-            return Path.cwd()
-        
-        # Fallback to the parent of audit_tool directory
-        return Path(__file__).parent.parent
-
-    def _load_prompt_template(self, template_name: str) -> str:
-        """Load prompt template from audit_inputs/prompts folder."""
-        template_path = self.project_root / "audit_inputs" / "prompts" / f"{template_name}.md"
-        try:
-            with open(template_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Extract the main prompt section (everything after "## Main Prompt")
-                if "## Main Prompt" in content:
-                    return content.split("## Main Prompt")[1].strip()
-                return content
-        except FileNotFoundError:
-            logging.error(f"Prompt template not found: {template_path}")
-            return "Error: Prompt template not found."
-    
-    def _get_system_message(self, template_name: str) -> str:
-        """Extract system message from prompt template."""
-        template_path = self.project_root / "audit_inputs" / "prompts" / f"{template_name}.md"
-        try:
-            with open(template_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Extract system message section
-                if "## System Message" in content:
-                    lines = content.split("## System Message")[1].split("## Main Prompt")[0].strip()
-                    return lines
-                return "You are a helpful AI assistant."
-        except FileNotFoundError:
-            return "You are a helpful AI assistant."
-    
-    def _get_cached_persona_attributes(self, persona_content: str):
-        """Get cached persona attributes or parse if not cached."""
-        if self._cached_persona_content != persona_content:
-            # Content changed, need to re-parse
-            logging.info("Parsing persona content...")
-            self._cached_persona_attributes = self.persona_parser.extract_attributes_from_content(persona_content, log_parsing=False)
-            self._cached_persona_content = persona_content
-        
-        return self._cached_persona_attributes
-
-    def _format_persona_attributes(self, persona_attributes) -> dict:
-        """Format persona attributes for template substitution."""
-        return {
-            'persona_name': persona_attributes.name,
-            'persona_role': persona_attributes.role,
-            'persona_industry': persona_attributes.industry,
-            'persona_geographic_scope': persona_attributes.geographic_scope,
-            'persona_business_context': persona_attributes.business_context,
-            'persona_communication_style': persona_attributes.communication_style,
-            'persona_priorities': '\n'.join([f"- {priority}" for priority in persona_attributes.key_priorities]),
-            'persona_pain_points': '\n'.join([f"- {pain}" for pain in persona_attributes.pain_points])
-        }
-
-    def generate_experience_report(self, url: str, page_content: str, persona_content: str, methodology) -> str:
-        """Generate experience report using configurable prompts and structured persona parsing."""
-        
-        # Get cached persona attributes (parsed only once per persona)
-        persona_attributes = self._get_cached_persona_attributes(persona_content)
-        
-        # Load prompt template
-        prompt_template = self._load_prompt_template("narrative_analysis")
-        system_message = self._get_system_message("narrative_analysis")
-        
-        # Format persona attributes for template
-        persona_vars = self._format_persona_attributes(persona_attributes)
-        
-        # Substitute variables in prompt
-        prompt = prompt_template.format(
-            page_content=page_content[:12000],  # Limit content length
-            **persona_vars
-        )
-        
-        return self._make_api_call(system_message, prompt, max_tokens=1500, temperature=0.6)
-
-    def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology) -> str:
-        """Generate hygiene scorecard using configurable prompts and YAML methodology."""
-        
-        # Get cached persona attributes (parsed only once per persona)
-        persona_attributes = self._get_cached_persona_attributes(persona_content)
-        
-        # Get criteria from methodology (this would need to be implemented)
-        # For now, use basic criteria
-        criteria_list = self._get_criteria_for_page(page_content, methodology)
-        
-        # Load prompt template
-        prompt_template = self._load_prompt_template("hygiene_scorecard")
-        system_message = self._get_system_message("hygiene_scorecard")
-        
-        # Format persona attributes for template
-        persona_vars = self._format_persona_attributes(persona_attributes)
-        
-        # Substitute variables in prompt
-        prompt = prompt_template.format(
-            page_url=url,
-            page_content=page_content[:8000],  # Limit content length
-            criteria_list=criteria_list,
-            current_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            scoring_table="[To be filled by AI]",
-            **persona_vars
-        )
-        
-        return self._make_api_call(system_message, prompt, max_tokens=2000, temperature=0.3)
-    
-    def _get_criteria_for_page(self, page_content: str, methodology) -> str:
-        """Get appropriate criteria based on page content and methodology."""
-        # This is a simplified version - would need full implementation
-        # based on page classification and YAML methodology
-        
-        basic_criteria = [
-            "Corporate Positioning Alignment - How well does the page reflect the company's core brand message?",
-            "Brand Differentiation - Does the content clearly differentiate from competitors?", 
-            "Value Proposition Clarity - Is the value proposition clear and compelling for the target persona?",
-            "Trust & Credibility Signals - Are there sufficient trust indicators and proof points?",
-            "Call-to-Action Effectiveness - Are the next steps clear and relevant to the persona?"
-        ]
-        
-        return '\n'.join([f"- {criterion}" for criterion in basic_criteria])
-
-    def generate_narrative(self, persona_content: str, page_text: str) -> str:
-        """
-        Legacy method - redirects to new experience report generation
-        """
-        return self.generate_experience_report("", page_text, persona_content, None)
-
-    def get_subjective_score(self, criterion_name: str, page_text: str) -> float:
-        """
-        Gets a single numerical score for a subjective criterion from the AI, with retries.
-        """
-        prompt = f"""
-You are a brand analyst. Your task is to provide a single numerical score from 0.0 to 10.0 based on the provided criterion and webpage text.
-
-**Criterion to score:** {criterion_name}
-Scoring Scale:
-- 0-3: Poor/Missing
-- 4-5: Below Average
-- 6-7: Average
-- 8-9: Strong
-- 10: Exceptional
-
-**Webpage Text (first 4000 characters):**
-<page_text>
-{page_text[:4000]}
-</page_text>
-
-Based on the text and the criterion "{criterion_name}", what is the score?
-
-Respond with ONLY a single floating-point number (e.g., 7.5). Do not include any other text, explanation, or punctuation.
-"""
-        retries = 3
-        for attempt in range(retries):
-            try:
-                message = self.client.messages.create(
-                    model="claude-3-haiku-20240307",
-                    max_tokens=10,
-                    temperature=0.1,
-                    system="You are a brand analyst who provides only a single numerical score from 0.0 to 10.0 and nothing else.",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        }
-                    ],
-                )
-                response_text = message.content[0].text.strip()
-                score = float(response_text)
-                return max(0.0, min(10.0, score))
-            except (ValueError, IndexError):
-                logging.warning(f"Could not parse float from AI response for '{criterion_name}'. Got: '{response_text}'. Defaulting to 5.0.")
-                return 5.0 # Don't retry on parsing errors
-            except Exception as e:
-                logging.warning(f"API call failed for subjective score on attempt {attempt + 1} of {retries}. Error: {e}")
-                if attempt + 1 == retries:
-                    logging.error(f"Final API call attempt failed for '{criterion_name}'. Defaulting to 5.0.")
-                    return 5.0
-        return 5.0
-
-    def generate_strategic_summary(self, compiled_text: str) -> str:
-        """
-        Performs a thematic analysis on a large body of text to extract
-        an executive summary and key themes.
-        """
-        prompt = f"""
-You are a strategic analyst. You have been given a series of narrative reports, each written from a specific persona's point of view about a webpage. Your task is to perform a thematic analysis on these reports to synthesize an executive summary, key strengths, and key weaknesses.
-
-<compiled_narratives>
-{compiled_text}
-</compiled_narratives>
-
-Analyze the compiled narratives and provide a raw JSON object with the following structure. Do NOT include any explanatory text before or after the JSON object. Ensure all strings within the JSON are properly escaped.
-
-{{
-  "executive_summary": "A concise, high-level summary of the overall findings from all reports.",
-  "key_strengths": ["A list of 3-5 key strengths that appeared consistently across the reports."],
-  "key_weaknesses": ["A list of 3-5 key weaknesses or recurring issues identified in the reports."]
-}}
-"""
-        try:
-            message = self.client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=1500,
-                temperature=0.2,
-                system="You are a strategic analyst who synthesizes qualitative data into a raw, valid JSON object and nothing else.",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ],
+            
+            response = requests.post(
+                "https://api.anthropic.com/v1/complete",
+                headers=headers,
+                json=data
             )
-            return message.content[0].text
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            return result.get("completion", "")
+            
         except Exception as e:
-            logging.error(f"Could not generate strategic summary due to an API error: {e}")
-            # Fallback to a placeholder JSON if the API call fails
-            placeholder = {
-                "executive_summary": "Error: The AI-powered summary could not be generated.",
-                "key_strengths": ["Could not be determined."],
-                "key_weaknesses": ["Could not be determined."]
+            logger.error(f"Error generating Anthropic response: {str(e)}")
+            return f"Error generating response: {str(e)}"
+    
+    def _generate_openai_response(self, prompt: str) -> str:
+        """
+        Generate a response from OpenAI's GPT.
+        
+        Args:
+            prompt: The prompt to send to GPT
+            
+        Returns:
+            GPT's response
+        """
+        if not self.openai_api_key:
+            raise ValueError("OpenAI API key not found")
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.openai_api_key}",
+                "Content-Type": "application/json"
             }
-            return json.dumps(placeholder) 
+            
+            data = {
+                "model": self.openai_model,
+                "messages": [
+                    {"role": "system", "content": "You are a brand audit expert analyzing digital content."},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 4000,
+                "temperature": 0.2
+            }
+            
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=data
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            return result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            
+        except Exception as e:
+            logger.error(f"Error generating OpenAI response: {str(e)}")
+            return f"Error generating response: {str(e)}"

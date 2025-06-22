@@ -1,3 +1,7 @@
+_Status: Active • Last-verified: 2025-06-22 • Owner: @frontend_dev_
+
+**Note:** This file focuses on the Streamlit UI. For the end-to-end technical architecture, see [../technical_architecture.md](../technical_architecture.md).
+
 # Technical Architecture: Brand Audit Dashboard UI
 
 ## 1. High-Level Overview

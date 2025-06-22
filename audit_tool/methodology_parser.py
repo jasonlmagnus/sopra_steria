@@ -1,303 +1,442 @@
 """
-This module is responsible for parsing the methodology.yaml configuration file
-and converting it into structured Python objects for the audit tool.
+Methodology Parser for Brand Audit Tool
+
+STATUS: ACTIVE
+
+This module provides functionality to parse and apply the brand audit methodology:
+1. Loads and parses methodology configuration from YAML files
+2. Classifies URLs into appropriate tiers and channels
+3. Retrieves evaluation criteria for different content types
+4. Supports the consistent application of evaluation frameworks
+5. Enables methodology-driven scoring and analysis
+
+The parser ensures that all audit evaluations follow a consistent methodology,
+with appropriate criteria applied based on content type and tier classification.
 """
-import logging
+
+import os
 import yaml
+import logging
+from typing import Dict, List, Tuple, Any, Optional
 from pathlib import Path
-from typing import Dict, List, Any
-from .models import Methodology, Tier, Criterion, OffsiteChannel
+
+from .tier_classifier import TierClassifier
+
+logger = logging.getLogger(__name__)
 
 class MethodologyParser:
-    """
-    Parses the methodology.yaml configuration file and builds structured objects.
-    """
+    """Parses and applies the brand audit methodology."""
     
-    def __init__(self, yaml_filepath: str = None):
-        """Initialize with path to methodology.yaml file."""
-        if yaml_filepath is None:
-            # Default to config/methodology.yaml in the same directory
-            self.yaml_filepath = Path(__file__).parent / "config" / "methodology.yaml"
-        else:
-            self.yaml_filepath = Path(yaml_filepath)
+    def __init__(self, config_path: str = None):
+        """
+        Initialize with optional configuration path.
         
-        self.config = None
-        self._load_config()
-
-    def _load_config(self) -> None:
-        """Load the YAML configuration file."""
+        Args:
+            config_path: Path to methodology configuration file
+        """
+        self.config_path = config_path or os.path.join("audit_tool", "config", "methodology.yaml")
+        self.config = self._load_config()
+        self.tier_classifier = TierClassifier(self.config)
+        
+        logger.info(f"Methodology parser initialized with config: {self.config_path}")
+    
+    def _load_config(self) -> Dict[str, Any]:
+        """
+        Load methodology configuration from YAML.
+        
+        Returns:
+            Dictionary of configuration
+        """
         try:
-            with open(self.yaml_filepath, 'r', encoding='utf-8') as file:
-                self.config = yaml.safe_load(file)
-            logging.info(f"Successfully loaded methodology configuration from {self.yaml_filepath}")
-        except FileNotFoundError:
-            logging.error(f"Methodology configuration file not found: {self.yaml_filepath}")
-            raise
-        except yaml.YAMLError as e:
-            logging.error(f"Error parsing YAML configuration: {e}")
-            raise
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+                logger.info(f"Loaded methodology configuration from {self.config_path}")
+                return config
         except Exception as e:
-            logging.error(f"Unexpected error loading configuration: {e}")
-            raise
-
-    def parse(self) -> Methodology:
+            logger.warning(f"Error loading methodology configuration: {str(e)}")
+            logger.info("Using default methodology configuration")
+            return self._get_default_config()
+    
+    def _get_default_config(self) -> Dict[str, Any]:
         """
-        Parse the YAML configuration and return a structured Methodology object.
+        Get default methodology configuration.
+        
+        Returns:
+            Dictionary of default configuration
         """
-        if not self.config:
-            raise ValueError("Configuration not loaded. Call _load_config() first.")
+        return {
+            "version": "1.0",
+            "name": "Brand Audit Methodology",
+            "classification": {
+                "onsite": {
+                    "tier_1": {
+                        "name": "TIER 1 - BRAND POSITIONING",
+                        "weight_in_onsite": 0.3,
+                        "brand_percentage": 80,
+                        "performance_percentage": 20,
+                        "criteria": [
+                            {
+                                "code": "BP1",
+                                "name": "Brand Clarity",
+                                "description": "Clear communication of brand purpose, values, and positioning",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "BP2",
+                                "name": "Value Proposition",
+                                "description": "Clear articulation of unique value and benefits",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "BP3",
+                                "name": "Visual Identity",
+                                "description": "Consistent and effective use of visual brand elements",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "BP4",
+                                "name": "Messaging Consistency",
+                                "description": "Consistent tone, voice, and key messages",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "BP5",
+                                "name": "Audience Relevance",
+                                "description": "Content tailored to target audience needs and interests",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "PP1",
+                                "name": "User Experience",
+                                "description": "Intuitive navigation and positive user experience",
+                                "weight": 0.1
+                            }
+                        ]
+                    },
+                    "tier_2": {
+                        "name": "TIER 2 - VALUE PROPOSITIONS",
+                        "weight_in_onsite": 0.5,
+                        "brand_percentage": 50,
+                        "performance_percentage": 50,
+                        "criteria": [
+                            {
+                                "code": "BP1",
+                                "name": "Brand Consistency",
+                                "description": "Consistent with overall brand positioning",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "BP2",
+                                "name": "Value Articulation",
+                                "description": "Clear articulation of specific value proposition",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "BP3",
+                                "name": "Differentiation",
+                                "description": "Clear differentiation from competitors",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "BP4",
+                                "name": "Credibility",
+                                "description": "Evidence and proof points supporting claims",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "PP1",
+                                "name": "Content Quality",
+                                "description": "Well-structured, clear, and engaging content",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "PP2",
+                                "name": "Call to Action",
+                                "description": "Clear and compelling next steps for the user",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "PP3",
+                                "name": "User Experience",
+                                "description": "Intuitive navigation and positive user experience",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "PP4",
+                                "name": "Mobile Optimization",
+                                "description": "Effective display and functionality on mobile devices",
+                                "weight": 0.1
+                            }
+                        ]
+                    },
+                    "tier_3": {
+                        "name": "TIER 3 - FUNCTIONAL CONTENT",
+                        "weight_in_onsite": 0.2,
+                        "brand_percentage": 30,
+                        "performance_percentage": 70,
+                        "criteria": [
+                            {
+                                "code": "BP1",
+                                "name": "Brand Consistency",
+                                "description": "Consistent with overall brand positioning",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "BP2",
+                                "name": "Tone and Voice",
+                                "description": "Appropriate tone and voice for the brand",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "BP3",
+                                "name": "Visual Consistency",
+                                "description": "Consistent use of visual brand elements",
+                                "weight": 0.1
+                            },
+                            {
+                                "code": "PP1",
+                                "name": "Content Quality",
+                                "description": "Clear, accurate, and helpful content",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "PP2",
+                                "name": "Functionality",
+                                "description": "Effective functionality for intended purpose",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "PP3",
+                                "name": "User Experience",
+                                "description": "Intuitive navigation and positive user experience",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "PP4",
+                                "name": "Mobile Optimization",
+                                "description": "Effective display and functionality on mobile devices",
+                                "weight": 0.15
+                            }
+                        ]
+                    }
+                },
+                "offsite": {
+                    "owned": {
+                        "name": "Owned Channels",
+                        "weight_in_offsite": 0.4,
+                        "brand_percentage": 60,
+                        "performance_percentage": 40,
+                        "criteria": [
+                            {
+                                "code": "OC1",
+                                "name": "Brand Consistency",
+                                "description": "Consistent with overall brand positioning",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "OC2",
+                                "name": "Content Quality",
+                                "description": "High-quality, relevant content",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "OC3",
+                                "name": "Visual Identity",
+                                "description": "Consistent and effective use of visual brand elements",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "OC4",
+                                "name": "Engagement",
+                                "description": "Effective engagement with audience",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "OC5",
+                                "name": "Call to Action",
+                                "description": "Clear and compelling next steps for the user",
+                                "weight": 0.2
+                            }
+                        ]
+                    },
+                    "influenced": {
+                        "name": "Influenced Channels",
+                        "weight_in_offsite": 0.35,
+                        "brand_percentage": 40,
+                        "authenticity_percentage": 60,
+                        "criteria": [
+                            {
+                                "code": "IC1",
+                                "name": "Brand Representation",
+                                "description": "Accurate representation of the brand",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "IC2",
+                                "name": "Engagement",
+                                "description": "Effective engagement with audience",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "IC3",
+                                "name": "Authenticity",
+                                "description": "Authentic and genuine communication",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "IC4",
+                                "name": "Community Building",
+                                "description": "Building and nurturing community",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "IC5",
+                                "name": "Content Value",
+                                "description": "Providing value through content",
+                                "weight": 0.2
+                            }
+                        ]
+                    },
+                    "independent": {
+                        "name": "Independent Channels",
+                        "weight_in_offsite": 0.25,
+                        "brand_percentage": 20,
+                        "sentiment_percentage": 80,
+                        "criteria": [
+                            {
+                                "code": "INC1",
+                                "name": "Brand Perception",
+                                "description": "How the brand is perceived by others",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "INC2",
+                                "name": "Sentiment",
+                                "description": "Overall sentiment towards the brand",
+                                "weight": 0.3
+                            },
+                            {
+                                "code": "INC3",
+                                "name": "Accuracy",
+                                "description": "Accuracy of information about the brand",
+                                "weight": 0.2
+                            },
+                            {
+                                "code": "INC4",
+                                "name": "Prominence",
+                                "description": "Prominence and visibility of the brand",
+                                "weight": 0.15
+                            },
+                            {
+                                "code": "INC5",
+                                "name": "Context",
+                                "description": "Context in which the brand appears",
+                                "weight": 0.15
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    
+    def classify_url(self, url: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Classify a URL into the appropriate tier or channel.
         
-        logging.info("Parsing methodology configuration from YAML")
+        Args:
+            url: The URL to classify
+            
+        Returns:
+            Tuple of (tier_name, tier_config)
+        """
+        return self.tier_classifier.classify_url(url)
+    
+    def get_criteria_for_tier(self, tier_name: str) -> List[Dict[str, Any]]:
+        """
+        Get the evaluation criteria for a specific tier.
         
-        # Parse onsite tiers
-        onsite_tiers = self._parse_onsite_tiers()
+        Args:
+            tier_name: The name of the tier
+            
+        Returns:
+            List of criteria dictionaries
+        """
+        # Check if this is an onsite tier
+        if tier_name.startswith('tier_'):
+            return self.config.get('classification', {}).get('onsite', {}).get(tier_name, {}).get('criteria', [])
         
-        # Parse offsite channels
-        offsite_channels = self._parse_offsite_channels()
+        # Otherwise, it's an offsite channel
+        return self.config.get('classification', {}).get('offsite', {}).get(tier_name, {}).get('criteria', [])
+    
+    def get_tier_names(self) -> List[str]:
+        """
+        Get all tier names.
         
-        # Create and return methodology object
-        methodology = Methodology(
-            tiers=onsite_tiers,
-            offsite_channels=offsite_channels,
-            metadata=self.config.get('metadata', {}),
-            scoring_config=self.config.get('scoring', {}),
-            calculation_config=self.config.get('calculation', {}),
-            gating_rules=self.config.get('gating_rules', {}),
-            brand_messaging=self.config.get('messaging', {}),
-            validation_flags=self.config.get('validation_flags', {}),
-            quality_penalties=self.config.get('quality_penalties', {}),
-            evidence_requirements=self.config.get('evidence', {})
-        )
+        Returns:
+            List of tier names
+        """
+        return list(self.config.get('classification', {}).get('onsite', {}).keys())
+    
+    def get_channel_names(self) -> List[str]:
+        """
+        Get all channel names.
         
-        return methodology
-
-    def _parse_onsite_tiers(self) -> List[Tier]:
-        """Parse the onsite tier configurations."""
-        tiers = []
-        criteria_config = self.config.get('criteria', {})
-        classification_config = self.config.get('classification', {}).get('onsite', {})
+        Returns:
+            List of channel names
+        """
+        return list(self.config.get('classification', {}).get('offsite', {}).keys())
+    
+    def get_tier_config(self, tier_name: str) -> Dict[str, Any]:
+        """
+        Get the configuration for a specific tier.
         
-        # Parse Tier 1
-        tier_1_config = classification_config.get('tier_1', {})
-        tier_1_criteria = self._parse_tier_criteria('tier_1', criteria_config)
-        tier_1 = Tier(
-            name="TIER 1 - BRAND POSITIONING",
-            criteria=tier_1_criteria,
-            weight=tier_1_config.get('weight_in_onsite', 0.3),
-            brand_percentage=tier_1_config.get('brand_percentage', 80),
-            performance_percentage=tier_1_config.get('performance_percentage', 20),
-            triggers=tier_1_config.get('triggers', []),
-            examples=tier_1_config.get('examples', [])
-        )
-        tiers.append(tier_1)
+        Args:
+            tier_name: The name of the tier
+            
+        Returns:
+            Dictionary of tier configuration
+        """
+        if tier_name.startswith('tier_'):
+            return self.config.get('classification', {}).get('onsite', {}).get(tier_name, {})
         
-        # Parse Tier 2
-        tier_2_config = classification_config.get('tier_2', {})
-        tier_2_criteria = self._parse_tier_criteria('tier_2', criteria_config)
-        tier_2 = Tier(
-            name="TIER 2 - VALUE PROPOSITIONS",
-            criteria=tier_2_criteria,
-            weight=tier_2_config.get('weight_in_onsite', 0.5),
-            brand_percentage=tier_2_config.get('brand_percentage', 50),
-            performance_percentage=tier_2_config.get('performance_percentage', 50),
-            triggers=tier_2_config.get('triggers', []),
-            examples=tier_2_config.get('examples', [])
-        )
-        tiers.append(tier_2)
+        return self.config.get('classification', {}).get('offsite', {}).get(tier_name, {})
+    
+    def get_all_criteria(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get all criteria across all tiers and channels.
         
-        # Parse Tier 3
-        tier_3_config = classification_config.get('tier_3', {})
-        tier_3_criteria = self._parse_tier_criteria('tier_3', criteria_config)
-        tier_3 = Tier(
-            name="TIER 3 - FUNCTIONAL CONTENT",
-            criteria=tier_3_criteria,
-            weight=tier_3_config.get('weight_in_onsite', 0.2),
-            brand_percentage=tier_3_config.get('brand_percentage', 30),
-            performance_percentage=tier_3_config.get('performance_percentage', 70),
-            triggers=tier_3_config.get('triggers', []),
-            examples=tier_3_config.get('examples', [])
-        )
-        tiers.append(tier_3)
+        Returns:
+            Dictionary of criteria by code
+        """
+        all_criteria = {}
         
-        return tiers
-
-    def _parse_tier_criteria(self, tier_name: str, criteria_config: Dict) -> List[Criterion]:
-        """Parse criteria for a specific tier."""
-        criteria = []
-        tier_config = criteria_config.get(tier_name, {})
+        # Get onsite criteria
+        for tier_name in self.get_tier_names():
+            criteria = self.get_criteria_for_tier(tier_name)
+            for criterion in criteria:
+                code = criterion.get('code')
+                if code and code not in all_criteria:
+                    all_criteria[code] = criterion
         
-        # Parse brand criteria
-        brand_criteria = tier_config.get('brand_criteria', {})
-        for criterion_name, criterion_config in brand_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='brand',
-                requirements=criterion_config.get('requirements', []),
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
+        # Get offsite criteria
+        for channel_name in self.get_channel_names():
+            criteria = self.get_criteria_for_tier(channel_name)
+            for criterion in criteria:
+                code = criterion.get('code')
+                if code and code not in all_criteria:
+                    all_criteria[code] = criterion
         
-        # Parse performance criteria
-        performance_criteria = tier_config.get('performance_criteria', {})
-        for criterion_name, criterion_config in performance_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='performance',
-                requirements=criterion_config.get('requirements', []),
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
+        return all_criteria
+    
+    def get_criterion_by_code(self, code: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a criterion by its code.
         
-        # Parse authenticity criteria (for tier 3 if applicable)
-        authenticity_criteria = tier_config.get('authenticity_criteria', {})
-        for criterion_name, criterion_config in authenticity_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='authenticity',
-                requirements=criterion_config.get('requirements', []),
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
-        
-        return criteria
-
-    def _parse_offsite_channels(self) -> List[OffsiteChannel]:
-        """Parse the offsite channel configurations."""
-        channels = []
-        offsite_criteria = self.config.get('offsite_criteria', {})
-        classification_config = self.config.get('classification', {}).get('offsite', {})
-        
-        # Parse Owned Channels
-        owned_config = classification_config.get('owned', {})
-        owned_criteria = self._parse_offsite_criteria('owned', offsite_criteria)
-        owned_channel = OffsiteChannel(
-            name="Owned Channels",
-            criteria=owned_criteria,
-            weight=owned_config.get('weight_in_offsite', 0.4),
-            brand_percentage=owned_config.get('brand_percentage', 60),
-            performance_percentage=owned_config.get('performance_percentage', 40),
-            examples=owned_config.get('examples', [])
-        )
-        channels.append(owned_channel)
-        
-        # Parse Influenced Channels
-        influenced_config = classification_config.get('influenced', {})
-        influenced_criteria = self._parse_offsite_criteria('influenced', offsite_criteria)
-        influenced_channel = OffsiteChannel(
-            name="Influenced Channels",
-            criteria=influenced_criteria,
-            weight=influenced_config.get('weight_in_offsite', 0.35),
-            brand_percentage=influenced_config.get('brand_percentage', 40),
-            authenticity_percentage=influenced_config.get('authenticity_percentage', 60),
-            examples=influenced_config.get('examples', [])
-        )
-        channels.append(influenced_channel)
-        
-        # Parse Independent Channels
-        independent_config = classification_config.get('independent', {})
-        independent_criteria = self._parse_offsite_criteria('independent', offsite_criteria)
-        independent_channel = OffsiteChannel(
-            name="Independent Channels",
-            criteria=independent_criteria,
-            weight=independent_config.get('weight_in_offsite', 0.25),
-            brand_percentage=independent_config.get('brand_percentage', 20),
-            sentiment_percentage=independent_config.get('sentiment_percentage', 80),
-            examples=independent_config.get('examples', [])
-        )
-        channels.append(independent_channel)
-        
-        return channels
-
-    def _parse_offsite_criteria(self, channel_name: str, offsite_criteria: Dict) -> List[Criterion]:
-        """Parse criteria for a specific offsite channel."""
-        criteria = []
-        channel_config = offsite_criteria.get(channel_name, {})
-        
-        # Parse brand criteria
-        brand_criteria = channel_config.get('brand_criteria', {})
-        for criterion_name, criterion_config in brand_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='brand',
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
-        
-        # Parse performance criteria
-        performance_criteria = channel_config.get('performance_criteria', {})
-        for criterion_name, criterion_config in performance_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='performance',
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
-        
-        # Parse authenticity criteria
-        authenticity_criteria = channel_config.get('authenticity_criteria', {})
-        for criterion_name, criterion_config in authenticity_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='authenticity',
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
-        
-        # Parse sentiment criteria
-        sentiment_criteria = channel_config.get('sentiment_criteria', {})
-        for criterion_name, criterion_config in sentiment_criteria.items():
-            criterion = Criterion(
-                name=criterion_config.get('description', criterion_name),
-                weight=criterion_config.get('weight', 0) / 100.0,  # Convert percentage to decimal
-                category='sentiment',
-                criterion_id=criterion_name
-            )
-            criteria.append(criterion)
-        
-        return criteria
-
-    def get_scoring_descriptors(self) -> dict:
-        """Get scoring descriptors"""
-        return self.config.get('scoring', {}).get('descriptors', {})
-
-    def get_gating_rules(self) -> Dict[str, Dict]:
-        """Get the hard gating rules from configuration."""
-        return self.config.get('gating_rules', {})
-
-    def get_brand_messaging(self) -> Dict[str, Any]:
-        """Get the brand messaging reference from configuration."""
-        return self.config.get('messaging', {})
-
-    def get_calculation_config(self) -> dict:
-        """Get calculation configuration"""
-        return self.config.get('calculation', {})
-
-    def get_quality_penalties(self) -> Dict[str, Dict]:
-        """Get the copy quality penalties configuration."""
-        return self.config.get('quality_penalties', {})
-
-    def get_validation_flags(self) -> Dict[str, Dict]:
-        """Get the validation flags configuration."""
-        return self.config.get('validation_flags', {})
-
-    def get_evidence_requirements(self) -> Dict[str, Any]:
-        """Get the evidence requirements configuration."""
-        return self.config.get('evidence', {})
-
-    def get_examples(self) -> Dict[str, Dict]:
-        """Get the calibration examples from configuration."""
-        return self.config.get('examples', {})
-
-    def get_metadata(self) -> dict:
-        """Get methodology metadata"""
-        return self.config.get('metadata', {})
-
-    def get_tier_criteria(self, tier_name: str) -> dict:
-        """Get criteria for a specific tier"""
-        return self.config.get('criteria', {}).get(tier_name, {})
+        Args:
+            code: The criterion code
+            
+        Returns:
+            Dictionary of criterion details or None if not found
+        """
+        all_criteria = self.get_all_criteria()
+        return all_criteria.get(code)
