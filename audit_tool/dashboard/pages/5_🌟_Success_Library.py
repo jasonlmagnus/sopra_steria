@@ -11,12 +11,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import sys
 from pathlib import Path
+import re
 
 # Add parent directory to path to import components
 sys.path.append(str(Path(__file__).parent.parent))
 
 from components.data_loader import BrandHealthDataLoader
 from components.metrics_calculator import BrandHealthMetricsCalculator
+from components.brand_styling import get_brand_css
 
 # Page configuration
 st.set_page_config(
@@ -26,8 +28,39 @@ st.set_page_config(
 )
 
 # Import centralized brand styling (fonts already loaded on home page)
-from components.brand_styling import get_brand_css
 st.markdown(get_brand_css(), unsafe_allow_html=True)
+
+def extract_persona_quotes_success(text):
+    """Extract persona voice quotes from success text"""
+    if not text or pd.isna(text):
+        return []
+    
+    quotes = []
+    text_str = str(text)
+    
+    # Look for first-person statements and persona voice patterns
+    patterns = [
+        r'As a[^.]*\.',
+        r'I [^.]*\.',
+        r'My [^.]*\.',
+        r'This [^.]*for me[^.]*\.',
+        r'From my perspective[^.]*\.',
+        r'[^.]*resonates with me[^.]*\.',
+        r'[^.]*aligns with my[^.]*\.',
+    ]
+    
+    for pattern in patterns:
+        matches = re.findall(pattern, text_str, re.IGNORECASE)
+        quotes.extend(matches)
+    
+    # Clean and deduplicate quotes
+    cleaned_quotes = []
+    for quote in quotes:
+        quote = quote.strip()
+        if len(quote) > 25 and quote not in cleaned_quotes:
+            cleaned_quotes.append(quote)
+    
+    return cleaned_quotes[:3]  # Return top 3 quotes
 
 def main():
     """Success Library - Comprehensive Success Analysis"""
@@ -425,7 +458,19 @@ def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name
                     <strong>✅ What's Working Exceptionally Well:</strong><br>
                 </div>
                 """, unsafe_allow_html=True)
-                st.markdown(f"*{str(effective_examples).strip()}*")
+                
+                # Extract persona voice quotes
+                persona_quotes = extract_persona_quotes_success(str(effective_examples))
+                if persona_quotes:
+                    st.markdown("**💬 Persona Voice:**")
+                    for quote in persona_quotes[:2]:  # Show top 2 quotes
+                        st.success(f"*\"{quote}\"*")
+                    
+                    # Show full text in expander
+                    with st.expander("📋 Full Success Analysis"):
+                        st.markdown(f"*{str(effective_examples).strip()}*")
+                else:
+                    st.markdown(f"*{str(effective_examples).strip()}*")
             else:
                 st.markdown("""
                 <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">

@@ -4,10 +4,9 @@ Matches the home page (brand_health_command_center.py) styling exactly
 """
 
 def get_brand_css():
-    """Return complete brand CSS for dashboard pages - matches home page styling"""
+    """Return brand CSS styling for the dashboard"""
     return """
 <style>
-    /* Brand Health Command Center Styles - Centralized */
     :root {
         --primary-color: #E85A4F;
         --primary-hover: #d44a3a;
@@ -414,14 +413,100 @@ def get_brand_css():
         font-weight: 600;
     }
     
-    /* Tab styling */
+    /* Tab styling - COMPREHENSIVE FIX */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 4px !important;
+        background: transparent !important;
+        border-bottom: none !important;
+        padding: 0 !important;
+        margin-bottom: 1rem !important;
     }
     
+    /* ALL TABS - Default inactive state (white background) */
     .stTabs [data-baseweb="tab"] {
-        font-family: var(--font-primary);
-        font-weight: 500;
+        font-family: var(--font-primary) !important;
+        font-weight: 500 !important;
+        background-color: white !important;
+        background: white !important;
+        color: var(--secondary-color) !important;
+        border: 1px solid var(--gray-border) !important;
+        border-radius: 6px !important;
+        padding: 0.5rem 1rem !important;
+        margin: 0 2px !important;
+        min-height: 40px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    /* ACTIVE TAB - Primary color background */
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: var(--primary-color) !important;
+        background: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 4px rgba(232, 90, 79, 0.3) !important;
+    }
+    
+    /* HOVER STATES */
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {
+        background-color: #F9FAFB !important;
+        background: #F9FAFB !important;
+        border-color: #9CA3AF !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    .stTabs [data-baseweb="tab"][aria-selected="true"]:hover {
+        background-color: var(--primary-hover) !important;
+        background: var(--primary-hover) !important;
+        border-color: var(--primary-hover) !important;
+    }
+    
+    /* FOCUS STATES */
+    .stTabs [data-baseweb="tab"]:focus {
+        outline: 2px solid var(--primary-color) !important;
+        outline-offset: 2px !important;
+    }
+    
+    /* Tab content area */
+    .stTabs [data-baseweb="tab-panel"] {
+        padding-top: 1rem !important;
+        border: none !important;
+    }
+    
+    /* NUCLEAR OPTION - Force styling with highest specificity */
+    div[data-testid="stTabs"] div[role="tablist"] button {
+        background-color: white !important;
+        color: var(--secondary-color) !important;
+        border: 1px solid var(--gray-border) !important;
+        border-radius: 6px !important;
+        font-family: var(--font-primary) !important;
+        font-weight: 500 !important;
+        padding: 0.5rem 1rem !important;
+        margin: 0 2px !important;
+    }
+    
+    div[data-testid="stTabs"] div[role="tablist"] button[aria-selected="true"] {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Override any Streamlit default tab styling */
+    .stTabs > div > div > div > div {
+        border-bottom: none !important;
+    }
+    
+    .stTabs > div > div > div > div > div {
+        background: white !important;
+        border: 1px solid var(--gray-border) !important;
+        border-radius: 6px !important;
+    }
+    
+    .stTabs > div > div > div > div > div[aria-selected="true"] {
+        background: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
     }
     
     /* Override Streamlit's default section headers */
