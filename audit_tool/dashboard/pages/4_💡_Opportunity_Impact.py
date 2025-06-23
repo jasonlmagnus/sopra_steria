@@ -25,112 +25,47 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Opportunity & Impact
-st.markdown("""
-<style>
-    .opportunity-header {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .opportunity-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #f59e0b;
-        margin-bottom: 1rem;
-    }
-    
-    .impact-high {
-        border-left-color: #dc2626;
-        background: #fef2f2;
-    }
-    
-    .impact-medium {
-        border-left-color: #f59e0b;
-        background: #fffbeb;
-    }
-    
-    .impact-low {
-        border-left-color: #10b981;
-        background: #f0fdf4;
-    }
-    
-    .priority-urgent {
-        background: #fee2e2;
-        border: 2px solid #dc2626;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .priority-high {
-        background: #fef3c7;
-        border: 2px solid #f59e0b;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .priority-medium {
-        background: #f0fdf4;
-        border: 2px solid #10b981;
-        border-radius: 8px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .ai-recommendation {
-        background: #f0f9ff;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #0ea5e9;
-        margin: 1rem 0;
-    }
-    
-    .criteria-insight {
-        background: #faf5ff;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #8b5cf6;
-        margin: 0.5rem 0;
-    }
-    
-    .impact-score {
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-    }
-    
-    .action-button {
-        background: #f59e0b;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0.25rem;
-        font-weight: 600;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Import centralized brand styling (fonts already loaded on home page)
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Opportunity & Impact - Comprehensive Improvement Roadmap"""
     
     # Header
     st.markdown("""
-    <div class="opportunity-header">
+    <div class="main-header">
         <h1>💡 Opportunity & Impact</h1>
         <p>Which gaps matter most and what should we do?</p>
-        <p><em>Comprehensive improvement roadmap with AI-powered action recommendations</em></p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Impact Calculation Explanation
+    with st.expander("📊 How Impact is Calculated", expanded=False):
+        st.markdown("""
+        **Impact Score Formula:**
+        ```
+        Impact = (10 - Current Score) × Tier Weight
+        ```
+        
+        **What this means:**
+        - **Current Score**: The page's performance score (1-10 scale)
+        - **Gap Size**: `(10 - Current Score)` = How much room for improvement exists
+        - **Tier Weight**: Multiplier based on content tier importance
+          - Tier 1: 0.3x weight (supporting content)
+          - Tier 2: 0.5x weight (important content)  
+          - Tier 3: 0.2x weight (secondary content)
+        
+        **Examples:**
+        - Page scoring 3/10 in Tier 2: Impact = (10-3) × 0.5 = **3.5**
+        - Page scoring 6/10 in Tier 1: Impact = (10-6) × 0.3 = **1.2**
+        - Page scoring 4/10 in Tier 3: Impact = (10-4) × 0.2 = **1.2**
+        
+        **Why this works:**
+        - Prioritizes pages with bigger performance gaps
+        - Weights core content more heavily than supporting content  
+        - Results in scores from 0-10 representing improvement potential
+        """)
     
     # Load data from session state or initialize
     if 'datasets' not in st.session_state or 'master_df' not in st.session_state:
@@ -151,7 +86,7 @@ def main():
     metrics_calc = BrandHealthMetricsCalculator(master_df, recommendations_df)
     
     # Opportunity analysis controls
-    display_opportunity_controls()
+    display_opportunity_controls(master_df)
     
     # Main analysis sections
     display_impact_overview(metrics_calc, master_df)
@@ -164,7 +99,7 @@ def main():
     
     display_action_roadmap(metrics_calc, master_df)
 
-def display_opportunity_controls():
+def display_opportunity_controls(master_df):
     """Display controls for opportunity analysis"""
     st.markdown("## 🎛️ Opportunity Analysis Controls")
     
@@ -198,10 +133,22 @@ def display_opportunity_controls():
         )
     
     with col4:
+        # Tier filter
+        tier_options = ['All'] + sorted(master_df['tier'].unique().tolist()) if 'tier' in master_df.columns else ['All']
+        selected_tier = st.selectbox(
+            "🏗️ Content Tier",
+            tier_options,
+            key="tier_filter",
+            help="Filter opportunities by content tier"
+        )
+    
+    # Additional row for max opportunities
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
         # Number of opportunities to show
         num_opportunities = st.number_input(
             "📊 Max Opportunities",
-            min_value=5, max_value=50, value=10,
+            min_value=5, max_value=50, value=15,
             key="max_opportunities"
         )
 
@@ -241,7 +188,7 @@ def display_impact_overview(metrics_calc, master_df):
         with col4:
             st.metric("Low Effort Opps", low_effort)
         
-        # Impact vs Effort scatter plot
+        # Impact vs Effort scatter plot with tier coloring
         if len(opportunities) > 1:
             impact_effort_data = pd.DataFrame([
                 {
@@ -249,7 +196,9 @@ def display_impact_overview(metrics_calc, master_df):
                     'impact': opp['potential_impact'],
                     'effort_numeric': 1 if opp['effort_level'] == 'Low' else 2 if opp['effort_level'] == 'Medium' else 3,
                     'effort_level': opp['effort_level'],
-                    'current_score': opp['current_score']
+                    'current_score': opp['current_score'],
+                    'tier': opp.get('tier', 'Unknown'),
+                    'tier_name': opp.get('tier_name', opp.get('tier', 'Unknown').replace('_', ' ').title())
                 }
                 for opp in opportunities
             ])
@@ -259,13 +208,12 @@ def display_impact_overview(metrics_calc, master_df):
                 x='effort_numeric',
                 y='impact',
                 size='current_score',
-                color='impact',
+                color='tier_name',
                 hover_name='page_title',
-                hover_data={'effort_level': True, 'current_score': ':.1f'},
-                title="Impact vs Effort Matrix",
+                hover_data={'effort_level': True, 'current_score': ':.1f', 'tier_name': True},
+                title="Impact vs Effort Matrix (by Content Tier)",
                 labels={'effort_numeric': 'Effort Level', 'impact': 'Potential Impact'},
-                color_continuous_scale='RdYlGn',
-                range_color=[0, 10]
+                category_orders={'tier_name': sorted(impact_effort_data['tier_name'].unique())}
             )
             
             # Customize x-axis
@@ -276,9 +224,31 @@ def display_impact_overview(metrics_calc, master_df):
             )
             
             fig_scatter.update_layout(height=400)
-            fig_scatter.update_xaxes(title="Impact Score")
-            fig_scatter.update_yaxes(title="Effort Level")
+            fig_scatter.update_xaxes(title="Effort Level")
+            fig_scatter.update_yaxes(title="Potential Impact")
             st.plotly_chart(fig_scatter, use_container_width=True)
+            
+            # Tier performance breakdown
+            st.markdown("### 🏗️ Opportunities by Content Tier")
+            tier_summary = impact_effort_data.groupby('tier_name').agg({
+                'impact': ['count', 'mean', 'max'],
+                'current_score': 'mean'
+            }).round(2)
+            
+            tier_summary.columns = ['Count', 'Avg Impact', 'Max Impact', 'Avg Current Score']
+            tier_summary = tier_summary.sort_values('Avg Impact', ascending=False)
+            
+            # Display tier summary
+            for tier_name, row in tier_summary.iterrows():
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric(f"{tier_name}", f"{int(row['Count'])} opps")
+                with col2:
+                    st.metric("Avg Impact", f"{row['Avg Impact']:.1f}/10")
+                with col3:
+                    st.metric("Max Impact", f"{row['Max Impact']:.1f}/10")
+                with col4:
+                    st.metric("Avg Score", f"{row['Avg Current Score']:.1f}/10")
     else:
         st.info("📊 No opportunities identified with current data structure.")
 
@@ -306,9 +276,42 @@ def display_prioritized_opportunities(metrics_calc, master_df):
     
     st.success(f"🎯 Found {len(filtered_opportunities)} prioritized opportunities")
     
-    # Display opportunities
-    for i, opp in enumerate(filtered_opportunities, 1):
-        display_opportunity_card(i, opp)
+    # Group opportunities by tier for better organization
+    opportunities_by_tier = {}
+    for opp in filtered_opportunities:
+        tier = opp.get('tier', 'Unknown')
+        tier_name = opp.get('tier_name', tier.replace('_', ' ').title()) if 'tier_name' in opp else tier.replace('_', ' ').title()
+        
+        if tier not in opportunities_by_tier:
+            opportunities_by_tier[tier] = {
+                'name': tier_name,
+                'opportunities': []
+            }
+        opportunities_by_tier[tier]['opportunities'].append(opp)
+    
+    # Display opportunities grouped by tier
+    overall_rank = 1
+    for tier, tier_data in opportunities_by_tier.items():
+        tier_name = tier_data['name']
+        tier_opps = tier_data['opportunities']
+        
+        # Tier header with summary
+        tier_avg_impact = sum(opp['potential_impact'] for opp in tier_opps) / len(tier_opps)
+        tier_avg_score = sum(opp['current_score'] for opp in tier_opps) / len(tier_opps)
+        
+        st.markdown(f"""
+        ## 🏗️ {tier_name} ({len(tier_opps)} opportunities)
+        **Avg Impact:** {tier_avg_impact:.1f}/10 | **Avg Current Score:** {tier_avg_score:.1f}/10
+        """)
+        
+        # Display opportunities within this tier
+        for tier_rank, opp in enumerate(tier_opps, 1):
+            display_opportunity_card(overall_rank, opp, tier_rank=tier_rank, tier_name=tier_name)
+            overall_rank += 1
+        
+        # Add separator between tiers
+        if tier != list(opportunities_by_tier.keys())[-1]:  # Not the last tier
+            st.markdown("---")
 
 def apply_opportunity_filters(opportunities):
     """Apply selected filters to opportunities"""
@@ -322,6 +325,11 @@ def apply_opportunity_filters(opportunities):
     effort_filter = st.session_state.get('effort_filter', 'All')
     if effort_filter != 'All':
         filtered = [opp for opp in filtered if opp['effort_level'] == effort_filter]
+    
+    # Tier filter
+    tier_filter = st.session_state.get('tier_filter', 'All')
+    if tier_filter != 'All':
+        filtered = [opp for opp in filtered if opp.get('tier', '') == tier_filter]
     
     # Priority filter (based on impact score)
     priority_filter = st.session_state.get('priority_filter', 'All')
@@ -337,7 +345,7 @@ def apply_opportunity_filters(opportunities):
     
     return filtered
 
-def display_opportunity_card(rank, opp):
+def display_opportunity_card(rank, opp, tier_rank=None, tier_name=None):
     """Display individual opportunity card"""
     page_title = opp.get('page_title', opp.get('page_id', 'Unknown Page'))
     impact = opp['potential_impact']
@@ -364,7 +372,13 @@ def display_opportunity_card(rank, opp):
     else:
         impact_class = "impact-low"
     
-    with st.expander(f"#{rank} - {page_title} ({priority_label})", expanded=(rank <= 3)):
+    # Create title with tier context
+    if tier_rank and tier_name:
+        title = f"#{rank} ({tier_name} #{tier_rank}) - {page_title} ({priority_label})"
+    else:
+        title = f"#{rank} - {page_title} ({priority_label})"
+    
+    with st.expander(title, expanded=(rank <= 3)):
         st.markdown(f"""
         <div class="opportunity-card {impact_class}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -399,12 +413,111 @@ def display_opportunity_card(rank, opp):
         </div>
         """, unsafe_allow_html=True)
         
+        # Rich Evidence section - show comprehensive supporting data
+        st.markdown("### 📋 Supporting Evidence & Analysis")
+        
+        # Experience Metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            sentiment = opp.get('overall_sentiment', 'Unknown')
+            sentiment_color = "🟢" if sentiment == "Positive" else "🟡" if sentiment == "Neutral" else "🔴"
+            st.markdown(f"**{sentiment_color} Sentiment:** {sentiment}")
+        
+        with col2:
+            engagement = opp.get('engagement_level', 'Unknown')
+            engagement_color = "🟢" if engagement == "High" else "🟡" if engagement == "Medium" else "🔴"
+            st.markdown(f"**{engagement_color} Engagement:** {engagement}")
+        
+        with col3:
+            conversion = opp.get('conversion_likelihood', 'Unknown')
+            conversion_color = "🟢" if conversion == "High" else "🟡" if conversion == "Medium" else "🔴"
+            st.markdown(f"**{conversion_color} Conversion:** {conversion}")
+        
+        # Content Examples - What's Working vs What's Not
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            effective_examples = opp.get('effective_copy_examples', '')
+            if effective_examples and len(str(effective_examples).strip()) > 20:
+                st.markdown("""
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <strong>✅ What's Working Well:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{str(effective_examples).strip()}*")
+            else:
+                st.markdown("""
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #6c757d;">
+                    <strong>✅ Effective Examples:</strong><br>
+                    No specific effective copy examples identified
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            ineffective_examples = opp.get('ineffective_copy_examples', '')
+            if ineffective_examples and len(str(ineffective_examples).strip()) > 20:
+                st.markdown("""
+                <div style="background: #f8d7da; padding: 1rem; border-radius: 6px; border-left: 4px solid #dc3545;">
+                    <strong>❌ What's Not Working:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{str(ineffective_examples).strip()}*")
+            else:
+                st.markdown("""
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #6c757d;">
+                    <strong>❌ Issues Identified:</strong><br>
+                    No specific ineffective copy examples noted
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Specific Issues & Business Impact
+        trust_issues = opp.get('trust_credibility_assessment', '')
+        info_gaps = opp.get('information_gaps', '')
+        business_impact = opp.get('business_impact_analysis', '')
+        
+        if trust_issues and len(str(trust_issues).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107;">
+                <strong>🔒 Trust & Credibility Issues:</strong><br>
+                {str(trust_issues).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if info_gaps and len(str(info_gaps).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #e2e3e5; padding: 1rem; border-radius: 6px; border-left: 4px solid #6c757d;">
+                <strong>📝 Information Gaps:</strong><br>
+                {str(info_gaps).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if business_impact and len(str(business_impact).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                <strong>💼 Business Impact:</strong><br>
+                {str(business_impact).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # General Evidence (fallback)
+        general_evidence = opp.get('evidence', '')
+        if general_evidence and len(str(general_evidence).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #E85A4F;">
+                <strong>🔍 Additional Audit Findings:</strong><br>
+                {str(general_evidence).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
         # Additional details if available
         if 'url' in opp and opp['url']:
             st.markdown(f"**🔗 URL:** {opp['url']}")
         
         if 'tier' in opp:
             st.markdown(f"**🏗️ Content Tier:** {opp['tier']}")
+        
+        if 'descriptor' in opp and opp['descriptor']:
+            st.markdown(f"**📊 Current Status:** {opp['descriptor']}")
         
         # Quick action buttons
         st.markdown("### 🚀 Quick Actions")

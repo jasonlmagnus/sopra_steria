@@ -17,6 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from components.data_loader import BrandHealthDataLoader
 from components.metrics_calculator import BrandHealthMetricsCalculator
+from components.brand_styling import get_complete_brand_css
 
 # Page configuration
 st.set_page_config(
@@ -25,115 +26,32 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Persona Insights
-st.markdown("""
-<style>
-    .persona-header {
-        background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .persona-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #7c3aed;
-        margin-bottom: 1rem;
-        height: 100%;
-    }
-    
-    .persona-metric {
-        text-align: center;
-        padding: 1rem;
-    }
-    
-    .persona-metric .metric-value {
-        font-size: 2rem;
-        font-weight: bold;
-        margin: 0;
-    }
-    
-    .persona-metric .metric-label {
-        font-size: 0.9rem;
-        color: #666;
-        margin-top: 0.5rem;
-    }
-    
-    .sentiment-positive { color: #10b981; }
-    .sentiment-neutral { color: #f59e0b; }
-    .sentiment-negative { color: #ef4444; }
-    
-    .engagement-high { color: #10b981; }
-    .engagement-medium { color: #f59e0b; }
-    .engagement-low { color: #ef4444; }
-    
-    .persona-quote {
-        background: #f8fafc;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #7c3aed;
-        margin: 1rem 0;
-        font-style: italic;
-    }
-    
-    .comparison-section {
-        background: #fef7cd;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid #f59e0b;
-        margin: 1rem 0;
-    }
-    
-    .experience-highlight {
-        background: #ecfdf5;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #10b981;
-        margin: 0.5rem 0;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply centralized brand styling with fonts
+st.markdown(get_complete_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Persona Insights - Comprehensive Persona Analysis"""
     
-    # Header
     st.markdown("""
-    <div class="persona-header">
-        <h1>👥 Persona Insights</h1>
-        <p>How do our personas feel and act?</p>
-        <p><em>Comprehensive analysis of persona experiences and behaviors</em></p>
+    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
+        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">Persona Insights</h1>
+        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Understand how different personas experience your brand across touchpoints</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Load data from session state or initialize
-    if 'datasets' not in st.session_state or 'master_df' not in st.session_state:
-        data_loader = BrandHealthDataLoader()
-        datasets, master_df = data_loader.load_all_data()
-        st.session_state['datasets'] = datasets
-        st.session_state['master_df'] = master_df
-    else:
-        datasets = st.session_state['datasets']
-        master_df = st.session_state['master_df']
+    # Load data using BrandHealthDataLoader
+    data_loader = BrandHealthDataLoader()
+    master_df = data_loader.load_unified_data()
     
     if master_df.empty:
         st.error("❌ No data available for Persona Insights analysis.")
         return
     
     # Initialize metrics calculator
-    recommendations_df = datasets.get('recommendations') if datasets else None
-    metrics_calc = BrandHealthMetricsCalculator(master_df, recommendations_df)
+    metrics_calc = BrandHealthMetricsCalculator(master_df)
     
     # Persona selection and filtering
-    display_persona_selector(master_df)
-    
-    # Get selected persona(s)
-    selected_persona = st.session_state.get('persona_insights_filter', 'All')
+    selected_persona = display_persona_selector(master_df)
     
     # Filter data based on selection
     if selected_persona == 'All':
@@ -178,21 +96,20 @@ def display_persona_selector(master_df):
             st.info("📊 **Comparison Mode**\nAnalyzing all personas side-by-side")
         else:
             st.success(f"🔍 **Deep Dive Mode**\nFocused analysis of {selected_persona}")
+    
+    return selected_persona
 
 def display_persona_comparison_analysis(master_df, metrics_calc):
     """Display side-by-side persona comparison (from Persona Comparison page)"""
     st.markdown("## 📊 Persona Performance Comparison")
     
-    # Calculate persona-level metrics
+    # Calculate persona-level metrics - only use meaningful metrics
     persona_summary = master_df.groupby('persona_id').agg({
-        'avg_score': ['mean', 'count'],
-        'sentiment_numeric': 'mean',
-        'engagement_numeric': 'mean',
-        'conversion_numeric': 'mean'
+        'avg_score': ['mean', 'count']
     }).round(2)
     
     # Flatten column names
-    persona_summary.columns = ['avg_score', 'page_count', 'avg_sentiment', 'avg_engagement', 'avg_conversion']
+    persona_summary.columns = ['avg_score', 'page_count']
     persona_summary = persona_summary.sort_values('avg_score', ascending=False)
     
     # Display persona cards
@@ -213,33 +130,22 @@ def display_persona_comparison_analysis(master_df, metrics_calc):
                 # Determine performance status
                 score = data['avg_score']
                 status_color = "🌟" if score >= 7 else "✅" if score >= 5 else "⚠️" if score >= 3 else "🚨"
-                status_text = "Excellent" if score >= 7 else "Good" if score >= 5 else "Fair" if score >= 3 else "Poor"
+                status_text = "EXCELLENT" if score >= 7 else "GOOD" if score >= 5 else "FAIR" if score >= 3 else "POOR"
                 
                 st.markdown(f"""
                 <div class="persona-card">
-                    <h4>{status_color} {persona}</h4>
+                    <h4 style="font-family: 'Crimson Text', serif; color: #2C3E50;">{status_color} {persona.replace('_', ' ')}</h4>
                     <div class="persona-metric">
-                        <div class="metric-value">{score:.1f}/10</div>
-                        <div class="metric-label">Overall Score ({status_text})</div>
+                        <div class="metric-value" style="font-family: 'Inter', sans-serif; font-size: 2rem; font-weight: bold; color: #E85A4F;">{score:.1f}/10</div>
+                        <div class="metric-label" style="font-family: 'Inter', sans-serif; color: #6B7280;">OVERALL SCORE ({status_text})</div>
                     </div>
-                    <hr>
-                    <div style="display: flex; justify-content: space-between;">
-                        <div class="persona-metric">
-                            <div class="metric-value sentiment-positive">{data['avg_sentiment']:.1f}</div>
-                            <div class="metric-label">Sentiment</div>
-                        </div>
-                        <div class="persona-metric">
-                            <div class="metric-value engagement-high">{data['avg_engagement']:.1f}</div>
-                            <div class="metric-label">Engagement</div>
-                        </div>
-                    </div>
-                    <div style="text-align: center; margin-top: 1rem;">
-                        <strong>{data['page_count']} pages analyzed</strong>
+                    <div style="text-align: center; margin-top: 1rem; font-family: 'Inter', sans-serif;">
+                        <strong style="color: #2C3E50;">{data['page_count']} pages analyzed</strong>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
     
-    # Comparison charts
+    # Comparison charts - simplified without uniform metrics
     display_persona_comparison_charts(persona_summary)
     
     # Persona ranking and insights
@@ -259,59 +165,32 @@ def display_persona_comparison_charts(persona_summary):
         range_color=[0, 10]
     )
     fig_score.update_layout(height=400)
-    st.plotly_chart(fig_score, use_container_width=True)
+    st.plotly_chart(fig_score, use_container_width=True, key="persona_score_comparison")
     
-    # Multi-metric comparison
+    # Page coverage comparison
     col1, col2 = st.columns(2)
     
     with col1:
-        # Sentiment vs Engagement scatter
-        fig_scatter = px.scatter(
-            x=persona_summary['avg_sentiment'],
-            y=persona_summary['avg_engagement'],
-            size=persona_summary['page_count'],
-            color=persona_summary['avg_score'],
-            hover_name=persona_summary.index,
-            title="Sentiment vs Engagement by Persona",
-            labels={"x": "Average Sentiment", "y": "Average Engagement"},
-            color_continuous_scale='RdYlGn',
-            range_color=[0, 10]
+        # Page count comparison
+        fig_pages = px.bar(
+            x=persona_summary.index,
+            y=persona_summary['page_count'],
+            title="Pages Analyzed per Persona",
+            color=persona_summary['page_count'],
+            color_continuous_scale='Blues'
         )
-        fig_scatter.update_layout(height=400)
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        fig_pages.update_layout(height=400)
+        st.plotly_chart(fig_pages, use_container_width=True, key="persona_page_count")
     
     with col2:
-        # Radar chart for top 3 personas
-        top_personas = persona_summary.head(3)
-        
-        if len(top_personas) > 0:
-            fig_radar = go.Figure()
-            
-            metrics = ['avg_score', 'avg_sentiment', 'avg_engagement', 'avg_conversion']
-            metric_labels = ['Overall Score', 'Sentiment', 'Engagement', 'Conversion']
-            
-            for persona in top_personas.index:
-                values = [top_personas.loc[persona, metric] for metric in metrics]
-                values.append(values[0])  # Close the radar chart
-                
-                fig_radar.add_trace(go.Scatterpolar(
-                    r=values,
-                    theta=metric_labels + [metric_labels[0]],
-                    fill='toself',
-                    name=persona
-                ))
-            
-            fig_radar.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 10]
-                    )),
-                showlegend=True,
-                title="Top 3 Personas - Multi-Metric Comparison",
-                height=400
-            )
-            st.plotly_chart(fig_radar, use_container_width=True)
+        # Score distribution pie chart
+        fig_pie = px.pie(
+            values=persona_summary['avg_score'],
+            names=persona_summary.index,
+            title="Score Distribution Across Personas"
+        )
+        fig_pie.update_layout(height=400)
+        st.plotly_chart(fig_pie, use_container_width=True, key="persona_score_distribution")
 
 def display_persona_ranking_insights(persona_summary):
     """Display persona ranking and insights"""
@@ -323,36 +202,22 @@ def display_persona_ranking_insights(persona_summary):
         st.success("🥇 **Top Performing Personas**")
         for i, (persona, data) in enumerate(persona_summary.head(3).iterrows(), 1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉"
-            st.write(f"{medal} **{persona}**: {data['avg_score']:.1f}/10")
-            st.write(f"   • Sentiment: {data['avg_sentiment']:.1f} | Engagement: {data['avg_engagement']:.1f}")
+            st.write(f"{medal} **{persona.replace('_', ' ')}**: {data['avg_score']:.1f}/10")
+            st.write(f"   • {data['page_count']} pages analyzed")
     
     with col2:
         st.error("📉 **Areas for Improvement**")
         bottom_personas = persona_summary.tail(2)
         for persona, data in bottom_personas.iterrows():
-            st.write(f"⚠️ **{persona}**: {data['avg_score']:.1f}/10")
-            
-            # Identify specific improvement areas
-            improvements = []
-            if data['avg_sentiment'] < 5:
-                improvements.append("Sentiment")
-            if data['avg_engagement'] < 5:
-                improvements.append("Engagement")
-            if data['avg_conversion'] < 5:
-                improvements.append("Conversion")
-            
-            if improvements:
-                st.write(f"   • Focus on: {', '.join(improvements)}")
+            st.write(f"⚠️ **{persona.replace('_', ' ')}**: {data['avg_score']:.1f}/10")
+            st.write(f"   • Focus on improving content quality and alignment")
 
 def display_individual_persona_analysis(filtered_df, persona_name, metrics_calc):
     """Display detailed analysis for individual persona (from Persona Experience page)"""
-    st.markdown(f"## 🔍 Deep Dive: {persona_name}")
+    st.markdown(f"## 🔍 Deep Dive: {persona_name.replace('_', ' ')}")
     
     # Persona overview metrics
     display_persona_overview_metrics(filtered_df, persona_name)
-    
-    # Sentiment and engagement analysis
-    display_sentiment_engagement_analysis(filtered_df, persona_name)
     
     # Page-level performance for this persona
     display_persona_page_performance(filtered_df, persona_name)
@@ -367,85 +232,31 @@ def display_persona_overview_metrics(filtered_df, persona_name):
     # Calculate key metrics
     avg_score = filtered_df['avg_score'].mean() if 'avg_score' in filtered_df.columns else 0
     page_count = len(filtered_df['page_id'].unique()) if 'page_id' in filtered_df.columns else len(filtered_df)
-    avg_sentiment = filtered_df['sentiment_numeric'].mean() if 'sentiment_numeric' in filtered_df.columns else 0
-    avg_engagement = filtered_df['engagement_numeric'].mean() if 'engagement_numeric' in filtered_df.columns else 0
+    
+    # Calculate tier distribution
+    tier_counts = filtered_df['tier'].value_counts() if 'tier' in filtered_df.columns else {}
+    top_tier = tier_counts.index[0] if len(tier_counts) > 0 else "Unknown"
+    
+    # Calculate critical issues
+    critical_count = len(filtered_df[filtered_df['avg_score'] < 4.0]) if 'avg_score' in filtered_df.columns else 0
     
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         status_color = "🌟" if avg_score >= 7 else "✅" if avg_score >= 5 else "⚠️" if avg_score >= 3 else "🚨"
-        st.metric("Overall Score", f"{avg_score:.1f}/10", delta=status_color)
+        st.metric("Overall Score", f"{avg_score:.1f}/10")
     
     with col2:
         st.metric("Pages Analyzed", page_count)
     
     with col3:
-        sentiment_status = "😊" if avg_sentiment >= 7 else "😐" if avg_sentiment >= 4 else "😞"
-        st.metric("Avg Sentiment", f"{avg_sentiment:.1f}/10", delta=sentiment_status)
+        st.metric("Primary Tier", top_tier.replace('tier_', 'Tier ').title())
     
     with col4:
-        engagement_status = "🔥" if avg_engagement >= 7 else "👍" if avg_engagement >= 4 else "👎"
-        st.metric("Avg Engagement", f"{avg_engagement:.1f}/10", delta=engagement_status)
+        critical_status = "🚨" if critical_count > 0 else "✅"
+        st.metric("Critical Issues", f"{critical_count}")
 
-def display_sentiment_engagement_analysis(filtered_df, persona_name):
-    """Display detailed sentiment and engagement analysis"""
-    st.markdown("### 💭 Sentiment & Engagement Analysis")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if 'sentiment_numeric' in filtered_df.columns:
-            # Sentiment distribution
-            sentiment_data = filtered_df['sentiment_numeric'].dropna()
-            
-            if not sentiment_data.empty:
-                fig_sentiment = px.histogram(
-                    sentiment_data,
-                    nbins=10,
-                    title=f"Sentiment Distribution - {persona_name}",
-                    color_discrete_sequence=['#7c3aed']
-                )
-                fig_sentiment.update_layout(height=300)
-                st.plotly_chart(fig_sentiment, use_container_width=True)
-                
-                # Sentiment insights
-                positive_pct = len(sentiment_data[sentiment_data >= 7]) / len(sentiment_data) * 100
-                negative_pct = len(sentiment_data[sentiment_data < 4]) / len(sentiment_data) * 100
-                
-                st.markdown(f"""
-                <div class="experience-highlight">
-                    <strong>Sentiment Insights:</strong><br>
-                    • {positive_pct:.1f}% of experiences are positive (≥7)<br>
-                    • {negative_pct:.1f}% of experiences are negative (<4)
-                </div>
-                """, unsafe_allow_html=True)
-    
-    with col2:
-        if 'engagement_numeric' in filtered_df.columns:
-            # Engagement distribution
-            engagement_data = filtered_df['engagement_numeric'].dropna()
-            
-            if not engagement_data.empty:
-                fig_engagement = px.histogram(
-                    engagement_data,
-                    nbins=10,
-                    title=f"Engagement Distribution - {persona_name}",
-                    color_discrete_sequence=['#a855f7']
-                )
-                fig_engagement.update_layout(height=300)
-                st.plotly_chart(fig_engagement, use_container_width=True)
-                
-                # Engagement insights
-                high_engagement_pct = len(engagement_data[engagement_data >= 7]) / len(engagement_data) * 100
-                low_engagement_pct = len(engagement_data[engagement_data < 4]) / len(engagement_data) * 100
-                
-                st.markdown(f"""
-                <div class="experience-highlight">
-                    <strong>Engagement Insights:</strong><br>
-                    • {high_engagement_pct:.1f}% show high engagement (≥7)<br>
-                    • {low_engagement_pct:.1f}% show low engagement (<4)
-                </div>
-                """, unsafe_allow_html=True)
+
 
 def display_persona_page_performance(filtered_df, persona_name):
     """Display page-level performance for the persona"""
@@ -455,10 +266,10 @@ def display_persona_page_performance(filtered_df, persona_name):
         # Aggregate by page
         page_performance = filtered_df.groupby('page_id').agg({
             'avg_score': 'mean',
-            'sentiment_numeric': 'mean',
-            'engagement_numeric': 'mean',
             'tier': 'first',
-            'url': 'first'
+            'tier_name': 'first',
+            'url': 'first',
+            'url_slug': 'first'
         }).round(2)
         
         page_performance = page_performance.sort_values('avg_score', ascending=False)
@@ -467,42 +278,58 @@ def display_persona_page_performance(filtered_df, persona_name):
         col1, col2 = st.columns(2)
         
         with col1:
-            st.success(f"🏆 **Top Performing Pages for {persona_name}**")
+            st.success(f"🏆 **Top Performing Pages for {persona_name.replace('_', ' ')}**")
             top_pages = page_performance.head(3)
             
             for page_id, data in top_pages.iterrows():
+                # Create friendly title from URL slug
+                friendly_title = data['url_slug'].replace('www', '').replace('com', '').replace('be', '').replace('nl', '')
+                friendly_title = friendly_title.replace('-', ' ').title()[:50]
+                
                 st.markdown(f"""
                 <div class="experience-highlight">
-                    <strong>{page_id}</strong> ({data['tier']})<br>
-                    Score: {data['avg_score']:.1f} | Sentiment: {data['sentiment_numeric']:.1f} | Engagement: {data['engagement_numeric']:.1f}
+                    <strong>{friendly_title}</strong><br>
+                    <small>{data['tier_name']} • Score: {data['avg_score']:.1f}/10</small>
                 </div>
                 """, unsafe_allow_html=True)
         
         with col2:
-            st.error(f"📉 **Improvement Opportunities for {persona_name}**")
+            st.error(f"📉 **Improvement Opportunities for {persona_name.replace('_', ' ')}**")
             bottom_pages = page_performance.tail(3)
             
             for page_id, data in bottom_pages.iterrows():
+                # Create friendly title from URL slug
+                friendly_title = data['url_slug'].replace('www', '').replace('com', '').replace('be', '').replace('nl', '')
+                friendly_title = friendly_title.replace('-', ' ').title()[:50]
+                
                 st.markdown(f"""
                 <div style="background: #fee2e2; padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 0.5rem 0;">
-                    <strong>{page_id}</strong> ({data['tier']})<br>
-                    Score: {data['avg_score']:.1f} | Sentiment: {data['sentiment_numeric']:.1f} | Engagement: {data['engagement_numeric']:.1f}
+                    <strong>{friendly_title}</strong><br>
+                    <small>{data['tier_name']} • Score: {data['avg_score']:.1f}/10</small>
                 </div>
                 """, unsafe_allow_html=True)
         
         # Page performance chart
         if len(page_performance) > 1:
+            # Create friendly names for chart
+            page_names = []
+            for idx in page_performance.index[:10]:
+                slug = page_performance.loc[idx, 'url_slug']
+                friendly = slug.replace('www', '').replace('com', '').replace('be', '').replace('nl', '')
+                friendly = friendly.replace('-', ' ').title()[:30] + "..."
+                page_names.append(friendly)
+            
             fig_pages = px.bar(
-                x=page_performance.index[:10],  # Top 10 pages
+                x=page_names,
                 y=page_performance['avg_score'][:10],
-                title=f"Top 10 Page Scores - {persona_name}",
+                title=f"Top 10 Page Scores - {persona_name.replace('_', ' ')}",
                 color=page_performance['avg_score'][:10],
                 color_continuous_scale='RdYlGn',
                 range_color=[0, 10]
             )
             fig_pages.update_layout(height=400)
             fig_pages.update_xaxes(tickangle=45)
-            st.plotly_chart(fig_pages, use_container_width=True)
+            st.plotly_chart(fig_pages, use_container_width=True, key=f"page_performance_{persona_name}")
 
 def display_persona_quotes_insights(filtered_df, persona_name):
     """Display first impressions and qualitative insights"""

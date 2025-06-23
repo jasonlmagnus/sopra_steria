@@ -29,107 +29,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Reports & Export
-st.markdown("""
-<style>
-    .reports-header {
-        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .report-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #6b7280;
-        margin-bottom: 1rem;
-    }
-    
-    .export-section {
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        margin: 1rem 0;
-    }
-    
-    .audit-section {
-        background: #fef7cd;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #f59e0b;
-        margin: 1rem 0;
-    }
-    
-    .data-table {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .export-button {
-        background: #6b7280;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0.25rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .export-button:hover {
-        background: #4b5563;
-        color: white;
-    }
-    
-    .audit-button {
-        background: #f59e0b;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0.25rem;
-        font-weight: 600;
-        border: none;
-        cursor: pointer;
-    }
-    
-    .status-running {
-        color: #f59e0b;
-        font-weight: bold;
-    }
-    
-    .status-complete {
-        color: #10b981;
-        font-weight: bold;
-    }
-    
-    .status-error {
-        color: #ef4444;
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Import centralized brand styling (fonts already loaded on home page)
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Reports & Export - Comprehensive Data & Audit Management"""
     
     # Header
     st.markdown("""
-    <div class="reports-header">
+    <div class="main-header">
         <h1>📋 Reports & Export</h1>
         <p>How do I analyze data and run new audits?</p>
-        <p><em>Comprehensive data exploration, custom reports, and audit management</em></p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -144,7 +55,7 @@ def main():
         master_df = st.session_state['master_df']
     
     # Tab selection
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 Data Explorer", "📈 Custom Reports", "📦 Export Center", "🚀 Audit Runner"])
+    tab1, tab2, tab3 = st.tabs(["📊 Data Explorer", "📈 Custom Reports", "📦 Export Center"])
     
     with tab1:
         display_data_explorer(master_df, datasets)
@@ -154,9 +65,6 @@ def main():
     
     with tab3:
         display_export_center(master_df, datasets)
-    
-    with tab4:
-        display_audit_runner()
 
 def display_data_explorer(master_df, datasets):
     """Display comprehensive data exploration interface (from Detailed Data page)"""
@@ -750,203 +658,6 @@ def display_bulk_export(master_df, datasets):
             file_name=f"brand_health_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
             mime="application/zip"
         )
-
-def display_audit_runner():
-    """Display audit runner interface (from Run Audit page)"""
-    st.markdown("## 🚀 Audit Runner")
-    
-    st.markdown("""
-    <div class="audit-section">
-        <h3>🔧 Brand Health Audit Management</h3>
-        <p>Run new audits, monitor progress, and manage audit configurations.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Audit configuration
-    display_audit_configuration()
-    
-    # Audit history
-    display_audit_history()
-    
-    # Quick audit runner
-    display_quick_audit_runner()
-
-def display_audit_configuration():
-    """Display audit configuration interface"""
-    st.markdown("### ⚙️ Audit Configuration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 🎯 Audit Scope")
-        
-        # URL input
-        audit_urls = st.text_area(
-            "🔗 URLs to Audit",
-            placeholder="Enter URLs, one per line\nhttps://example.com\nhttps://example.com/page2",
-            height=100,
-            key="audit_urls"
-        )
-        
-        # Persona selection
-        available_personas = [
-            "The Technical Influencer",
-            "The Benelux Strategic Business Leader",
-            "The Benelux Transformation Programme Leader",
-            "The Benelux Cybersecurity Decision Maker",
-            "The BENELUX Technology Innovation Leader"
-        ]
-        
-        selected_personas = st.multiselect(
-            "👥 Personas to Analyze",
-            available_personas,
-            default=available_personas[:2],
-            key="audit_personas"
-        )
-    
-    with col2:
-        st.markdown("#### 🔧 Audit Settings")
-        
-        # Audit depth
-        audit_depth = st.selectbox(
-            "🔍 Audit Depth",
-            ["Quick Scan", "Standard Analysis", "Deep Dive"],
-            index=1,
-            key="audit_depth"
-        )
-        
-        # Output format
-        output_format = st.selectbox(
-            "📄 Output Format",
-            ["Enhanced Dataset", "Standard Reports", "Both"],
-            index=2,
-            key="audit_output_format"
-        )
-        
-        # Email notifications
-        email_notifications = st.checkbox(
-            "📧 Email Notifications",
-            value=False,
-            key="audit_email_notifications"
-        )
-
-def display_audit_history():
-    """Display audit history and status"""
-    st.markdown("### 📊 Audit History")
-    
-    # Mock audit history data (in real implementation, this would come from a database or file system)
-    audit_history = [
-        {
-            "Audit ID": "AUD_20241221_001",
-            "Date": "2024-12-21 14:30",
-            "URLs": 15,
-            "Personas": 3,
-            "Status": "Complete",
-            "Duration": "45 min",
-            "Results": "Available"
-        },
-        {
-            "Audit ID": "AUD_20241220_002",
-            "Date": "2024-12-20 09:15",
-            "URLs": 8,
-            "Personas": 2,
-            "Status": "Complete",
-            "Duration": "32 min",
-            "Results": "Available"
-        },
-        {
-            "Audit ID": "AUD_20241219_003",
-            "Date": "2024-12-19 16:45",
-            "URLs": 12,
-            "Personas": 4,
-            "Status": "Failed",
-            "Duration": "N/A",
-            "Results": "Error Log"
-        }
-    ]
-    
-    if audit_history:
-        history_df = pd.DataFrame(audit_history)
-        
-        # Style the status column
-        def style_status(val):
-            if val == "Complete":
-                return "color: #10b981; font-weight: bold;"
-            elif val == "Running":
-                return "color: #f59e0b; font-weight: bold;"
-            elif val == "Failed":
-                return "color: #ef4444; font-weight: bold;"
-            return ""
-        
-        styled_history = history_df.style.map(style_status, subset=['Status'])
-        st.dataframe(styled_history, use_container_width=True)
-    else:
-        st.info("📊 No audit history available.")
-
-def display_quick_audit_runner():
-    """Display quick audit runner interface"""
-    st.markdown("### ⚡ Quick Audit Runner")
-    
-    st.info("🔧 **Note:** This is a UI mockup. In the full implementation, this would integrate with the actual audit_tool.main module.")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Quick audit for current site
-        st.markdown("#### 🚀 Quick Site Audit")
-        
-        quick_url = st.text_input(
-            "🔗 Single URL to Audit",
-            placeholder="https://www.soprasteria.com",
-            key="quick_audit_url"
-        )
-        
-        if st.button("🚀 Run Quick Audit"):
-            if quick_url:
-                with st.spinner("🔄 Running quick audit..."):
-                    # Mock audit process
-                    import time
-                    time.sleep(3)  # Simulate audit time
-                    
-                    st.success("✅ Quick audit completed!")
-                    st.info("📊 Results would be processed and added to the dashboard data.")
-            else:
-                st.error("❌ Please enter a URL to audit.")
-    
-    with col2:
-        # Batch audit
-        st.markdown("#### 📦 Batch Audit")
-        
-        if st.button("📦 Run Configured Batch Audit"):
-            audit_urls = st.session_state.get('audit_urls', '')
-            selected_personas = st.session_state.get('audit_personas', [])
-            
-            if audit_urls and selected_personas:
-                with st.spinner("🔄 Running batch audit..."):
-                    # Mock batch audit process
-                    import time
-                    time.sleep(5)  # Simulate longer audit time
-                    
-                    st.success("✅ Batch audit completed!")
-                    st.info("📊 Results would be processed and integrated into all dashboard tabs.")
-            else:
-                st.error("❌ Please configure URLs and personas for batch audit.")
-    
-    # Audit status monitoring
-    st.markdown("#### 📊 Current Audit Status")
-    
-    # Mock current audit status
-    if st.session_state.get('audit_running', False):
-        st.markdown("""
-        <div class="audit-section">
-            <h4>🔄 Audit in Progress</h4>
-            <p><strong>Status:</strong> <span class="status-running">Processing URLs...</span></p>
-            <p><strong>Progress:</strong> 3/10 URLs completed</p>
-            <p><strong>Estimated Time Remaining:</strong> 15 minutes</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("💤 No active audits running.")
 
 if __name__ == "__main__":
     main() 

@@ -20,48 +20,79 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Brand Health Command Center
+# Load Google Fonts and Custom CSS for Brand Health Command Center
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
     /* Brand Health Command Center Styles */
     :root {
-        --navy-deep: #0d1b2a;
-        --white-snow: #ffffff;
+        --primary-color: #E85A4F;
+        --primary-hover: #d44a3a;
+        --secondary-color: #2C3E50;
+        --gray-border: #D1D5DB;
+        --background: #FFFFFF;
+        --text-selection: #E85A4F;
         --green-status: #34c759;
         --yellow-status: #ffb800;
         --red-status: #ff3b30;
         --orange-status: #ff9500;
         --font-primary: "Inter", sans-serif;
+        --font-serif: "Crimson Text", serif;
+    }
+    
+    /* Global Typography */
+    .main .block-container {
+        font-family: var(--font-primary);
+        font-weight: 400;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
+        font-weight: 600;
+    }
+    
+    /* Text Selection */
+    ::selection {
+        background-color: var(--text-selection);
+        color: white;
     }
     
     .main-header {
-        background: linear-gradient(135deg, var(--navy-deep) 0%, #1e3a8a 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
+        background: var(--background);
+        border-left: 4px solid var(--primary-color);
+        color: var(--secondary-color);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--gray-border);
     }
     
     .main-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+        font-family: var(--font-serif);
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--secondary-color);
     }
     
     .main-header p {
-        font-size: 1.2rem;
-        opacity: 0.9;
+        font-family: var(--font-primary);
+        font-size: 1rem;
+        font-weight: 400;
+        color: #666;
         margin: 0;
     }
     
     .metric-card {
-        background: white;
+        background: var(--background);
         padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid var(--green-status);
+        border: 1px solid var(--gray-border);
+        border-left: 4px solid var(--primary-color);
         margin-bottom: 1rem;
+        font-family: var(--font-primary);
     }
     
     .metric-card.critical {
@@ -100,8 +131,15 @@ st.markdown("""
         background: #f8fafc;
         padding: 1.5rem;
         border-radius: 10px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--gray-border);
         margin: 1rem 0;
+        font-family: var(--font-primary);
+    }
+    
+    .insights-box h4 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
+        margin-bottom: 1rem;
     }
     
     .quick-win-badge {
@@ -109,6 +147,7 @@ st.markdown("""
         color: white;
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
+        font-family: var(--font-primary);
         font-size: 0.8rem;
         font-weight: 600;
     }
@@ -118,15 +157,59 @@ st.markdown("""
         color: white;
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
+        font-family: var(--font-primary);
         font-size: 0.8rem;
         font-weight: 600;
+    }
+    
+    /* Business Impact Summary Styling */
+    .business-impact-summary {
+        font-family: var(--font-primary);
+    }
+    
+    .business-impact-summary h3 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
+    }
+    
+    /* Metric Labels */
+    .metric-label {
+        font-family: var(--font-primary);
+        font-size: 0.9rem;
+        color: var(--secondary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .metric-value {
+        font-family: var(--font-primary);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    /* So What Context */
+    .so-what {
+        font-family: var(--font-primary);
+        font-weight: 500;
+        margin-top: 8px;
     }
     
     .executive-question {
         background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         padding: 1.5rem;
         border-radius: 10px;
-        border-left: 4px solid var(--navy-deep);
+        border-left: 4px solid var(--primary-color);
+        margin-bottom: 1rem;
+        font-family: var(--font-primary);
+    }
+    
+    .executive-question h4 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
         margin-bottom: 1rem;
     }
     
@@ -134,25 +217,123 @@ st.markdown("""
         background: #f0f9ff;
         padding: 1.5rem;
         border-radius: 10px;
-        border: 1px solid #0ea5e9;
+        border: 1px solid var(--primary-color);
         margin-top: 2rem;
     }
     
+    .navigation-guide h3 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
+    }
+    
     .nav-button {
-        background: var(--navy-deep);
+        background: var(--primary-color);
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 8px;
         text-decoration: none;
         display: inline-block;
         margin: 0.25rem;
+        font-family: var(--font-primary);
         font-weight: 600;
         transition: background 0.3s;
     }
     
     .nav-button:hover {
-        background: #1e3a8a;
+        background: var(--primary-hover);
         color: white;
+    }
+    
+    /* Streamlit Button Overrides */
+    .stButton > button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-family: var(--font-primary);
+        font-weight: 500;
+        transition: background-color 0.3s;
+    }
+    
+    .stButton > button:hover {
+        background-color: var(--primary-hover);
+        color: white;
+    }
+    
+    /* Streamlit Link Styling */
+    a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    a:hover {
+        color: var(--primary-hover);
+        text-decoration: underline;
+    }
+    
+    /* Override Streamlit's default section headers */
+    .main h1, .main h2, .main h3, .main h4, .main h5, .main h6 {
+        font-family: var(--font-serif);
+        color: var(--secondary-color);
+        font-weight: 600;
+        padding: 0;
+        margin: 1rem 0 0.5rem 0;
+        background: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+    
+    /* Specific styling for h2 section headers */
+    .main h2 {
+        font-size: 1.4rem;
+        border-left: 3px solid var(--primary-color);
+        padding-left: 0.75rem;
+        margin: 1.5rem 0 1rem 0;
+        background: rgba(232, 90, 79, 0.05) !important;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+    }
+    
+    /* Specific styling for h3 subsection headers */
+    .main h3 {
+        font-size: 1.2rem;
+        color: var(--secondary-color);
+        margin: 1rem 0 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    /* Remove any colored backgrounds from section containers */
+    .stMarkdown div[data-testid="stMarkdownContainer"] {
+        background: none !important;
+    }
+    
+    /* Target Streamlit's auto-generated header styling */
+    div[data-testid="stMarkdownContainer"] h1,
+    div[data-testid="stMarkdownContainer"] h2,
+    div[data-testid="stMarkdownContainer"] h3 {
+        background: none !important;
+        border: none !important;
+        color: var(--secondary-color) !important;
+        font-family: var(--font-serif) !important;
+        padding: 0.25rem 0 !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Override the colored header banners completely */
+    .stMarkdown > div > div > div {
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    
+    /* Force remove any element-ui header styling */
+    .element-container div[data-testid="stMarkdownContainer"] h2 {
+        background: rgba(232, 90, 79, 0.05) !important;
+        border-left: 3px solid var(--primary-color) !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 4px !important;
+        font-size: 1.3rem !important;
+        margin: 1rem 0 0.75rem 0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -160,11 +341,11 @@ st.markdown("""
 def main():
     """Main Brand Health Command Center - Executive Dashboard"""
     
-    # Header
+    # Clean Header
     st.markdown("""
     <div class="main-header">
         <h1>🎯 Brand Health Command Center</h1>
-        <p>Executive Dashboard - 30-Second Strategic Overview</p>
+        <p>Executive Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -203,146 +384,44 @@ def main():
 def display_executive_dashboard(summary, metrics_calc):
     """Display the focused executive dashboard - 30-second overview"""
     
-    # Add tier filtering at the top
-    st.markdown("### 🎯 Strategic Focus")
-    col1, col2 = st.columns([3, 1])
+    # Brand Health Overview (not affected by tier filtering)
+    st.markdown("## Brand Health Overview")
     
-    with col1:
-        tier_filter = st.selectbox(
-            "Focus on Content Tier:",
-            ["All Tiers", "Tier 1 (Strategic)", "Tier 2 (Tactical)", "Tier 3 (Operational)"],
-            help="Filter analysis by content strategy tier"
-        )
-    
-    with col2:
-        if tier_filter != "All Tiers":
-            st.info(f"📊 Showing {tier_filter} analysis")
-    
-    # Business Impact Summary - The "So What?" Section
-    st.markdown("## 🎯 Executive Summary")
-    
-    # Get brand health data first
+    # Get brand health data from summary
     brand_health = summary['brand_health']
-    
-    # Calculate key business metrics
-    brand_score = brand_health['raw_score']
-    critical_count = summary['key_metrics']['critical_issues']
-    quick_wins = summary['key_metrics']['quick_wins']
-    
-    # Determine overall status and priority
-    if brand_score >= 8:
-        status_message = "Strong brand performance across key metrics"
-        impact_color = "green"
-        impact_icon = "🚀"
-        priority = "MAINTAIN"
-    elif brand_score >= 6:
-        status_message = "Solid foundation with room for improvement"
-        impact_color = "orange" 
-        impact_icon = "⚠️"
-        priority = "OPTIMIZE"
-    else:
-        status_message = "Significant improvement opportunities identified"
-        impact_color = "red"
-        impact_icon = "🚨"
-        priority = "URGENT"
-    
-    st.markdown(f"""
-    <div class="business-impact-summary" style="
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-left: 5px solid {impact_color};
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px 0;
-    ">
-        <h3 style="margin: 0 0 10px 0; color: #333;">
-            {impact_icon} <strong>{status_message}</strong>
-        </h3>
-        <p style="font-size: 16px; margin: 10px 0; color: {impact_color};">
-            <strong>Priority Level: {priority}</strong>
-        </p>
-        <p style="margin: 5px 0;">
-            • <strong>{critical_count} critical issues</strong> need immediate attention
-        </p>
-        <p style="margin: 5px 0;">
-            • <strong>{quick_wins} quick wins</strong> identified for fast improvements
-        </p>
-        <p style="margin: 5px 0;">
-            • <strong>Overall Score:</strong> {brand_score:.1f}/10 ({brand_health['status']})
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # EXECUTIVE QUESTION 1: How healthy is our brand?
-    st.markdown("## 🏥 Brand Health Overview")
     
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     
     with col1:
         status_class = f"status-{brand_health['status'].lower()}"
-        # Show actual performance context
-        score = brand_health['raw_score']
-        if score >= 8:
-            impact_text = "🚀 Strong performance across criteria"
-            impact_color = "green"
-        elif score >= 6:
-            impact_text = "⚠️ Room for improvement identified"
-            impact_color = "orange"
-        else:
-            impact_text = "🚨 Multiple issues need attention"
-            impact_color = "red"
             
         st.markdown(f"""
         <div class="metric-card">
             <div class="metric-value {status_class}">
-                {brand_health['emoji']} {brand_health['raw_score']}/10
+                {brand_health['raw_score']}/10
             </div>
             <div class="metric-label">Overall Brand Health - {brand_health['status']}</div>
-            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
-                💡 {impact_text}
-            </div>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         critical_count = summary['key_metrics']['critical_issues']
         card_class = "critical" if critical_count > 0 else ""
-        
-        # Show actual critical issue context
-        if critical_count > 0:
-            impact_text = f"Requires immediate attention"
-            impact_color = "red"
-        else:
-            impact_text = "✅ No critical issues found"
-            impact_color = "green"
             
         st.markdown(f"""
         <div class="metric-card {card_class}">
-            <div class="metric-value">🚨 {critical_count}</div>
+            <div class="metric-value">{critical_count}</div>
             <div class="metric-label">Critical Issues</div>
-            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
-                💡 {impact_text}
-            </div>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         quick_wins = summary['key_metrics']['quick_wins']
-        
-        # Show quick win context
-        if quick_wins > 0:
-            impact_text = f"Ready for implementation"
-            impact_color = "green"
-        else:
-            impact_text = "No quick wins identified"
-            impact_color = "gray"
             
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">⚡ {quick_wins}</div>
+            <div class="metric-value">{quick_wins}</div>
             <div class="metric-label">Quick Wins</div>
-            <div class="so-what" style="color: {impact_color}; font-weight: bold; margin-top: 8px;">
-                💡 {impact_text}
-            </div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -350,77 +429,157 @@ def display_executive_dashboard(summary, metrics_calc):
         success_pages = summary['key_metrics']['success_pages']
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-value">🌟 {success_pages}</div>
+            <div class="metric-value">{success_pages}</div>
             <div class="metric-label">Success Pages</div>
         </div>
         """, unsafe_allow_html=True)
     
-    # EXECUTIVE QUESTION 2: What needs immediate attention?
-    if critical_count > 0:
-        st.markdown("""
-        <div class="insights-box" style="border-left: 4px solid var(--red-status);">
-            <h4>🚨 CRITICAL ALERT</h4>
-            <p><strong>{} pages are scoring below 4.0 and need immediate attention!</strong></p>
-            <p>👉 <em>Visit the <strong>Opportunity & Impact</strong> tab for detailed action plans.</em></p>
-        </div>
-        """.format(critical_count), unsafe_allow_html=True)
+
     
-    # Three Strategic Questions - Focused Executive View
-    st.markdown("## 🎯 Strategic Brand Assessment")
+    # Add tier filtering for Strategic Brand Assessment
+    st.markdown("### 🎯 Strategic Focus")
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        tier_filter = st.selectbox(
+            "Focus on Content Tier:",
+            ["All Tiers", "Tier 1 (Strategic)", "Tier 2 (Tactical)", "Tier 3 (Operational)"],
+            help="Filter Strategic Brand Assessment by content strategy tier"
+        )
+    
+    with col2:
+        if tier_filter != "All Tiers":
+            st.info(f"📊 Filtering analysis by {tier_filter}")
+    
+    # Apply tier filtering to metrics calculator
+    if tier_filter != "All Tiers":
+        # Extract tier number (1, 2, or 3)
+        tier_num = tier_filter.split()[1]  # "Tier 1 (Strategic)" -> "1"
+        tier_name = f"tier_{tier_num}"
+        # Filter the dataframe in metrics calculator
+        original_df = metrics_calc.df.copy()
+        metrics_calc.df = metrics_calc.df[metrics_calc.df['tier'] == tier_name]
+        
+        # If no data for this tier, show message and reset
+        if metrics_calc.df.empty:
+            st.warning(f"⚠️ No data available for {tier_filter}")
+            metrics_calc.df = original_df
+            tier_filter = "All Tiers"
+    
+    # Strategic Brand Assessment
+    st.markdown("## Strategic Brand Assessment")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
         <div class="executive-question">
-            <h4>🔍 Are we distinct?</h4>
+            <h4>Are we distinct?</h4>
         """, unsafe_allow_html=True)
         
-        # Calculate distinctiveness metrics (simplified for executive view)
-        tier_performance = metrics_calc.calculate_tier_performance()
-        if not tier_performance.empty:
-            score_col = 'avg_score_mean' if 'avg_score_mean' in tier_performance.columns else 'avg_score'
-            if score_col in tier_performance.columns:
-                distinct_score = tier_performance[score_col].mean()
-                if distinct_score is not None:
-                    distinct_status = "🎯 Strong" if distinct_score >= 7 else "⚠️ Moderate" if distinct_score >= 4 else "🚨 Weak"
-                    st.metric("Distinctiveness", f"{distinct_score:.1f}/10", delta=distinct_status)
-                else:
-                    st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
-            else:
-                st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
+        # Calculate distinctiveness using new algorithm
+        distinctiveness = metrics_calc.calculate_distinctiveness_score()
+        score = distinctiveness['score']
+        
+        # Color coding: Red (<4), Amber (4-6.9), Green (7+)
+        if score >= 7.0:
+            color = "#22C55E"  # Green
+            status_text = "HIGH"
+        elif score >= 4.0:
+            color = "#F59E0B"  # Amber
+            status_text = "MODERATE"
         else:
-            st.metric("Distinctiveness", "N/A", delta="❓ Unknown")
+            color = "#EF4444"  # Red
+            status_text = "LOW"
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid {color};">
+            <div style="font-size: 2rem; font-weight: bold; color: {color};">{score:.1f}/10</div>
+            <div style="color: {color}; font-weight: 600; margin: 0.5rem 0;">{status_text}</div>
+            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                <strong>How we measure:</strong><br/>
+                First impression uniqueness (40%)<br/>
+                Brand visibility (30%)<br/>
+                Distinctive language tone (30%)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
         <div class="executive-question">
-            <h4>💭 Are we resonating?</h4>
+            <h4>Are we resonating?</h4>
         """, unsafe_allow_html=True)
         
-        sentiment = summary['sentiment']
-        resonance_score = sentiment['net_sentiment']
-        if resonance_score is not None:
-            resonance_status = "😊 Positive" if resonance_score >= 60 else "😐 Neutral" if resonance_score >= 40 else "😞 Negative"
-            st.metric("Net Sentiment", f"{resonance_score:.1f}%", delta=resonance_status)
+        # Calculate resonance using new algorithm
+        resonance = metrics_calc.calculate_resonance_score()
+        sentiment = resonance['net_sentiment']
+        
+        # Convert sentiment percentage to 0-10 scale for consistency
+        resonance_score = sentiment / 10  # 34.4% becomes 3.4/10
+        
+        # Color coding: Red (<4), Amber (4-6.9), Green (7+) - same as other metrics
+        if resonance_score >= 7.0:
+            color = "#22C55E"  # Green
+            status_text = "HIGH"
+        elif resonance_score >= 4.0:
+            color = "#F59E0B"  # Amber
+            status_text = "MODERATE"
+        else:
+            color = "#EF4444"  # Red
+            status_text = "LOW"
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid {color};">
+            <div style="font-size: 2rem; font-weight: bold; color: {color};">{resonance_score:.1f}/10</div>
+            <div style="color: {color}; font-weight: 600; margin: 0.5rem 0;">{status_text}</div>
+            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                <strong>How we measure:</strong><br/>
+                User sentiment scores (50%)<br/>
+                Content engagement (30%)<br/>
+                Success rate (20%)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
         <div class="executive-question">
-            <h4>💰 Are we converting?</h4>
+            <h4>Are we converting?</h4>
         """, unsafe_allow_html=True)
         
-        conversion = summary['conversion']
-        convert_status = "🚀 Ready" if conversion['status'] == "High" else "⚠️ Moderate" if conversion['status'] == "Medium" else "🔧 Needs Work"
+        # Calculate conversion using new algorithm
+        conversion = metrics_calc.calculate_conversion_score()
+        score = conversion['score']
+        status = conversion['status']
         
-        st.metric("Conversion Readiness", conversion['status'], delta=convert_status)
-        # Handle missing score key gracefully
-        conversion_score = conversion.get('score', conversion.get('net_sentiment', 0))
-        st.metric("Conversion Score", f"{conversion_score:.1f}/10")
+        # Map status to consistent HIGH/MODERATE/LOW format
+        if status == "High":
+            color = "#22C55E"  # Green
+            status_text = "HIGH"
+        elif status == "Medium":
+            color = "#F59E0B"  # Amber
+            status_text = "MODERATE"
+        else:
+            color = "#EF4444"  # Red
+            status_text = "LOW"
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; border-left: 4px solid {color};">
+            <div style="font-size: 2rem; font-weight: bold; color: {color};">{score:.1f}/10</div>
+            <div style="color: {color}; font-weight: 600; margin: 0.5rem 0;">{status_text}</div>
+            <div style="font-size: 0.85rem; color: #6B7280; margin-top: 0.5rem;">
+                <strong>How we measure:</strong><br/>
+                Conversion likelihood (50%)<br/>
+                Trust & credibility (30%)<br/>
+                Performance metrics (20%)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
     
@@ -438,7 +597,10 @@ def display_executive_dashboard(summary, metrics_calc):
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.metric("Current Score", f"{opp['current_score']:.1f}/10")
+                    if opp.get('current_score', 0) > 0:
+                        st.metric("Current Score", f"{opp['current_score']:.1f}/10")
+                    else:
+                        st.metric("Strategic Impact", opp.get('strategic_impact', 'General'))
                 
                 with col2:
                     st.metric("Effort Level", opp['effort_level'])
@@ -446,23 +608,36 @@ def display_executive_dashboard(summary, metrics_calc):
                 with col3:
                     st.metric("Potential Impact", f"{opp['potential_impact']:.1f}")
                 
-                st.markdown(f"**💡 Quick Action:** {opp['recommendation']}")
+                # Show actual detailed recommendation
+                st.markdown(f"**💡 Recommendation:**")
+                st.markdown(f"*{opp['recommendation']}*")
+                
+                # Show evidence if available
+                if opp.get('evidence') and opp['evidence'] != opp['recommendation']:
+                    st.markdown(f"**📋 Evidence:** {opp['evidence']}")
+                
+                # Show urgency if available
+                if opp.get('urgency'):
+                    st.markdown(f"**⏰ Urgency:** {opp['urgency']}")
                 
                 # Link to detailed analysis
                 st.markdown("*👉 For detailed action plan, visit **Opportunity & Impact** tab*")
     else:
         st.info("📈 No specific opportunities identified. Visit **Content Matrix** for detailed analysis.")
     
-    # EXECUTIVE QUESTION 4: What's working well? (Top 3 Success Stories)
-    st.markdown("## 🌟 Top 3 Success Stories")
+    # EXECUTIVE QUESTION 4: What's working well? (Top 5 Success Stories)
+    st.markdown("## 🌟 Top 5 Success Stories")
     st.markdown("*For detailed success analysis, visit the **Success Library** tab*")
     
-    success_stories = metrics_calc.calculate_success_stories()
+    success_stories = metrics_calc.calculate_success_stories(min_score=7.5)  # Temporarily lower threshold
+    
+    # Debug info
+    st.write(f"DEBUG: Found {len(success_stories)} success stories")
     
     if success_stories:
         st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 7.7)")
         
-        for i, story in enumerate(success_stories[:3], 1):
+        for i, story in enumerate(success_stories, 1):
             page_title = story.get('page_title', 'Unknown Page')
             
             with st.expander(f"⭐ #{i} - {page_title} - Score: {story['raw_score']:.1f}"):
@@ -471,12 +646,25 @@ def display_executive_dashboard(summary, metrics_calc):
                 with col1:
                     st.markdown(f"**🎯 Score:** {story['raw_score']:.1f}/10")
                     st.markdown(f"**📊 Tier:** {story['tier']}")
-                
-                with col2:
+                    
+                    # Show key strengths
                     if story['key_strengths']:
                         st.markdown("**✨ Key Strengths:**")
-                        for strength in story['key_strengths'][:2]:  # Show only top 2 for executive view
+                        for strength in story['key_strengths'][:2]:  # Show top 2 for executive view
                             st.markdown(f"• {strength}")
+                
+                with col2:
+                    # Show evidence
+                    evidence_text = str(story.get('evidence', '')).strip()
+                    if evidence_text and evidence_text != 'nan' and len(evidence_text) > 10:
+                        st.markdown("**📋 Evidence:**")
+                        if len(evidence_text) > 200:
+                            st.markdown(f"*{evidence_text[:200]}...*")
+                        else:
+                            st.markdown(f"*{evidence_text}*")
+                    else:
+                        st.markdown("**📋 Evidence:**")
+                        st.markdown("*Evidence details available in Success Library tab*")
                 
                 # Link to detailed analysis
                 st.markdown("*👉 For pattern analysis and replication guide, visit **Success Library** tab*")
@@ -494,15 +682,79 @@ def display_executive_dashboard(summary, metrics_calc):
                 <strong>{i}.</strong> {rec}
             </div>
             """, unsafe_allow_html=True)
+            
+            # Add contextual action buttons with proper filtering
+            col1, col2 = st.columns([3, 1])
+            
+            with col2:
+                if "critical pages" in rec.lower() or "scoring below" in rec.lower():
+                    if st.button("🔍 View Critical Pages", key=f"critical_btn_{i}"):
+                        # Set filters for critical pages (score < 4.0)
+                        st.session_state['content_min_score'] = 0.0
+                        st.session_state['content_performance_filter'] = 'Poor (<4)'
+                        st.session_state['content_persona_filter'] = 'All'
+                        st.session_state['content_tier_filter'] = 'All'
+                        st.switch_page("pages/3_📊_Content_Matrix.py")
+                        
+                elif "quick wins" in rec.lower() or "immediate impact" in rec.lower():
+                    if st.button("⚡ See Quick Wins", key=f"quick_wins_btn_{i}"):
+                        # Set filters for quick wins (low effort, high impact)
+                        st.session_state['effort_filter'] = 'Low'
+                        st.session_state['impact_threshold'] = 6.0
+                        st.session_state['priority_filter'] = 'High'
+                        st.session_state['max_opportunities'] = 20
+                        st.switch_page("pages/4_💡_Opportunity_Impact.py")
+                        
+                elif "persona" in rec.lower():
+                    # Extract persona name from recommendation if possible
+                    persona_name = None
+                    if "Benelux Cybersecurity Decision Maker" in rec:
+                        persona_name = "The Benelux Cybersecurity Decision Maker"
+                    elif "Strategic Business Leader" in rec:
+                        persona_name = "The Benelux Strategic Business Leader (C-Suite Executive)"
+                    elif "Transformation Programme Leader" in rec:
+                        persona_name = "The Benelux Transformation Programme Leader"
+                    elif "Technical Influencer" in rec:
+                        persona_name = "The Technical Influencer"
+                    elif "Technology Innovation Leader" in rec:
+                        persona_name = "The_BENELUX_Technology_Innovation_Leader"
+                    
+                    if st.button("👥 Analyze Persona", key=f"persona_btn_{i}"):
+                        # Set persona filter
+                        if persona_name:
+                            st.session_state['persona_insights_filter'] = persona_name
+                        else:
+                            st.session_state['persona_insights_filter'] = 'All'
+                        st.switch_page("pages/2_👥_Persona_Insights.py")
+                        
+                elif "improvements" in rec.lower() or "opportunities" in rec.lower():
+                    if st.button("💡 Get Action Plan", key=f"action_btn_{i}"):
+                        # Set filters for improvement opportunities
+                        st.session_state['impact_threshold'] = 5.0
+                        st.session_state['effort_filter'] = 'All'
+                        st.session_state['priority_filter'] = 'All'
+                        st.session_state['max_opportunities'] = 15
+                        st.switch_page("pages/4_💡_Opportunity_Impact.py")
+                        
+                else:
+                    if st.button("📊 Explore Analysis", key=f"explore_btn_{i}"):
+                        # Default to content matrix with no specific filters
+                        st.session_state['content_persona_filter'] = 'All'
+                        st.session_state['content_tier_filter'] = 'All'
+                        st.session_state['content_min_score'] = 0.0
+                        st.session_state['content_performance_filter'] = 'All'
+                        st.switch_page("pages/3_📊_Content_Matrix.py")
+            
+            st.markdown("")  # Add spacing
+    
+    # Restore original dataframe if it was filtered
+    if tier_filter != "All Tiers" and 'original_df' in locals():
+        metrics_calc.df = original_df
 
 def display_navigation_guidance():
     """Enhanced navigation guidance to specialized tabs"""
-    st.markdown("""
-    <div class="navigation-guide">
-        <h3>🧭 Deep-Dive Analysis</h3>
-        <p><strong>Need more details?</strong> Visit these specialized tabs for comprehensive analysis:</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("## 🧭 Deep-Dive Analysis")
+    st.markdown("**Need more details?** Visit these specialized tabs for comprehensive analysis:")
     
     col1, col2, col3 = st.columns(3)
     
@@ -529,6 +781,18 @@ def display_navigation_guidance():
 
 def display_sidebar_essentials(data_loader, master_df, datasets):
     """Display essential sidebar information only"""
+    
+    # Magnus Consulting Logo at top of sidebar
+    try:
+        st.sidebar.image("logo.png", width=150)
+    except:
+        st.sidebar.markdown("""
+        <div style="text-align: center; padding: 1rem;">
+            <strong style="color: #E85A4F; font-size: 1.2rem;">MAGNUS</strong><br/>
+            <span style="color: #2C3E50; font-size: 0.9rem;">CONSULTING</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 Data Overview")
     

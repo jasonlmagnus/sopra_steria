@@ -17,21 +17,21 @@ The system is a Python command-line application that audits a list of URLs from 
 
 ### 1.1. High-Level Architecture
 
-The application follows a modular, 4-stage design with manual orchestration between stages.
+The application follows a modular design with **automated post-processing pipeline** for seamless dashboard integration.
 
-- **Technology Stack:** Python 3.10+, Requests, BeautifulSoup4, Anthropic SDK, OpenAI SDK, PyYAML, Pandas.
-- **Current Execution Flow (Manual 4-Stage Process):**
+- **Technology Stack:** Python 3.10+, Requests, BeautifulSoup4, Anthropic SDK, OpenAI SDK, PyYAML, Pandas, Streamlit.
+- **Current Execution Flow (Automated Pipeline):**
   1.  **Stage 1 - Audit Generation:** `python -m audit_tool.main` generates markdown scorecards and experience reports.
-  2.  **Stage 2 - Data Enhancement:** `python -m audit_tool.backfill_packager` converts markdown to structured CSV files.
-  3.  **Stage 3 - Strategic Summary:** `python strategic_summary_generator.py` creates executive-level insights.
-  4.  **Stage 4 - Data Unification:** `python -m audit_tool.multi_persona_packager` generates unified parquet files for dashboard.
+  2.  **Stage 2 - Post-Processing:** Automated via `AuditPostProcessor` - converts markdown to structured data, applies tier classification, generates strategic summary, and integrates with unified database.
+  3.  **Stage 3 - Dashboard Integration:** Immediate data availability via cache refresh - no app restart required.
 
-### 1.2. Current Limitations
+### 1.2. Workflow Improvements
 
-- **Manual Process:** Requires 4 separate command executions
-- **No Automation:** Each stage must be run manually in sequence
-- **Error Handling:** No automated recovery between stages
-- **Progress Tracking:** No visibility into pipeline execution status
+- **Automated Process:** Single-click "ADD TO DATABASE" button eliminates manual steps
+- **Immediate Integration:** Automatic cache refresh makes new data available instantly
+- **Error Recovery:** Comprehensive validation and graceful error handling
+- **Progress Tracking:** Live progress indicators with step-by-step status updates
+- **User Experience:** Seamless workflow from audit completion to dashboard viewing
 
 ## 2. Component Specification
 
@@ -131,21 +131,66 @@ The application follows a modular, 4-stage design with manual orchestration betw
 - **Functions:**
   - `process_all_personas()`: Creates unified parquet files for cross-persona analysis.
 
+### 2.7. Audit Post-Processor (`audit_post_processor.py`)
+
+- **Purpose:** Consolidated post-audit processing pipeline that automates the conversion of raw audit outputs into dashboard-ready unified data.
+- **Interface:** Can be used programmatically or via the Streamlit UI:
+
+  ```python
+  # Simple usage
+  from audit_tool.audit_post_processor import process_completed_audit
+  success = process_completed_audit("Persona_Name", add_to_db=True)
+
+  # Advanced usage
+  processor = AuditPostProcessor("Persona_Name")
+  success = processor.process_audit_results()
+  if success:
+      processor.add_to_database()
+  ```
+
+- **Functions:**
+  - `validate_audit_output() -> bool`: Checks that required markdown files exist (hygiene scorecards + experience reports)
+  - `classify_page_tiers() -> Dict[str, Dict]`: Applies `TierClassifier` to extract and classify all audited URLs
+  - `run_backfill_processing() -> Dict[str, pd.DataFrame]`: Converts markdown files to structured CSV/Parquet using `EnhancedBackfillPackager`
+  - `generate_strategic_summary() -> str`: Creates executive-level insights via `StrategicSummaryGenerator`
+  - `add_to_database() -> bool`: Integrates processed data with unified multi-persona dataset via `MultiPersonaPackager`
+  - `process_audit_results() -> bool`: Executes complete processing pipeline (validate → classify → backfill → summarize)
+  - `get_processing_status() -> Dict`: Returns current processing state and readiness for database integration
+
+**UI Integration:**
+
+- **Streamlit Integration:** Seamlessly integrated with Run Audit page UI
+- **Progress Tracking:** Live progress bar with step-by-step status updates (10% → 20% → 40% → 60% → 80% → 90% → 100%)
+- **Cache Management:** Automatically clears Streamlit cache (`st.cache_data.clear()`) to make new data immediately available
+- **Error Handling:** Comprehensive error reporting with detailed status messages
+- **State Management:** Proper session state handling for multi-audit workflows
+
+**Workflow Benefits:**
+
+- **Eliminates Manual Steps:** Replaces 4-stage manual process with single-click automation
+- **Immediate Data Availability:** New audit data visible in dashboard without app restart
+- **Error Recovery:** Graceful handling of processing failures with detailed error reporting
+- **User Experience:** Seamless workflow from audit completion to dashboard integration
+
 ## 3. Data Flow Diagram
 
-### Current Implementation (Manual 4-Stage Process)
+### Current Implementation (Automated Post-Processing Pipeline)
 
 ```mermaid
 sequenceDiagram
     participant User
+    participant RunAuditUI
     participant BrandAuditTool
     participant Scraper
     participant AIInterface
+    participant PostProcessor
     participant BackfillPackager
     participant StrategicSummaryGenerator
     participant MultiPersonaPackager
+    participant Dashboard
 
-    User->>BrandAuditTool: python -m audit_tool.main --urls --persona
+    User->>RunAuditUI: Upload persona + URLs
+    RunAuditUI->>BrandAuditTool: Execute audit
     BrandAuditTool->>BrandAuditTool: Initialize components
 
     loop For Each URL
@@ -161,17 +206,27 @@ sequenceDiagram
         BrandAuditTool->>BrandAuditTool: Save markdown files
     end
 
-    Note over User: MANUAL STEP 2
-    User->>BackfillPackager: python -m audit_tool.backfill_packager
-    BackfillPackager-->>BackfillPackager: Generate CSV files
+    BrandAuditTool-->>RunAuditUI: ✅ Audit Complete (raw files)
+    RunAuditUI-->>User: Show "ADD TO DATABASE" button
 
-    Note over User: MANUAL STEP 3
-    User->>StrategicSummaryGenerator: python strategic_summary_generator.py
-    StrategicSummaryGenerator-->>StrategicSummaryGenerator: Generate Strategic_Summary.md
+    User->>RunAuditUI: Click "ADD TO DATABASE"
+    RunAuditUI->>PostProcessor: process_audit_results()
 
-    Note over User: MANUAL STEP 4
-    User->>MultiPersonaPackager: python -m audit_tool.multi_persona_packager
-    MultiPersonaPackager-->>MultiPersonaPackager: Generate unified parquet files
+    PostProcessor->>PostProcessor: 1. Validate audit output
+    PostProcessor->>PostProcessor: 2. Classify page tiers
+    PostProcessor->>BackfillPackager: 3. Process markdown to CSV
+    BackfillPackager-->>PostProcessor: Returns structured data
+    PostProcessor->>StrategicSummaryGenerator: 4. Generate strategic summary
+    StrategicSummaryGenerator-->>PostProcessor: Returns summary
+    PostProcessor->>MultiPersonaPackager: 5. Add to unified database
+    MultiPersonaPackager-->>PostProcessor: Database updated
+
+    PostProcessor-->>RunAuditUI: ✅ Processing Complete
+    RunAuditUI->>RunAuditUI: Clear cache (st.cache_data.clear())
+    RunAuditUI-->>User: "New data available - navigate to dashboard"
+
+    User->>Dashboard: Navigate to other pages
+    Dashboard-->>User: Shows new audit data immediately
 ```
 
 ## 4. Error Handling

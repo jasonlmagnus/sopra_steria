@@ -25,116 +25,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Success Library
-st.markdown("""
-<style>
-    .success-header {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .success-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #10b981;
-        margin-bottom: 1rem;
-    }
-    
-    .success-excellent {
-        border-left-color: #059669;
-        background: #f0fdf4;
-    }
-    
-    .success-good {
-        border-left-color: #10b981;
-        background: #f0fdf4;
-    }
-    
-    .pattern-card {
-        background: #f0f9ff;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #0ea5e9;
-        margin: 1rem 0;
-    }
-    
-    .evidence-section {
-        background: #fef7cd;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #f59e0b;
-        margin: 0.5rem 0;
-    }
-    
-    .copy-example {
-        background: #f8fafc;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        margin: 0.5rem 0;
-        font-family: monospace;
-    }
-    
-    .strength-badge {
-        background: #10b981;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-block;
-        margin: 0.25rem;
-    }
-    
-    .pattern-tag {
-        background: #0ea5e9;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-block;
-        margin: 0.25rem;
-    }
-    
-    .apply-button {
-        background: #10b981;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0.25rem;
-        font-weight: 600;
-    }
-    
-    .copy-button {
-        background: #6b7280;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        float: right;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Import centralized brand styling (fonts already loaded on home page)
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Success Library - Comprehensive Success Analysis"""
     
     # Header
     st.markdown("""
-    <div class="success-header">
+    <div class="main-header">
         <h1>🌟 Success Library</h1>
         <p>What already works that we can emulate?</p>
-        <p><em>Comprehensive success analysis and pattern replication guide</em></p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -180,7 +82,7 @@ def display_success_controls():
         # Success threshold
         success_threshold = st.slider(
             "⭐ Success Threshold",
-            5.0, 10.0, 7.7,
+            5.0, 10.0, 7.5,
             step=0.1,
             key="success_threshold",
             help="Minimum score to be considered a success"
@@ -235,7 +137,7 @@ def display_success_overview(metrics_calc, master_df):
         # Performance distribution
         excellent = len(filtered_df[filtered_df['avg_score'] >= 9.0])
         very_good = len(filtered_df[(filtered_df['avg_score'] >= 8.0) & (filtered_df['avg_score'] < 9.0)])
-        good = len(filtered_df[(filtered_df['avg_score'] >= success_threshold) & (filtered_df['avg_score'] < 8.0)])
+        good = len(filtered_df[(filtered_df['avg_score'] >= 7.5) & (filtered_df['avg_score'] < 8.0)])
         
         col1, col2, col3, col4 = st.columns(4)
         
@@ -274,23 +176,66 @@ def display_success_overview(metrics_calc, master_df):
             st.markdown(f"""
             <div class="success-card">
                 <div class="metric-value">✅ {good}</div>
-                <div class="metric-label">Good (7.7-8.0)</div>
+                <div class="metric-label">Good (7.5-8.0)</div>
             </div>
             """, unsafe_allow_html=True)
         
-        # Success distribution chart
+        # Success distribution chart with tier coloring
         if success_pages > 0:
-            success_data = filtered_df[filtered_df['avg_score'] >= success_threshold]
+            success_data = filtered_df[filtered_df['avg_score'] >= success_threshold].copy()
             
-            fig_dist = px.histogram(
-                success_data,
-                x='avg_score',
-                nbins=20,
-                title="Success Score Distribution",
-                color_discrete_sequence=['#10b981']
-            )
-            fig_dist.update_layout(height=300)
-            st.plotly_chart(fig_dist, use_container_width=True)
+            # Add tier names for better display
+            success_data['tier_name'] = success_data['tier'].apply(lambda x: x.replace('_', ' ').title() if pd.notna(x) else 'Unknown')
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Score distribution histogram
+                fig_dist = px.histogram(
+                    success_data,
+                    x='avg_score',
+                    nbins=20,
+                    title="Success Score Distribution",
+                    color_discrete_sequence=['#10b981']
+                )
+                fig_dist.update_layout(height=300)
+                st.plotly_chart(fig_dist, use_container_width=True)
+            
+            with col2:
+                # Success by tier
+                if 'tier' in success_data.columns:
+                    tier_success_counts = success_data.groupby('tier_name').size().reset_index(name='count')
+                    
+                    fig_tier = px.pie(
+                        tier_success_counts,
+                        values='count',
+                        names='tier_name',
+                        title="Success Stories by Content Tier"
+                    )
+                    fig_tier.update_layout(height=300)
+                    st.plotly_chart(fig_tier, use_container_width=True)
+            
+            # Tier performance breakdown
+            st.markdown("### 🏗️ Success Performance by Content Tier")
+            if 'tier' in success_data.columns:
+                tier_summary = success_data.groupby('tier_name').agg({
+                    'avg_score': ['count', 'mean', 'max', 'min']
+                }).round(2)
+                
+                tier_summary.columns = ['Count', 'Avg Score', 'Max Score', 'Min Score']
+                tier_summary = tier_summary.sort_values('Avg Score', ascending=False)
+                
+                # Display tier summary
+                for tier_name, row in tier_summary.iterrows():
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric(f"{tier_name}", f"{int(row['Count'])} stories")
+                    with col2:
+                        st.metric("Avg Score", f"{row['Avg Score']:.1f}/10")
+                    with col3:
+                        st.metric("Best Score", f"{row['Max Score']:.1f}/10")
+                    with col4:
+                        st.metric("Lowest Score", f"{row['Min Score']:.1f}/10")
 
 def apply_success_filters(master_df):
     """Apply selected filters to the success dataset"""
@@ -316,7 +261,30 @@ def display_success_stories_detailed(metrics_calc, master_df):
     max_stories = st.session_state.get('max_success_stories', 10)
     
     if 'avg_score' in filtered_df.columns:
-        success_stories = filtered_df[filtered_df['avg_score'] >= success_threshold].sort_values('avg_score', ascending=False)
+        # AGGREGATE TO PAGE LEVEL to avoid duplicates and get richer data
+        page_success = filtered_df[filtered_df['avg_score'] >= success_threshold].groupby('page_id').agg({
+            'avg_score': 'mean',  # Average score across all criteria for this page
+            'tier': 'first',
+            'tier_name': 'first',
+            'url': 'first',
+            'url_slug': 'first',
+            'persona_id': 'first',
+            # Experience metrics
+            'overall_sentiment': 'first',
+            'engagement_level': 'first', 
+            'conversion_likelihood': 'first',
+            # Content examples for concrete evidence
+            'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            # Evidence and analysis
+            'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip()])[:500],
+            'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
+            'trust_credibility_assessment': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
+            'information_gaps': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200]
+        }).reset_index()
+        
+        # Filter to keep only pages that still meet the success threshold after aggregation
+        success_stories = page_success[page_success['avg_score'] >= success_threshold].sort_values('avg_score', ascending=False)
         
         if success_stories.empty:
             st.warning(f"⚠️ No pages score above {success_threshold:.1f} with current filters.")
@@ -327,11 +295,44 @@ def display_success_stories_detailed(metrics_calc, master_df):
         
         st.success(f"🎉 Found {len(success_stories)} success stories above {success_threshold:.1f}")
         
-        # Display success stories
-        for i, (_, story) in enumerate(success_stories.iterrows(), 1):
-            display_success_story_card(i, story, master_df)
+        # Group success stories by tier for better organization
+        stories_by_tier = {}
+        for _, story in success_stories.iterrows():
+            tier = story.get('tier', 'Unknown')
+            tier_name = story.get('tier_name', tier.replace('_', ' ').title()) if pd.notna(story.get('tier_name')) else tier.replace('_', ' ').title()
+            
+            if tier not in stories_by_tier:
+                stories_by_tier[tier] = {
+                    'name': tier_name,
+                    'stories': []
+                }
+            stories_by_tier[tier]['stories'].append(story)
+        
+        # Display success stories grouped by tier
+        overall_rank = 1
+        for tier, tier_data in stories_by_tier.items():
+            tier_name = tier_data['name']
+            tier_stories = tier_data['stories']
+            
+            # Tier header with summary
+            tier_avg_score = sum(story.get('avg_score', 0) for story in tier_stories) / len(tier_stories)
+            tier_max_score = max(story.get('avg_score', 0) for story in tier_stories)
+            
+            st.markdown(f"""
+            ## 🏗️ {tier_name} Success Stories ({len(tier_stories)} stories)
+            **Avg Score:** {tier_avg_score:.1f}/10 | **Best Score:** {tier_max_score:.1f}/10
+            """)
+            
+            # Display success stories within this tier
+            for tier_rank, story in enumerate(tier_stories, 1):
+                display_success_story_card(overall_rank, story, master_df, tier_rank=tier_rank, tier_name=tier_name)
+                overall_rank += 1
+            
+            # Add separator between tiers
+            if tier != list(stories_by_tier.keys())[-1]:  # Not the last tier
+                st.markdown("---")
 
-def display_success_story_card(rank, story, master_df):
+def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name=None):
     """Display individual success story card"""
     page_id = story.get('page_id', 'Unknown')
     score = story.get('avg_score', 0)
@@ -349,11 +350,20 @@ def display_success_story_card(rank, story, master_df):
     elif score >= 8.0:
         excellence_level = "⭐ VERY GOOD"
         card_class = "success-good"
-    else:
+    elif score >= 7.5:
         excellence_level = "✅ GOOD"
         card_class = "success-card"
+    else:
+        excellence_level = "📈 IMPROVING"
+        card_class = "success-improving"
     
-    with st.expander(f"#{rank} - {page_title} ({excellence_level})", expanded=(rank <= 3)):
+    # Create title with tier context
+    if tier_rank and tier_name:
+        title = f"#{rank} ({tier_name} #{tier_rank}) - {page_title} ({excellence_level})"
+    else:
+        title = f"#{rank} - {page_title} ({excellence_level})"
+    
+    with st.expander(title, expanded=(rank <= 3)):
         st.markdown(f"""
         <div class="{card_class}">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -384,28 +394,109 @@ def display_success_story_card(rank, story, master_df):
             else:
                 st.metric("Percentile", "N/A")
         
-        # Key strengths analysis
-        display_key_strengths(story)
+        # Rich Evidence section - show comprehensive supporting data (aligned with Opportunity page)
+        st.markdown("### 📋 Success Evidence & Analysis")
         
-        # Evidence section
-        display_evidence_section(story)
+        # Experience Metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            sentiment = story.get('overall_sentiment', 'Unknown')
+            sentiment_color = "🟢" if sentiment == "Positive" else "🟡" if sentiment == "Neutral" else "🔴"
+            st.markdown(f"**{sentiment_color} Sentiment:** {sentiment}")
+        
+        with col2:
+            engagement = story.get('engagement_level', 'Unknown')
+            engagement_color = "🟢" if engagement == "High" else "🟡" if engagement == "Medium" else "🔴"
+            st.markdown(f"**{engagement_color} Engagement:** {engagement}")
+        
+        with col3:
+            conversion = story.get('conversion_likelihood', 'Unknown')
+            conversion_color = "🟢" if conversion == "High" else "🟡" if conversion == "Medium" else "🔴"
+            st.markdown(f"**{conversion_color} Conversion:** {conversion}")
+        
+        # Content Examples - What's Working vs What Could Improve
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            effective_examples = story.get('effective_copy_examples', '')
+            if effective_examples and len(str(effective_examples).strip()) > 20:
+                st.markdown("""
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <strong>✅ What's Working Exceptionally Well:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{str(effective_examples).strip()}*")
+            else:
+                st.markdown("""
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <strong>✅ Success Elements:</strong><br>
+                    This page demonstrates strong overall performance worth replicating
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            ineffective_examples = story.get('ineffective_copy_examples', '')
+            if ineffective_examples and len(str(ineffective_examples).strip()) > 20:
+                st.markdown("""
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107;">
+                    <strong>⚠️ Areas for Enhancement:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown(f"*{str(ineffective_examples).strip()}*")
+            else:
+                st.markdown("""
+                <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                    <strong>💡 Optimization Potential:</strong><br>
+                    Even successful pages can be further optimized
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Success Insights & Business Impact
+        trust_assessment = story.get('trust_credibility_assessment', '')
+        business_impact = story.get('business_impact_analysis', '')
+        
+        if trust_assessment and len(str(trust_assessment).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                <strong>🔒 Trust & Credibility Strengths:</strong><br>
+                {str(trust_assessment).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
+        if business_impact and len(str(business_impact).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                <strong>💼 Business Impact & Value:</strong><br>
+                {str(business_impact).strip()}
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # General Evidence (fallback)
+        general_evidence = story.get('evidence', '')
+        if general_evidence and len(str(general_evidence).strip()) > 10:
+            st.markdown(f"""
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                <strong>🔍 Additional Success Factors:</strong><br>
+                {str(general_evidence).strip()}
+            </div>
+            """, unsafe_allow_html=True)
         
         # URL and additional info
         if url:
             st.markdown(f"**🔗 URL:** {url}")
         
-        # Apply pattern buttons
-        st.markdown("### 🚀 Apply This Success Pattern")
+        # Apply pattern buttons (aligned with Opportunity page style)
+        st.markdown("### 🚀 Replicate This Success")
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown('<a href="#" class="apply-button">📋 Create Template</a>', unsafe_allow_html=True)
+            st.markdown('<a href="#" class="action-button">📋 Create Template</a>', unsafe_allow_html=True)
         
         with col2:
-            st.markdown('<a href="#" class="apply-button">🔍 Analyze Pattern</a>', unsafe_allow_html=True)
+            st.markdown('<a href="#" class="action-button">🔍 Analyze Pattern</a>', unsafe_allow_html=True)
         
         with col3:
-            st.markdown('<a href="#" class="apply-button">📊 Compare Similar</a>', unsafe_allow_html=True)
+            st.markdown('<a href="#" class="action-button">📊 Compare Similar</a>', unsafe_allow_html=True)
 
 def create_friendly_page_title(page_id, url):
     """Create a friendly page title from page ID and URL"""

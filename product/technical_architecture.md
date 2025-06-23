@@ -255,6 +255,89 @@ Enhanced dataclasses for type-safe data transfer:
 - **Cache Management**: Test data caching and retrieval
 - **Multiple Test Outputs**: Various test scenarios and configurations
 
+### 4.11. Audit Post-Processor (`audit_post_processor.py`)
+
+**Consolidated post-audit processing pipeline** that transforms raw audit outputs into dashboard-ready unified data:
+
+**Core Functionality**:
+
+- **Validation**: Checks audit output completeness (hygiene scorecards + experience reports)
+- **Tier Classification**: Applies `TierClassifier` to all audited URLs
+- **Backfill Processing**: Converts markdown files to structured CSV/Parquet using `EnhancedBackfillPackager`
+- **Strategic Summary**: Generates executive insights via `StrategicSummaryGenerator`
+- **Database Integration**: Adds processed data to unified multi-persona dataset via `MultiPersonaPackager`
+
+**Integration Architecture**:
+
+```python
+# Simple usage
+from audit_tool.audit_post_processor import process_completed_audit
+success = process_completed_audit("Persona_Name", add_to_db=True)
+
+# Advanced usage
+processor = AuditPostProcessor("Persona_Name")
+processor.process_audit_results()  # Run full pipeline
+processor.add_to_database()        # Integrate with unified data
+```
+
+**Processing Pipeline**:
+
+1. **Validate** audit output directory contains required markdown files
+2. **Extract** URLs from audit files using regex pattern matching
+3. **Classify** URLs into tiers (1/2/3) and channels (owned/influenced/independent)
+4. **Process** markdown reports into structured datasets with tier-weighted scores
+5. **Generate** strategic summary using processed CSV data
+6. **Integrate** with unified multi-persona database for dashboard consumption
+
+**UI Workflow Integration**:
+The post-processor integrates seamlessly with the Streamlit Run Audit page:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant RunAuditPage
+    participant AuditTool
+    participant PostProcessor
+    participant Dashboard
+
+    User->>RunAuditPage: Upload persona + URLs
+    RunAuditPage->>AuditTool: Execute audit
+    AuditTool-->>RunAuditPage: ✅ Audit complete (raw files)
+
+    Note over RunAuditPage: Shows "ADD TO DATABASE" button
+
+    User->>RunAuditPage: Click "ADD TO DATABASE"
+    RunAuditPage->>PostProcessor: process_audit_results()
+
+    PostProcessor->>PostProcessor: 1. Validate output
+    PostProcessor->>PostProcessor: 2. Classify tiers
+    PostProcessor->>PostProcessor: 3. Process backfill
+    PostProcessor->>PostProcessor: 4. Generate summary
+    PostProcessor->>PostProcessor: 5. Add to database
+
+    PostProcessor-->>RunAuditPage: ✅ Processing complete
+    RunAuditPage->>RunAuditPage: Clear cache (st.cache_data.clear())
+    RunAuditPage-->>User: "New data available - navigate to dashboard"
+
+    User->>Dashboard: Navigate to other pages
+    Dashboard-->>User: Shows new audit data immediately
+```
+
+**Error Handling & Recovery**:
+
+- **Import Fallbacks**: Handles both relative and absolute imports
+- **Validation Checks**: Ensures required files exist before processing
+- **Graceful Degradation**: Continues processing even if some steps fail
+- **Comprehensive Logging**: Detailed status updates for debugging
+
+**Cache Management**:
+
+- **Streamlit Cache Refresh**: Automatically clears `@st.cache_data` after processing
+- **Immediate Data Availability**: New data visible without app restart
+- **State Management**: Proper session state handling for multi-audit workflows
+
+This component eliminates the previous 4-stage manual process, providing a single-click solution from audit completion to dashboard integration.
+
 ## 5. Current Data Flow
 
 ```mermaid

@@ -60,8 +60,8 @@ echo "   • Run Audit - Create new brand audits"
 echo "   • Reports & Export - Share insights and deep-dive data"
 echo ""
 
-# Launch the Brand Health Command Center
-cd audit_tool/dashboard && streamlit run brand_health_command_center.py --server.port 8509
+# Launch the Brand Health Command Center from root directory (so data paths work correctly)
+streamlit run audit_tool/dashboard/brand_health_command_center.py --server.port 8509
 
 echo ""
 echo "🎯 Brand Health Command Center stopped." 

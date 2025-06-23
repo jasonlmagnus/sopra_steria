@@ -26,58 +26,18 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Content Matrix
-st.markdown("""
-<style>
-    .content-matrix-header {
-        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .matrix-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #3b82f6;
-        margin-bottom: 1rem;
-    }
-    
-    .tier-section {
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        margin: 1rem 0;
-    }
-    
-    .performance-excellent { color: #10b981; font-weight: bold; }
-    .performance-good { color: #f59e0b; font-weight: bold; }
-    .performance-fair { color: #ef4444; font-weight: bold; }
-    
-    .drill-down-section {
-        background: #fef7cd;
-        padding: 1rem;
-        border-radius: 8px;
-        border-left: 4px solid #f59e0b;
-        margin: 1rem 0;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Import centralized brand styling (fonts already loaded on home page)
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Content Matrix - Comprehensive Content Analysis"""
     
     # Header
     st.markdown("""
-    <div class="content-matrix-header">
+    <div class="main-header">
         <h1>📊 Content Matrix</h1>
         <p>Where do we pass/fail across content types?</p>
-        <p><em>Detailed performance analysis by tier, content type, and criteria</em></p>
     </div>
     """, unsafe_allow_html=True)
     

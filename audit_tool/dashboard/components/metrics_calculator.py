@@ -238,7 +238,7 @@ class BrandHealthMetricsCalculator:
             return pd.DataFrame()
     
     def get_top_opportunities(self, limit: int = 5) -> List[Dict]:
-        """Get top improvement opportunities based on score gaps and tier importance"""
+        """Get top improvement opportunities with evidence from unified dataset"""
         # Find the correct score column
         score_col = None
         for col in ['avg_score', 'raw_score', 'final_score']:
@@ -246,34 +246,53 @@ class BrandHealthMetricsCalculator:
                 score_col = col
                 break
         
-        if score_col is None or 'tier_weight' not in self.df.columns:
+        if score_col is None:
             return []
         
-        # Aggregate by page to avoid duplicates (unified dataset has multiple rows per page)
-        page_agg = self.df.groupby('page_id').agg({
-            score_col: 'mean',  # Use avg_score which should be consistent per page
-            'tier_weight': 'first',  # Tier weight should be same for all criteria of a page
+        # Get lowest scoring pages with evidence for improvement opportunities
+        low_scoring = self.df[self.df[score_col] < 7.0].copy()
+        
+        if low_scoring.empty:
+            return []
+        
+        # Calculate opportunity impact using tier weights
+        if 'tier_weight' in low_scoring.columns:
+            low_scoring['opportunity_impact'] = (10 - low_scoring[score_col]) * low_scoring['tier_weight']
+        else:
+            low_scoring['opportunity_impact'] = (10 - low_scoring[score_col])
+        
+        # AGGREGATE TO PAGE LEVEL to avoid duplicates - include richer supporting data
+        page_opportunities = low_scoring.groupby('page_id').agg({
+            score_col: 'mean',  # Average score across all criteria for this page
+            'opportunity_impact': 'mean',  # Average impact across all criteria (keep within 1-10 scale)
             'tier': 'first',
-            'tier_name': 'first', 
+            'tier_name': 'first',
             'url': 'first',
-            'url_slug': 'first'
+            'url_slug': 'first',
+            'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip()])[:500],  # Combine evidence
+            'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
+            'descriptor': lambda x: x.mode().iloc[0] if not x.mode().empty else 'NEEDS IMPROVEMENT',  # Most common descriptor
+            # Experience metrics
+            'overall_sentiment': 'first',
+            'engagement_level': 'first', 
+            'conversion_likelihood': 'first',
+            # Content examples for concrete evidence
+            'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            # Specific feedback areas
+            'trust_credibility_assessment': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
+            'information_gaps': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200]
         }).reset_index()
         
-        # Calculate opportunity score: (10 - current_score) * tier_weight
-        # Higher opportunity score = bigger gap in more important pages
-        page_agg['opportunity_score'] = (10 - page_agg[score_col]) * page_agg['tier_weight']
-        
-        # Filter to pages with meaningful improvement potential (score < 7.5)
-        improvement_candidates = page_agg[page_agg[score_col] < 7.5]
-        
-        if improvement_candidates.empty:
-            return []
-        
-        # Get top opportunities by opportunity score
-        opportunities = improvement_candidates.nlargest(limit, 'opportunity_score')
+        # Sort by total opportunity impact and get top opportunities
+        top_opportunities = page_opportunities.nlargest(limit, 'opportunity_impact')
         
         result = []
-        for _, row in opportunities.iterrows():
+        for _, row in top_opportunities.iterrows():
+            # Create a friendly page title from URL slug
+            url_slug = row.get('url_slug', '')
+            page_title = self._create_friendly_title(url_slug)
+            
             # Calculate effort level based on current score
             current_score = row.get(score_col, 0)
             if current_score < 3.0:
@@ -283,25 +302,75 @@ class BrandHealthMetricsCalculator:
             else:
                 effort_level = "Low"
             
-            # Create a friendly page title from URL slug
-            url_slug = row.get('url_slug', '')
-            page_title = self._create_friendly_title(url_slug)
+            # Extract evidence and create actionable recommendation
+            evidence_text = row.get('evidence', '')
+            business_impact = row.get('business_impact_analysis', '')
+            trust_assessment = row.get('trust_credibility_assessment', '')
+            
+            # Create specific recommendation based on evidence
+            if evidence_text and len(str(evidence_text)) > 20:
+                # Extract key issues from evidence
+                recommendation = self._create_recommendation_from_evidence(evidence_text, current_score)
+                evidence_summary = str(evidence_text)[:200] + "..." if len(str(evidence_text)) > 200 else str(evidence_text)
+            else:
+                recommendation = f"Improve {row.get('tier_name', 'page')} content - current score {current_score:.1f}/10"
+                evidence_summary = f"Page scoring {current_score:.1f}/10 needs improvement"
+            
+            # Add business context if available
+            if business_impact and len(str(business_impact)) > 10:
+                evidence_summary += f" | Business Impact: {str(business_impact)[:100]}"
             
             result.append({
                 'page_id': row.get('page_id', 'Unknown'),
                 'page_title': page_title,
                 'url': row.get('url', ''),
                 'current_score': current_score,
-                'potential_impact': round(row.get('opportunity_score', 0), 1),
+                'potential_impact': round(row.get('opportunity_impact', 0), 1),
                 'effort_level': effort_level,
                 'tier': row.get('tier', 'Unknown'),
-                'recommendation': f"Improve {row.get('tier_name', 'page')} content - current score {current_score:.1f}/10"
+                'recommendation': recommendation,
+                'evidence': evidence_summary,
+                'criterion': row.get('criterion_code', 'General'),
+                'descriptor': row.get('descriptor', 'NEEDS IMPROVEMENT'),
+                # Rich supporting data
+                'overall_sentiment': row.get('overall_sentiment', ''),
+                'engagement_level': row.get('engagement_level', ''),
+                'conversion_likelihood': row.get('conversion_likelihood', ''),
+                'business_impact_analysis': row.get('business_impact_analysis', ''),
+                'effective_copy_examples': row.get('effective_copy_examples', ''),
+                'ineffective_copy_examples': row.get('ineffective_copy_examples', ''),
+                'trust_credibility_assessment': row.get('trust_credibility_assessment', ''),
+                'information_gaps': row.get('information_gaps', '')
             })
         
         return result
     
+    def _create_recommendation_from_evidence(self, evidence: str, score: float) -> str:
+        """Create actionable recommendation from evidence text"""
+        evidence_str = str(evidence).lower()
+        
+        # Common improvement patterns based on evidence keywords
+        if 'brand' in evidence_str and 'generic' in evidence_str:
+            return "Strengthen brand differentiation and unique value proposition"
+        elif 'navigation' in evidence_str or 'menu' in evidence_str:
+            return "Improve site navigation and information architecture"
+        elif 'content' in evidence_str and ('unclear' in evidence_str or 'confusing' in evidence_str):
+            return "Clarify content messaging and improve readability"
+        elif 'trust' in evidence_str or 'credibility' in evidence_str:
+            return "Add trust signals and credibility indicators"
+        elif 'engagement' in evidence_str or 'boring' in evidence_str:
+            return "Enhance content engagement and visual appeal"
+        elif 'conversion' in evidence_str or 'action' in evidence_str:
+            return "Optimize calls-to-action and conversion pathways"
+        elif score < 3.0:
+            return "Critical content overhaul required - multiple issues identified"
+        elif score < 5.0:
+            return "Moderate content improvements needed based on audit findings"
+        else:
+            return "Fine-tune content based on specific audit feedback"
+    
     def calculate_success_stories(self, min_score: float = 7.7) -> List[Dict]:
-        """Get success stories (high-performing pages)"""
+        """Get success stories (high-performing pages) aggregated to page level"""
         # Use avg_score as the primary score column for unified data
         if 'avg_score' in self.df.columns:
             score_col = 'avg_score'
@@ -314,8 +383,29 @@ class BrandHealthMetricsCalculator:
         
         success_pages = self.df[self.df[score_col] >= min_score]
         
+        if success_pages.empty:
+            return []
+        
+        # AGGREGATE TO PAGE LEVEL to avoid duplicates
+        page_success = success_pages.groupby('page_id').agg({
+            score_col: 'mean',  # Average score across all criteria for this page
+            'tier': 'first',
+            'url': 'first',
+            'url_slug': 'first',
+            'overall_sentiment': 'first',
+            'engagement_level': 'first',
+            'conversion_likelihood': 'first',
+            'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e).strip()) > 10])[:500]  # Combine meaningful evidence
+        }).reset_index()
+        
+        # Filter to keep only pages that still meet the min_score after aggregation
+        page_success = page_success[page_success[score_col] >= min_score]
+        
+        # Sort by score (highest first) and limit to top 5
+        top_success = page_success.nlargest(5, score_col)
+        
         result = []
-        for _, row in success_pages.iterrows():
+        for _, row in top_success.iterrows():
             # Create a friendly page title from URL slug
             url_slug = row.get('url_slug', '')
             page_title = self._create_friendly_title(url_slug)
@@ -326,16 +416,17 @@ class BrandHealthMetricsCalculator:
                 'url': row.get('url', ''),
                 'raw_score': row.get(score_col, 0),
                 'tier': row.get('tier', 'Unknown'),
-                'key_strengths': self._extract_key_strengths(row)
+                'key_strengths': self._extract_page_level_strengths(row),
+                'evidence': row.get('evidence', '')  # Include aggregated evidence
             }
             
             # Add sentiment if available (string-based)
-            if 'overall_sentiment' in row:
+            if 'overall_sentiment' in row and pd.notna(row['overall_sentiment']):
                 story['sentiment'] = row['overall_sentiment']
             
             result.append(story)
         
-        return result[:5]  # Return top 5
+        return result
     
     def _extract_key_strengths(self, row) -> List[str]:
         """Extract key strengths from a high-performing page"""
@@ -361,6 +452,43 @@ class BrandHealthMetricsCalculator:
             strengths.append("Exceptional performance score")
         elif score_val >= 8.5:
             strengths.append("Strong performance score")
+        
+        return strengths if strengths else ["High-performing page"]
+    
+    def _extract_page_level_strengths(self, row) -> List[str]:
+        """Extract key strengths from a page-level aggregated row"""
+        strengths = []
+        
+        # Check sentiment
+        sentiment = row.get('overall_sentiment', '')
+        if isinstance(sentiment, str) and sentiment.lower() in ['positive', 'excellent']:
+            strengths.append("Positive user sentiment")
+        
+        # Check engagement
+        engagement = row.get('engagement_level', '')
+        if isinstance(engagement, str) and engagement.lower() in ['high', 'excellent']:
+            strengths.append("High user engagement")
+        
+        # Check conversion
+        conversion = row.get('conversion_likelihood', '')
+        if isinstance(conversion, str) and conversion.lower() in ['high', 'excellent']:
+            strengths.append("High conversion potential")
+        
+        # Check score-based strengths
+        score_val = row.get('raw_score', 0) or row.get('avg_score', 0)
+        if score_val >= 9.0:
+            strengths.append("Exceptional performance score")
+        elif score_val >= 8.5:
+            strengths.append("Strong performance score")
+        
+        # Check evidence for additional strengths
+        evidence = str(row.get('evidence', '')).lower()
+        if 'clear' in evidence and 'messaging' in evidence:
+            strengths.append("Clear messaging and communication")
+        if 'professional' in evidence or 'polished' in evidence:
+            strengths.append("Professional presentation")
+        if 'trust' in evidence and 'credible' in evidence:
+            strengths.append("Strong trust and credibility")
         
         return strengths if strengths else ["High-performing page"]
     
@@ -542,4 +670,227 @@ class BrandHealthMetricsCalculator:
         if score_col is None:
             return 0
         
-        return len(self.df[self.df[score_col] >= 7.7]) 
+        return len(self.df[self.df[score_col] >= 7.7])
+    
+    def calculate_distinctiveness_score(self) -> Dict:
+        """Calculate distinctiveness using first_impression + brand_percentage + language_tone_feedback"""
+        # Columns that contribute to distinctiveness
+        distinctiveness_cols = ['first_impression', 'brand_percentage', 'language_tone_feedback']
+        
+        # Check which columns are available and have non-null data
+        available_cols = []
+        for col in distinctiveness_cols:
+            if col in self.df.columns and not self.df[col].isna().all():
+                available_cols.append(col)
+        
+        if not available_cols:
+            # Fallback to overall score
+            score_col = 'avg_score' if 'avg_score' in self.df.columns else 'raw_score'
+            if score_col in self.df.columns:
+                score = self.df[score_col].mean()
+            else:
+                score = 0.0
+        else:
+            # Calculate weighted average based on available columns
+            scores = []
+            
+            # First impression (40% weight) - how unique/memorable is the first impression
+            if 'first_impression' in available_cols:
+                # Convert text to numeric if needed, otherwise use as-is
+                if self.df['first_impression'].dtype == 'object':
+                    # For text data, count positive keywords
+                    first_impression_score = self._text_to_score(self.df['first_impression'], 
+                                                               positive_keywords=['unique', 'distinct', 'memorable', 'standout', 'different'])
+                else:
+                    first_impression_score = self.df['first_impression'].dropna().mean()
+                
+                if not pd.isna(first_impression_score):
+                    scores.append(('first_impression', first_impression_score, 0.4))
+            
+            # Brand percentage (30% weight) - how strongly branded is the content
+            if 'brand_percentage' in available_cols:
+                brand_score = self.df['brand_percentage'].dropna().mean()
+                if not pd.isna(brand_score):
+                    # Convert to 0-10 scale if it's a percentage
+                    if brand_score > 10:
+                        brand_score = brand_score / 10
+                    scores.append(('brand_percentage', brand_score, 0.3))
+            
+            # Language tone feedback (30% weight) - is the tone distinctive
+            if 'language_tone_feedback' in available_cols:
+                if self.df['language_tone_feedback'].dtype == 'object':
+                    tone_score = self._text_to_score(self.df['language_tone_feedback'],
+                                                   positive_keywords=['distinctive', 'unique', 'compelling', 'engaging', 'memorable'])
+                else:
+                    tone_score = self.df['language_tone_feedback'].dropna().mean()
+                
+                if not pd.isna(tone_score):
+                    scores.append(('language_tone_feedback', tone_score, 0.3))
+            
+            # Calculate weighted average
+            if scores:
+                total_weight = sum(weight for _, _, weight in scores)
+                weighted_sum = sum(score * weight for _, score, weight in scores)
+                score = weighted_sum / total_weight if total_weight > 0 else 0.0
+            else:
+                # Fallback to overall score if no valid components
+                score_col = 'avg_score' if 'avg_score' in self.df.columns else 'raw_score'
+                if score_col in self.df.columns:
+                    score = self.df[score_col].mean()
+                else:
+                    score = 0.0
+        
+        # Determine status
+        if score >= 7.0:
+            status = "Strong"
+        elif score >= 4.0:
+            status = "Moderate"
+        else:
+            status = "Weak"
+        
+        return {
+            'score': score,
+            'status': status,
+            'components': available_cols
+        }
+    
+    def calculate_resonance_score(self) -> Dict:
+        """Calculate resonance using sentiment_numeric + engagement_numeric + success_flag"""
+        # Columns that contribute to resonance
+        resonance_cols = ['sentiment_numeric', 'engagement_numeric', 'success_flag']
+        
+        # Check which columns are available
+        available_cols = [col for col in resonance_cols if col in self.df.columns]
+        
+        if not available_cols:
+            # Fallback to sentiment calculation
+            return self.calculate_sentiment_metrics()
+        
+        scores = []
+        
+        # Sentiment numeric (50% weight) - how positive is the sentiment
+        if 'sentiment_numeric' in self.df.columns:
+            sentiment_score = self.df['sentiment_numeric'].mean()
+            scores.append(('sentiment_numeric', sentiment_score, 0.5))
+        
+        # Engagement numeric (30% weight) - how engaging is the content
+        if 'engagement_numeric' in self.df.columns:
+            engagement_score = self.df['engagement_numeric'].mean()
+            scores.append(('engagement_numeric', engagement_score, 0.3))
+        
+        # Success flag (20% weight) - proportion of successful pages
+        if 'success_flag' in self.df.columns:
+            success_rate = self.df['success_flag'].mean() * 10  # Convert to 0-10 scale
+            scores.append(('success_flag', success_rate, 0.2))
+        
+        # Calculate weighted average
+        if scores:
+            total_weight = sum(weight for _, _, weight in scores)
+            weighted_sum = sum(score * weight for _, score, weight in scores)
+            score = weighted_sum / total_weight if total_weight > 0 else 0.0
+        else:
+            score = 0.0
+        
+        # Convert to percentage for net sentiment
+        net_sentiment = (score / 10) * 100 if score > 0 else 0.0
+        
+        # Determine status
+        if net_sentiment >= 60:
+            status = "Positive"
+        elif net_sentiment >= 40:
+            status = "Neutral"
+        else:
+            status = "Negative"
+        
+        return {
+            'net_sentiment': net_sentiment,
+            'status': status,
+            'components': available_cols
+        }
+    
+    def calculate_conversion_score(self) -> Dict:
+        """Calculate conversion using conversion_numeric + trust_credibility + performance_percentage"""
+        # Columns that contribute to conversion
+        conversion_cols = ['conversion_numeric', 'trust_credibility_assessment', 'performance_percentage']
+        
+        # Check which columns are available and have non-null data
+        available_cols = []
+        for col in conversion_cols:
+            if col in self.df.columns and not self.df[col].isna().all():
+                available_cols.append(col)
+        
+        if not available_cols:
+            # Fallback to existing conversion readiness calculation
+            return self.calculate_conversion_readiness()
+        
+        scores = []
+        
+        # Conversion numeric (50% weight) - direct conversion likelihood
+        if 'conversion_numeric' in available_cols:
+            conversion_score = self.df['conversion_numeric'].dropna().mean()
+            if not pd.isna(conversion_score):
+                scores.append(('conversion_numeric', conversion_score, 0.5))
+        
+        # Trust credibility assessment (30% weight) - how trustworthy/credible
+        if 'trust_credibility_assessment' in available_cols:
+            if self.df['trust_credibility_assessment'].dtype == 'object':
+                trust_score = self._text_to_score(self.df['trust_credibility_assessment'],
+                                                positive_keywords=['trustworthy', 'credible', 'reliable', 'authoritative', 'professional'])
+            else:
+                trust_score = self.df['trust_credibility_assessment'].dropna().mean()
+            
+            if not pd.isna(trust_score):
+                scores.append(('trust_credibility_assessment', trust_score, 0.3))
+        
+        # Performance percentage (20% weight) - overall performance
+        if 'performance_percentage' in available_cols:
+            performance_score = self.df['performance_percentage'].dropna().mean()
+            if not pd.isna(performance_score):
+                # Convert to 0-10 scale if it's a percentage
+                if performance_score > 10:
+                    performance_score = performance_score / 10
+                scores.append(('performance_percentage', performance_score, 0.2))
+        
+        # Calculate weighted average
+        if scores:
+            total_weight = sum(weight for _, _, weight in scores)
+            weighted_sum = sum(score * weight for _, score, weight in scores)
+            score = weighted_sum / total_weight if total_weight > 0 else 0.0
+        else:
+            # Fallback to existing conversion readiness calculation
+            fallback = self.calculate_conversion_readiness()
+            score = fallback.get('raw_score', 0.0)
+        
+        # Determine status
+        if score >= 7.0:
+            status = "High"
+        elif score >= 5.0:
+            status = "Medium"
+        else:
+            status = "Low"
+        
+        return {
+            'score': score,
+            'status': status,
+            'components': available_cols
+        }
+    
+    def _text_to_score(self, text_series: pd.Series, positive_keywords: List[str]) -> float:
+        """Convert text feedback to numeric score based on positive keywords"""
+        if text_series.empty:
+            return 0.0
+        
+        # Count positive mentions across all text entries
+        total_positive = 0
+        total_entries = 0
+        
+        for text in text_series.dropna():
+            if isinstance(text, str):
+                text_lower = text.lower()
+                positive_count = sum(1 for keyword in positive_keywords if keyword in text_lower)
+                # Score based on keyword density (0-10 scale)
+                entry_score = min(positive_count * 2, 10)  # Cap at 10
+                total_positive += entry_score
+                total_entries += 1
+        
+        return total_positive / total_entries if total_entries > 0 else 0.0 
