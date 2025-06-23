@@ -253,6 +253,7 @@ dashboard/dashboard_data.json
 dashboard/concrete_findings.json
 dashboard/strategic_insights.json
 otto_audit.csv
+legacy/
 
 # Allow specific files we want to track
 !dashboard/*.py
