@@ -398,92 +398,10 @@ def main():
         else:
             st.metric("Critical Issues", "0")
     
-    # Create tabs - Streamlit will handle the UI, we'll track state manually
-    tab_names = ["📋 Profile", "🗺️ Journey", "📊 Performance", "🗣️ Voice"]
+    # Create native Streamlit tabs (same approach as Visual Brand Hygiene page)
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Profile", "🗺️ Journey", "📊 Performance", "🗣️ Voice"])
     
-    # Add custom CSS for tab styling - comprehensive approach
-    st.markdown("""
-    <style>
-    /* Force tab button styling with highest specificity */
-    div[data-testid="column"] button[kind="primary"],
-    div[data-testid="column"] .stButton > button[kind="primary"],
-    div[data-testid="column"] button[data-testid*="button"][kind="primary"],
-    .stButton > button[data-baseweb="button"][kind="primary"],
-    button[data-testid="baseButton-primary"] {
-        background: #E85A4F !important;
-        background-color: #E85A4F !important;
-        color: white !important;
-        border: 1px solid #E85A4F !important;
-        border-radius: 6px !important;
-        font-weight: 600 !important;
-    }
-    
-    div[data-testid="column"] button[kind="secondary"],
-    div[data-testid="column"] .stButton > button[kind="secondary"],
-    div[data-testid="column"] button[data-testid*="button"][kind="secondary"],
-    .stButton > button[data-baseweb="button"][kind="secondary"],
-    button[data-testid="baseButton-secondary"] {
-        background: white !important;
-        background-color: white !important;
-        color: #2C3E50 !important;
-        border: 1px solid #D1D5DB !important;
-        border-radius: 6px !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Hover states */
-    div[data-testid="column"] button[kind="primary"]:hover,
-    .stButton > button[data-baseweb="button"][kind="primary"]:hover,
-    button[data-testid="baseButton-primary"]:hover {
-        background: #D14B40 !important;
-        background-color: #D14B40 !important;
-        border-color: #D14B40 !important;
-    }
-    
-    div[data-testid="column"] button[kind="secondary"]:hover,
-    .stButton > button[data-baseweb="button"][kind="secondary"]:hover,
-    button[data-testid="baseButton-secondary"]:hover {
-        background: #F9FAFB !important;
-        background-color: #F9FAFB !important;
-        border-color: #9CA3AF !important;
-    }
-    
-    /* Nuclear option - style all buttons in the tab row */
-    div[data-testid="column"]:nth-child(1) button,
-    div[data-testid="column"]:nth-child(2) button,
-    div[data-testid="column"]:nth-child(3) button,
-    div[data-testid="column"]:nth-child(4) button {
-        border-radius: 6px !important;
-        font-weight: 500 !important;
-        min-height: 2.5rem !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Create tab buttons that update session state
-    cols = st.columns(4)
-    for i, (col, tab_name) in enumerate(zip(cols, tab_names)):
-        with col:
-            # Use session state to determine if this tab is active
-            is_active = st.session_state.active_persona_tab == i
-            if st.button(
-                tab_name, 
-                key=f"tab_btn_{i}_{selected_persona}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary"
-            ):
-                st.session_state.active_persona_tab = i
-                st.rerun()
-    
-    st.markdown("---")
-    
-    # Display content based on session state
-    active_tab = st.session_state.active_persona_tab
-    
-    # Note: Tab persistence in Streamlit is limited, but we can track user preference
-    # The tabs will reset when persona changes, but that's expected UX behavior
-    
-    if active_tab == 0:  # Profile tab
+    with tab1:  # Profile tab
         st.markdown("## 🎯 Persona Profile")
         
         if profile_content:
@@ -526,7 +444,7 @@ def main():
         else:
             st.warning("⚠️ No persona profile data available")
     
-    elif active_tab == 1:  # Journey tab
+    with tab2:  # Journey tab
         st.markdown("## 🗺️ Journey Analysis")
         
         if journey_data:
@@ -635,7 +553,7 @@ def main():
         else:
             st.warning("⚠️ No journey analysis data available")
     
-    elif active_tab == 2:  # Performance tab
+    with tab3:  # Performance tab
         st.markdown("## 📊 Performance Analytics")
         
         if performance_data is not None and not performance_data.empty:
@@ -662,7 +580,7 @@ def main():
         else:
             st.warning("⚠️ No performance data available for this persona")
     
-    elif active_tab == 3:  # Voice tab
+    with tab4:  # Voice tab
         st.markdown("## 🗣️ Persona Voice Analysis")
         
         if performance_data is not None and not performance_data.empty:
