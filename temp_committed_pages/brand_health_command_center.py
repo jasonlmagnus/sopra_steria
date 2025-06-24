@@ -7,36 +7,16 @@ import streamlit as st
 import sys
 from pathlib import Path
 
-# Add project root to Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 # Import components with consistent paths
 from components.perfect_styling_method import (
     apply_perfect_styling,
     create_main_header,
     create_section_header,
-    create_subsection_header,
     create_metric_card,
     create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    create_pattern_card,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
     create_primary_button,
     create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
+    create_content_card
 )
 from components.data_loader import BrandHealthDataLoader
 from components.metrics_calculator import BrandHealthMetricsCalculator
@@ -73,8 +53,8 @@ def main():
     st.session_state['summary'] = data_loader.get_summary_stats(master_df, datasets)
     
     if master_df.empty:
-        create_error_alert("❌ No data available. Please ensure the enhanced unified dataset exists.")
-        create_info_alert("💡 Run the multi-persona packager to generate the enhanced unified dataset.")
+        st.error("❌ No data available. Please ensure the enhanced unified dataset exists.")
+        st.info("💡 Run the multi-persona packager to generate the enhanced unified dataset.")
         return
     
     # Initialize metrics calculator with unified data
@@ -83,12 +63,6 @@ def main():
     
     # Generate executive summary
     executive_summary = metrics_calc.generate_executive_summary()
-    
-    # Debug toggle (temporary)
-    if st.sidebar.checkbox("🔧 Debug Mode", help="Show technical debugging information"):
-        st.session_state['debug_mode'] = True
-    else:
-        st.session_state['debug_mode'] = False
     
     # Display focused executive dashboard
     display_executive_dashboard(executive_summary, metrics_calc)
@@ -105,26 +79,15 @@ def display_executive_dashboard(summary, metrics_calc):
     # Brand Health Overview (not affected by tier filtering)
     st.markdown("## Brand Health Overview")
     
-    # Debug: Check data availability
-    if st.session_state.get('debug_mode', False):
-        st.write(f"DEBUG: DataFrame shape: {metrics_calc.df.shape}")
-        st.write(f"DEBUG: Available columns: {list(metrics_calc.df.columns)}")
-        if 'avg_score' in metrics_calc.df.columns:
-            st.write(f"DEBUG: avg_score stats: {metrics_calc.df['avg_score'].describe()}")
-    
     # Get brand health data from summary
     brand_health = summary['brand_health']
     
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     
     with col1:
-        if 'avg_score' in metrics_calc.df.columns and not metrics_calc.df.empty:
-            overall_score = metrics_calc.df['avg_score'].mean()
-        else:
-            overall_score = brand_health.get('overall_score', 0)
-        
-        status = "excellent" if overall_score >= 7 else "warning" if overall_score >= 4 else "critical"
-        create_metric_card(f"{overall_score:.1f}/10", "Overall Brand Health", status)
+        # Overall brand health score
+        overall_score = brand_health.get('overall_score', 0)
+        create_metric_card(f"{overall_score:.1f}/10", "Overall Brand Health", "excellent" if overall_score >= 7 else "warning" if overall_score >= 4 else "critical")
 
     with col2:
         critical_count = summary['key_metrics']['critical_issues']
@@ -151,7 +114,7 @@ def display_executive_dashboard(summary, metrics_calc):
     
     with col2:
         if tier_filter != "All Tiers":
-            create_info_alert(f"📊 Filtering analysis by {tier_filter}")
+            st.info(f"📊 Filtering analysis by {tier_filter}")
     
     # Apply tier filtering to metrics calculator
     if tier_filter != "All Tiers":
@@ -164,7 +127,7 @@ def display_executive_dashboard(summary, metrics_calc):
         
         # If no data for this tier, show message and reset
         if metrics_calc.df.empty:
-            create_warning_alert(f"⚠️ No data available for {tier_filter}")
+            st.warning(f"⚠️ No data available for {tier_filter}")
             metrics_calc.df = original_df
             tier_filter = "All Tiers"
     
@@ -174,48 +137,56 @@ def display_executive_dashboard(summary, metrics_calc):
     col1, col2, col3 = st.columns(3)
     
     with col1:
+
+        # Calculate distinctiveness using new algorithm
         distinctiveness = metrics_calc.calculate_distinctiveness_score()
         score = distinctiveness['score']
-        if score >= 7.0: status_text = "HIGH"
-        elif score >= 4.0: status_text = "MODERATE"
-        else: status_text = "LOW"
-        create_metric_card(
-            value=f"{score:.1f}/10", 
-            label="DISTINCTIVENESS", 
-            status=status_text.lower(),
-            status_text=status_text,
-            description="Measures brand differentiation and uniqueness."
-        )
+        
+        # Color coding: Red (<4), Amber (4-6.9), Green (7+)
+        if score >= 7.0:
+            status_text = "HIGH"
+        elif score >= 4.0:
+            status_text = "MODERATE"
+        else:
+            status_text = "LOW"
+
+        create_metric_card(f"{score:.1f}/10", "Distinctiveness", status_text.lower())
      
     with col2:
+
+        # Calculate resonance using new algorithm
         resonance = metrics_calc.calculate_resonance_score()
         sentiment = resonance['net_sentiment']
-        resonance_score = sentiment / 10
-        if resonance_score >= 7.0: status_text = "HIGH"
-        elif resonance_score >= 4.0: status_text = "MODERATE"
-        else: status_text = "LOW"
-        create_metric_card(
-            value=f"{resonance_score:.1f}/10", 
-            label="RESONANCE",
-            status=status_text.lower(),
-            status_text=status_text,
-            description="Measures audience connection and relevance."
-        )
+        
+        # Convert sentiment percentage to 0-10 scale for consistency
+        resonance_score = sentiment / 10  # 34.4% becomes 3.4/10
+        
+        # Color coding: Red (<4), Amber (4-6.9), Green (7+) - same as other metrics
+        if resonance_score >= 7.0:
+            status_text = "HIGH"
+        elif resonance_score >= 4.0:
+            status_text = "MODERATE"
+        else:
+            status_text = "LOW"
+
+        create_metric_card(f"{resonance_score:.1f}/10", "Resonance", status_text.lower())
      
     with col3:
+
+        # Calculate conversion using new algorithm
         conversion = metrics_calc.calculate_conversion_score()
         score = conversion['score']
         status = conversion['status']
-        if status == "High": status_text = "HIGH"
-        elif status == "Medium": status_text = "MODERATE"
-        else: status_text = "LOW"
-        create_metric_card(
-            value=f"{score:.1f}/10", 
-            label="CONVERSION", 
-            status=status_text.lower(),
-            status_text=status_text,
-            description="Measures effectiveness in driving action."
-        )
+        
+        # Map status to consistent HIGH/MODERATE/LOW format
+        if status == "High":
+            status_text = "HIGH"
+        elif status == "Medium":
+            status_text = "MODERATE"
+        else:
+            status_text = "LOW"
+
+        create_metric_card(f"{score:.1f}/10", "Conversion", status_text.lower())
      
     # EXECUTIVE QUESTION 3: What can we fix quickly? (Top 3 Opportunities)
     st.markdown("## 🎯 Top 3 Improvement Opportunities")
@@ -232,15 +203,15 @@ def display_executive_dashboard(summary, metrics_calc):
                 
                 with col1:
                     if opp.get('current_score', 0) > 0:
-                        create_metric_card(f"{opp['current_score']:.1f}/10", "Current Score", "warning")
+                        st.metric("Current Score", f"{opp['current_score']:.1f}/10")
                     else:
-                        create_metric_card(opp.get('strategic_impact', 'General'), "Strategic Impact")
+                        st.metric("Strategic Impact", opp.get('strategic_impact', 'General'))
                 
                 with col2:
-                    create_metric_card(opp['effort_level'], "Effort Level", "info")
+                    st.metric("Effort Level", opp['effort_level'])
                 
                 with col3:
-                    create_metric_card(f"{opp['potential_impact']:.1f}", "Potential Impact", "excellent")
+                    st.metric("Potential Impact", f"{opp['potential_impact']:.1f}")
                 
                 # Show actual detailed recommendation
                 st.markdown(f"**💡 Recommendation:**")
@@ -257,16 +228,19 @@ def display_executive_dashboard(summary, metrics_calc):
                 # Link to detailed analysis
                 st.markdown("*👉 For detailed action plan, visit **Opportunity & Impact** tab*")
     else:
-        create_info_alert("📈 No specific opportunities identified. Visit **Content Matrix** for detailed analysis.")
+        st.info("📈 No specific opportunities identified. Visit **Content Matrix** for detailed analysis.")
     
     # EXECUTIVE QUESTION 4: What's working well? (Top 5 Success Stories)
     st.markdown("## 🌟 Top 5 Success Stories")
     st.markdown("*For detailed success analysis, visit the **Success Library** tab*")
     
-    success_stories = metrics_calc.calculate_success_stories(min_score=7.5)
+    success_stories = metrics_calc.calculate_success_stories(min_score=7.5)  # Temporarily lower threshold
+    
+    # Debug info
+    st.write(f"DEBUG: Found {len(success_stories)} success stories")
     
     if success_stories:
-        create_success_alert(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 7.5)")
+        st.success(f"🎉 Found {len(success_stories)} high-performing pages (score ≥ 7.7)")
         
         for i, story in enumerate(success_stories, 1):
             page_title = story.get('page_title', 'Unknown Page')
@@ -275,13 +249,13 @@ def display_executive_dashboard(summary, metrics_calc):
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    create_metric_card(f"{story['raw_score']:.1f}/10", "Score", "excellent" if story['raw_score'] >= 8.0 else "good")
-                    create_metric_card(story['tier'], "Content Tier", "info")
+                    st.markdown(f"**🎯 Score:** {story['raw_score']:.1f}/10")
+                    st.markdown(f"**📊 Tier:** {story['tier']}")
                     
                     # Show key strengths
                     if story['key_strengths']:
                         st.markdown("**✨ Key Strengths:**")
-                        for strength in story['key_strengths'][:2]:
+                        for strength in story['key_strengths'][:2]:  # Show top 2 for executive view
                             st.markdown(f"• {strength}")
                 
                 with col2:
@@ -300,10 +274,10 @@ def display_executive_dashboard(summary, metrics_calc):
                 # Link to detailed analysis
                 st.markdown("*👉 For pattern analysis and replication guide, visit **Success Library** tab*")
     else:
-        create_warning_alert("⚠️ No pages currently scoring 7.5 or above. Focus on improvement opportunities.")
+        st.warning("⚠️ No pages currently scoring 7.7 or above. Focus on improvement opportunities.")
     
     # EXECUTIVE QUESTION 5: What should we do next? (Strategic Recommendations)
-    if summary.get('recommendations'):
+    if summary['recommendations']:
         st.markdown("## 💡 Strategic Recommendations")
         st.markdown("*AI-generated action priorities based on current brand health*")
         
@@ -371,9 +345,8 @@ def display_executive_dashboard(summary, metrics_calc):
                         st.session_state['content_min_score'] = 0.0
                         st.session_state['content_performance_filter'] = 'All'
                         st.switch_page("pages/3_📊_Content_Matrix.py")
-    else:
-        st.markdown("## 💡 Strategic Recommendations")
-        create_info_alert("💡 Strategic recommendations will be generated once sufficient data is available.")
+            
+              # Add spacing
     
     # Restore original dataframe if it was filtered
     if tier_filter != "All Tiers" and 'original_df' in locals():
@@ -401,18 +374,15 @@ def display_sidebar_essentials(data_loader, master_df, datasets):
     st.sidebar.markdown("### 📊 Data Overview")
     
     stats = data_loader.get_summary_stats(master_df, datasets)
-    
-    # Use sidebar metric cards for clean display
-    with st.sidebar:
-        create_metric_card(str(stats.get('total_pages', 0)), "Total Pages")
-        create_metric_card(str(stats.get('total_records', 0)), "Total Records") 
-        create_metric_card(f"{stats.get('avg_score', 0):.1f}/10", "Avg Score")
+    st.sidebar.metric("Total Pages", stats.get('total_pages', 0))
+    st.sidebar.metric("Total Records", stats.get('total_records', 0))
+    st.sidebar.metric("Avg Score", f"{stats.get('avg_score', 0):.1f}/10")
     
     # Show data quality indicators
     if stats.get('experience_records', 0) > 0:
-        st.sidebar.markdown("✅ Experience Data Available")
+        st.sidebar.success(f"✅ Experience Data: {stats['experience_records']} records")
     if stats.get('total_recommendations', 0) > 0:
-        st.sidebar.markdown("✅ Recommendations Available")
+        st.sidebar.success(f"✅ Recommendations: {stats['total_recommendations']} items")
     
     # Quick navigation
     st.sidebar.markdown("---")

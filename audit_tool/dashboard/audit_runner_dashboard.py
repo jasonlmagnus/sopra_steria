@@ -1,4 +1,28 @@
 import streamlit as st
+from audit_tool.dashboard.components.perfect_styling_method import (
+    apply_perfect_styling,
+    create_page_header,
+    create_status_card,
+    create_metric_card,
+    show_success,
+    show_warning,
+    show_error,
+    show_info,
+    get_chart_config,
+    apply_chart_styling,
+    display_dataframe,
+    create_columns,
+    create_tabs,
+    create_expander
+)
+    apply_perfect_styling,
+    create_page_header,
+    create_status_card,
+    show_success,
+    show_warning,
+    show_error,
+    show_info
+)
 import os
 import subprocess
 import tempfile
@@ -9,7 +33,6 @@ import sys
 from pathlib import Path
 
 # Add audit_tool to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 def get_persona_name(persona_content: str) -> str:
     """Extracts the full persona name from the markdown content."""
@@ -86,6 +109,12 @@ def main():
         page_icon="🚀",
         layout="wide"
     )
+
+# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
+apply_perfect_styling()
+
+# Create standardized page header
+create_page_header("Dashboard Page", "")
 
     # --- SESSION STATE INITIALIZATION ---
     if 'is_running' not in st.session_state:

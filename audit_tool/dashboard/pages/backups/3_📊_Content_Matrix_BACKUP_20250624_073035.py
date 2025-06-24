@@ -5,13 +5,8 @@ Consolidates Overview + Tier Analysis functionality
 """
 
 import streamlit as st
-import sys
-from pathlib import Path
 
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
+import streamlit as st
 from audit_tool.dashboard.components.perfect_styling_method import (
     apply_perfect_styling,
     create_main_header,
@@ -35,20 +30,22 @@ from audit_tool.dashboard.components.perfect_styling_method import (
     create_secondary_button,
     create_badge,
     create_spacer,
-    create_divider,
-    create_perfect_bar_chart,
-    create_perfect_pie_chart,
-    create_metric_grid,
-    apply_chart_styling
+    create_divider
 )
+
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import sys
+from pathlib import Path
 
-from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
-from audit_tool.dashboard.components.metrics_calculator import BrandHealthMetricsCalculator
-from audit_tool.dashboard.components.tier_analyzer import TierAnalyzer
+# Add parent directory to path to import components
+
+from components.data_loader import BrandHealthDataLoader
+from components.metrics_calculator import BrandHealthMetricsCalculator
+from components.tier_analyzer import TierAnalyzer
 
 # Page configuration
 st.set_page_config(
@@ -60,11 +57,14 @@ st.set_page_config(
 # SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
 apply_perfect_styling()
 
+# Create standardized page header
+create_main_header("📊 Content Matrix", "Where do you win and lose?")
+
+
 def main():
     """Content Matrix - Comprehensive Content Analysis"""
     
-    # Create standardized page header
-    create_main_header("📊 Content Matrix", "Where do you win and lose?")
+    # Header
 
     # Load data from session state or initialize
     if 'datasets' not in st.session_state or 'master_df' not in st.session_state:
@@ -77,7 +77,7 @@ def main():
         master_df = st.session_state['master_df']
     
     if master_df.empty:
-        create_error_alert("❌ No data available for Content Matrix analysis.")
+        st.error("❌ No data available for Content Matrix analysis.")
         return
     
     # Initialize analyzers
@@ -92,7 +92,7 @@ def main():
     filtered_df = apply_content_filters(master_df)
     
     if filtered_df.empty:
-        create_warning_alert("⚠️ No data matches the selected filters.")
+        st.warning("⚠️ No data matches the selected filters.")
         return
     
     # Update analyzers with filtered data
@@ -112,9 +112,9 @@ def main():
 
 def display_content_filters(master_df):
     """Display filtering controls for content analysis"""
-    create_section_header("🎛️ Content Analysis Filters")
+    st.markdown("## 🎛️ Content Analysis Filters")
     
-    col1, col2, col3, col4 = create_four_column_layout()
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         # Persona filter
@@ -184,7 +184,7 @@ def apply_content_filters(master_df):
 
 def display_performance_overview(metrics_calc, filtered_df):
     """Display high-level performance overview with business context"""
-    create_section_header("📈 Performance Overview")
+    st.markdown("## 📈 Performance Overview")
     
     # Add business impact context at the top
     if 'avg_score' in filtered_df.columns:
@@ -224,34 +224,42 @@ def display_performance_overview(metrics_calc, filtered_df):
         else:
             status_class = "status-critical"
         
-        # Use standardized metric grid
+        # Use consistent metric cards
         metrics_data = [
-            (f"{avg_score:.1f}/10", "Average Score", status_class),
-            (f"{total_pages}", "Total Pages", "default"),
-            (f"{excellent}", "Excellent (≥8.0)", "excellent"),
-            (f"{good}", "Good (6.0-8.0)", "good"),
-            (f"{fair + poor}", "Needs Work (<6.0)", "warning")
+            {"value": f"{avg_score:.1f}/10", "label": "Average Score", "status": status_class},
+            {"value": f"{total_pages}", "label": "Total Pages", "status": "default"},
+            {"value": f"🌟 {excellent}", "label": "Excellent (≥8.0)", "status": "excellent"},
+            {"value": f"✅ {good}", "label": "Good (6.0-8.0)", "status": "good"},
+            {"value": f"⚠️ {fair + poor}", "label": "Needs Work (<6.0)", "status": "warning"}
         ]
         
-        create_metric_grid(metrics_data)
+        # Display metrics in columns
+        cols = st.columns(len(metrics_data))
+        for i, metric in enumerate(metrics_data):
+            with cols[i]:
+                create_metric_card(metric["value"], metric["label"], metric["status"])
         
         # Performance distribution chart
         performance_data = pd.DataFrame({
             'Performance Level': ['Excellent (≥8)', 'Good (6-8)', 'Fair (4-6)', 'Poor (<4)'],
-            'Count': [excellent, good, fair, poor]
+            'Count': [excellent, good, fair, poor],
+            'Color': ['#10b981', '#f59e0b', '#ef4444', '#dc2626']
         })
         
-        fig = create_perfect_bar_chart(
+        fig = px.bar(
             performance_data,
             x='Performance Level',
             y='Count',
+            color='Color',
+            color_discrete_map=dict(zip(performance_data['Color'], performance_data['Color'])),
             title="Performance Distribution"
         )
+        fig.update_layout(showlegend=False, height=400)
         st.plotly_chart(fig, use_container_width=True, key="performance_distribution")
 
 def display_tier_performance_analysis(tier_analyzer, filtered_df):
     """Display detailed tier performance analysis (from Tier Analysis page)"""
-    create_section_header("🏗️ Tier Performance Analysis")
+    st.markdown("## 🏗️ Tier Performance Analysis")
     
     # Calculate tier performance
     tier_summary = tier_analyzer.get_tier_summary()
@@ -263,10 +271,22 @@ def display_tier_performance_analysis(tier_analyzer, filtered_df):
         tier_performance = pd.DataFrame()
     
     if not tier_performance.empty:
-        create_subsection_header("📊 Performance by Content Tier")
+        st.markdown("### 📊 Performance by Content Tier")
         
-        # Use standardized data table
-        create_data_table(tier_performance)
+        format_dict = {}
+        gradient_cols = []
+        
+        for col in tier_performance.columns:
+            if col in ['avg_score', 'avg_sentiment', 'avg_conversion', 'avg_engagement']:
+                format_dict[col] = '{:.1f}'
+                if col == 'avg_score':
+                    gradient_cols.append(col)
+        
+        styled_df = tier_performance.style.format(format_dict)
+        if gradient_cols:
+            styled_df = styled_df.background_gradient(subset=gradient_cols, cmap='RdYlGn', vmin=0, vmax=10)
+        
+        st.dataframe(styled_df, use_container_width=True)
         
         # Tier comparison chart
         if 'avg_score' in tier_performance.columns:
@@ -274,22 +294,26 @@ def display_tier_performance_analysis(tier_analyzer, filtered_df):
             chart_data = tier_performance.reset_index()
             chart_data = chart_data.rename(columns={'index': 'tier_id'})
             
-            fig = create_perfect_bar_chart(
+            fig = px.bar(
                 chart_data,
                 x='tier_id',
                 y='avg_score',
-                title="Average Score by Content Tier"
+                title="Average Score by Content Tier",
+                color='avg_score',
+                color_continuous_scale='RdYlGn',
+                range_color=[0, 10]
             )
+            fig.update_layout(height=400, xaxis_tickangle=45)
             st.plotly_chart(fig, use_container_width=True, key="tier_performance_bar")
         
         # Tier insights
         display_tier_insights(tier_performance)
     else:
-        create_info_alert("📊 Tier performance data not available with current filters.")
+        st.info("📊 Tier performance data not available with current filters.")
 
 def display_tier_insights(tier_performance):
     """Display insights about tier performance"""
-    create_subsection_header("💡 Tier Performance Insights")
+    st.markdown("### 💡 Tier Performance Insights")
     
     if 'avg_score' in tier_performance.columns:
         # Find best and worst performing tiers
@@ -298,21 +322,33 @@ def display_tier_insights(tier_performance):
         best_score = tier_performance.loc[best_tier, 'avg_score']
         worst_score = tier_performance.loc[worst_tier, 'avg_score']
         
-        col1, col2 = create_two_column_layout()
+        col1, col2 = st.columns(2)
         
         with col1:
-            best_status = "✨ **Status:** Excellent - Use as template for other tiers" if best_score >= 8.0 else "✅ **Status:** Good - Minor optimizations needed" if best_score >= 6.0 else "⚠️ **Status:** Needs improvement across all tiers"
+            st.success(f"🏆 **Best Performing Tier:** {best_tier}")
+            st.write(f"Average Score: {best_score:.1f}/10")
             
-            create_success_alert(f"🏆 **Best Performing Tier:** {best_tier}\n\n**Average Score:** {best_score:.1f}/10\n\n{best_status}")
+            if best_score >= 8.0:
+                st.write("✨ **Status:** Excellent - Use as template for other tiers")
+            elif best_score >= 6.0:
+                st.write("✅ **Status:** Good - Minor optimizations needed")
+            else:
+                st.write("⚠️ **Status:** Needs improvement across all tiers")
         
         with col2:
-            worst_priority = "🚨 **Priority:** Critical - Immediate attention required" if worst_score < 4.0 else "⚠️ **Priority:** High - Significant improvements needed" if worst_score < 6.0 else "💡 **Priority:** Medium - Optimization opportunities"
+            st.error(f"📉 **Lowest Performing Tier:** {worst_tier}")
+            st.write(f"Average Score: {worst_score:.1f}/10")
             
-            create_error_alert(f"📉 **Lowest Performing Tier:** {worst_tier}\n\n**Average Score:** {worst_score:.1f}/10\n\n{worst_priority}")
+            if worst_score < 4.0:
+                st.write("🚨 **Priority:** Critical - Immediate attention required")
+            elif worst_score < 6.0:
+                st.write("⚠️ **Priority:** High - Significant improvements needed")
+            else:
+                st.write("💡 **Priority:** Medium - Optimization opportunities")
 
 def display_content_type_heatmap(filtered_df):
     """Display interactive content type performance heatmap"""
-    create_section_header("🔥 Content Performance Heatmap")
+    st.markdown("## 🔥 Content Performance Heatmap")
     
     if 'tier' in filtered_df.columns and 'avg_score' in filtered_df.columns:
         # Create tier vs criteria heatmap using available numeric columns
@@ -325,7 +361,7 @@ def display_content_type_heatmap(filtered_df):
             heatmap_data = filtered_df.groupby('tier')[criteria_cols].mean(numeric_only=True).round(1)
             
             if not heatmap_data.empty:
-                # Create heatmap using perfect styling
+                # Create heatmap
                 fig = px.imshow(
                     heatmap_data.T,
                     labels=dict(x="Content Tier", y="Criteria", color="Score"),
@@ -333,12 +369,11 @@ def display_content_type_heatmap(filtered_df):
                     color_continuous_scale='RdYlGn',
                     range_color=[0, 10]
                 )
-                # Apply perfect chart styling
-                fig = apply_chart_styling(fig)
+                fig.update_layout(height=600)
                 st.plotly_chart(fig, use_container_width=True, key="content_heatmap")
                 
                 # Heatmap insights
-                create_subsection_header("🔍 Heatmap Insights")
+                st.markdown("### 🔍 Heatmap Insights")
                 
                 # Find hotspots and cold spots
                 flat_data = heatmap_data.stack().reset_index()
@@ -347,23 +382,25 @@ def display_content_type_heatmap(filtered_df):
                 hotspots = flat_data.nlargest(3, 'raw_score')
                 coldspots = flat_data.nsmallest(3, 'raw_score')
                 
-                col1, col2 = create_two_column_layout()
+                col1, col2 = st.columns(2)
                 
                 with col1:
-                    hotspots_list = "<br>".join([f"• <strong>{row['tier']}</strong> - {row['criteria']}: {row['raw_score']:.1f}" for _, row in hotspots.iterrows()])
-                    create_success_alert(f"🔥 **Top Performing Areas:**\n\n{hotspots_list.replace('<br>', '\n').replace('<strong>', '**').replace('</strong>', '**')}")
+                    st.success("🔥 **Top Performing Areas:**")
+                    for _, row in hotspots.iterrows():
+                        st.write(f"• **{row['tier']}** - {row['criteria']}: {row['raw_score']:.1f}")
                 
                 with col2:
-                    coldspots_list = "<br>".join([f"• <strong>{row['tier']}</strong> - {row['criteria']}: {row['raw_score']:.1f}" for _, row in coldspots.iterrows()])
-                    create_error_alert(f"❄️ **Areas Needing Attention:**\n\n{coldspots_list.replace('<br>', '\n').replace('<strong>', '**').replace('</strong>', '**')}")
+                    st.error("❄️ **Areas Needing Attention:**")
+                    for _, row in coldspots.iterrows():
+                        st.write(f"• **{row['tier']}** - {row['criteria']}: {row['raw_score']:.1f}")
         else:
-            create_info_alert("📊 Criteria data not available for heatmap analysis.")
+            st.info("📊 Criteria data not available for heatmap analysis.")
     else:
-        create_info_alert("📊 Tier and score data required for heatmap analysis.")
+        st.info("📊 Tier and score data required for heatmap analysis.")
 
 def display_criteria_deep_dive(filtered_df):
     """Display detailed criteria analysis (from Criteria Deep Dive page)"""
-    create_section_header("🎯 Criteria Deep Dive")
+    st.markdown("## 🎯 Criteria Deep Dive")
     
     # Find available numeric criteria columns
     criteria_cols = [col for col in filtered_df.columns if col in [
@@ -375,7 +412,7 @@ def display_criteria_deep_dive(filtered_df):
         criteria_performance = filtered_df[criteria_cols].mean(numeric_only=True).sort_values(ascending=False)
         
         # Display criteria performance
-        create_subsection_header("📊 Criteria Performance Ranking")
+        st.markdown("### 📊 Criteria Performance Ranking")
         
         criteria_df = pd.DataFrame({
             'Criteria': criteria_performance.index,
@@ -383,42 +420,51 @@ def display_criteria_deep_dive(filtered_df):
             'Performance Level': ['Excellent' if score >= 8 else 'Good' if score >= 6 else 'Fair' if score >= 4 else 'Poor' for score in criteria_performance.values]
         })
         
-        # Use standardized data table
-        create_data_table(criteria_df)
+        # Color code the performance levels
+        def color_performance(val):
+            if val == 'Excellent':
+                return 'background-color: #d1fae5'
+            elif val == 'Good':
+                return 'background-color: #fef3c7'
+            elif val == 'Fair':
+                return 'background-color: #fee2e2'
+            else:
+                return 'background-color: #fecaca'
+        
+        styled_criteria = criteria_df.style.map(color_performance, subset=['Performance Level']).format({'Average Score': '{:.1f}'})
+        st.dataframe(styled_criteria, use_container_width=True)
         
         # Best and worst criteria
-        col1, col2 = create_two_column_layout()
+        col1, col2 = st.columns(2)
         
         with col1:
-            top_criteria_list = "<br>".join([f"{i}. <strong>{criteria}</strong>: {score:.1f}/10" for i, (criteria, score) in enumerate(criteria_performance.head(3).items(), 1)])
-            create_success_alert(f"🏆 **Top 3 Performing Criteria:**\n\n{top_criteria_list.replace('<br>', '\n').replace('<strong>', '**').replace('</strong>', '**')}")
+            st.success("🏆 **Top 3 Performing Criteria:**")
+            for i, (criteria, score) in enumerate(criteria_performance.head(3).items(), 1):
+                st.write(f"{i}. **{criteria}**: {score:.1f}/10")
         
         with col2:
-            bottom_criteria_list = "<br>".join([f"{i}. <strong>{criteria}</strong>: {score:.1f}/10" for i, (criteria, score) in enumerate(criteria_performance.tail(3).items(), 1)])
-            create_error_alert(f"📉 **Bottom 3 Performing Criteria:**\n\n{bottom_criteria_list.replace('<br>', '\n').replace('<strong>', '**').replace('</strong>', '**')}")
+            st.error("📉 **Bottom 3 Performing Criteria:**")
+            for i, (criteria, score) in enumerate(criteria_performance.tail(3).items(), 1):
+                st.write(f"{i}. **{criteria}**: {score:.1f}/10")
         
         # Criteria distribution chart
-        criteria_chart_data = pd.DataFrame({
-            'Criteria': criteria_performance.index,
-            'Score': criteria_performance.values
-        })
-        
-        fig = create_perfect_bar_chart(
-            criteria_chart_data,
-            x='Score',
-            y='Criteria',
-            title="Criteria Performance Distribution"
+        fig = px.bar(
+            x=criteria_performance.values,
+            y=criteria_performance.index,
+            orientation='h',
+            title="Criteria Performance Distribution",
+            color=criteria_performance.values,
+            color_continuous_scale='RdYlGn',
+            range_color=[0, 10]
         )
-        # Apply perfect chart styling
-        fig = apply_chart_styling(fig)
-        fig.update_layout(xaxis_title="Score", yaxis_title="Criteria")
+        fig.update_layout(height=max(400, len(criteria_cols) * 30))
         st.plotly_chart(fig, use_container_width=True, key="criteria_performance_bar")
     else:
-        create_info_alert("📊 Criteria data not available for deep dive analysis.")
+        st.info("📊 Criteria data not available for deep dive analysis.")
 
 def display_page_drill_down(filtered_df):
     """Display page-level drill-down functionality"""
-    create_section_header("🔍 Page-Level Drill Down")
+    st.markdown("## 🔍 Page-Level Drill Down")
     
     if 'page_id' in filtered_df.columns:
         # Group by page for drill-down
@@ -479,7 +525,7 @@ def display_page_drill_down(filtered_df):
         # Sort by score
         page_summary = page_summary.sort_values('avg_score', ascending=False)
         
-        create_subsection_header("📄 Individual Page Performance")
+        st.markdown("### 📄 Individual Page Performance")
         
         # Performance level selector for drill-down
         drill_down_options = ['All Pages', 'Top Performers (≥7)', 'Average Performers (4-7)', 'Underperformers (<4)']
@@ -502,13 +548,13 @@ def display_page_drill_down(filtered_df):
                 display_name = row.get('display_name', 'Unknown Page')
                 
                 with st.expander(f"{score_color} {display_name} - Score: {row['avg_score']:.1f} ({row['tier']})"):
-                    col1, col2, col3 = create_three_column_layout()
+                    col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                                            create_metric_card(f"{row['avg_score']:.1f}/10", "Score", status="success" if row['avg_score'] >= 7 else "warning" if row['avg_score'] >= 5 else "error")
-                
-                with col2:
-                    create_metric_card(row['tier'], "Tier", status="info")
+                        st.metric("Score", f"{row['avg_score']:.1f}/10")
+                    
+                    with col2:
+                        st.metric("Tier", row['tier'])
                     
                     with col3:
                         st.write(f"**Personas:** {row['persona_id']}")
@@ -534,17 +580,21 @@ def display_page_drill_down(filtered_df):
                             'Score': criteria_scores.values
                         }).sort_values('Score', ascending=True)
                         
-                        fig = create_perfect_bar_chart(
+                        fig = px.bar(
                             criteria_chart_data,
                             x='Score',
                             y='Criteria',
-                            title="Criteria Breakdown"
+                            orientation='h',
+                            color='Score',
+                            color_continuous_scale='RdYlGn',
+                            range_color=[0, 10],
+                            height=300
                         )
                         st.plotly_chart(fig, use_container_width=True, key=f"page_criteria_{page_id}")
         else:
-            create_info_alert(f"📄 No pages match the selected criteria: {selected_drill_down}")
+            st.info(f"📄 No pages match the selected criteria: {selected_drill_down}")
     else:
-        create_info_alert("📄 Page-level data not available for drill-down analysis.")
+        st.info("📄 Page-level data not available for drill-down analysis.")
 
 if __name__ == "__main__":
     main() 

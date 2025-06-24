@@ -6,7 +6,6 @@ Consolidates Page Performance + Evidence Explorer functionality
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -14,38 +13,12 @@ import sys
 from pathlib import Path
 import re
 
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
+# Add parent directory to path to import components
+sys.path.append(str(Path(__file__).parent.parent))
 
-from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
-from audit_tool.dashboard.components.metrics_calculator import BrandHealthMetricsCalculator
-from audit_tool.dashboard.components.perfect_styling_method import (
-    apply_perfect_styling,
-    create_main_header,
-    create_section_header,
-    create_subsection_header,
-    create_metric_card,
-    create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    create_pattern_card,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
-    create_primary_button,
-    create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
-)
+from components.data_loader import BrandHealthDataLoader
+from components.metrics_calculator import BrandHealthMetricsCalculator
+from components.brand_styling import get_brand_css
 
 # Page configuration
 st.set_page_config(
@@ -54,58 +27,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
-
-def get_best_evidence_text(series, min_length=10, max_length=500):
-    """Intelligently aggregate evidence text with proper sentence boundaries"""
-    if series.empty:
-        return ""
-    
-    # Filter and clean evidence
-    valid_evidence = []
-    for item in series.dropna():
-        text = str(item).strip()
-        if len(text) >= min_length:
-            valid_evidence.append(text)
-    
-    if not valid_evidence:
-        return ""
-    
-    # Sort by length (longer = more detailed) and take best
-    valid_evidence.sort(key=len, reverse=True)
-    
-    # Smart truncation at sentence boundaries
-    best_text = valid_evidence[0]
-    if len(best_text) <= max_length:
-        return best_text
-    
-    # Truncate at sentence boundary
-    sentences = best_text.split('. ')
-    truncated = ""
-    for sentence in sentences:
-        if len(truncated + sentence + '. ') <= max_length - 3:
-            truncated += sentence + '. '
-        else:
-            break
-    
-    return truncated.strip() if truncated else best_text[:max_length-3] + "..."
-
-def create_pattern_card(content):
-    """Create a styled pattern card with consistent formatting"""
-    st.markdown(f"""
-    <div class="pattern-card" style="
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border: 1px solid #dee2e6;
-        border-left: 4px solid #007bff;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 8px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    ">
-        {content}
-    </div>
-    """, unsafe_allow_html=True)
+# Import centralized brand styling (fonts already loaded on home page)
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def extract_persona_quotes_success(text):
     """Extract persona voice quotes from success text"""
@@ -142,8 +65,13 @@ def extract_persona_quotes_success(text):
 def main():
     """Success Library - Comprehensive Success Analysis"""
     
-    # Create standardized page header
-    create_main_header("🌟 Success Library", "What already works that we can emulate?")
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>🌟 Success Library</h1>
+        <p>What already works that we can emulate?</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Load data from session state or initialize
     if 'datasets' not in st.session_state or 'master_df' not in st.session_state:
@@ -247,37 +175,43 @@ def display_success_overview(metrics_calc, master_df):
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            create_metric_card(f"{total_pages}", "Total Pages")
+            st.metric("Total Pages", total_pages)
         
         with col2:
-            create_metric_card(f"{success_pages}", "Success Pages")
+            st.metric("Success Pages", success_pages)
         
         with col3:
-            # Determine status based on success rate
-            if success_rate >= 80:
-                status = "excellent"
-            elif success_rate >= 60:
-                status = "good"
-            elif success_rate >= 40:
-                status = "warning"
-            else:
-                status = "critical"
-            create_metric_card(f"{success_rate:.1f}%", "Success Rate", status)
+            st.metric("Success Rate", f"{success_rate:.1f}%")
         
         with col4:
-            create_metric_card(f"{avg_success_score:.1f}/10", "Avg Success Score")
+            st.metric("Avg Success Score", f"{avg_success_score:.1f}/10")
         
         # Success distribution
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            create_metric_card(f"{excellent}", "🏆 Excellent (≥9.0)", "excellent")
+            st.markdown(f"""
+            <div class="success-card success-excellent">
+                <div class="metric-value">🏆 {excellent}</div>
+                <div class="metric-label">Excellent (≥9.0)</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
-            create_metric_card(f"{very_good}", "⭐ Very Good (8.0-8.9)", "good")
+            st.markdown(f"""
+            <div class="success-card success-good">
+                <div class="metric-value">⭐ {very_good}</div>
+                <div class="metric-label">Very Good (8.0-9.0)</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col3:
-            create_metric_card(f"{good}", "✅ Good (7.5-7.9)", "warning")
+            st.markdown(f"""
+            <div class="success-card">
+                <div class="metric-value">✅ {good}</div>
+                <div class="metric-label">Good (7.5-8.0)</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Success distribution chart with tier coloring
         if success_pages > 0:
@@ -328,23 +262,13 @@ def display_success_overview(metrics_calc, master_df):
                 for tier_name, row in tier_summary.iterrows():
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        create_metric_card(f"{int(row['Count'])}", f"{tier_name} Stories")
+                        st.metric(f"{tier_name}", f"{int(row['Count'])} stories")
                     with col2:
-                        # Determine status based on avg score
-                        avg_score = row['Avg Score']
-                        if avg_score >= 8.0:
-                            status = "excellent"
-                        elif avg_score >= 7.5:
-                            status = "good"
-                        elif avg_score >= 7.0:
-                            status = "warning"
-                        else:
-                            status = "critical"
-                        create_metric_card(f"{avg_score:.1f}/10", "Avg Score", status)
+                        st.metric("Avg Score", f"{row['Avg Score']:.1f}/10")
                     with col3:
-                        create_metric_card(f"{row['Max Score']:.1f}/10", "Best Score")
+                        st.metric("Best Score", f"{row['Max Score']:.1f}/10")
                     with col4:
-                        create_metric_card(f"{row['Min Score']:.1f}/10", "Lowest Score")
+                        st.metric("Lowest Score", f"{row['Min Score']:.1f}/10")
 
 def apply_success_filters(master_df):
     """Apply selected filters to the success dataset"""
@@ -382,13 +306,13 @@ def display_success_stories_detailed(metrics_calc, master_df):
             'overall_sentiment': 'first',
             'engagement_level': 'first', 
             'conversion_likelihood': 'first',
-            # Content examples for concrete evidence - IMPROVED AGGREGATION
-            'effective_copy_examples': lambda x: get_best_evidence_text(x, min_length=20, max_length=400),
-            'ineffective_copy_examples': lambda x: get_best_evidence_text(x, min_length=20, max_length=400),
-            # Evidence and analysis - STRUCTURED AGGREGATION
-            'evidence': lambda x: get_best_evidence_text(x, min_length=10, max_length=500),
-            'business_impact_analysis': lambda x: get_best_evidence_text(x, min_length=10, max_length=300),
-            'trust_credibility_assessment': lambda x: get_best_evidence_text(x, min_length=10, max_length=200),
+            # Content examples for concrete evidence
+            'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            # Evidence and analysis
+            'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip()])[:500],
+            'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
+            'trust_credibility_assessment': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
             'information_gaps': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200]
         }).reset_index()
         
@@ -473,30 +397,35 @@ def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name
         title = f"#{rank} - {page_title} ({excellence_level})"
     
     with st.expander(title, expanded=(rank <= 3)):
-        col1, col2 = st.columns([3, 1])
+        st.markdown(f"""
+        <div class="{card_class}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="margin: 0;">{page_title}</h4>
+                <div style="background: #10b981; color: white; padding: 0.5rem; border-radius: 6px;">
+                    <strong>{excellence_level}</strong>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
         with col1:
-            st.markdown(f"#### {page_title}")
-        with col2:
-            create_metric_card(excellence_level, "Excellence Level", "excellent")
-        
-        col1, col2, col3, col4 = create_four_column_layout()
-        
-        with col1:
-            create_metric_card(f"{score:.1f}/10", "Success Score", status="success")
+            st.metric("Success Score", f"{score:.1f}/10")
         
         with col2:
-            create_metric_card(tier, "Content Tier", status="info")
+            st.metric("Content Tier", tier)
         
         with col3:
-            create_metric_card(persona, "Persona", status="info")
+            st.metric("Persona", persona)
         
         with col4:
             # Calculate percentile using master_df
             if 'avg_score' in master_df.columns:
                 percentile = (master_df['avg_score'] < score).mean() * 100
-                create_metric_card(f"{percentile:.0f}th", "Percentile", status="info")
+                st.metric("Percentile", f"{percentile:.0f}th")
             else:
-                create_metric_card("N/A", "Percentile", status="info")
+                st.metric("Percentile", "N/A")
         
         # Rich Evidence section - show comprehensive supporting data (aligned with Opportunity page)
         st.markdown("### 📋 Success Evidence & Analysis")
@@ -524,7 +453,11 @@ def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name
         with col1:
             effective_examples = story.get('effective_copy_examples', '')
             if effective_examples and len(str(effective_examples).strip()) > 20:
-                create_success_alert("✅ What's Working Exceptionally Well:")
+                st.markdown("""
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <strong>✅ What's Working Exceptionally Well:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Extract persona voice quotes
                 persona_quotes = extract_persona_quotes_success(str(effective_examples))
@@ -539,30 +472,59 @@ def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name
                 else:
                     st.markdown(f"*{str(effective_examples).strip()}*")
             else:
-                create_success_alert("✅ Success Elements: This page demonstrates strong overall performance worth replicating")
+                st.markdown("""
+                <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <strong>✅ Success Elements:</strong><br>
+                    This page demonstrates strong overall performance worth replicating
+                </div>
+                """, unsafe_allow_html=True)
         
         with col2:
             ineffective_examples = story.get('ineffective_copy_examples', '')
             if ineffective_examples and len(str(ineffective_examples).strip()) > 20:
-                create_warning_alert("⚠️ Areas for Enhancement:")
+                st.markdown("""
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 6px; border-left: 4px solid #ffc107;">
+                    <strong>⚠️ Areas for Enhancement:</strong><br>
+                </div>
+                """, unsafe_allow_html=True)
                 st.markdown(f"*{str(ineffective_examples).strip()}*")
             else:
-                create_info_alert("💡 Optimization Potential: Even successful pages can be further optimized")
+                st.markdown("""
+                <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                    <strong>💡 Optimization Potential:</strong><br>
+                    Even successful pages can be further optimized
+                </div>
+                """, unsafe_allow_html=True)
         
         # Success Insights & Business Impact
         trust_assessment = story.get('trust_credibility_assessment', '')
         business_impact = story.get('business_impact_analysis', '')
         
         if trust_assessment and len(str(trust_assessment).strip()) > 10:
-            create_success_alert(f"🔒 Trust & Credibility Strengths: {str(trust_assessment).strip()}")
+            st.markdown(f"""
+            <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                <strong>🔒 Trust & Credibility Strengths:</strong><br>
+                {str(trust_assessment).strip()}
+            </div>
+            """, unsafe_allow_html=True)
         
         if business_impact and len(str(business_impact).strip()) > 10:
-            create_info_alert(f"💼 Business Impact & Value: {str(business_impact).strip()}")
+            st.markdown(f"""
+            <div style="background: #d1ecf1; padding: 1rem; border-radius: 6px; border-left: 4px solid #17a2b8;">
+                <strong>💼 Business Impact & Value:</strong><br>
+                {str(business_impact).strip()}
+            </div>
+            """, unsafe_allow_html=True)
         
         # General Evidence (fallback)
         general_evidence = story.get('evidence', '')
         if general_evidence and len(str(general_evidence).strip()) > 10:
-            create_success_alert(f"🔍 Additional Success Factors: {str(general_evidence).strip()}")
+            st.markdown(f"""
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                <strong>🔍 Additional Success Factors:</strong><br>
+                {str(general_evidence).strip()}
+            </div>
+            """, unsafe_allow_html=True)
         
         # URL and additional info
         if url:
@@ -650,7 +612,7 @@ def display_evidence_section(story):
         st.info("💡 No specific evidence examples available for this success story.")
 
 def display_pattern_analysis(master_df):
-    """Display enhanced pattern analysis with visualizations"""
+    """Display pattern analysis across success stories"""
     st.markdown("## 🔍 Success Pattern Analysis")
     
     # Apply filters
@@ -664,11 +626,10 @@ def display_pattern_analysis(master_df):
             st.info("📊 No success stories available for pattern analysis.")
             return
         
-        # Enhanced pattern analysis with charts
-        display_tier_patterns_enhanced(success_stories)
-        display_persona_patterns_enhanced(success_stories)
-        display_criteria_patterns_enhanced(success_stories)
-        display_success_correlation_analysis(success_stories)
+        # Analyze patterns
+        display_tier_patterns(success_stories)
+        display_persona_patterns(success_stories)
+        display_criteria_patterns(success_stories)
 
 def display_tier_patterns(success_stories):
     """Display tier-based success patterns"""
@@ -714,200 +675,6 @@ def display_persona_patterns(success_stories):
                 <span class="pattern-tag">Persona Pattern</span>
             </div>
             """, unsafe_allow_html=True)
-
-def display_tier_patterns_enhanced(success_stories):
-    """Enhanced tier pattern analysis with visualizations"""
-    st.markdown("### 🏗️ Success Patterns by Content Tier")
-    
-    if 'tier' in success_stories.columns:
-        tier_success = success_stories.groupby('tier').agg({
-            'avg_score': ['mean', 'count', 'std'],
-            'page_id': 'count'
-        }).round(2)
-        
-        tier_success.columns = ['avg_score', 'score_count', 'score_std', 'total_pages']
-        tier_success = tier_success.sort_values('avg_score', ascending=False)
-        
-        # Visualization
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Tier performance chart
-            fig_tier = px.bar(
-                x=tier_success.index,
-                y=tier_success['avg_score'],
-                title="Average Success Score by Tier",
-                color=tier_success['avg_score'],
-                color_continuous_scale="RdYlGn"
-            )
-            fig_tier.update_layout(height=400)
-            st.plotly_chart(fig_tier, use_container_width=True)
-        
-        with col2:
-            # Success story count by tier
-            fig_count = px.pie(
-                values=tier_success['total_pages'],
-                names=tier_success.index,
-                title="Success Stories Distribution by Tier"
-            )
-            fig_count.update_layout(height=400)
-            st.plotly_chart(fig_count, use_container_width=True)
-        
-        # Pattern insights
-        for tier, data in tier_success.iterrows():
-            consistency = "High" if data['score_std'] < 0.5 else "Medium" if data['score_std'] < 1.0 else "Variable"
-            create_pattern_card(f"""
-                <strong>🏗️ {tier.replace('_', ' ').title()} Success Pattern</strong><br>
-                <strong>Performance:</strong> {data['avg_score']:.1f}/10 average score<br>
-                <strong>Volume:</strong> {data['total_pages']} success stories<br>
-                <strong>Consistency:</strong> {consistency} (σ={data['score_std']:.2f})<br>
-                <span class="pattern-tag">Tier Analysis</span>
-            """)
-
-def display_persona_patterns_enhanced(success_stories):
-    """Enhanced persona pattern analysis with visualizations"""
-    st.markdown("### 👥 Success Patterns by Persona")
-    
-    if 'persona_id' in success_stories.columns:
-        persona_success = success_stories.groupby('persona_id').agg({
-            'avg_score': ['mean', 'count', 'max']
-        }).round(2)
-        
-        persona_success.columns = ['avg_score', 'success_count', 'best_score']
-        persona_success = persona_success.sort_values('avg_score', ascending=False)
-        
-        # Visualization
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Persona performance radar
-            fig_radar = go.Figure()
-            fig_radar.add_trace(go.Scatterpolar(
-                r=persona_success['avg_score'].values,
-                theta=persona_success.index,
-                fill='toself',
-                name='Success Score'
-            ))
-            fig_radar.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, 10])),
-                title="Success Score by Persona",
-                height=400
-            )
-            st.plotly_chart(fig_radar, use_container_width=True)
-        
-        with col2:
-            # Success count vs quality scatter
-            fig_scatter = px.scatter(
-                x=persona_success['success_count'],
-                y=persona_success['avg_score'],
-                size=persona_success['best_score'],
-                hover_name=persona_success.index,
-                title="Success Volume vs Quality by Persona",
-                labels={'x': 'Number of Success Stories', 'y': 'Average Score'}
-            )
-            fig_scatter.update_layout(height=400)
-            st.plotly_chart(fig_scatter, use_container_width=True)
-        
-        # Pattern insights
-        for persona, data in persona_success.iterrows():
-            efficiency = "High" if data['success_count'] >= 3 and data['avg_score'] >= 8.0 else "Medium"
-            create_pattern_card(f"""
-                <strong>👤 {persona} Success Pattern</strong><br>
-                <strong>Performance:</strong> {data['avg_score']:.1f}/10 average score<br>
-                <strong>Volume:</strong> {data['success_count']} success stories<br>
-                <strong>Peak Performance:</strong> {data['best_score']:.1f}/10<br>
-                <strong>Efficiency:</strong> {efficiency}<br>
-                <span class="pattern-tag">Persona Analysis</span>
-            """)
-
-def display_criteria_patterns_enhanced(success_stories):
-    """Enhanced criteria pattern analysis"""
-    st.markdown("### 🎯 Success Patterns by Criteria")
-    
-    # Dynamic criteria detection
-    numeric_cols = success_stories.select_dtypes(include=['float64', 'int64']).columns
-    criteria_cols = [col for col in numeric_cols if 'score' in col.lower() or col in [
-        'sentiment_numeric', 'engagement_numeric', 'conversion_numeric'
-    ]]
-    
-    if criteria_cols:
-        criteria_averages = success_stories[criteria_cols].mean().sort_values(ascending=False)
-        
-        # Criteria performance chart
-        fig_criteria = px.bar(
-            x=criteria_averages.values,
-            y=[col.replace('_', ' ').title() for col in criteria_averages.index],
-            orientation='h',
-            title="Average Criteria Performance in Success Stories",
-            color=criteria_averages.values,
-            color_continuous_scale="RdYlGn"
-        )
-        fig_criteria.update_layout(height=400)
-        st.plotly_chart(fig_criteria, use_container_width=True)
-        
-        # Top criteria insights
-        st.markdown("#### 🏆 Top Performing Criteria")
-        for i, (criteria, score) in enumerate(criteria_averages.head(5).items(), 1):
-            criteria_name = criteria.replace('_', ' ').title()
-            performance_level = "Excellent" if score >= 8.0 else "Good" if score >= 7.0 else "Fair"
-            create_pattern_card(f"""
-                <strong>#{i} - {criteria_name}</strong><br>
-                <strong>Average Score:</strong> {score:.1f}/10<br>
-                <strong>Performance Level:</strong> {performance_level}<br>
-                <span class="pattern-tag">Criteria Excellence</span>
-            """)
-    else:
-        st.info("📊 Numeric criteria data not available for detailed analysis.")
-
-def display_success_correlation_analysis(success_stories):
-    """Display correlation analysis between success factors"""
-    st.markdown("### 🔗 Success Factor Correlations")
-    
-    # Find numeric columns for correlation
-    numeric_cols = success_stories.select_dtypes(include=['float64', 'int64']).columns
-    if len(numeric_cols) >= 2:
-        # Calculate correlation matrix
-        corr_matrix = success_stories[numeric_cols].corr()
-        
-        # Create correlation heatmap
-        fig_corr = px.imshow(
-            corr_matrix.values,
-            x=corr_matrix.columns,
-            y=corr_matrix.index,
-            color_continuous_scale="RdBu",
-            aspect="auto",
-            title="Success Factor Correlation Matrix"
-        )
-        fig_corr.update_layout(height=500)
-        st.plotly_chart(fig_corr, use_container_width=True)
-        
-        # Identify strongest correlations
-        st.markdown("#### 🔍 Key Correlations")
-        correlations = []
-        for i in range(len(corr_matrix.columns)):
-            for j in range(i+1, len(corr_matrix.columns)):
-                corr_value = corr_matrix.iloc[i, j]
-                if abs(corr_value) > 0.5:  # Strong correlation
-                    correlations.append({
-                        'factor1': corr_matrix.columns[i],
-                        'factor2': corr_matrix.columns[j], 
-                        'correlation': corr_value
-                    })
-        
-        if correlations:
-            correlations.sort(key=lambda x: abs(x['correlation']), reverse=True)
-            for corr in correlations[:3]:  # Top 3 correlations
-                strength = "Strong" if abs(corr['correlation']) > 0.7 else "Moderate"
-                direction = "Positive" if corr['correlation'] > 0 else "Negative"
-                create_pattern_card(f"""
-                    <strong>{corr['factor1'].replace('_', ' ').title()} ↔ {corr['factor2'].replace('_', ' ').title()}</strong><br>
-                    <strong>Correlation:</strong> {corr['correlation']:.3f} ({strength} {direction})<br>
-                    <span class="pattern-tag">Correlation Insight</span>
-                """)
-        else:
-            st.info("No strong correlations found between success factors.")
-    else:
-        st.info("Insufficient numeric data for correlation analysis.")
 
 def display_criteria_patterns(success_stories):
     """Display criteria-based success patterns"""
@@ -1048,9 +815,8 @@ def categorize_evidence(column_name, content):
         return 'Other Evidence'
 
 def display_replication_guide(metrics_calc, master_df):
-    """Display enhanced data-driven replication guide"""
+    """Display comprehensive replication guide"""
     st.markdown("## 🔄 Success Replication Guide")
-    st.markdown("*Data-driven insights for improving underperforming content*")
     
     # Apply filters
     filtered_df = apply_success_filters(master_df)
@@ -1063,11 +829,14 @@ def display_replication_guide(metrics_calc, master_df):
             st.info("📊 No success stories available for replication guide.")
             return
         
-        # Enhanced replication analysis
-        display_replication_templates_enhanced(success_stories)
-        display_success_checklist_enhanced(success_stories)
-        display_implementation_roadmap_enhanced(success_stories)
-        display_success_threshold_analysis(success_stories)
+        # Generate replication templates
+        display_replication_templates(success_stories)
+        
+        # Success checklist
+        display_success_checklist(success_stories)
+        
+        # Implementation roadmap
+        display_implementation_roadmap(success_stories)
 
 def display_replication_templates(success_stories):
     """Display replication templates based on success patterns"""
@@ -1197,255 +966,16 @@ def display_implementation_roadmap(success_stories):
     ]
     
     for phase in phases:
-        task_list = ''.join([f"<li>{task}</li>" for task in phase['tasks']])
-        create_pattern_card(f"""
-            <h4>{phase['phase']}</h4>
+        st.markdown(f"""
+        <div class="pattern-card" style="border-left-color: {phase['color']};">
+            <h4 style="color: {phase['color']};">{phase['phase']}</h4>
             <ul>
-                {task_list}
-            </ul>
-        """)
-
-def display_replication_templates_enhanced(success_stories):
-    """Enhanced replication templates with data-driven insights"""
-    st.markdown("### 📋 Data-Driven Replication Templates")
-    
-    # Advanced template analysis
-    if 'tier' in success_stories.columns and 'persona_id' in success_stories.columns:
-        # Multi-dimensional template analysis
-        template_analysis = success_stories.groupby(['tier', 'persona_id']).agg({
-            'avg_score': ['mean', 'count', 'std'],
-            'page_id': 'count'
-        }).round(2)
+        """, unsafe_allow_html=True)
         
-        template_analysis.columns = ['avg_score', 'score_count', 'score_std', 'page_count']
-        template_analysis = template_analysis.reset_index()
-        template_analysis = template_analysis[template_analysis['page_count'] >= 2]  # Only templates with multiple examples
+        for task in phase['tasks']:
+            st.markdown(f"<li>{task}</li>", unsafe_allow_html=True)
         
-        if not template_analysis.empty:
-            # Top performing templates
-            top_templates = template_analysis.nlargest(3, 'avg_score')
-            
-            for _, template in top_templates.iterrows():
-                consistency_score = max(0, 10 - template['score_std'] * 2)  # Convert std to 0-10 scale
-                reliability = "High" if consistency_score >= 8 else "Medium" if consistency_score >= 6 else "Low"
-                
-                create_pattern_card(f"""
-                    <strong>🎯 {template['tier']} × {template['persona_id']} Template</strong><br>
-                    <strong>Performance:</strong> {template['avg_score']:.1f}/10 average score<br>
-                    <strong>Sample Size:</strong> {template['page_count']} success stories<br>
-                    <strong>Consistency:</strong> {reliability} (σ={template['score_std']:.2f})<br>
-                    <strong>Reliability Score:</strong> {consistency_score:.1f}/10<br>
-                    <span class="pattern-tag">Proven Template</span>
-                """)
-        else:
-            st.info("📊 Insufficient data for multi-dimensional template analysis.")
-    
-    # Fallback to tier-only analysis
-    elif 'tier' in success_stories.columns:
-        tier_templates = success_stories.groupby('tier').agg({
-            'avg_score': ['mean', 'count', 'std']
-        }).round(2)
-        
-        tier_templates.columns = ['avg_score', 'page_count', 'score_std']
-        
-        for tier, data in tier_templates.iterrows():
-            consistency = "High" if data['score_std'] < 0.5 else "Medium" if data['score_std'] < 1.0 else "Variable"
-            create_pattern_card(f"""
-                <strong>📋 {tier.replace('_', ' ').title()} Success Template</strong><br>
-                <strong>Performance:</strong> {data['avg_score']:.1f}/10 average<br>
-                <strong>Sample Size:</strong> {data['page_count']} stories<br>
-                <strong>Consistency:</strong> {consistency}<br>
-                <span class="pattern-tag">Template Ready</span>
-            """)
-
-def display_success_checklist_enhanced(success_stories):
-    """Enhanced success checklist with dynamic thresholds"""
-    st.markdown("### ✅ Dynamic Success Checklist")
-    
-    # Calculate dynamic thresholds based on actual success data
-    numeric_cols = success_stories.select_dtypes(include=['float64', 'int64']).columns
-    criteria_cols = [col for col in numeric_cols if 'score' in col.lower()]
-    
-    if criteria_cols:
-        # Calculate percentile-based thresholds
-        thresholds = {}
-        for col in criteria_cols:
-            q75 = success_stories[col].quantile(0.75)
-            q90 = success_stories[col].quantile(0.90)
-            thresholds[col] = {'good': q75, 'excellent': q90}
-        
-        st.markdown("#### 🎯 Dynamic Performance Thresholds")
-        st.markdown("*Based on actual success story performance data*")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("**Good Performance Targets (75th percentile):**")
-            for criteria, threshold in thresholds.items():
-                criteria_name = criteria.replace('_', ' ').title()
-                st.markdown(f"• **{criteria_name}:** ≥{threshold['good']:.1f}")
-        
-        with col2:
-            st.markdown("**Excellent Performance Targets (90th percentile):**")
-            for criteria, threshold in thresholds.items():
-                criteria_name = criteria.replace('_', ' ').title()
-                st.markdown(f"• **{criteria_name}:** ≥{threshold['excellent']:.1f}")
-        
-        # Success probability calculator
-        st.markdown("#### 🎲 Success Probability Analysis")
-        
-        # Calculate correlation between criteria and success
-        if len(criteria_cols) >= 2:
-            success_rate_by_criteria = {}
-            for col in criteria_cols:
-                high_performers = success_stories[success_stories[col] >= thresholds[col]['good']]
-                success_rate = len(high_performers) / len(success_stories) * 100
-                success_rate_by_criteria[col] = success_rate
-            
-            # Display success rates
-            for criteria, rate in sorted(success_rate_by_criteria.items(), key=lambda x: x[1], reverse=True):
-                criteria_name = criteria.replace('_', ' ').title()
-                create_pattern_card(f"""
-                    <strong>📊 {criteria_name} Success Rate</strong><br>
-                    <strong>Success Probability:</strong> {rate:.1f}% when above threshold<br>
-                    <strong>Threshold:</strong> ≥{thresholds[criteria]['good']:.1f}<br>
-                    <span class="pattern-tag">Probability Insight</span>
-                """)
-    else:
-        st.info("📊 Numeric criteria data not available for dynamic thresholds.")
-
-def display_implementation_roadmap_enhanced(success_stories):
-    """Enhanced implementation roadmap with data-driven priorities"""
-    st.markdown("### 🗺️ Data-Driven Implementation Roadmap")
-    
-    # Calculate implementation priorities based on data
-    if 'tier' in success_stories.columns:
-        tier_priority = success_stories.groupby('tier').agg({
-            'avg_score': ['mean', 'count']
-        }).round(2)
-        tier_priority.columns = ['avg_score', 'success_count']
-        tier_priority['priority_score'] = tier_priority['avg_score'] * np.log(tier_priority['success_count'] + 1)
-        tier_priority = tier_priority.sort_values('priority_score', ascending=False)
-        
-        # Create priority-based phases
-        phases = []
-        for i, (tier, data) in enumerate(tier_priority.iterrows(), 1):
-            phase_name = f"Phase {i}: {tier.replace('_', ' ').title()} Optimization"
-            priority_level = "High" if data['priority_score'] >= tier_priority['priority_score'].median() else "Medium"
-            
-            phases.append({
-                'phase': phase_name,
-                'priority': priority_level,
-                'avg_score': data['avg_score'],
-                'success_count': data['success_count'],
-                'tasks': [
-                    f'Analyze {data["success_count"]} success stories in {tier}',
-                    f'Target improvement to {data["avg_score"]:.1f}/10 benchmark',
-                    f'Apply proven patterns from high-performing {tier} content',
-                    f'Monitor performance against {tier} success metrics'
-                ]
-            })
-        
-        for phase in phases:
-            task_list = ''.join([f"<li>{task}</li>" for task in phase['tasks']])
-            priority_color = "#dc2626" if phase['priority'] == "High" else "#f59e0b"
-            
-            create_pattern_card(f"""
-                <h4 style="color: {priority_color};">{phase['phase']}</h4>
-                <strong>Priority:</strong> {phase['priority']}<br>
-                <strong>Success Benchmark:</strong> {phase['avg_score']:.1f}/10<br>
-                <strong>Evidence Base:</strong> {phase['success_count']} stories<br>
-                <ul>
-                    {task_list}
-                </ul>
-            """)
-    else:
-        # Generic roadmap if tier data not available
-        st.info("📊 Tier data not available for data-driven roadmap. Showing generic implementation phases.")
-
-def display_success_threshold_analysis(success_stories):
-    """Analyze optimal success thresholds for different contexts"""
-    st.markdown("### 🎯 Success Threshold Optimization")
-    
-    if 'avg_score' in success_stories.columns:
-        # Analyze score distribution
-        score_stats = success_stories['avg_score'].describe()
-        
-        # Calculate recommended thresholds using quantile method
-        if len(success_stories) > 0:
-            conservative_threshold = success_stories['avg_score'].quantile(0.75)  # 75th percentile
-            aggressive_threshold = success_stories['avg_score'].quantile(0.90)    # 90th percentile
-        else:
-            conservative_threshold = 7.0  # Default fallback
-            aggressive_threshold = 8.0    # Default fallback
-        current_threshold = st.session_state.get('success_threshold', 7.7)
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            create_metric_card(
-                f"{conservative_threshold:.1f}",
-                "Conservative Threshold",
-                "success" if conservative_threshold >= 7.0 else "warning"
-            )
-            st.markdown("*75th percentile - More inclusive*")
-        
-        with col2:
-            create_metric_card(
-                f"{current_threshold:.1f}",
-                "Current Threshold",
-                "info"
-            )
-            st.markdown("*Your current setting*")
-        
-        with col3:
-            create_metric_card(
-                f"{aggressive_threshold:.1f}",
-                "Aggressive Threshold", 
-                "success" if aggressive_threshold >= 8.0 else "warning"
-            )
-            st.markdown("*90th percentile - More selective*")
-        
-        # Threshold impact analysis
-        st.markdown("#### 📊 Threshold Impact Analysis")
-        
-        thresholds_to_test = [6.0, 7.0, 7.5, 8.0, 8.5, 9.0]
-        threshold_analysis = []
-        
-        for threshold in thresholds_to_test:
-            success_count = len(success_stories[success_stories['avg_score'] >= threshold])
-            success_rate = success_count / len(success_stories) * 100
-            threshold_analysis.append({
-                'threshold': threshold,
-                'success_count': success_count,
-                'success_rate': success_rate
-            })
-        
-        # Create threshold analysis chart
-        df_threshold = pd.DataFrame(threshold_analysis)
-        
-        fig_threshold = px.line(
-            df_threshold,
-            x='threshold',
-            y='success_rate',
-            title='Success Rate vs Threshold Setting',
-            labels={'threshold': 'Success Threshold', 'success_rate': 'Success Rate (%)'}
-        )
-        fig_threshold.add_vline(x=current_threshold, line_dash="dash", line_color="red", 
-                               annotation_text=f"Current: {current_threshold}")
-        fig_threshold.update_layout(height=400)
-        st.plotly_chart(fig_threshold, use_container_width=True)
-        
-        # Threshold recommendations
-        optimal_threshold = df_threshold.loc[df_threshold['success_rate'].between(20, 40), 'threshold']
-        if not optimal_threshold.empty:
-            recommended = optimal_threshold.median()
-            create_pattern_card(f"""
-                <strong>🎯 Recommended Threshold: {recommended:.1f}</strong><br>
-                <strong>Reasoning:</strong> Balances selectivity with sample size<br>
-                <strong>Expected Success Rate:</strong> ~{df_threshold[df_threshold['threshold']==recommended]['success_rate'].iloc[0]:.1f}%<br>
-                <span class="pattern-tag">Optimization Insight</span>
-            """)
+        st.markdown("</ul></div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main() 

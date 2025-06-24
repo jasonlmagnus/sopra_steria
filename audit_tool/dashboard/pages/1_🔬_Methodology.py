@@ -1,159 +1,55 @@
 import streamlit as st
+import sys
+from pathlib import Path
 import yaml
 import os
-from pathlib import Path
-import pandas as pd
-import json
 
-# Set page config
+# Add project root to Python path
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from audit_tool.dashboard.components.perfect_styling_method import (
+    apply_perfect_styling,
+    create_main_header,
+    create_section_header,
+    create_subsection_header,
+    create_metric_card,
+    create_status_indicator,
+    create_success_alert,
+    create_warning_alert,
+    create_error_alert,
+    create_info_alert,
+    create_content_card,
+    create_two_column_layout,
+    create_divider
+)
+
+# Page configuration
 st.set_page_config(
-    page_title="Brand Health Command Center - Methodology",
+    page_title="Methodology",
     page_icon="🔬",
     layout="wide"
 )
 
-# Load Google Fonts and Custom CSS
-st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Crimson+Text:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-    /* Brand Health Command Center Styles */
-    :root {
-        --primary-color: #E85A4F;
-        --primary-hover: #d44a3a;
-        --secondary-color: #2C3E50;
-        --gray-border: #D1D5DB;
-        --background: #FFFFFF;
-        --text-selection: #E85A4F;
-        --green-status: #34c759;
-        --yellow-status: #ffb800;
-        --red-status: #ff3b30;
-        --orange-status: #ff9500;
-        --font-primary: "Inter", sans-serif;
-        --font-serif: "Crimson Text", serif;
-    }
-    
-    /* Global Typography */
-    .main .block-container {
-        font-family: var(--font-primary);
-        font-weight: 400;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        font-weight: 600;
-    }
-    
-    /* Text Selection */
-    ::selection {
-        background-color: var(--text-selection);
-        color: white;
-    }
-    
-    .insights-box {
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid var(--gray-border);
-        margin: 1rem 0;
-        font-family: var(--font-primary);
-    }
-    
-    .insights-box h4 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        margin-bottom: 1rem;
-    }
-    
-    .tier-card {
-        background: var(--background);
-        border: 2px solid var(--gray-border);
-        padding: 20px;
-        margin: 15px 0;
-        border-radius: 8px;
-        font-family: var(--font-primary);
-    }
-    
-    .tier-card h4 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        margin-bottom: 1rem;
-    }
-    
-    .channel-card {
-        background: var(--background);
-        border: 1px solid var(--gray-border);
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 5px;
-        font-family: var(--font-primary);
-    }
-    
-    .channel-card h5 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .evidence-requirement {
-        background: #f8fafc;
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid var(--gray-border);
-        margin: 1rem 0;
-        font-family: var(--font-primary);
-    }
-    
-    .evidence-requirement h5 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .messaging-hierarchy {
-        font-family: var(--font-primary);
-    }
-    
-    .messaging-hierarchy h5 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-    }
-    
-    .penalty-item {
-        background: var(--background);
-        border: 1px solid var(--gray-border);
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 5px;
-        font-family: var(--font-primary);
-    }
-    
-    .penalty-item h5 {
-        font-family: var(--font-serif);
-        color: var(--secondary-color);
-        margin-bottom: 0.5rem;
-    }
-    
-    .footer {
-        margin-top: 50px;
-        padding: 20px;
-        border-top: 1px solid var(--gray-border);
-        text-align: center;
-        color: #6c757d;
-        font-family: var(--font-primary);
-    }
-</style>
-""", unsafe_allow_html=True)
+# Apply the single source of truth for styling
+apply_perfect_styling()
 
-# Title with icon
-st.title("🔬 Methodology")
+# --- Main Page ---
+create_main_header("🔬 Methodology", "How we evaluate brand health across digital touchpoints")
 
 # Load methodology data
-methodology_path = os.path.join(Path(__file__).parent.parent.parent, "config", "methodology.yaml")
-with open(methodology_path, 'r') as file:
-    methodology = yaml.safe_load(file)
+methodology_path = project_root / "audit_tool" / "config" / "methodology.yaml"
+try:
+    with open(methodology_path, 'r') as file:
+        methodology = yaml.safe_load(file)
+except FileNotFoundError:
+    create_error_alert(f"FATAL: Methodology file not found at {methodology_path}")
+    st.stop()
+except Exception as e:
+    create_error_alert(f"Error loading or parsing methodology YAML: {e}")
+    st.stop()
 
-# Create tabs - updated to reflect actual methodology structure
+# Create tabs as per the functional specification
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Overview", 
     "Scoring Framework", 
@@ -163,425 +59,235 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Quality Controls"
 ])
 
+# --- Tab 1: Overview ---
 with tab1:
-    st.header("Brand Health Audit Methodology")
-    
-    # Get metadata
+    create_section_header("Brand Health Audit Methodology")
+
     metadata = methodology.get('metadata', {})
-    
-    st.markdown(f"""
-    <div class="insights-box">
-        <h4>{metadata.get('name', 'Brand Audit Methodology')}</h4>
-        <p><strong>Version:</strong> {metadata.get('version', 'N/A')} | <strong>Updated:</strong> {metadata.get('updated', 'N/A')}</p>
-        <p><strong>Corporate Tagline:</strong> "{metadata.get('tagline', 'The world is how we shape it')}"</p>
-        <p>{metadata.get('description', '')}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Core Formula
     calculation = methodology.get('calculation', {})
     
-    st.markdown(f"""
-    <div class="insights-box">
-        <h4>Brand Score Calculation</h4>
-        <p><strong>Formula:</strong> <code>{calculation.get('formula', '')}</code></p>
-        <ul>
-            <li><strong>Onsite Weight:</strong> {calculation.get('onsite_weight', 0.7)*100}% (Your website and digital properties)</li>
-            <li><strong>Offsite Weight:</strong> {calculation.get('offsite_weight', 0.3)*100}% (Third-party platforms and reviews)</li>
-            <li><strong>Crisis Impact:</strong> Can reduce overall score by up to 70%</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Crisis Multipliers
-    crisis_multipliers = calculation.get('crisis_multipliers', {})
-    
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Crisis Impact Multipliers</h4>
-        <p>Reputation issues can significantly impact your overall brand health score:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    for crisis_type, multiplier in crisis_multipliers.items():
-        reduction = (1 - multiplier) * 100
-        status_color = "green" if multiplier == 1.0 else "orange" if multiplier >= 0.9 else "red"
+    if metadata:
+        st.info(f"""
+        **{metadata.get('name', 'Brand Audit Methodology')}** (Version {metadata.get('version', 'N/A')})
         
-        st.markdown(f"""
-        <div class="crisis-multiplier" style="border-left: 4px solid {status_color}; padding: 10px; margin: 5px 0;">
-            <strong>{crisis_type.replace('_', ' ').title()}:</strong> {multiplier} multiplier 
-            {f'({reduction:.0f}% reduction)' if reduction > 0 else '(no reduction)'}
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Process Overview
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Audit Process</h4>
-        <p>The brand health audit follows a structured 5-stage process:</p>
-        <ol>
-            <li><strong>Page Classification:</strong> Categorize content into Tier 1 (Brand), Tier 2 (Value Prop), or Tier 3 (Functional)</li>
-            <li><strong>Criteria Assessment:</strong> Apply tier-specific scoring criteria with appropriate brand/performance weightings</li>
-            <li><strong>Evidence Collection:</strong> Gather verbatim quotes and specific examples to support all scores</li>
-            <li><strong>Brand Consistency Check:</strong> Validate messaging hierarchy, visual identity, and approved content usage</li>
-            <li><strong>Strategic Recommendations:</strong> Prioritize improvements by impact, effort, and urgency</li>
-        </ol>
-    </div>
-    """, unsafe_allow_html=True)
+        Last Updated: {metadata.get('last_updated', 'N/A')}
+        
+        *{metadata.get('description', '' )}*
+        """)
 
+    if calculation:
+        create_subsection_header("Brand Score Calculation")
+        formula = calculation.get('formula', 'Not specified')
+        onsite_weight = calculation.get('onsite_weight', 0) * 100
+        offsite_weight = calculation.get('offsite_weight', 0) * 100
+
+        st.info(f"""
+        **Formula:** `{formula}`
+        - **Onsite Weight:** {onsite_weight:.0f}% (Your website and digital properties)
+        - **Offsite Weight:** {offsite_weight:.0f}% (Third-party platforms and reviews)
+        - **Crisis Impact:** Can reduce overall score by up to 70%.
+        """)
+
+    crisis_multipliers = calculation.get('crisis_multipliers', {})
+    if crisis_multipliers:
+        create_subsection_header("Crisis Impact Multipliers")
+        st.info("Reputation issues can significantly impact your overall brand health score.")
+        
+        for crisis_type, multiplier in crisis_multipliers.items():
+            reduction = (1 - multiplier) * 100
+            message = f"**{crisis_type.replace('_', ' ').title()}:** {multiplier}x multiplier ({reduction:.0f}% reduction)"
+            if multiplier < 0.9:
+                st.error(message)
+            elif multiplier < 1.0:
+                st.warning(message)
+            else:
+                st.success(message)
+
+    create_subsection_header("Audit Process")
+    st.info("""
+    The brand health audit follows a structured 5-stage process:
+    1.  **Page Classification:** Categorize content into Tier 1 (Brand), Tier 2 (Value Prop), or Tier 3 (Functional).
+    2.  **Criteria Assessment:** Apply tier-specific scoring criteria with appropriate brand/performance weightings.
+    3.  **Evidence Collection:** Gather verbatim quotes and specific examples to support all scores.
+    4.  **Brand Consistency Check:** Validate messaging hierarchy, visual identity, and approved content usage.
+    5.  **Strategic Recommendations:** Prioritize improvements by impact, effort, and urgency.
+    """)
+
+# --- Tab 2: Scoring Framework ---
 with tab2:
-    st.header("Scoring Framework")
-    
-    # Get scoring configuration
+    create_section_header("Scoring Framework")
     scoring = methodology.get('scoring', {})
     scale = scoring.get('scale', {})
     descriptors = scoring.get('descriptors', {})
-    
-    st.markdown(f"""
-    <div class="insights-box">
-        <h4>Scoring Scale</h4>
-        <p>All criteria are scored on a <strong>{scale.get('min', 0)}-{scale.get('max', 10)} scale</strong> with mandatory evidence requirements.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Score descriptors
-    st.subheader("Score Interpretation")
-    
-    for score_range, details in descriptors.items():
-        color = details.get('color', 'gray')
-        status = details.get('status', '')
-        label = details.get('label', '')
-        
-        # Map colors to CSS classes or inline styles
-        color_style = {
-            'red': 'background-color: #fee; border-left: 4px solid #dc3545;',
-            'orange': 'background-color: #fff3cd; border-left: 4px solid #fd7e14;',
-            'yellow': 'background-color: #fff3cd; border-left: 4px solid #ffc107;',
-            'green': 'background-color: #d4edda; border-left: 4px solid #28a745;',
-            'dark-green': 'background-color: #d4edda; border-left: 4px solid #155724;'
-        }.get(color, 'background-color: #f8f9fa; border-left: 4px solid #6c757d;')
-        
-        st.markdown(f"""
-        <div style="{color_style} padding: 15px; margin: 10px 0; border-radius: 5px;">
-            <h5 style="margin: 0 0 5px 0;">{score_range}: {label}</h5>
-            <p style="margin: 0;"><strong>Status:</strong> {status}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Evidence Requirements
     evidence = methodology.get('evidence', {})
-    
-    st.subheader("Evidence Requirements")
-    
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Mandatory Evidence Standards</h4>
-        <p>All scores must be supported by specific evidence from the audited content:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    high_scores = evidence.get('high_scores', {})
-    low_scores = evidence.get('low_scores', {})
-    
-    st.markdown(f"""
-    <div class="evidence-requirement">
-        <h5>High Scores (≥7)</h5>
-        <p><strong>Requirement:</strong> {high_scores.get('requirement', '')}</p>
-        <p><strong>Penalty:</strong> {high_scores.get('penalty', '')}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="evidence-requirement">
-        <h5>Low Scores (≤4)</h5>
-        <p><strong>Requirement:</strong> {low_scores.get('requirement', '')}</p>
-        <p><strong>Penalty:</strong> {low_scores.get('penalty', '')}</p>
-    </div>
-    """, unsafe_allow_html=True)
 
+    if scale:
+        st.info(f"All criteria are scored on a **{scale.get('min', 0)}-{scale.get('max', 10)} scale** with mandatory evidence requirements.")
+
+    if descriptors:
+        create_subsection_header("Score Interpretation")
+        for score_range, details in descriptors.items():
+            content = f"**{score_range}: {details.get('label', '')}**\n\n{details.get('status', '')}"
+            color = details.get('color', 'info')
+            if 'red' in color:
+                st.error(content)
+            elif 'orange' in color or 'yellow' in color:
+                st.warning(content)
+            elif 'green' in color:
+                st.success(content)
+            else:
+                st.info(content)
+
+    if evidence:
+        create_subsection_header("Evidence Requirements")
+        high_scores = evidence.get('high_scores', {})
+        low_scores = evidence.get('low_scores', {})
+        
+        col1, col2 = create_two_column_layout()
+        with col1:
+            st.success(f"""
+            **High Scores (≥7)**
+            - **Requirement:** {high_scores.get('requirement', '')}
+            - **Penalty:** {high_scores.get('penalty', '')}
+            """)
+        with col2:
+            st.error(f"""
+            **Low Scores (≤4)**
+            - **Requirement:** {low_scores.get('requirement', '')}
+            - **Penalty:** {low_scores.get('penalty', '')}
+            """)
+
+# --- Tab 3: Page Classification ---
 with tab3:
-    st.header("Page Classification System")
-    
-    # Get classification data
+    create_section_header("Page Classification System")
     classification = methodology.get('classification', {})
     onsite = classification.get('onsite', {})
-    
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Three-Tier Classification</h4>
-        <p>Every page is classified into one of three tiers, each with different brand/performance weightings and criteria:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Display each tier
-    for tier_key, tier_data in onsite.items():
-        tier_name = tier_data.get('name', '')
-        weight_in_onsite = tier_data.get('weight_in_onsite', 0) * 100
-        brand_pct = tier_data.get('brand_percentage', 0)
-        perf_pct = tier_data.get('performance_percentage', 0)
-        triggers = tier_data.get('triggers', [])
-        examples = tier_data.get('examples', [])
-        
-        st.markdown(f"""
-        <div class="tier-card" style="border: 2px solid #dee2e6; padding: 20px; margin: 15px 0; border-radius: 8px;">
-            <h4>{tier_key.replace('_', ' ').title()}: {tier_name}</h4>
-            <div style="display: flex; gap: 20px; margin: 10px 0;">
-                <div><strong>Weight in Onsite:</strong> {weight_in_onsite:.0f}%</div>
-                <div><strong>Brand Focus:</strong> {brand_pct}%</div>
-                <div><strong>Performance Focus:</strong> {perf_pct}%</div>
-            </div>
-            
-            <div style="margin: 15px 0;">
-                <strong>Classification Triggers:</strong>
-                <ul>
-                    {"".join([f"<li>{trigger}</li>" for trigger in triggers])}
-                </ul>
-            </div>
-            
-            <div>
-                <strong>Examples:</strong>
-                <ul>
-                    {"".join([f"<li>{example}</li>" for example in examples])}
-                </ul>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Offsite Classification
     offsite = classification.get('offsite', {})
-    
-    st.subheader("Offsite Channel Classification")
-    
-    for channel_key, channel_data in offsite.items():
-        channel_name = channel_data.get('name', '')
-        weight_in_offsite = channel_data.get('weight_in_offsite', 0) * 100
-        examples = channel_data.get('examples', [])
-        
-        st.markdown(f"""
-        <div class="channel-card" style="border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px;">
-            <h5>{channel_name}</h5>
-            <p><strong>Weight in Offsite:</strong> {weight_in_offsite:.0f}%</p>
-            <p><strong>Examples:</strong> {', '.join(examples)}</p>
-        </div>
-        """, unsafe_allow_html=True)
 
+    st.info("Every page is classified into one of three tiers, each with different brand/performance weightings and criteria.")
+
+    if onsite:
+        create_subsection_header("Onsite Page Tiers")
+        for tier_key, tier_data in onsite.items():
+            with st.expander(f"**{tier_key.replace('_', ' ').title()}:** {tier_data.get('name', '')}"):
+                col1, col2 = create_two_column_layout()
+                with col1:
+                    create_metric_card(f"{tier_data.get('brand_percentage', 0)}%", "Brand Focus")
+                    create_metric_card(f"{tier_data.get('performance_percentage', 0)}%", "Performance Focus")
+                    create_metric_card(f"{tier_data.get('weight_in_onsite', 0)*100:.0f}%", "Weight in Onsite Score")
+                with col2:
+                    st.markdown("**Classification Triggers:**")
+                    for trigger in tier_data.get('triggers', []):
+                        st.markdown(f"- {trigger}")
+                    st.markdown("**Examples:**")
+                    for example in tier_data.get('examples', []):
+                        st.markdown(f"- {example}")
+
+    if offsite:
+        create_subsection_header("Offsite Channel Classification")
+        for channel_key, channel_data in offsite.items():
+            with st.expander(f"**{channel_data.get('name', '')}**"):
+                st.metric("Weight in Offsite Score", f"{channel_data.get('weight_in_offsite', 0)*100:.0f}%")
+                st.markdown("**Examples:**")
+                for example in channel_data.get('examples', []):
+                    st.markdown(f"- {example}")
+
+# --- Tab 4: Tier Criteria ---
 with tab4:
-    st.header("Tier-Specific Criteria")
-    
-    # Get criteria data
+    create_section_header("Tier-Specific Criteria")
     criteria = methodology.get('criteria', {})
     
     for tier_key, tier_criteria in criteria.items():
-        tier_name = tier_key.replace('_', ' ').title()
-        st.subheader(f"{tier_name} Criteria")
-        
-        # Brand criteria
-        brand_criteria = tier_criteria.get('brand_criteria', {})
-        if brand_criteria:
-            st.markdown("**Brand Criteria:**")
-            
-            for criterion_key, criterion_data in brand_criteria.items():
-                weight = criterion_data.get('weight', 0)
-                description = criterion_data.get('description', '')
-                requirements = criterion_data.get('requirements', [])
-                
-                with st.expander(f"{criterion_key.replace('_', ' ').title()} ({weight}%)"):
-                    st.markdown(f"**Description:** {description}")
-                    st.markdown("**Requirements:**")
-                    for req in requirements:
-                        st.markdown(f"• {req}")
-        
-        # Performance criteria
-        performance_criteria = tier_criteria.get('performance_criteria', {})
-        if performance_criteria:
-            st.markdown("**Performance Criteria:**")
-            
-            for criterion_key, criterion_data in performance_criteria.items():
-                weight = criterion_data.get('weight', 0)
-                description = criterion_data.get('description', '')
-                requirements = criterion_data.get('requirements', [])
-                
-                with st.expander(f"{criterion_key.replace('_', ' ').title()} ({weight}%)"):
-                    st.markdown(f"**Description:** {description}")
-                    st.markdown("**Requirements:**")
-                    for req in requirements:
-                        st.markdown(f"• {req}")
-        
-        st.markdown("---")
+        with st.expander(f"**{tier_key.replace('_', ' ').title()} Criteria**"):
+            brand_criteria = tier_criteria.get('brand_criteria', {})
+            performance_criteria = tier_criteria.get('performance_criteria', {})
 
+            if brand_criteria:
+                create_subsection_header("Brand Criteria")
+                for crit_key, crit_data in brand_criteria.items():
+                    st.markdown(f"**{crit_key.replace('_', ' ').title()}** ({crit_data.get('weight', 0)}%)")
+                    st.caption(crit_data.get('description', ''))
+                    for req in crit_data.get('requirements', []):
+                        st.markdown(f"- {req}")
+                    create_divider()
+
+            if performance_criteria:
+                create_subsection_header("Performance Criteria")
+                for crit_key, crit_data in performance_criteria.items():
+                    st.markdown(f"**{crit_key.replace('_', ' ').title()}** ({crit_data.get('weight', 0)}%)")
+                    st.caption(crit_data.get('description', ''))
+                    for req in crit_data.get('requirements', []):
+                        st.markdown(f"- {req}")
+                    create_divider()
+
+# --- Tab 5: Brand Standards ---
 with tab5:
-    st.header("Brand Standards & Messaging")
-    
-    # Get messaging data
+    create_section_header("Brand Standards & Messaging")
     messaging = methodology.get('messaging', {})
     
-    # Corporate Hierarchy
-    corporate_hierarchy = messaging.get('corporate_hierarchy', {})
-    
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Brand Messaging Hierarchy</h4>
-        <p>Approved messaging elements that must be used consistently across all digital properties:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="messaging-hierarchy">
-        <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px;">
-            <h5>Global Corporate Positioning</h5>
-            <p style="font-size: 1.2em; font-weight: bold; color: #E85A4F;">"{corporate_hierarchy.get('global', '')}"</p>
-        </div>
+    if messaging:
+        hierarchy = messaging.get('corporate_hierarchy', {})
+        if hierarchy:
+            create_subsection_header("Brand Messaging Hierarchy")
+            create_content_card(f"""
+            **Global Corporate Positioning:** "{hierarchy.get('global', '')}"
+            
+            **Regional Narrative (BENELUX):** "{hierarchy.get('regional', '')}"
+            """)
         
-        <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px;">
-            <h5>Regional Narrative (BENELUX)</h5>
-            <p style="font-weight: bold; color: #2C3E50;">"{corporate_hierarchy.get('regional', '')}"</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Sub-narratives
-    sub_narratives = corporate_hierarchy.get('sub_narratives', {})
-    
-    if sub_narratives:
-        st.subheader("Sub-Narratives by Domain")
-        
-        cols = st.columns(2)
-        for i, (domain, narrative) in enumerate(sub_narratives.items()):
-            with cols[i % 2]:
-                st.markdown(f"""
-                <div style="border: 1px solid #dee2e6; padding: 10px; margin: 5px 0; border-radius: 5px;">
-                    <strong>{domain.replace('_', ' ').title()}:</strong><br>
-                    "{narrative}"
-                </div>
-                """, unsafe_allow_html=True)
-    
-    # Value Propositions
-    value_props = messaging.get('value_propositions', [])
-    
-    if value_props:
-        st.subheader("Approved Value Propositions")
-        
-        for prop in value_props:
-            st.markdown(f"• {prop}")
-    
-    # Strategic CTAs
-    strategic_ctas = messaging.get('strategic_ctas', [])
-    
-    if strategic_ctas:
-        st.subheader("Approved Strategic CTAs")
-        
-        for cta in strategic_ctas:
-            st.markdown(f"• {cta}")
-    
-    # BENELUX Positioning
-    benelux_positioning = messaging.get('benelux_positioning', [])
-    
-    if benelux_positioning:
-        st.subheader("BENELUX Market Positioning")
-        
-        for position in benelux_positioning:
-            st.markdown(f"• {position}")
+        sub_narratives = hierarchy.get('sub_narratives', {})
+        if sub_narratives:
+            create_subsection_header("Sub-Narratives by Domain")
+            sub_narrative_content = ""
+            for domain, narrative in sub_narratives.items():
+                sub_narrative_content += f'- **{domain.replace("_", " ").title()}:** "{narrative}"\n'
+            create_content_card(sub_narrative_content)
 
+        value_props = messaging.get('value_propositions', [])
+        if value_props:
+            create_subsection_header("Approved Value Propositions")
+            vp_content = ""
+            for prop in value_props:
+                vp_content += f"- {prop}\n"
+            create_content_card(vp_content)
+
+        ctas = messaging.get('strategic_ctas', [])
+        if ctas:
+            create_subsection_header("Approved Strategic CTAs")
+            cta_content = ""
+            for cta in ctas:
+                cta_content += f"- {cta}\n"
+            create_content_card(cta_content)
+
+# --- Tab 6: Quality Controls ---
 with tab6:
-    st.header("Quality Controls & Validation")
-    
-    # Gating Rules
+    create_section_header("Quality Controls & Validation")
     gating_rules = methodology.get('gating_rules', {})
-    
-    st.subheader("Hard Gating Rules (Non-Negotiable)")
-    
-    st.markdown("""
-    <div class="insights-box">
-        <h4>Critical Quality Gates</h4>
-        <p>These rules automatically trigger score penalties and cannot be overridden:</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    for rule_key, rule_data in gating_rules.items():
-        trigger = rule_data.get('trigger', '')
-        penalty = rule_data.get('penalty', '')
-        severity = rule_data.get('severity', '')
-        
-        severity_color = {
-            'CRITICAL': '#dc3545',
-            'HIGH': '#fd7e14',
-            'MEDIUM': '#ffc107'
-        }.get(severity, '#6c757d')
-        
-        st.markdown(f"""
-        <div style="border-left: 4px solid {severity_color}; padding: 15px; margin: 10px 0; background: #f8f9fa;">
-            <h5 style="margin: 0 0 5px 0; color: {severity_color};">{severity} - {rule_key.replace('_', ' ').title()}</h5>
-            <p><strong>Trigger:</strong> {trigger}</p>
-            <p><strong>Penalty:</strong> {penalty}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Quality Penalties
     quality_penalties = methodology.get('quality_penalties', {})
-    
-    st.subheader("Copy Quality Penalties")
-    
-    for penalty_key, penalty_data in quality_penalties.items():
-        points = penalty_data.get('points', 0)
-        example = penalty_data.get('example', '')
-        examples = penalty_data.get('examples', [])
-        
-        st.markdown(f"""
-        <div class="penalty-item" style="border: 1px solid #dee2e6; padding: 10px; margin: 5px 0; border-radius: 5px;">
-            <h5>{penalty_key.replace('_', ' ').title()}: {points} points</h5>
-            {f'<p><strong>Example:</strong> {example}</p>' if example else ''}
-            {f'<p><strong>Examples:</strong></p><ul>{"".join([f"<li>{ex}</li>" for ex in examples])}</ul>' if examples else ''}
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Validation Flags
-    validation_flags = methodology.get('validation_flags', {})
-    
-    st.subheader("Validation Flags")
-    
-    for flag_category, flags in validation_flags.items():
-        st.markdown(f"**{flag_category.title()} Flags:**")
-        
-        for flag_key, flag_data in flags.items():
-            penalty = flag_data.get('penalty', '')
-            st.markdown(f"• **{flag_key.replace('_', ' ').title()}:** {penalty}")
-    
-    # Examples
-    examples = methodology.get('examples', {})
-    
-    if examples:
-        st.subheader("Scoring Examples")
-        
-        for example_key, example_data in examples.items():
-            score = example_data.get('score', 0)
-            text = example_data.get('text', '')
-            why_good = example_data.get('why_good', [])
-            why_bad = example_data.get('why_bad', [])
-            
-            score_color = '#28a745' if score >= 8 else '#dc3545' if score <= 4 else '#ffc107'
-            
-            with st.expander(f"{example_key.replace('_', ' ').title()} (Score: {score}/10)"):
-                st.markdown(f"""
-                <div style="border-left: 4px solid {score_color}; padding: 10px; background: #f8f9fa;">
-                    <p><strong>Example Text:</strong></p>
-                    <blockquote>"{text}"</blockquote>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if why_good:
-                    st.markdown("**Why this scores well:**")
-                    for reason in why_good:
-                        st.markdown(f"• {reason}")
-                
-                if why_bad:
-                    st.markdown("**Why this scores poorly:**")
-                    for reason in why_bad:
-                        st.markdown(f"• {reason}")
 
-# Footer
-st.markdown("""
-<div class="footer" style="margin-top: 50px; padding: 20px; border-top: 1px solid #dee2e6; text-align: center; color: #6c757d;">
-    <p>Brand Health Command Center • Comprehensive Audit Methodology</p>
-    <p>Sopra Steria Brand Standards • "The world is how we shape it"</p>
-</div>
-""", unsafe_allow_html=True)
+    if gating_rules:
+        create_subsection_header("Hard Gating Rules (Non-Negotiable)")
+        st.info("These rules automatically trigger score penalties and cannot be overridden.")
+        for rule_key, rule_data in gating_rules.items():
+            message = f"""
+            **Trigger:** {rule_data.get('trigger', '')}
+            
+            **Penalty:** {rule_data.get('penalty', '')}
+            """
+            severity = rule_data.get('severity', 'MEDIUM')
+            if severity == 'CRITICAL':
+                st.error(f"**{rule_key.replace('_', ' ').title()}**\n\n{message}")
+            else:
+                st.warning(f"**{rule_key.replace('_', ' ').title()}**\n\n{message}")
+    
+    if quality_penalties:
+        create_subsection_header("Copy Quality Penalties")
+        for penalty_key, penalty_data in quality_penalties.items():
+            with st.expander(f"**{penalty_key.replace('_', ' ').title()}:** {penalty_data.get('penalty', '0 points')}"):
+                st.caption(penalty_data.get('description', ''))
+                if 'examples' in penalty_data:
+                    for ex in penalty_data.get('examples', []):
+                        st.markdown(f"- {ex}")
+
+create_divider()
+create_info_alert("This methodology is continuously updated based on market research and client feedback.") 

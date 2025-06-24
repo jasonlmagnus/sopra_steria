@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .packager import Packager
+from .packager import AuditDataPackager as Packager
 
 logger = logging.getLogger(__name__)
 

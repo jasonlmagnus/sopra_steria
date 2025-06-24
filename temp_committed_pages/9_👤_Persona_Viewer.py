@@ -4,46 +4,20 @@ Combines persona profiles, journey analysis, and performance data for comprehens
 """
 
 import streamlit as st
-import sys
-from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from audit_tool.dashboard.components.perfect_styling_method import (
-    apply_perfect_styling,
-    create_main_header,
-    create_section_header,
-    create_subsection_header,
-    create_metric_card,
-    create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
-    create_primary_button,
-    create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
-)
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
+from pathlib import Path
 import os
 import re
 from collections import Counter
 
-from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
+# Add parent directory to path to import components
+sys.path.append(str(Path(__file__).parent.parent))
+
+from components.data_loader import BrandHealthDataLoader
+from components.brand_styling import get_complete_brand_css
 
 # Page configuration
 st.set_page_config(
@@ -52,8 +26,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
+# Apply centralized brand styling with fonts
+st.markdown(get_complete_brand_css(), unsafe_allow_html=True)
 
 # Persona name mapping
 PERSONA_NAMES = {
@@ -322,10 +296,15 @@ def format_markdown_content(content):
 
 def main():
     """Main Persona Viewer application"""
-
-    # Create standardized page header
-    create_main_header("👤 Persona Viewer", "Deep-dive into persona experiences")
-
+    
+    # Page header with brand styling
+    st.markdown("""
+    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
+        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">👤 Persona Viewer</h1>
+        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Deep-dive analysis of individual personas combining strategic context, journey experience, and performance data</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Get available personas
     personas_dir = Path("audit_inputs/personas")
     personas = []
@@ -391,7 +370,13 @@ def main():
     
     with col1:
         persona_name = PERSONA_NAMES.get(selected_persona, f"Business Professional {selected_persona}")
-
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; background: white;">
+            <h3 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">{persona_name}</h3>
+            <p style="color: #6B7280; margin: 0.5rem 0 0 0;"><strong>ID:</strong> {selected_persona}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col2:
         if performance_data is not None and not performance_data.empty:
             avg_score = performance_data['avg_score'].mean() if 'avg_score' in performance_data.columns else 0
@@ -426,6 +411,7 @@ def main():
             if sections:
                 for section in sections:
                     if section['content'].strip():
+                        # Use expandable sections with proper styling
                         with st.expander(f"📋 {section['title']}", expanded=False):
                             # Format the content better
                             formatted_content = section['content']
@@ -480,12 +466,10 @@ def main():
             step_names = [step['step_name'].replace('Step ', '').replace(': ', ':\n') for step in journey_data['steps']]
             gap_scores = [step['gap_severity'] for step in journey_data['steps']]
             
-            # Create color mapping for gap severity
-            colors = ['#10B981' if score <= 2 else '#F59E0B' if score <= 3 else '#EF4444' for score in gap_scores]
-            
             fig = go.Figure()
             
             # Add journey path with gap severity coloring
+            colors = ['#10B981' if score <= 2 else '#F59E0B' if score <= 3 else '#EF4444' for score in gap_scores]
             
             fig.add_trace(go.Scatter(
                 x=list(range(len(step_names))),
@@ -493,6 +477,7 @@ def main():
                 mode='lines+markers+text',
                 text=[f"Gap: {score}/5" for score in gap_scores],
                 textposition="top center",
+                line=dict(color='#E85A4F', width=3),
                 marker=dict(size=15, color=colors, line=dict(width=2, color='white')),
                 name="Journey Flow",
                 hovertemplate="<b>%{text}</b><br>Step: %{x}<br>Severity: %{y}/5<extra></extra>"
@@ -519,6 +504,7 @@ def main():
             
             for step in journey_data['steps']:
                 # Color-code by severity
+                severity_color = "#D1FAE5" if step['gap_severity'] <= 2 else "#FEF3C7" if step['gap_severity'] <= 3 else "#FEE2E2"
                 severity_text = "Low" if step['gap_severity'] <= 2 else "Medium" if step['gap_severity'] <= 3 else "High"
                 
                 with st.expander(f"📍 {step['step_name']} (Severity: {step['gap_severity']}/5 - {severity_text})", expanded=False):
@@ -534,14 +520,13 @@ def main():
                     
                     with col2:
                         # Severity indicator
-                        severity_color = "🟢" if step['gap_severity'] <= 2 else "🟡" if step['gap_severity'] <= 3 else "🔴"
-                        st.metric("Gap Severity", f"{step['gap_severity']}/5", 
-                                help=f"Severity level: {severity_text}")
-                        
-                        # Impact indicator
-                        impact_color = "success" if step['gap_severity'] <= 2 else "warning" if step['gap_severity'] <= 3 else "error"
-                        st.metric("Status", severity_color, 
-                                help=f"Impact level based on gap severity")
+                        st.markdown(f"""
+                        <div style="background: {severity_color}; padding: 1rem; border-radius: 8px; text-align: center;">
+                            <h3 style="margin: 0; color: #374151;">Gap Severity</h3>
+                            <h1 style="margin: 0.5rem 0; color: #1F2937;">{step['gap_severity']}/5</h1>
+                            <p style="margin: 0; color: #6B7280;">{severity_text} Priority</p>
+                        </div>
+                        """, unsafe_allow_html=True)
             
             # Journey insights summary
             st.markdown("### 💡 Key Insights")
@@ -580,7 +565,9 @@ def main():
                     performance_data, 
                     x='avg_score', 
                     nbins=20,
-                    title="Distribution of Page Scores")
+                    title="Distribution of Page Scores",
+                    color_discrete_sequence=['#E85A4F']
+                )
                 fig.update_layout(
                     xaxis_title="Average Score",
                     yaxis_title="Number of Pages"
@@ -795,11 +782,24 @@ def display_persona_voice_analysis(persona_id, performance_data):
                                             analysis_text = analysis_parts[1].strip()
                                             if analysis_text.startswith(':'):
                                                 analysis_text = analysis_text[1:].strip()
-
+                                        
+                                        st.markdown(f"""
+                                        <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745; margin: 0.5rem 0;">
+                                            <strong>📝 Copy Example:</strong><br>
+                                            <em>"{quote}"</em><br><br>
+                                            <strong>💬 Persona Analysis:</strong><br>
+                                            {analysis_text if analysis_text else 'Analysis not available'}
+                                        </div>
+                                        """, unsafe_allow_html=True)
                                 else:
                                     # Pure analysis - show as persona insight
-                                    st.markdown(f"💭 **Persona Insight:** {segment}")
-
+                                    st.markdown(f"""
+                                    <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745; margin: 0.5rem 0;">
+                                        <strong>💬 Persona Insight:</strong><br>
+                                        {segment}
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            
                             if i < len(examples) - 1:  # Add separator between examples from same page
                                 st.markdown("---")
                 
@@ -881,11 +881,24 @@ def display_persona_voice_analysis(persona_id, performance_data):
                                             analysis_text = analysis_parts[1].strip()
                                             if analysis_text.startswith(':'):
                                                 analysis_text = analysis_text[1:].strip()
-
+                                        
+                                        st.markdown(f"""
+                                        <div style="background: #f8d7da; padding: 1rem; border-radius: 6px; border-left: 4px solid #dc3545; margin: 0.5rem 0;">
+                                            <strong>📝 Problematic Copy:</strong><br>
+                                            <em>"{quote}"</em><br><br>
+                                            <strong>💬 Persona Analysis:</strong><br>
+                                            {analysis_text if analysis_text else 'Analysis not available'}
+                                        </div>
+                                        """, unsafe_allow_html=True)
                                 else:
                                     # Pure analysis - show as persona insight
-                                    st.markdown(f"💭 **Persona Insight:** {segment}")
-
+                                    st.markdown(f"""
+                                    <div style="background: #f8d7da; padding: 1rem; border-radius: 6px; border-left: 4px solid #dc3545; margin: 0.5rem 0;">
+                                        <strong>💬 Persona Concern:</strong><br>
+                                        {segment}
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                            
                             if i < len(examples) - 1:  # Add separator between examples from same page
                                 st.markdown("---")
                 
@@ -953,8 +966,12 @@ def display_persona_voice_analysis(persona_id, performance_data):
                         segments = [seg.strip() for seg in analysis_text.split(' | ') if seg.strip()]
                         
                         for j, segment in enumerate(segments):
-                            st.markdown(f"💼 **Business Impact:** {segment}")
-                            
+                            st.markdown(f"""
+                            <div style="background: #e2e3e5; padding: 1rem; border-radius: 6px; border-left: 4px solid #6c757d; margin: 0.5rem 0;">
+                                <strong>💼 Strategic Insight:</strong><br>
+                                {segment}
+                            </div>
+                            """, unsafe_allow_html=True)
             else:
                 st.info("📝 No unique strategic business impact analysis available after deduplication")
         else:
@@ -1005,16 +1022,36 @@ def display_persona_voice_analysis(persona_id, performance_data):
             
             if quote_type == "Positive Reactions" and 'positive' in best_quotes:
                 for i, quote in enumerate(best_quotes['positive'][:3], 1):
-                    st.success(f"**Quote {i}:** {quote}")
-
+                    st.markdown(f"""
+                    <div style="background: #d4edda; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745; margin: 0.5rem 0;">
+                        <strong>Quote #{i}:</strong><br>
+                        <em>"{quote}"</em>
+                        <br><br>
+                        <button onclick="navigator.clipboard.writeText('{quote.replace("'", "\\'")}')">📋 Copy Quote</button>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
             elif quote_type == "Critical Feedback" and 'negative' in best_quotes:
                 for i, quote in enumerate(best_quotes['negative'][:3], 1):
-                    st.error(f"**Quote {i}:** {quote}")
-
+                    st.markdown(f"""
+                    <div style="background: #f8d7da; padding: 1rem; border-radius: 6px; border-left: 4px solid #dc3545; margin: 0.5rem 0;">
+                        <strong>Quote #{i}:</strong><br>
+                        <em>"{quote}"</em>
+                        <br><br>
+                        <button onclick="navigator.clipboard.writeText('{quote.replace("'", "\\'")}')">📋 Copy Quote</button>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
             elif quote_type == "Strategic Insights" and 'strategic' in best_quotes:
                 for i, quote in enumerate(best_quotes['strategic'][:3], 1):
-                    st.info(f"**Quote {i}:** {quote}")
-                    
+                    st.markdown(f"""
+                    <div style="background: #e2e3e5; padding: 1rem; border-radius: 6px; border-left: 4px solid #6c757d; margin: 0.5rem 0;">
+                        <strong>Quote #{i}:</strong><br>
+                        <em>"{quote}"</em>
+                        <br><br>
+                        <button onclick="navigator.clipboard.writeText('{quote.replace("'", "\\'")}')">📋 Copy Quote</button>
+                    </div>
+                    """, unsafe_allow_html=True)
         else:
             st.info("📝 No persona quotes available for extraction")
 

@@ -1,52 +1,22 @@
 #!/usr/bin/env python3
-
-import streamlit as st
-import sys
-from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from audit_tool.dashboard.components.perfect_styling_method import (
-    apply_perfect_styling,
-    create_main_header,
-    create_section_header,
-    create_subsection_header,
-    create_metric_card,
-    create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
-    create_primary_button,
-    create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
-)
 """
 Run Audit Page
 Integrated audit runner functionality within the main dashboard
 """
 
+import streamlit as st
 import os
 import subprocess
 import tempfile
 import re
 import glob
 import shutil
+import sys
+from pathlib import Path
 from datetime import datetime
 
 # Add audit_tool to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # Page configuration
 st.set_page_config(
@@ -55,9 +25,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
-
+# Import centralized brand styling
+sys.path.append(str(Path(__file__).parent.parent))
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def get_persona_name(persona_content: str, filename: str = None) -> str:
     """Extract a human-readable persona name; fall back to P-number."""
@@ -141,12 +112,16 @@ def stop_audit():
     st.session_state.audit_complete = False
 
 def main():
-    """Main function for the Run Audit page"""
-    # Create standardized page header
-    create_main_header("🚀 Run Brand Audit", "Launch new brand health analysis")
-    
     initialize_audit_state()
-
+    
+    # Header with brand styling
+    st.markdown("""
+    <div class="main-header">
+        <h1>🚀 Run Brand Audit</h1>
+        <p>Launch new audits with YAML-driven methodology and dual AI provider support</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Check if audit is running and show warning
     if st.session_state.is_running:
         st.warning("⚠️ **Audit Currently Running** - Please wait for the current audit to complete or stop it below.")
@@ -176,7 +151,16 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+                    padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem;
+                    border: 1px solid #e2e8f0;">
+            <h3 style="color: #1e3a8a; margin: 0 0 1rem 0; font-family: 'Inter', sans-serif;">
+                📋 Step 1: Upload Persona File
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         persona_file = st.file_uploader(
             "Choose your persona markdown file",
             type=['md'],
@@ -191,7 +175,16 @@ def main():
             st.info(f"Detected persona: **{persona_name}**")
         
         # Model Selection
-
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%); 
+                    padding: 1.5rem; border-radius: 1rem; margin-top: 1rem;
+                    border: 1px solid #93c5fd;">
+            <h3 style="color: #1e40af; margin: 0 0 1rem 0; font-family: 'Inter', sans-serif;">
+                🤖 Step 1.5: Select AI Model
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         model_options = {
             "openai": "🔥 OpenAI GPT-4.1-Mini (Cost Effective)",
             "anthropic": "🧠 Anthropic Claude-3-Opus (Premium Quality)"
@@ -215,7 +208,16 @@ def main():
             st.warning("💎 **Premium Choice** - Claude-3-Opus provides highest quality but at higher cost")
     
     with col2:
-
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+                    padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem;
+                    border: 1px solid #e2e8f0;">
+            <h3 style="color: #1e3a8a; margin: 0 0 1rem 0; font-family: 'Inter', sans-serif;">
+                🌐 Step 2: Provide URLs to Audit
+            </h3>
+        </div>
+        """, unsafe_allow_html=True)
+        
         tab1, tab2 = st.tabs(["Paste URLs", "Upload File"])
         
         with tab1:
@@ -352,7 +354,15 @@ def main():
         st.markdown("### 🎯 Audit Complete - Next Steps")
         
         persona_name = st.session_state.get('completed_persona_name', 'Unknown')
-
+        
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                    color: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1rem;">
+            <h3 style="margin: 0 0 0.5rem 0;">✅ Audit Complete: {persona_name}</h3>
+            <p style="margin: 0; opacity: 0.9;">Raw audit files have been generated successfully.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -402,7 +412,9 @@ def main():
             
             try:
                 # Import the post-processor
-                                
+                import sys
+                sys.path.append(str(Path(__file__).parent.parent.parent))
+                
                 status_text.text("📦 Importing post-processor...")
                 progress_bar.progress(10)
                 

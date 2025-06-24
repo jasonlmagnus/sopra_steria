@@ -4,43 +4,17 @@ Cross-platform brand presence and engagement insights
 """
 
 import streamlit as st
-import sys
-from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from audit_tool.dashboard.components.perfect_styling_method import (
-    apply_perfect_styling,
-    create_main_header,
-    create_section_header,
-    create_subsection_header,
-    create_metric_card,
-    create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
-    create_primary_button,
-    create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
-)
-
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
+from pathlib import Path
 import re
+
+# Add parent directory to path to import components
+sys.path.append(str(Path(__file__).parent.parent))
+
+from components.brand_styling import get_complete_brand_css
 
 # Page configuration
 st.set_page_config(
@@ -49,8 +23,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
+# Apply centralized brand styling with fonts
+st.markdown(get_complete_brand_css(), unsafe_allow_html=True)
 
 def load_social_media_data():
     """Load social media data from markdown file"""
@@ -223,10 +197,14 @@ def parse_follower_count(follower_str):
 
 def main():
     """Social Media Analysis Dashboard"""
-
-    # Create standardized page header
-    create_main_header("🔍 Social Media Analysis", "Cross-platform brand presence audit")
-
+    
+    st.markdown("""
+    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
+        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">🔍 Social Media Analysis</h1>
+        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Cross-platform brand presence and engagement insights</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Load social media data
     data = load_social_media_data()
     
@@ -341,16 +319,36 @@ def display_key_metrics_overview(filtered_data):
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("📱 Platforms", f"{total_platforms}")
-
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
+            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{total_platforms}</div>
+            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Active Platforms</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col2:
-        st.metric("🌍 Regions", f"{total_regions}")
-
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
+            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{total_regions}</div>
+            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Regional Presences</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col3:
-        st.metric("📈 High Engagement", f"{high_engagement}")
-
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
+            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{high_engagement}</div>
+            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">High Engagement Channels</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
     with col4:
-        st.metric("🎯 Strong Consistency", f"{strong_consistency}")
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
+            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{strong_consistency}</div>
+            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Strong Brand Consistency</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 def display_platform_performance_analysis(filtered_data):
     """Display platform performance analysis"""
@@ -442,7 +440,16 @@ def display_content_strategy_analysis(filtered_data):
                 # Create collapsible section for each platform
                 with st.expander(f"📱 {platform} ({len(platform_data)} regions)", expanded=False):
                     for _, row in platform_data.iterrows():
-                        st.write(f"**{row['Region']}**: {row['Most Engaging Content']}")
+                        st.markdown(f"""
+                        <div style="border-left: 3px solid #E85A4F; padding-left: 1rem; margin-bottom: 1rem;">
+                            <h5 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0 0 0.5rem 0;">
+                                {row['Region']}
+                            </h5>
+                            <p style="color: #6B7280; margin: 0; font-family: 'Inter', sans-serif;">
+                                {row['Most Engaging Content']}
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
 
 def display_recommendations(filtered_data):
     """Display recommendations and insights"""
@@ -463,18 +470,34 @@ def display_recommendations(filtered_data):
                 priority_data = priority_groups.get_group(priority)
                 
                 # Priority indicator
+                priority_color = "#E85A4F" if priority == "High" else "#F59E0B" if priority == "Medium" else "#10B981"
                 priority_icon = "🔥" if priority == "High" else "⚡" if priority == "Medium" else "💡"
-
+                
+                st.markdown(f"""
+                <h3 style="color: {priority_color}; font-family: 'Crimson Text', serif;">
+                    {priority_icon} {priority} Priority Recommendations
+                </h3>
+                """, unsafe_allow_html=True)
+                
                 # Display recommendations
                 for _, rec in priority_data.iterrows():
                     category = rec.get('Category', 'General')
                     observation = rec.get('Observation', 'N/A')
                     recommendation = rec.get('Recommendation', 'N/A')
                     
-                    st.markdown(f"**{priority_icon} {category}**")
-                    st.markdown(f"*Observation:* {observation}")
-                    st.markdown(f"*Recommendation:* {recommendation}")
-                    st.markdown("---")
+                    st.markdown(f"""
+                    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+                        <h4 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0 0 0.5rem 0;">
+                            {category}
+                        </h4>
+                        <p style="color: #6B7280; margin: 0 0 0.5rem 0; font-family: 'Inter', sans-serif;">
+                            <strong>Observation:</strong> {observation}
+                        </p>
+                        <p style="color: #2C3E50; margin: 0; font-family: 'Inter', sans-serif;">
+                            <strong>Recommendation:</strong> {recommendation}
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main() 

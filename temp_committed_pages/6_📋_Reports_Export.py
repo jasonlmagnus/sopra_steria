@@ -5,40 +5,6 @@ Consolidates Detailed Data + Run Audit functionality
 """
 
 import streamlit as st
-import sys
-from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-import streamlit as st
-from audit_tool.dashboard.components.perfect_styling_method import (
-    apply_perfect_styling,
-    create_main_header,
-    create_section_header,
-    create_subsection_header,
-    create_metric_card,
-    create_status_indicator,
-    create_success_alert,
-    create_warning_alert,
-    create_error_alert,
-    create_info_alert,
-    get_perfect_chart_config,
-    create_data_table,
-    create_two_column_layout,
-    create_three_column_layout,
-    create_four_column_layout,
-    create_content_card,
-    create_brand_card,
-    create_persona_card,
-    create_primary_button,
-    create_secondary_button,
-    create_badge,
-    create_spacer,
-    create_divider
-)
-
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -50,8 +16,11 @@ from datetime import datetime
 import zipfile
 import io
 
-from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
-from audit_tool.dashboard.components.metrics_calculator import BrandHealthMetricsCalculator
+# Add parent directory to path to import components
+sys.path.append(str(Path(__file__).parent.parent))
+
+from components.data_loader import BrandHealthDataLoader
+from components.metrics_calculator import BrandHealthMetricsCalculator
 
 # Page configuration
 st.set_page_config(
@@ -60,15 +29,21 @@ st.set_page_config(
     layout="wide"
 )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
+# Import centralized brand styling (fonts already loaded on home page)
+from components.brand_styling import get_brand_css
+st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
     """Reports & Export - Comprehensive Data & Audit Management"""
     
-    # Create standardized page header
-    create_main_header("📋 Reports & Export", "How do you want to use this data?")
-
+    # Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>📋 Reports & Export</h1>
+        <p>How do I analyze data and run new audits?</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Load data from session state or initialize
     if 'datasets' not in st.session_state or 'master_df' not in st.session_state:
         data_loader = BrandHealthDataLoader()
@@ -118,22 +93,23 @@ def display_data_overview(master_df, datasets):
     """Display high-level data overview"""
     st.markdown("### 📊 Data Overview")
     
-    total_records = len(master_df)
-    unique_pages = len(master_df['page_id'].unique()) if 'page_id' in master_df.columns else 0
-    unique_personas = len(master_df['persona_id'].unique()) if 'persona_id' in master_df.columns else 0
-    data_completeness = (master_df.notna().sum().sum() / (len(master_df) * len(master_df.columns)) * 100) if not master_df.empty else 0
+    col1, col2, col3, col4 = st.columns(4)
     
-    # Use consistent metric cards
-    status_class = "success" if data_completeness >= 90 else "warning" if data_completeness >= 75 else "error"
-        
-    metrics_data = [
-        {"value": f"{total_records:,}", "label": "Total Records"},
-        {"value": f"{unique_pages:,}", "label": "Unique Pages"},
-        {"value": f"{unique_personas}", "label": "Personas"},
-        {"value": f"{data_completeness:.1f}%", "label": "Data Completeness", "status_class": status_class}
-    ]
+    with col1:
+        total_records = len(master_df)
+        st.metric("Total Records", f"{total_records:,}")
     
-    (metrics_data, 4)
+    with col2:
+        unique_pages = len(master_df['page_id'].unique()) if 'page_id' in master_df.columns else 0
+        st.metric("Unique Pages", f"{unique_pages:,}")
+    
+    with col3:
+        unique_personas = len(master_df['persona_id'].unique()) if 'persona_id' in master_df.columns else 0
+        st.metric("Personas", unique_personas)
+    
+    with col4:
+        data_completeness = (master_df.notna().sum().sum() / (len(master_df) * len(master_df.columns)) * 100) if not master_df.empty else 0
+        st.metric("Data Completeness", f"{data_completeness:.1f}%")
     
     # Dataset breakdown
     if datasets:
