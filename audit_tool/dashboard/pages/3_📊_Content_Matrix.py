@@ -385,7 +385,7 @@ def display_criteria_deep_dive(filtered_df):
         # Display criteria performance
         st.markdown("### 📊 Criteria Performance Ranking")
         
-        # Create a dataframe for styling, ensuring clean data
+        # Create a dataframe for styling, ensuring clean data and avoiding ValueError
         criteria_df = criteria_performance.rename(
             columns={'criterion_id': 'Criteria', 'avg_score': 'Average Score'}
         ).set_index('Criteria')
@@ -402,7 +402,8 @@ def display_criteria_deep_dive(filtered_df):
                 color = '#dc2626'  # Dark Red
             return f"background-color: {color}"
         
-        styled_criteria = criteria_df.style.map(color_performance)
+        # Use .map() instead of the deprecated .applymap()
+        styled_criteria = criteria_df.style.map(color_performance, subset=['Average Score'])
         st.dataframe(styled_criteria)
         
         # Best and worst criteria
@@ -410,12 +411,14 @@ def display_criteria_deep_dive(filtered_df):
         
         with col1:
             st.success("🏆 **Top 3 Performing Criteria:**")
+            # Use itertuples() to correctly iterate over rows and prevent TypeError
             for i, row in enumerate(criteria_performance.head(3).itertuples(), 1):
                 st.write(f"{i}. **{row.criterion_id}**: {row.avg_score:.1f}/10")
         
         with col2:
             st.error("📉 **Bottom 3 Performing Criteria:**")
-            for i, row in enumerate(criteria_performance.tail(3).itertuples(), 1):
+            # Use itertuples() here as well for consistency and correctness
+            for i, row in enumerate(criteria_performance.tail(3).sort_values(by='avg_score').itertuples(), 1):
                 st.write(f"{i}. **{row.criterion_id}**: {row.avg_score:.1f}/10")
         
         # Criteria distribution chart

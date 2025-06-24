@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from .packager import Packager
+from .packager import AuditDataPackager as Packager
 
 logger = logging.getLogger(__name__)
 
@@ -102,10 +102,10 @@ class MultiPersonaPackager:
         
         try:
             # Create a packager for this persona
-            packager = Packager(str(persona_dir))
+            packager = Packager(persona_dir.name)
             
             # Process the data
-            result = packager.process_all_files()
+            result = packager.package_run()
             
             # Save persona-specific parquet files
             self._save_persona_parquet(persona_dir.name, result)

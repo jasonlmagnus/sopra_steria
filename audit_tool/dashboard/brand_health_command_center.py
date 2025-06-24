@@ -198,6 +198,96 @@ st.markdown("""
         margin-top: 8px;
     }
     
+    /*
+      ==========================================================================================
+      =   THE DEFINITIVE, FINAL, ONCE-AND-FOR-ALL STREAMLIT WIDE-CONTENT & EXPANSION FIX       =
+      ==========================================================================================
+      DESCRIPTION:
+      This CSS block is the ultimate solution to Streamlit's most frustrating UX issue: the
+      progressive, uncontrolled widening of the main content area. It establishes a strict,
+      non-negotiable layout boundary that forces individual components to be responsible
+      for their own width, preventing them from ever expanding the page.
+
+      HOW IT WORKS:
+      1.  A high-level container is targeted to absolutely prevent horizontal scrollbars
+          from ever appearing on the main page body (`overflow-x: hidden`).
+      2.  The main content `block-container` is locked to a sane, centered max-width.
+      3.  Any direct child of the main content block is forced to manage its own
+          horizontal overflow by showing a scrollbar (`overflow-x: auto`). This is the
+          key principle: components scroll internally; the page does not expand.
+      4.  It includes "nuclear options" for notoriously problematic elements like
+          `st.dataframe` and `st.plotly_chart` to guarantee they are always contained.
+    */
+
+    /* Lock the main content container to a sane maximum width. */
+    .main .block-container {
+        max-width: 1400px !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Target the container that HOLDS the block-container.
+       By setting overflow-x to hidden here, we prevent the whole page from getting a scrollbar. */
+    section[data-testid="stSidebar"] + section {
+        overflow-x: hidden !important;
+    }
+
+    /* Target the specific element Streamlit uses that causes the growth and force it to scroll.
+       This is the core of the fix. Instead of the page expanding, the wide element itself will scroll. */
+    [data-testid="stVerticalBlock"] > [data-testid="stHorizontalBlock"] {
+        overflow-x: auto !important;
+        padding-bottom: 15px; /* Add some space for the scrollbar to not look cramped */
+    }
+
+    /* Nuclear option for DataFrames to ensure they are always scrollable. */
+    [data-testid="stDataFrame"] {
+        width: 100% !important;
+    }
+    [data-testid="stDataFrame"] > div {
+        overflow-x: auto !important;
+        width: 100% !important;
+    }
+    [data-testid="stDataFrame"] > div > div {
+        width: 100% !important;
+    }
+    [data-testid="stDataFrame"] table {
+        width: 100% !important;
+        display: table !important; /* Override previous attempts that used display: block */
+    }
+
+    /* New Component Styles for Redesigned Recommendation Cards */
+    .rec-metrics-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: #4B5563; /* Gray-600 */
+    }
+    .rec-metrics-bar span b {
+        color: #1F2937; /* Gray-800 */
+    }
+    .badge-default {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        background-color: #F3F4F6; /* Gray-100 */
+        color: #374151; /* Gray-700 */
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ensure other wide elements like charts also respect the container width */
+    .stPlotlyChart, [data-testid="stDeckGlJsonChart"] {
+        width: 100% !important;
+        overflow-x: auto !important;
+    }
+    
     .executive-question {
         background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         padding: 1.5rem;
