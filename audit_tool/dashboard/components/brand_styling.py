@@ -7,6 +7,13 @@ def get_brand_css():
     """Return brand CSS styling for the dashboard"""
     return """
 <style>
+    /* ---- CUSTOM LAYOUT FIX ---- */
+    .main .block-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    /* ---- END CUSTOM LAYOUT FIX ---- */
+
     :root {
         --primary-color: #E85A4F;
         --primary-hover: #d44a3a;

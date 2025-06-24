@@ -101,70 +101,77 @@ def display_persona_selector(master_df):
 
 def display_persona_comparison_analysis(master_df, metrics_calc):
     """Display side-by-side persona comparison (from Persona Comparison page)"""
-    st.markdown("## 📊 Persona Performance Comparison")
-    
-    # Calculate persona-level metrics - only use meaningful metrics
-    persona_summary = master_df.groupby('persona_id').agg({
-        'avg_score': ['mean', 'count']
-    }).round(2)
-    
-    # Flatten column names
-    persona_summary.columns = ['avg_score', 'page_count']
-    persona_summary = persona_summary.sort_values('avg_score', ascending=False)
-    
-    # Display persona cards
-    st.markdown("### 👥 Persona Performance Cards")
-    
-    personas = persona_summary.index.tolist()
-    
-    # Create columns for persona cards (max 3 per row)
-    rows = [personas[i:i+3] for i in range(0, len(personas), 3)]
-    
-    for row in rows:
-        cols = st.columns(len(row))
+    with st.container(border=True):
+        st.markdown("## 📊 Persona Performance Comparison")
         
-        for i, persona in enumerate(row):
-            with cols[i]:
-                data = persona_summary.loc[persona]
-                
-                # Determine performance status
-                score = data['avg_score']
-                status_color = "🌟" if score >= 7 else "✅" if score >= 5 else "⚠️" if score >= 3 else "🚨"
-                status_text = "EXCELLENT" if score >= 7 else "GOOD" if score >= 5 else "FAIR" if score >= 3 else "POOR"
-                
-                st.markdown(f"""
-                <div class="persona-card">
-                    <h4 style="font-family: 'Crimson Text', serif; color: #2C3E50;">{status_color} {persona.replace('_', ' ')}</h4>
-                    <div class="persona-metric">
-                        <div class="metric-value" style="font-family: 'Inter', sans-serif; font-size: 2rem; font-weight: bold; color: #E85A4F;">{score:.1f}/10</div>
-                        <div class="metric-label" style="font-family: 'Inter', sans-serif; color: #6B7280;">OVERALL SCORE ({status_text})</div>
+        # Calculate persona-level metrics - only use meaningful metrics
+        persona_summary = master_df.groupby('persona_id').agg({
+            'avg_score': ['mean', 'count']
+        }).round(2)
+        
+        # Flatten column names
+        persona_summary.columns = ['avg_score', 'page_count']
+        persona_summary = persona_summary.sort_values('avg_score', ascending=False)
+        
+        # Display persona cards
+        st.markdown("### 👥 Persona Performance Cards")
+        
+        personas = persona_summary.index.tolist()
+        
+        # Create columns for persona cards (max 3 per row)
+        rows = [personas[i:i+3] for i in range(0, len(personas), 3)]
+        
+        for row in rows:
+            cols = st.columns(len(row))
+            
+            for i, persona in enumerate(row):
+                with cols[i]:
+                    data = persona_summary.loc[persona]
+                    
+                    # Determine performance status
+                    score = data['avg_score']
+                    status_color = "🌟" if score >= 7 else "✅" if score >= 5 else "⚠️" if score >= 3 else "🚨"
+                    status_text = "EXCELLENT" if score >= 7 else "GOOD" if score >= 5 else "FAIR" if score >= 3 else "POOR"
+                    
+                    st.markdown(f"""
+                    <div class="persona-card">
+                        <h4 style="font-family: 'Crimson Text', serif; color: #2C3E50; font-size: 1.25rem;">{status_color} {persona.replace('_', ' ')}</h4>
+                        <div class="persona-metric">
+                            <div class="metric-value" style="font-family: 'Inter', sans-serif; font-size: 1.75rem; font-weight: bold; color: #E85A4F;">{score:.1f}/10</div>
+                            <div class="metric-label" style="font-family: 'Inter', sans-serif; color: #6B7280;">OVERALL SCORE ({status_text})</div>
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem; font-family: 'Inter', sans-serif;">
+                            <strong style="color: #2C3E50;">{data['page_count']} pages analyzed</strong>
+                        </div>
                     </div>
-                    <div style="text-align: center; margin-top: 1rem; font-family: 'Inter', sans-serif;">
-                        <strong style="color: #2C3E50;">{data['page_count']} pages analyzed</strong>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-    # Comparison charts - simplified without uniform metrics
-    display_persona_comparison_charts(persona_summary)
-    
-    # Persona ranking and insights
-    display_persona_ranking_insights(persona_summary)
+                    """, unsafe_allow_html=True)
+        
+        # Comparison charts - simplified without uniform metrics
+        display_persona_comparison_charts(persona_summary)
+        
+        # Persona ranking and insights
+        display_persona_ranking_insights(persona_summary)
 
 def display_persona_comparison_charts(persona_summary):
     """Display comparison charts between personas"""
     st.markdown("### 📈 Persona Performance Comparison Charts")
     
-    # Overall score comparison
+    # Clean up persona names for display
+    persona_summary.index = persona_summary.index.str.replace('_', ' ')
+    
+    # Overall score comparison - HORIZONTAL for better label display
     fig_score = px.bar(
-        x=persona_summary.index,
-        y=persona_summary['avg_score'],
+        persona_summary,
+        x='avg_score',
+        y=persona_summary.index,
+        orientation='h',
         title="Overall Brand Health Score by Persona",
-        color=persona_summary['avg_score'],
+        color='avg_score',
         color_continuous_scale='RdYlGn',
-        range_color=[0, 10]
+        range_color=[0, 10],
+        labels={'avg_score': 'Average Score', 'y': 'Persona'}
     )
-    fig_score.update_layout(height=400)
+    fig_score.update_layout(height=400, yaxis={'categoryorder':'total ascending'})
     st.plotly_chart(fig_score, use_container_width=True, key="persona_score_comparison")
     
     # Page coverage comparison
@@ -173,19 +180,23 @@ def display_persona_comparison_charts(persona_summary):
     with col1:
         # Page count comparison
         fig_pages = px.bar(
-            x=persona_summary.index,
-            y=persona_summary['page_count'],
+            persona_summary,
+            x='page_count',
+            y=persona_summary.index,
+            orientation='h',
             title="Pages Analyzed per Persona",
-            color=persona_summary['page_count'],
-            color_continuous_scale='Blues'
+            color='page_count',
+            color_continuous_scale='Blues',
+            labels={'page_count': 'Pages Analyzed', 'y': 'Persona'}
         )
-        fig_pages.update_layout(height=400)
+        fig_pages.update_layout(height=400, yaxis={'categoryorder':'total ascending'})
         st.plotly_chart(fig_pages, use_container_width=True, key="persona_page_count")
     
     with col2:
         # Score distribution pie chart
         fig_pie = px.pie(
-            values=persona_summary['avg_score'],
+            persona_summary,
+            values='avg_score',
             names=persona_summary.index,
             title="Score Distribution Across Personas"
         )
@@ -202,15 +213,37 @@ def display_persona_ranking_insights(persona_summary):
         st.success("🥇 **Top Performing Personas**")
         for i, (persona, data) in enumerate(persona_summary.head(3).iterrows(), 1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉"
-            st.write(f"{medal} **{persona.replace('_', ' ')}**: {data['avg_score']:.1f}/10")
-            st.write(f"   • {data['page_count']} pages analyzed")
+            st.write(f"{medal} **{persona}**: {data['avg_score']:.1f}/10")
+            st.write(f"   • {int(data['page_count'])} pages analyzed")
     
     with col2:
         st.error("📉 **Areas for Improvement**")
         bottom_personas = persona_summary.tail(2)
         for persona, data in bottom_personas.iterrows():
-            st.write(f"⚠️ **{persona.replace('_', ' ')}**: {data['avg_score']:.1f}/10")
+            st.write(f"⚠️ **{persona}**: {data['avg_score']:.1f}/10")
             st.write(f"   • Focus on improving content quality and alignment")
+
+    st.markdown("---")
+    st.markdown("### 🎯 Strategic Recommendations")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <div class="insights-box" style="background-color: #e6f7ff; border-color: #91d5ff;">
+            <h5>🏆 Benchmark Persona</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write(f"**{persona_summary.index[0]}**")
+        st.write("_Use their experience patterns as templates_")
+
+    with col2:
+        st.markdown("""
+        <div class="insights-box" style="background-color: #fffbe6; border-color: #ffe58f;">
+            <h5>🎯 Priority Persona</h5>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write(f"**{persona_summary.index[-1]}**")
+        st.write("_Focus improvement efforts here first_")
 
 def display_individual_persona_analysis(filtered_df, persona_name, metrics_calc):
     """Display detailed analysis for individual persona (from Persona Experience page)"""
@@ -255,8 +288,6 @@ def display_persona_overview_metrics(filtered_df, persona_name):
     with col4:
         critical_status = "🚨" if critical_count > 0 else "✅"
         st.metric("Critical Issues", f"{critical_count}")
-
-
 
 def display_persona_page_performance(filtered_df, persona_name):
     """Display page-level performance for the persona"""
@@ -329,7 +360,7 @@ def display_persona_page_performance(filtered_df, persona_name):
             )
             fig_pages.update_layout(height=400)
             fig_pages.update_xaxes(tickangle=45)
-            st.plotly_chart(fig_pages, use_container_width=True, key=f"page_performance_{persona_name}")
+            st.plotly_chart(fig_pages, use_container_width=False, key=f"page_performance_{persona_name}")
 
 def display_persona_quotes_insights(filtered_df, persona_name):
     """Display first impressions and qualitative insights"""
@@ -430,7 +461,7 @@ def display_cross_persona_insights(master_df):
             'sample_size': '{:.0f}'
         })
         
-        st.dataframe(styled_summary, use_container_width=True)
+        st.dataframe(styled_summary, use_container_width=False)
 
 if __name__ == "__main__":
     main() 

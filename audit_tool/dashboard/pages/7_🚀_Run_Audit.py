@@ -129,7 +129,7 @@ def main():
         # Show option to stop current audit
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
-            if st.button("🛑 Stop Current Audit", type="secondary", use_container_width=True):
+            if st.button("🛑 Stop Current Audit", type="secondary"):
                 stop_audit()
                 st.success("✅ Audit stopped successfully!")
                 st.rerun()
@@ -269,7 +269,7 @@ def main():
         if st.button(
             "🚀 Run Brand Audit",
             disabled=not can_run or st.session_state.is_running,
-            use_container_width=True,
+            
             type="primary"
         ):
             # Initialize audit state
@@ -394,7 +394,7 @@ def main():
         with col2:
             if st.button(
                 "🗄️ ADD TO DATABASE",
-                use_container_width=True,
+                
                 type="primary",
                 disabled=st.session_state.get('is_processing', False),
                 help="Process audit results and add to unified database for dashboard viewing"
@@ -470,10 +470,10 @@ def main():
                         # Add navigation and reset buttons
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("🏠 Go to Dashboard Home", type="secondary", use_container_width=True):
+                            if st.button("🏠 Go to Dashboard Home", type="secondary"):
                                 st.switch_page("audit_tool/dashboard/brand_health_command_center.py")
                         with col2:
-                            if st.button("🚀 Run Another Audit", type="primary", use_container_width=True):
+                            if st.button("🚀 Run Another Audit", type="primary"):
                                 # Reset audit state
                                 st.session_state.audit_complete = False
                                 st.session_state.completed_persona_name = ""

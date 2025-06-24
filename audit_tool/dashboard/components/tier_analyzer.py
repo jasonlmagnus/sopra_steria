@@ -347,11 +347,11 @@ class TierAnalyzer:
         
         with col1:
             fig1 = self.create_tier_performance_chart()
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1)
         
         with col2:
             fig2 = self.create_brand_performance_split_chart()
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2)
         
         # Performance matrix
         st.subheader("Tier × Persona Performance Matrix")
@@ -372,7 +372,7 @@ class TierAnalyzer:
                 xaxis_title="Personas",
                 yaxis_title="Content Tiers"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig)
         else:
             st.warning("No data available for performance matrix")
         
@@ -384,7 +384,7 @@ class TierAnalyzer:
             opp_df = pd.DataFrame(opportunities)
             st.dataframe(
                 opp_df[['tier', 'url_slug', 'current_score', 'potential_impact', 'priority']],
-                use_container_width=True
+                
             )
         else:
             st.info("No improvement opportunities identified")

@@ -497,7 +497,7 @@ def main():
                 yaxis=dict(range=[0, 5])
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig)
             
             # Detailed step analysis
             st.markdown("### 🔍 Step-by-Step Analysis")
@@ -572,11 +572,11 @@ def main():
                     xaxis_title="Average Score",
                     yaxis_title="Number of Pages"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig)
             
             # Show raw data
             st.markdown("### 📋 Raw Performance Data")
-            st.dataframe(performance_data, use_container_width=True)
+            st.dataframe(performance_data)
         else:
             st.warning("⚠️ No performance data available for this persona")
     

@@ -232,7 +232,7 @@ def display_success_overview(metrics_calc, master_df):
                     color_discrete_sequence=['#10b981']
                 )
                 fig_dist.update_layout(height=300)
-                st.plotly_chart(fig_dist, use_container_width=True)
+                st.plotly_chart(fig_dist)
             
             with col2:
                 # Success by tier
@@ -246,29 +246,69 @@ def display_success_overview(metrics_calc, master_df):
                         title="Success Stories by Content Tier"
                     )
                     fig_tier.update_layout(height=300)
-                    st.plotly_chart(fig_tier, use_container_width=True)
+                    st.plotly_chart(fig_tier)
             
             # Tier performance breakdown
             st.markdown("### 🏗️ Success Performance by Content Tier")
-            if 'tier' in success_data.columns:
-                tier_summary = success_data.groupby('tier_name').agg({
-                    'avg_score': ['count', 'mean', 'max', 'min']
-                }).round(2)
+            if success_pages > 0:
+                st.warning("⚠️ No success stories match the selected filters. Try adjusting the criteria.")
+                return
+            
+            st.markdown("### Success Performance by Content Tier")
+
+            tier_success = {}
+            for story in filtered_df:
+                tier = story.get('tier_name', 'Unknown')
+                if tier not in tier_success:
+                    tier_success[tier] = []
+                tier_success[tier].append(story)
+            
+            for tier, stories in sorted(tier_success.items(), key=lambda item: -sum(s['current_score'] for s in item[1])):
+                avg_score = sum(s['current_score'] for s in stories) / len(stories)
+                best_score = max(s['current_score'] for s in stories)
+                lowest_score = min(s['current_score'] for s in stories)
                 
-                tier_summary.columns = ['Count', 'Avg Score', 'Max Score', 'Min Score']
-                tier_summary = tier_summary.sort_values('Avg Score', ascending=False)
+                st.markdown(f"**{tier}**: {len(stories)} stories | Avg Score: {avg_score:.1f}/10 | Best: {best_score:.1f}/10 | Lowest: {lowest_score:.1f}/10")
+
+            st.markdown("### Detailed Success Stories")
+
+            if filtered_df:
+                # Group by tier for display
+                stories_by_tier = {}
+                for _, story in filtered_df.iterrows():
+                    tier = story.get('tier', 'Unknown')
+                    tier_name = story.get('tier_name', tier.replace('_', ' ').title()) if pd.notna(story.get('tier_name')) else tier.replace('_', ' ').title()
+                    
+                    if tier not in stories_by_tier:
+                        stories_by_tier[tier] = {
+                            'name': tier_name,
+                            'stories': []
+                        }
+                    stories_by_tier[tier]['stories'].append(story)
                 
-                # Display tier summary
-                for tier_name, row in tier_summary.iterrows():
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric(f"{tier_name}", f"{int(row['Count'])} stories")
-                    with col2:
-                        st.metric("Avg Score", f"{row['Avg Score']:.1f}/10")
-                    with col3:
-                        st.metric("Best Score", f"{row['Max Score']:.1f}/10")
-                    with col4:
-                        st.metric("Lowest Score", f"{row['Min Score']:.1f}/10")
+                # Display success stories grouped by tier
+                overall_rank = 1
+                for tier, tier_data in stories_by_tier.items():
+                    tier_name = tier_data['name']
+                    tier_stories = tier_data['stories']
+                    
+                    # Tier header with summary
+                    tier_avg_score = sum(story.get('avg_score', 0) for story in tier_stories) / len(tier_stories)
+                    tier_max_score = max(story.get('avg_score', 0) for story in tier_stories)
+                    
+                    st.markdown(f"""
+                    ## 🏗️ {tier_name} Success Stories ({len(tier_stories)} stories)
+                    **Avg Score:** {tier_avg_score:.1f}/10 | **Best Score:** {tier_max_score:.1f}/10
+                    """)
+                    
+                    # Display success stories within this tier
+                    for tier_rank, story in enumerate(tier_stories, 1):
+                        display_success_story_card(overall_rank, story, master_df, tier_rank=tier_rank, tier_name=tier_name)
+                        overall_rank += 1
+                    
+                    # Add separator between tiers
+                    if tier != list(stories_by_tier.keys())[-1]:  # Not the last tier
+                        st.markdown("---")
 
 def apply_success_filters(master_df):
     """Apply selected filters to the success dataset"""

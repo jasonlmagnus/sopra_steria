@@ -209,7 +209,7 @@ def main():
         if st.button(
             f"🚀 Run Audit with {selected_model.upper()}", 
             disabled=disable_run_button,
-            use_container_width=True,
+            
             type="primary"
         ):
             st.session_state.is_running = True

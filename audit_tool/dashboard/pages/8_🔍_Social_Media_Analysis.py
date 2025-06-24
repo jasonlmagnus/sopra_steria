@@ -294,61 +294,44 @@ def filter_data(data, selected_platforms, selected_regions):
     return filtered_data
 
 def display_key_metrics_overview(filtered_data):
-    """Display key metrics overview cards"""
+    """Display key social media metrics"""
     st.markdown("## 📊 Key Metrics Overview")
     
     platform_metrics = filtered_data['platform_metrics']
     
-    if platform_metrics.empty:
-        st.warning("No data available for selected filters.")
-        return
+    # Calculate metrics
+    active_platforms = len(platform_metrics['Platform'].unique())
+    regional_presences = len(platform_metrics['Region'].unique())
     
-    # Calculate key metrics
-    total_platforms = len(platform_metrics['Platform'].unique())
-    total_regions = len(platform_metrics['Region'].unique())
+    # Consolidate engagement and count high engagement
+    platform_metrics['Engagement Category'] = platform_metrics['Engagement Level'].apply(consolidate_engagement_levels)
+    high_engagement_channels = len(platform_metrics[platform_metrics['Engagement Category'] == 'High'])
     
-    # Engagement level distribution
-    engagement_counts = platform_metrics['Engagement Level'].value_counts()
-    high_engagement = engagement_counts.get('High', 0) + engagement_counts.get('Solid', 0)
+    # Calculate brand consistency
+    tone_analysis = filtered_data['tone_analysis']
+    if not tone_analysis.empty and 'Consistency Score (1-5)' in tone_analysis.columns:
+        tone_analysis['Consistency Score'] = pd.to_numeric(tone_analysis['Consistency Score (1-5)'], errors='coerce')
+        strong_brand_consistency = len(tone_analysis[tone_analysis['Consistency Score'] >= 4])
+    else:
+        strong_brand_consistency = "N/A"
     
-    # Brand consistency distribution
-    consistency_counts = platform_metrics['Brand Consistency'].value_counts()
-    strong_consistency = consistency_counts.get('Strong', 0)
+    metrics = {
+        "Active Platforms": active_platforms,
+        "Regional Presences": regional_presences,
+        "High Engagement Channels": high_engagement_channels,
+        "Strong Brand Consistency": strong_brand_consistency
+    }
     
-    # Display metrics cards
-    col1, col2, col3, col4 = st.columns(4)
+    cols = st.columns(len(metrics))
     
-    with col1:
-        st.markdown(f"""
-        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
-            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{total_platforms}</div>
-            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Active Platforms</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
-            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{total_regions}</div>
-            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Regional Presences</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
-            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{high_engagement}</div>
-            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">High Engagement Channels</div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
-            <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{strong_consistency}</div>
-            <div style="color: #6B7280; font-family: 'Inter', sans-serif;">Strong Brand Consistency</div>
-        </div>
-        """, unsafe_allow_html=True)
+    for i, (label, value) in enumerate(metrics.items()):
+        with cols[i]:
+            st.markdown(f"""
+            <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; text-align: center; background: white;">
+                <div style="font-size: 2rem; font-weight: bold; color: #E85A4F; font-family: 'Inter', sans-serif;">{value}</div>
+                <div style="color: #6B7280; font-family: 'Inter', sans-serif;">{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
 def display_platform_performance_analysis(filtered_data):
     """Display platform performance analysis"""
@@ -394,7 +377,7 @@ def display_platform_performance_analysis(filtered_data):
             }
         )
         fig_engagement.update_layout(height=500)
-        st.plotly_chart(fig_engagement, use_container_width=True, key="engagement_by_platform")
+        st.plotly_chart(fig_engagement,  key="engagement_by_platform")
     
     with col2:
         # Brand consistency by platform
@@ -412,7 +395,7 @@ def display_platform_performance_analysis(filtered_data):
             }
         )
         fig_consistency.update_layout(height=500)
-        st.plotly_chart(fig_consistency, use_container_width=True, key="brand_consistency")
+        st.plotly_chart(fig_consistency,  key="brand_consistency")
 
 def display_content_strategy_analysis(filtered_data):
     """Display content strategy analysis"""
@@ -452,52 +435,46 @@ def display_content_strategy_analysis(filtered_data):
                         """, unsafe_allow_html=True)
 
 def display_recommendations(filtered_data):
-    """Display recommendations and insights"""
-    st.markdown("## 💡 Recommendations & Insights")
-    
+    """Display strategic recommendations"""
     recommendations = filtered_data['recommendations']
     
     if recommendations.empty:
-        st.warning("No recommendations data available.")
+        st.warning("⚠️ No recommendations available for the selected scope.")
         return
-    
-    # Group recommendations by priority
-    if 'Priority' in recommendations.columns:
-        priority_groups = recommendations.groupby('Priority')
         
-        for priority in ['High', 'Medium', 'Low']:
-            if priority in priority_groups.groups:
-                priority_data = priority_groups.get_group(priority)
-                
-                # Priority indicator
-                priority_color = "#E85A4F" if priority == "High" else "#F59E0B" if priority == "Medium" else "#10B981"
-                priority_icon = "🔥" if priority == "High" else "⚡" if priority == "Medium" else "💡"
-                
-                st.markdown(f"""
-                <h3 style="color: {priority_color}; font-family: 'Crimson Text', serif;">
-                    {priority_icon} {priority} Priority Recommendations
-                </h3>
-                """, unsafe_allow_html=True)
-                
-                # Display recommendations
-                for _, rec in priority_data.iterrows():
-                    category = rec.get('Category', 'General')
-                    observation = rec.get('Observation', 'N/A')
-                    recommendation = rec.get('Recommendation', 'N/A')
-                    
-                    st.markdown(f"""
-                    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
-                        <h4 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0 0 0.5rem 0;">
-                            {category}
-                        </h4>
-                        <p style="color: #6B7280; margin: 0 0 0.5rem 0; font-family: 'Inter', sans-serif;">
-                            <strong>Observation:</strong> {observation}
-                        </p>
-                        <p style="color: #2C3E50; margin: 0; font-family: 'Inter', sans-serif;">
-                            <strong>Recommendation:</strong> {recommendation}
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
+    st.markdown("## 💡 Recommendations & Insights")
+    
+    # High Priority
+    st.markdown("<h3 style=\"color: #E85A4F; font-family: 'Crimson Text', serif;\"> 🔥 High Priority Recommendations</h3>", unsafe_allow_html=True)
+    high_priority = recommendations[recommendations['Priority'] == 'High']
+    for _, row in high_priority.iterrows():
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+            <h4 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0 0 0.5rem 0;">{row.get('Category', 'General Recommendation')}</h4>
+            <p style="color: #6B7280; margin: 0 0 0.5rem 0; font-family: 'Inter', sans-serif;">
+                <strong>Observation:</strong> {row.get('Key Insight', 'N/A')}
+            </p>
+            <p style="color: #2C3E50; margin: 0; font-family: 'Inter', sans-serif;">
+                <strong>Recommendation:</strong> {row.get('Recommendation', 'N/A')}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    # Medium Priority
+    st.markdown("<h3 style=\"color: #F59E0B; font-family: 'Crimson Text', serif;\"> ⚡ Medium Priority Recommendations</h3>", unsafe_allow_html=True)
+    medium_priority = recommendations[recommendations['Priority'] == 'Medium']
+    for _, row in medium_priority.iterrows():
+        st.markdown(f"""
+        <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: white;">
+            <h4 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0 0 0.5rem 0;">{row.get('Category', 'General Recommendation')}</h4>
+            <p style="color: #6B7280; margin: 0 0 0.5rem 0; font-family: 'Inter', sans-serif;">
+                <strong>Observation:</strong> {row.get('Key Insight', 'N/A')}
+            </p>
+            <p style="color: #2C3E50; margin: 0; font-family: 'Inter', sans-serif;">
+                <strong>Recommendation:</strong> {row.get('Recommendation', 'N/A')}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main() 

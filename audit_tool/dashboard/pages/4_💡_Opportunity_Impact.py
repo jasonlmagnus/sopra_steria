@@ -258,7 +258,7 @@ def display_impact_overview(metrics_calc, master_df):
             fig_scatter.update_layout(height=400)
             fig_scatter.update_xaxes(title="Effort Level")
             fig_scatter.update_yaxes(title="Potential Impact")
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig_scatter)
             
             # Tier performance breakdown
             st.markdown("### 🏗️ Opportunities by Content Tier")
@@ -303,47 +303,27 @@ def display_prioritized_opportunities(metrics_calc, master_df):
         st.warning("⚠️ No opportunities match the selected filters. Try adjusting the criteria.")
         return
     
-    # Limit to max opportunities
-    filtered_opportunities = filtered_opportunities[:max_opps]
-    
-    st.success(f"🎯 Found {len(filtered_opportunities)} prioritized opportunities")
-    
-    # Group opportunities by tier for better organization
-    opportunities_by_tier = {}
+    st.markdown("### Opportunities by Content Tier")
+
+    tier_opps = {}
     for opp in filtered_opportunities:
-        tier = opp.get('tier', 'Unknown')
-        tier_name = opp.get('tier_name', tier.replace('_', ' ').title()) if 'tier_name' in opp else tier.replace('_', ' ').title()
-        
-        if tier not in opportunities_by_tier:
-            opportunities_by_tier[tier] = {
-                'name': tier_name,
-                'opportunities': []
-            }
-        opportunities_by_tier[tier]['opportunities'].append(opp)
+        tier = opp.get('tier_name', 'Unknown')
+        if tier not in tier_opps:
+            tier_opps[tier] = []
+        tier_opps[tier].append(opp)
     
-    # Display opportunities grouped by tier
-    overall_rank = 1
-    for tier, tier_data in opportunities_by_tier.items():
-        tier_name = tier_data['name']
-        tier_opps = tier_data['opportunities']
+    for tier, opps in sorted(tier_opps.items(), key=lambda item: -sum(o['potential_impact'] for o in item[1])):
+        avg_impact = sum(o['potential_impact'] for o in opps) / len(opps)
+        max_impact = max(o['potential_impact'] for o in opps)
+        avg_score = sum(o['current_score'] for o in opps) / len(opps)
         
-        # Tier header with summary
-        tier_avg_impact = sum(opp['potential_impact'] for opp in tier_opps) / len(tier_opps)
-        tier_avg_score = sum(opp['current_score'] for opp in tier_opps) / len(tier_opps)
-        
-        st.markdown(f"""
-        ## 🏗️ {tier_name} ({len(tier_opps)} opportunities)
-        **Avg Impact:** {tier_avg_impact:.1f}/10 | **Avg Current Score:** {tier_avg_score:.1f}/10
-        """)
-        
-        # Display opportunities within this tier
-        for tier_rank, opp in enumerate(tier_opps, 1):
-            display_opportunity_card(overall_rank, opp, tier_rank=tier_rank, tier_name=tier_name)
-            overall_rank += 1
-        
-        # Add separator between tiers
-        if tier != list(opportunities_by_tier.keys())[-1]:  # Not the last tier
-            st.markdown("---")
+        st.markdown(f"**{tier}**: {len(opps)} opps | Avg Impact: {avg_impact:.1f}/10 | Avg Score: {avg_score:.1f}/10")
+
+    st.markdown("### Prioritized Improvement Opportunities")
+    
+    if filtered_opportunities:
+        for rank, opp in enumerate(filtered_opportunities, 1):
+            display_opportunity_card(rank, opp)
 
 def apply_opportunity_filters(opportunities):
     """Apply selected filters to opportunities"""
@@ -377,7 +357,7 @@ def apply_opportunity_filters(opportunities):
     
     return filtered
 
-def display_opportunity_card(rank, opp, tier_rank=None, tier_name=None):
+def display_opportunity_card(rank, opp):
     """Display individual opportunity card"""
     page_title = opp.get('page_title', opp.get('page_id', 'Unknown Page'))
     impact = opp['potential_impact']
@@ -405,10 +385,7 @@ def display_opportunity_card(rank, opp, tier_rank=None, tier_name=None):
         impact_class = "impact-low"
     
     # Create title with tier context
-    if tier_rank and tier_name:
-        title = f"#{rank} ({tier_name} #{tier_rank}) - {page_title} ({priority_label})"
-    else:
-        title = f"#{rank} - {page_title} ({priority_label})"
+    title = f"#{rank} - {page_title} ({priority_label})"
     
     with st.expander(title, expanded=(rank <= 3)):
         st.markdown(f"""
@@ -696,7 +673,7 @@ def display_criteria_deep_dive_analysis(master_df):
     fig_criteria.update_layout(height=max(300, len(criteria_performance) * 25))
     fig_criteria.update_xaxes(title="Score")
     fig_criteria.update_yaxes(title="Criteria")
-    st.plotly_chart(fig_criteria, use_container_width=True)
+    st.plotly_chart(fig_criteria)
     
     # Criteria correlation analysis
     display_criteria_correlation_analysis(master_df, criteria_cols)
@@ -719,7 +696,7 @@ def display_criteria_correlation_analysis(master_df, criteria_cols):
         fig_corr.update_layout(height=400)
         fig_corr.update_xaxes(title="Criteria")
         fig_corr.update_yaxes(title="Criteria")
-        st.plotly_chart(fig_corr, use_container_width=True)
+        st.plotly_chart(fig_corr)
         
         # Find strongest correlations
         # Get upper triangle of correlation matrix
@@ -853,7 +830,7 @@ def display_action_roadmap(metrics_calc, master_df):
         fig_timeline.update_layout(height=400)
         fig_timeline.update_xaxes(title="Phase")
         fig_timeline.update_yaxes(title="Opportunities")
-        st.plotly_chart(fig_timeline, use_container_width=True)
+        st.plotly_chart(fig_timeline)
 
 if __name__ == "__main__":
     main() 

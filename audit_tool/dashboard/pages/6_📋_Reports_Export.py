@@ -127,7 +127,7 @@ def display_data_overview(master_df, datasets):
         
         if dataset_info:
             dataset_df = pd.DataFrame(dataset_info)
-            st.dataframe(dataset_df, use_container_width=True)
+            st.dataframe(dataset_df)
 
     # Only create chart if dataset_info is properly structured
     if dataset_info and isinstance(dataset_info, list) and len(dataset_info) > 0:
@@ -151,7 +151,7 @@ def display_data_overview(master_df, datasets):
                 title="Dataset Overview"
             )
     fig.update_layout(height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
 
 def display_data_filters(master_df):
     """Display interactive data filtering controls"""
@@ -260,7 +260,7 @@ def display_filtered_data(filtered_df):
         numeric_columns = display_df.select_dtypes(include=['float64', 'int64']).columns
         styled_df = display_df.style.format({col: '{:.2f}' for col in numeric_columns if col in display_df.columns})
         
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(styled_df)
         
         if len(filtered_df) > max_rows:
             st.info(f"💡 Showing first {max_rows:,} rows of {len(filtered_df):,} total records")
@@ -272,7 +272,7 @@ def display_filtered_data(filtered_df):
         numeric_cols = filtered_df.select_dtypes(include=['float64', 'int64']).columns
         if len(numeric_cols) > 0:
             summary_stats = filtered_df[numeric_cols].describe().round(2)
-            st.dataframe(summary_stats, use_container_width=True)
+            st.dataframe(summary_stats)
         
         # Categorical columns summary
         categorical_cols = filtered_df.select_dtypes(include=['object']).columns
@@ -298,7 +298,7 @@ def display_filtered_data(filtered_df):
                                     title=f"Top Values - {col}"
                                 )
                                 fig.update_layout(height=400)
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig)
 
 def display_data_quality_insights(filtered_df):
     """Display data quality insights"""
@@ -326,7 +326,7 @@ def display_data_quality_insights(filtered_df):
         missing_df = missing_df[missing_df['Missing Count'] > 0].sort_values('Missing %', ascending=False)
         
         if not missing_df.empty:
-            st.dataframe(missing_df, use_container_width=True)
+            st.dataframe(missing_df)
         else:
             st.success("✅ No missing data found!")
     
@@ -351,7 +351,7 @@ def display_data_quality_insights(filtered_df):
                     nbins=30
                 )
                 fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig)
 
 def display_custom_reports(master_df, datasets):
     """Display custom report generation interface"""
@@ -495,7 +495,7 @@ def generate_persona_performance_report(master_df, metrics_calc):
         persona_performance.columns = ['Average Score', 'Page Count']
         persona_performance = persona_performance.sort_values('Average Score', ascending=False)
         
-        st.dataframe(persona_performance, use_container_width=True)
+        st.dataframe(persona_performance)
         
         # Persona insights
         best_persona = persona_performance['Average Score'].idxmax()
@@ -516,7 +516,7 @@ def generate_content_tier_report(master_df, metrics_calc):
         tier_performance.columns = ['Average Score', 'Page Count', 'Score Variation']
         tier_performance = tier_performance.sort_values('Average Score', ascending=False)
         
-        st.dataframe(tier_performance, use_container_width=True)
+        st.dataframe(tier_performance)
 
 def generate_success_stories_report(master_df, metrics_calc):
     """Generate success stories report"""

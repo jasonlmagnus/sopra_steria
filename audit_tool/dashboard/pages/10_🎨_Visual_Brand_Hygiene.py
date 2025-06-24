@@ -688,9 +688,9 @@ with tab5:
                     <h4 style="margin: 0; color: {color}; font-family: 'Inter', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{name}</h4>
                     <div style="display: flex; gap: 15px; margin: 5px 0; flex-wrap: wrap;">
                         <code style="background: {color}20; color: {color}; padding: 2px 8px; border-radius: 4px; font-weight: bold; white-space: nowrap;">{color}</code>
-                        <span style="color: #666; font-size: 0.9em; white-space: nowrap;">{cmyk}</span>
+                        <span style="color: #666;  white-space: nowrap;">{cmyk}</span>
                     </div>
-                    <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9em; overflow: hidden; text-overflow: ellipsis;">{desc}</p>
+                    <p style="margin: 5px 0 0 0; color: #666;  overflow: hidden; text-overflow: ellipsis;">{desc}</p>
                 </div>
                 <button onclick="navigator.clipboard.writeText('{color}')" style="
                     background: {color}; 
@@ -699,7 +699,7 @@ with tab5:
                     padding: 8px 12px; 
                     border-radius: 6px; 
                     cursor: pointer;
-                    font-size: 0.8em;
+                    
                     font-weight: 600;
                     flex-shrink: 0;
                     white-space: nowrap;
@@ -740,8 +740,8 @@ with tab5:
                         margin: 0 auto 8px auto;
                         box-shadow: 0 2px 6px {color}40;
                     "></div>
-                    <strong style="color: {color}; font-size: 0.9em;">{name}</strong><br>
-                    <code style="font-size: 0.8em; color: #666;">{color}</code><br>
+                    <strong style="color: {color}; ">{name}</strong><br>
+                    <code style=" color: #666;">{color}</code><br>
                     <small style="color: #666;">{desc}</small>
                 </div>
                 """, unsafe_allow_html=True)
@@ -753,7 +753,7 @@ with tab5:
         st.markdown("""
         <div style="background: linear-gradient(135deg, rgba(77, 29, 130, 0.1), rgba(139, 29, 130, 0.1)); padding: 25px; border-radius: 12px; border-left: 4px solid #4D1D82; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="font-family: Inter, sans-serif; color: #4D1D82; margin: 0; font-size: 2rem; font-weight: 700;">Hurme Geometric Sans 3</h2>
+                <h2 style="font-family: Inter, sans-serif; color: #4D1D82; margin: 0;  font-weight: 700;">Hurme Geometric Sans 3</h2>
                 <p style="color: #666; margin: 5px 0; font-style: italic;">Primary Font Family</p>
             </div>
         </div>
@@ -781,7 +781,7 @@ with tab5:
         
         import pandas as pd
         font_df = pd.DataFrame(font_specs)
-        st.dataframe(font_df, use_container_width=True, hide_index=True)
+        st.dataframe(font_df,  hide_index=True)
         
         # Color contrast checker
         st.markdown("##### 🎯 Color Accessibility")
@@ -843,7 +843,7 @@ with tab5:
     st.markdown("""
     <div class="brand-card">
         <h4>Corporate Tagline</h4>
-        <p style="font-size: 1.5em; font-weight: bold; color: #E85A4F; font-style: italic;">
+        <p style=" font-weight: bold; color: #E85A4F; font-style: italic;">
             "The world is how we shape it"
         </p>
         <p><strong>Usage:</strong> Must appear on all Tier 1 brand positioning pages</p>
@@ -934,4 +934,24 @@ with st.sidebar:
     st.markdown("### Quick Stats")
     st.metric("Avg Logo Score", f"{df['Logo Compliance'].mean():.1f}/10")
     st.metric("Avg Color Score", f"{df['Color Palette'].mean():.1f}/10")
-    st.metric("Avg Typography", f"{df['Typography'].mean():.1f}/10") 
+    st.metric("Avg Typography", f"{df['Typography'].mean():.1f}/10")
+
+    # Color palette and heatmap are commented out as they are already displayed in the main page body
+    # and the functions called here were not defined, causing the app to crash.
+    # st.markdown("<h5>🎨 Color Palette</h5>", unsafe_allow_html=True)
+    # display_color_palette(df)
+
+    # # Detailed performance breakdown
+    # st.markdown("## Detailed Performance Breakdown")
+    
+    # st.markdown(
+    #     """
+    #     <div style="width: 100%; max-width: 1200px; overflow-x: auto; box-sizing: border-box;">
+    #     """, 
+    #     unsafe_allow_html=True
+    # )
+    
+    # # Heatmap of scores
+    # display_heatmap(df)
+
+    # st.markdown("</div>", unsafe_allow_html=True) 

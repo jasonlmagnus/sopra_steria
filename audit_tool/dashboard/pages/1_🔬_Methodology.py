@@ -262,7 +262,7 @@ with tab2:
         }.get(color, 'background-color: #f8f9fa; border-left: 4px solid #6c757d;')
         
         st.markdown(f"""
-        <div style="{color_style} padding: 15px; margin: 10px 0; border-radius: 5px;">
+        <div style="padding: 15px; margin: 10px 0; border-radius: 5px; {color_style}">
             <h5 style="margin: 0 0 5px 0;">{score_range}: {label}</h5>
             <p style="margin: 0;"><strong>Status:</strong> {status}</p>
         </div>
@@ -322,7 +322,11 @@ with tab3:
         triggers = tier_data.get('triggers', [])
         examples = tier_data.get('examples', [])
         
-        st.markdown(f"""
+        # --- ROBUST HTML GENERATION ---
+        triggers_html = "".join(f"<li>{trigger}</li>" for trigger in triggers)
+        examples_html = "".join(f"<li>{example}</li>" for example in examples)
+
+        card_html = f"""
         <div class="tier-card" style="border: 2px solid #dee2e6; padding: 20px; margin: 15px 0; border-radius: 8px;">
             <h4>{tier_key.replace('_', ' ').title()}: {tier_name}</h4>
             <div style="display: flex; gap: 20px; margin: 10px 0;">
@@ -330,22 +334,17 @@ with tab3:
                 <div><strong>Brand Focus:</strong> {brand_pct}%</div>
                 <div><strong>Performance Focus:</strong> {perf_pct}%</div>
             </div>
-            
             <div style="margin: 15px 0;">
                 <strong>Classification Triggers:</strong>
-                <ul>
-                    {"".join([f"<li>{trigger}</li>" for trigger in triggers])}
-                </ul>
+                <ul>{triggers_html}</ul>
             </div>
-            
             <div>
                 <strong>Examples:</strong>
-                <ul>
-                    {"".join([f"<li>{example}</li>" for example in examples])}
-                </ul>
+                <ul>{examples_html}</ul>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
     
     # Offsite Classification
     offsite = classification.get('offsite', {})
@@ -425,19 +424,23 @@ with tab5:
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown(f"""
+    # --- ROBUST HTML GENERATION ---
+    global_pos = corporate_hierarchy.get('global', '')
+    regional_nav = corporate_hierarchy.get('regional', '')
+
+    messaging_html = f"""
     <div class="messaging-hierarchy">
         <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px;">
             <h5>Global Corporate Positioning</h5>
-            <p style="font-size: 1.2em; font-weight: bold; color: #E85A4F;">"{corporate_hierarchy.get('global', '')}"</p>
+            <p style="font-weight: bold; color: #E85A4F;">"{global_pos}"</p>
         </div>
-        
         <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px;">
             <h5>Regional Narrative (BENELUX)</h5>
-            <p style="font-weight: bold; color: #2C3E50;">"{corporate_hierarchy.get('regional', '')}"</p>
+            <p style="font-weight: bold; color: #2C3E50;">"{regional_nav}"</p>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(messaging_html, unsafe_allow_html=True)
     
     # Sub-narratives
     sub_narratives = corporate_hierarchy.get('sub_narratives', {})
@@ -525,15 +528,21 @@ with tab6:
         points = penalty_data.get('points', 0)
         example = penalty_data.get('example', '')
         examples = penalty_data.get('examples', [])
-        
+
         st.markdown(f"""
         <div class="penalty-item" style="border: 1px solid #dee2e6; padding: 10px; margin: 5px 0; border-radius: 5px;">
             <h5>{penalty_key.replace('_', ' ').title()}: {points} points</h5>
-            {f'<p><strong>Example:</strong> {example}</p>' if example else ''}
-            {f'<p><strong>Examples:</strong></p><ul>{"".join([f"<li>{ex}</li>" for ex in examples])}</ul>' if examples else ''}
         </div>
         """, unsafe_allow_html=True)
-    
+
+        if example:
+            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;<strong>Example:</strong> {example}", unsafe_allow_html=True)
+        
+        if examples:
+            st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;<strong>Examples:</strong>", unsafe_allow_html=True)
+            for ex in examples:
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;• {ex}")
+
     # Validation Flags
     validation_flags = methodology.get('validation_flags', {})
     
