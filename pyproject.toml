@@ -1,0 +1,109 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sopra-steria-audit-tool"
+version = "2.0.0"
+description = "Brand audit tool for Sopra Steria digital presence evaluation"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Jason Ryan", email = "jason.ryan@magnusconsulting.co.uk"}
+]
+keywords = ["brand-audit", "streamlit", "ai", "content-analysis", "sopra-steria"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Streamlit",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "streamlit>=1.46.0",
+    "pandas>=2.3.0",
+    "plotly>=6.1.2",
+    "requests>=2.32.4",
+    "PyYAML>=6.0.2",
+    "numpy>=2.3.0",
+    "beautifulsoup4>=4.13.4",
+    "playwright>=1.52.0",
+    "anthropic>=0.54.0",
+    "Jinja2>=3.1.6",
+    "python-dotenv>=1.1.0",
+    "tqdm>=4.67.1",
+    "psutil>=7.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/jasonlmagnus/sopra_steria"
+Repository = "https://github.com/jasonlmagnus/sopra_steria.git"
+Documentation = "https://github.com/jasonlmagnus/sopra_steria/blob/main/README.md"
+Issues = "https://github.com/jasonlmagnus/sopra_steria/issues"
+
+[project.scripts]
+sopra-audit = "audit_tool.main:main"
+brand-health-dashboard = "audit_tool.dashboard.brand_health_command_center:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["audit_tool*"]
+
+[tool.setuptools.package-data]
+audit_tool = [
+    "config/*.yaml",
+    "templates/*.md",
+    "templates/*.j2",
+    "dashboard/assets/*"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | legacy
+)/
+'''
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = ["venv/", "legacy/"]
+
+[tool.pytest.ini_options]
+testpaths = ["audit_tool/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short" 

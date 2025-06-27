@@ -1,0 +1,45 @@
+# Sopra Steria Brand Audit Tool - Python Project
+# This file explicitly defines this repository as a Python project
+
+# Python files
+*.py linguist-language=Python
+*.pyx linguist-language=Python
+*.pyi linguist-language=Python
+
+# Configuration files (Python ecosystem)
+pyproject.toml linguist-language=TOML
+requirements.txt linguist-language=Text
+setup.py linguist-language=Python
+setup.cfg linguist-language=INI
+
+# Jupyter notebooks
+*.ipynb linguist-language=Jupyter-Notebook
+
+# YAML configuration files
+*.yaml linguist-language=YAML
+*.yml linguist-language=YAML
+
+# Markdown documentation
+*.md linguist-language=Markdown
+
+# Shell scripts for Python project automation
+*.sh linguist-language=Shell
+
+# Exclude vendored/generated JavaScript from language detection
+# These are from Python dependencies (Playwright, Plotly, etc.)
+venv/** linguist-vendored
+legacy/** linguist-vendored
+*.js.map linguist-generated
+node_modules/** linguist-vendored
+
+# Mark package.json files as vendored (they're from Python deps)
+**/package.json linguist-vendored
+
+# Ensure Python is detected as primary language
+* linguist-detectable
+*.py linguist-detectable
+
+# Force GitHub to recognize this as a Python project
+# Override any JavaScript detection from dependencies
+*.js linguist-vendored=true
+*.json linguist-vendored=true 

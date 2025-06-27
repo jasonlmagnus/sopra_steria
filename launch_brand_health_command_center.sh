@@ -1,11 +1,13 @@
 #!/bin/bash
 
-# Brand Health Command Center Launch Script
-# Launches the strategic marketing decision engine
+# Brand Health Command Center Launch Script - PYTHON PROJECT
+# Launches the strategic marketing decision engine (Streamlit/Python)
+# This is a Python application, NOT Node.js
 
+echo "🐍 PYTHON PROJECT - Brand Health Command Center"
 echo "🎯 Launching Brand Health Command Center..."
-echo "Strategic Marketing Decision Engine"
-echo "=================================="
+echo "Strategic Marketing Decision Engine (Python/Streamlit)"
+echo "======================================================"
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
@@ -16,11 +18,12 @@ fi
 # Activate virtual environment
 source venv/bin/activate
 
-# Check if required packages are installed
-echo "📦 Checking dependencies..."
+# Check if required Python packages are installed
+echo "📦 Checking Python dependencies..."
+echo "   (This is a Python project using pip, not npm)"
 python -c "import streamlit, pandas, plotly" 2>/dev/null
 if [ $? -ne 0 ]; then
-    echo "❌ Missing required packages. Installing..."
+    echo "❌ Missing required Python packages. Installing from requirements.txt..."
     pip install -r requirements.txt
 fi
 
@@ -60,8 +63,9 @@ echo "   • Run Audit - Create new brand audits"
 echo "   • Reports & Export - Share insights and deep-dive data"
 echo ""
 
-# Launch the Brand Health Command Center from root directory (so data paths work correctly)
+# Launch the Python Streamlit application from root directory (so data paths work correctly)
+echo "🐍 Starting Python Streamlit application..."
 streamlit run audit_tool/dashboard/brand_health_command_center.py --server.port 8509
 
 echo ""
-echo "🎯 Brand Health Command Center stopped." 
+echo "🎯 Python Brand Health Command Center stopped." 
