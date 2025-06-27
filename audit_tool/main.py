@@ -1,5 +1,12 @@
+#!/usr/bin/env python3
 """
-Main Entry Point for Brand Audit Tool
+Sopra Steria Brand Audit Tool - Main CLI Entry Point
+
+🐍 PYTHON PROJECT - This is the main CLI for the Python-based brand audit tool
+Test change to see if Codex creates PRs for Python backend changes
+
+Usage:
+    python -m audit_tool.main --help
 
 STATUS: ACTIVE
 
