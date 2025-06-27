@@ -20,6 +20,7 @@ import json
 import logging
 import requests
 from typing import Dict, List, Any, Optional, Union
+from pathlib import Path
 
 from .methodology_parser import MethodologyParser
 
@@ -50,6 +51,24 @@ class AIInterface:
             logger.warning("Anthropic API key not found in environment variables")
         elif model_provider == "openai" and not self.openai_api_key:
             logger.warning("OpenAI API key not found in environment variables")
+
+    def _load_prompt_template(self, name: str) -> str:
+        """Load a prompt template from the templates directory."""
+        templates_dir = Path(__file__).parent / "templates"
+        for ext in [".md", ".j2", ".txt"]:
+            path = templates_dir / f"{name}{ext}"
+            if path.exists():
+                with open(path, "r", encoding="utf-8") as f:
+                    return f.read()
+        raise FileNotFoundError(f"Prompt template not found: {name}")
+
+    def _get_system_message(self, name: str) -> str:
+        """Return a default system prompt for a template name."""
+        defaults = {
+            "narrative_analysis": "You are a brand audit expert analyzing narrative quality and brand alignment.",
+            "scorecard": "You are a brand audit expert analyzing digital content.",
+        }
+        return defaults.get(name, "You are a brand audit expert analyzing digital content.")
     
     def generate_hygiene_scorecard(self, url: str, page_content: str, persona_content: str, methodology: MethodologyParser) -> str:
         """
