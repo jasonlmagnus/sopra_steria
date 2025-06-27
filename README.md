@@ -250,6 +250,17 @@ streamlit run dashboard/streamlit_dashboard.py --server.runOnSave true
 ./launch_dashboard.sh --help  # Shows available options
 ```
 
+## 🟢 Node Example
+
+This repository now includes a small Node.js script located in `node_scripts/`.
+You can run it to verify Node is configured correctly:
+
+```bash
+cd node_scripts
+npm install
+npm run hello
+```
+
 ## 📄 License
 
 This project is proprietary and confidential. All rights reserved.
