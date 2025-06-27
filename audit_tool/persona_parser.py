@@ -59,10 +59,14 @@ class Persona:
 
 class PersonaParser:
     """Parses persona information from markdown files."""
-    
+
     def __init__(self):
         """Initialize the persona parser."""
         logger.info("Persona parser initialized")
+
+    def extract_attributes(self, file_path: str) -> Persona:
+        """Wrapper for backward compatibility."""
+        return self.extract_attributes_from_file(file_path)
     
     def extract_attributes_from_file(self, file_path: str) -> Persona:
         """

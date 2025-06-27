@@ -228,6 +228,39 @@ class BrandAuditTool:
         
         return slug
 
+
+def run_audit(urls_file: str = None, persona_file: str = None,
+              output_dir: str = "audit_outputs", generate_summary: bool = True,
+              verbose: bool = True, config: str | None = None) -> List[Dict[str, Any]]:
+    """Convenience function to run a simple audit."""
+    if not verbose:
+        logging.getLogger().setLevel(logging.WARNING)
+
+    tool = BrandAuditTool(config)
+    tool.audit_outputs_dir = Path(output_dir)
+    os.makedirs(tool.audit_outputs_dir, exist_ok=True)
+
+    urls = []
+    if urls_file:
+        with open(urls_file, 'r', encoding='utf-8') as f:
+            urls = [line.strip() for line in f if line.strip() and not line.strip().startswith('#')]
+
+    if not hasattr(tool.scraper, 'scrape_url'):
+        tool.scraper.scrape_url = tool.scraper.fetch_page  # type: ignore
+
+    results_dict = tool.run_audit(urls, persona_file)
+
+    ordered_results = []
+    for url in urls:
+        data = results_dict.get(url, {})
+        ordered_results.append({
+            'url': url,
+            'status': data.get('status'),
+            'hygiene_score': 1.0 if data.get('status') == 'success' else 0.0
+        })
+
+    return ordered_results
+
 def main():
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description='Brand Audit Tool')

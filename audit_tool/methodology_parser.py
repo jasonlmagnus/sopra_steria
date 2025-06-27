@@ -19,8 +19,18 @@ import yaml
 import logging
 from typing import Dict, List, Tuple, Any, Optional
 from pathlib import Path
+from dataclasses import dataclass
 
 from .tier_classifier import TierClassifier
+
+
+@dataclass
+class ParsedMethodology:
+    """Simple container for parsed methodology sections."""
+
+    metadata: Dict[str, Any]
+    tiers: Dict[str, Any]
+    offsite_channels: Dict[str, Any]
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +47,15 @@ class MethodologyParser:
         self.config_path = config_path or os.path.join("audit_tool", "config", "methodology.yaml")
         self.config = self._load_config()
         self.tier_classifier = TierClassifier(self.config)
-        
+
         logger.info(f"Methodology parser initialized with config: {self.config_path}")
+
+    def parse(self) -> ParsedMethodology:
+        """Parse the loaded YAML into a structured object."""
+        metadata = self.config.get("metadata", {})
+        tiers = self.config.get("classification", {}).get("onsite", {})
+        offsite = self.config.get("classification", {}).get("offsite", {})
+        return ParsedMethodology(metadata=metadata, tiers=tiers, offsite_channels=offsite)
     
     def _load_config(self) -> Dict[str, Any]:
         """
