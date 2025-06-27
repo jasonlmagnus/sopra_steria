@@ -344,7 +344,7 @@ This report presents a comprehensive analysis of Sopra Steria's brand presence a
         
         return report
     
-    def generate_ai_summary(self, model_provider: str = "anthropic") -> str:
+    def generate_ai_summary(self, model_provider: str = "openai") -> str:
         """
         Generate a summary using AI.
         

@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class AIInterface:
     """Interface for AI services used in brand audits."""
     
-    def __init__(self, model_provider: str = "anthropic"):
+    def __init__(self, model_provider: str = "openai"):
         """
         Initialize with model provider.
         
