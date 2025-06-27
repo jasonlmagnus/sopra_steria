@@ -1,24 +1,21 @@
 """
-Brand Audit Tool Package
+Sopra Steria Brand Audit Tool
 
-STATUS: ACTIVE
+🐍 PYTHON PROJECT - Main audit tool package for brand health analysis
+Version: 2.1.0 - Updated after Codex acknowledged Python project status
 
-This package provides a comprehensive toolkit for evaluating brand presence across digital touchpoints.
-Key components include:
-1. Scraping and content extraction from web pages
-2. AI-powered analysis of brand positioning and messaging
-3. Persona-specific experience evaluation
-4. Structured reporting and visualization
-5. Multi-persona comparison and insights
+A comprehensive brand audit system using:
+- Python 3.12+
+- Streamlit dashboard
+- AI-powered analysis
+- Multi-persona evaluation
 
-The tool supports both command-line operation and dashboard-based visualization,
-enabling detailed brand audits from multiple persona perspectives.
+NOT Node.js, NOT JavaScript - Pure Python package.
 """
 
-__version__ = "1.2.0"
-__author__ = "Sopra Steria Digital Experience Team"
-__email__ = "digital.experience@soprasteria.com"
-__license__ = "Proprietary"
+__version__ = "2.1.0"
+__author__ = "Magnus Consulting"
+__description__ = "Python-based brand audit tool with AI analysis"
 
 # Import key components for easier access
 from .ai_interface import AIInterface
