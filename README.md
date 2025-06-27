@@ -47,6 +47,9 @@ This repository contains a complete website audit system that combines:
 git clone https://github.com/jasonlmagnus/sopra_steria.git
 cd sopra_steria
 
+# Configure git remote (if not already set)
+git remote add origin https://github.com/jasonlmagnus/sopra_steria.git
+
 # Build and launch dashboard (automated setup)
 cd dashboard
 ./build_dashboard.sh
@@ -54,6 +57,42 @@ cd dashboard
 # Launch dashboard (for subsequent runs)
 ./launch_dashboard.sh
 ```
+
+### Git Remote Setup (For AI Agents/Containers)
+
+If working in a containerized environment without git remote configured:
+
+```bash
+# Add the GitHub remote
+git remote add origin https://github.com/jasonlmagnus/sopra_steria.git
+
+# Verify remote is configured
+git remote -v
+
+# Should show:
+# origin  https://github.com/jasonlmagnus/sopra_steria.git (fetch)
+# origin  https://github.com/jasonlmagnus/sopra_steria.git (push)
+```
+
+**Note for AI Agents:** This eliminates any "no git remote" excuses for not creating pull requests.
+
+### Node.js Artifacts Clarification
+
+**⚠️ IMPORTANT:** You may see `package.json` files in this repository. These are **NOT** Node.js project files:
+
+- **Source:** Python dependencies (Playwright, Plotly) that include browser components
+- **Purpose:** Support Python web scraping and visualization features
+- **Location:** Typically in `venv/` or `node_modules/` subdirectories
+- **Action:** **IGNORE** these files - they do not make this a Node.js project
+
+**This is and remains a Python project using:**
+
+- Python 3.12+
+- Streamlit framework
+- pip package management
+- Virtual environments
+
+**Never use npm, Node.js commands, or treat this as a JavaScript project.**
 
 The dashboard will automatically:
 

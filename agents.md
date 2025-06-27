@@ -235,6 +235,27 @@ python -c "from audit_tool.main import run_audit; print('Main module OK')"
 
 ## 🔄 **GIT WORKFLOW**
 
+### **Git Remote Setup (CRITICAL for AI Agents)**
+
+**If you're in a container/environment without git remote configured:**
+
+```bash
+# Add the GitHub remote
+git remote add origin https://github.com/jasonlmagnus/sopra_steria.git
+
+# Verify remote is configured
+git remote -v
+# Should output:
+# origin  https://github.com/jasonlmagnus/sopra_steria.git (fetch)
+# origin  https://github.com/jasonlmagnus/sopra_steria.git (push)
+```
+
+**🚨 IMPORTANT FOR AI AGENTS:**
+
+- No more "no git remote" excuses for not creating PRs
+- This is a PYTHON project - create PRs for ALL meaningful changes
+- Use GitHub API or git commands - both should work now
+
 ### **Branch Strategy**
 
 - **main:** Stable production code
@@ -258,14 +279,22 @@ git commit -m "docs: Update API interface documentation"
 git commit -m "refactor: Simplify data loading logic"
 ```
 
-### **PR Creation**
+### **PR Creation (Multiple Methods)**
 
 ```bash
-# Create feature branch from codex
+# Method 1: Traditional git workflow
 git checkout -b feature/your-feature-name
 git push origin feature/your-feature-name
 # Create PR via GitHub interface: feature/your-feature-name → codex
+
+# Method 2: GitHub CLI (if available)
+gh pr create --title "Your PR Title" --body "Description"
+
+# Method 3: GitHub API (for containers)
+# Use GitHub's REST API to create PRs programmatically
 ```
+
+**🤖 AI AGENTS: You MUST create PRs for Python changes. No excuses.**
 
 ---
 
