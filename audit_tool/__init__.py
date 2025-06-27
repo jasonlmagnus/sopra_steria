@@ -20,6 +20,11 @@ __author__ = "Sopra Steria Digital Experience Team"
 __email__ = "digital.experience@soprasteria.com"
 __license__ = "Proprietary"
 
+# Public helper
+def get_version() -> str:
+    """Return the current package version."""
+    return __version__
+
 # Import key components for easier access
 from .ai_interface import AIInterface
 from .methodology_parser import MethodologyParser

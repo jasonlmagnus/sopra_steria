@@ -38,6 +38,7 @@ from .methodology_parser import MethodologyParser
 from .persona_parser import PersonaParser
 from .multi_persona_packager import MultiPersonaPackager
 from .strategic_summary_generator import StrategicSummaryGenerator
+from . import __version__
 
 # Configure logging
 logging.basicConfig(
@@ -289,8 +290,13 @@ def main():
     parser.add_argument('--all-personas', action='store_true', help='Run audit with all personas')
     parser.add_argument('--config', type=str, help='Path to configuration file')
     parser.add_argument('--output-dir', type=str, help='Output directory')
+    parser.add_argument('--version', action='store_true', help='Show version and exit')
     
     args = parser.parse_args()
+
+    if args.version:
+        print(f"Sopra Steria Brand Audit Tool {__version__}")
+        return
     
     # Initialize the tool
     tool = BrandAuditTool(args.config)
