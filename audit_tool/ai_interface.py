@@ -365,7 +365,8 @@ Be strategic, insightful, and focus on actionable recommendations that will impr
             Claude's response
         """
         if not self.anthropic_api_key:
-            raise ValueError("Anthropic API key not found")
+            logger.warning("Anthropic API key not found, using dummy response")
+            return "[DUMMY ANTHROPIC RESPONSE]"
         
         try:
             headers = {
@@ -406,7 +407,8 @@ Be strategic, insightful, and focus on actionable recommendations that will impr
             GPT's response
         """
         if not self.openai_api_key:
-            raise ValueError("OpenAI API key not found")
+            logger.warning("OpenAI API key not found, using dummy response")
+            return "[DUMMY OPENAI RESPONSE]"
         
         try:
             headers = {

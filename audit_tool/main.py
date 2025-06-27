@@ -20,6 +20,7 @@ import sys
 import time
 import logging
 import argparse
+import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -240,6 +241,11 @@ def run_audit(urls_file: str = None, persona_file: str = None,
     tool.audit_outputs_dir = Path(output_dir)
     os.makedirs(tool.audit_outputs_dir, exist_ok=True)
 
+    persona_name = None
+    if persona_file:
+        persona = PersonaParser().extract_attributes(persona_file)
+        persona_name = persona.name
+
     urls = []
     if urls_file:
         with open(urls_file, 'r', encoding='utf-8') as f:
@@ -249,6 +255,11 @@ def run_audit(urls_file: str = None, persona_file: str = None,
         tool.scraper.scrape_url = tool.scraper.fetch_page  # type: ignore
 
     results_dict = tool.run_audit(urls, persona_file)
+
+    if persona_name:
+        persona_dir = tool.audit_outputs_dir / persona_name
+        for p in persona_dir.glob("*.md"):
+            shutil.copy(p, tool.audit_outputs_dir / p.name)
 
     ordered_results = []
     for url in urls:
