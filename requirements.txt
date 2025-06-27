@@ -5,4 +5,9 @@ Jinja2
 python-dotenv
 tqdm
 streamlit
-psutil 
+psutil
+numpy
+pandas
+plotly
+requests
+PyYAML
