@@ -1,4 +1,6 @@
-# Sopra Steria Website Audit & Journey Analysis
+# 🐍 Sopra Steria Website Audit & Journey Analysis (Python Project)
+
+**This is a Python project using Streamlit, pip, and Python 3.12+**
 
 A comprehensive audit and analysis platform for evaluating Sopra Steria's digital presence across multiple personas and user journeys.
 

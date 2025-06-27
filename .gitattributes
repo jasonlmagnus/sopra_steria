@@ -25,21 +25,25 @@ setup.cfg linguist-language=INI
 # Shell scripts for Python project automation
 *.sh linguist-language=Shell
 
-# Exclude vendored/generated JavaScript from language detection
+# CRITICAL: Exclude ALL JavaScript/Node.js files from detection
 # These are from Python dependencies (Playwright, Plotly, etc.)
 venv/** linguist-vendored
 legacy/** linguist-vendored
-*.js.map linguist-generated
-node_modules/** linguist-vendored
-
-# Mark package.json files as vendored (they're from Python deps)
-**/package.json linguist-vendored
-
-# Ensure Python is detected as primary language
-* linguist-detectable
-*.py linguist-detectable
-
-# Force GitHub to recognize this as a Python project
-# Override any JavaScript detection from dependencies
 *.js linguist-vendored=true
-*.json linguist-vendored=true 
+*.js.map linguist-generated=true
+node_modules/** linguist-vendored=true
+
+# CRITICAL: Mark ALL package.json files as vendored
+**/package.json linguist-vendored=true
+package.json linguist-vendored=true
+legacy/**/package.json linguist-vendored=true
+venv/**/package.json linguist-vendored=true
+
+# Force Python detection
+*.py linguist-detectable=true
+pyproject.toml linguist-detectable=true
+requirements.txt linguist-detectable=true
+
+# Override any JavaScript detection
+*.json linguist-vendored=true
+*.js linguist-language=JavaScript linguist-vendored=true 
