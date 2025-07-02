@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consolidated Brand Experience Report | Sopra Steria</title>
+    <style>
+        :root {
+            --primary-purple: #4D1D82;
+            --secondary-purple: #8b1d82;
+            --accent-red: #cf022b;
+            --accent-orange: #ef7d00;
+            --text-dark: #1d1d1b;
+            --text-gray: #666;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        }
+
+        .report-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--secondary-purple) 50%, var(--accent-red) 100%);
+            color: var(--white);
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .company-logo {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .report-title {
+            font-size: 2.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .report-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .executive-summary {
+            background: rgba(255,255,255,0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 50px 40px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-purple);
+        }
+
+        .section-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5em;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--primary-purple);
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        .persona-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .persona-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 6px solid var(--primary-purple);
+            transition: transform 0.3s ease;
+        }
+
+        .persona-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .persona-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+        }
+
+        .persona-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: var(--background-light);
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--primary-purple);
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: var(--text-gray);
+        }
+
+        .tier-analysis {
+            display: grid;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .tier-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 6px solid var(--accent-red);
+        }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tier-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tier-score {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .recommendation-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--accent-red);
+        }
+
+        .recommendation-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .recommendation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendation-list li {
+            margin-bottom: 10px;
+            padding: 12px;
+            background: var(--background-light);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .impact-score {
+            display: inline-block;
+            background: var(--accent-orange);
+            color: var(--white);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .brand-health-overview {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border-left: 6px solid #2196f3;
+        }
+
+        .brand-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .brand-metric {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 12px;
+        }
+
+        .brand-metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary-purple);
+            margin-bottom: 5px;
+        }
+
+        .brand-metric-label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .report-footer {
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-content {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .report-header {
+                padding: 40px 20px;
+            }
+            
+            .persona-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .section-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="company-logo">Sopra Steria</div>
+            <h1 class="report-title">Consolidated Brand Experience Report</h1>
+            <p class="report-subtitle">Cross-Persona Analysis & Strategic Insights</p>
+            
+            <div class="executive-summary">
+                <p><strong>Executive Summary:</strong> Comprehensive brand experience analysis across 5 personas, covering 18 unique pages and 432 audit criteria. Overall brand health score: 5.8/10.</p>
+                
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Personas Analyzed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">Pages Audited</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5.8/10</div>
+                        <div class="stat-label">Overall Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">90</div>
+                        <div class="stat-label">Issues Identified</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Persona Comparison Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">👥</div>
+                <div>
+                    <h2 class="section-title">Persona Performance Comparison</h2>
+                    <p class="section-subtitle">Comparative analysis across all personas</p>
+                </div>
+            </div>
+
+            <div class="persona-grid">
+                
+                <div class="persona-card">
+                    <div class="persona-name">The Benelux Cybersecurity Decision Maker</div>
+                    <div class="persona-metrics">
+                        <div class="metric">
+                            <div class="metric-value">5.2</div>
+                            <div class="metric-label">Avg Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">18</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">26</div>
+                            <div class="metric-label">Issues</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Positive Sentiment</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-name">The Benelux Strategic Business Leader (C-Suite Executive)</div>
+                    <div class="persona-metrics">
+                        <div class="metric">
+                            <div class="metric-value">5.8</div>
+                            <div class="metric-label">Avg Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">18</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">19</div>
+                            <div class="metric-label">Issues</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Positive Sentiment</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-name">The Benelux Transformation Programme Leader</div>
+                    <div class="persona-metrics">
+                        <div class="metric">
+                            <div class="metric-value">5.6</div>
+                            <div class="metric-label">Avg Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">18</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">21</div>
+                            <div class="metric-label">Issues</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Positive Sentiment</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-name">The Technical Influencer</div>
+                    <div class="persona-metrics">
+                        <div class="metric">
+                            <div class="metric-value">5.6</div>
+                            <div class="metric-label">Avg Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">18</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">18</div>
+                            <div class="metric-label">Issues</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Positive Sentiment</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="persona-card">
+                    <div class="persona-name">The_BENELUX_Technology_Innovation_Leader</div>
+                    <div class="persona-metrics">
+                        <div class="metric">
+                            <div class="metric-value">7.0</div>
+                            <div class="metric-label">Avg Score</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">15</div>
+                            <div class="metric-label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">6</div>
+                            <div class="metric-label">Issues</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">0</div>
+                            <div class="metric-label">Positive Sentiment</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Cross-Tier Analysis -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🏗️</div>
+                <div>
+                    <h2 class="section-title">Cross-Tier Performance Analysis</h2>
+                    <p class="section-subtitle">Performance patterns across content tiers</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Functional Content</h3>
+                        <div class="tier-score">6.0/10</div>
+                    </div>
+                    
+                    <p><strong>Coverage:</strong> 5 pages across 5 personas</p>
+                    <p><strong>Score Range:</strong> 3.0 - 9.0</p>
+                    
+                    
+                    <p><strong>Top Issues:</strong></p>
+                    <ul class="recommendation-list">
+                        
+                        <li>Calltoaction Effectiveness (15 occurrences)</li>
+                        
+                        <li>Brand Differentiation (9 occurrences)</li>
+                        
+                        <li>Trust Credibility Signals (8 occurrences)</li>
+                        
+                    </ul>
+                    
+                </div>
+                
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Brand Positioning</h3>
+                        <div class="tier-score">5.4/10</div>
+                    </div>
+                    
+                    <p><strong>Coverage:</strong> 7 pages across 5 personas</p>
+                    <p><strong>Score Range:</strong> 0.0 - 8.0</p>
+                    
+                    
+                    <p><strong>Top Issues:</strong></p>
+                    <ul class="recommendation-list">
+                        
+                        <li>Calltoaction Effectiveness (16 occurrences)</li>
+                        
+                        <li>Brand Differentiation (12 occurrences)</li>
+                        
+                        <li>Value Proposition Clarity (6 occurrences)</li>
+                        
+                    </ul>
+                    
+                </div>
+                
+                <div class="tier-card">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Value Propositions</h3>
+                        <div class="tier-score">6.1/10</div>
+                    </div>
+                    
+                    <p><strong>Coverage:</strong> 6 pages across 5 personas</p>
+                    <p><strong>Score Range:</strong> 0.0 - 8.0</p>
+                    
+                    
+                    <p><strong>Top Issues:</strong></p>
+                    <ul class="recommendation-list">
+                        
+                        <li>Trust Credibility Signals (7 occurrences)</li>
+                        
+                        <li>Brand Differentiation (5 occurrences)</li>
+                        
+                        <li>Calltoaction Effectiveness (3 occurrences)</li>
+                        
+                    </ul>
+                    
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Consolidated Recommendations -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <div>
+                    <h2 class="section-title">Strategic Recommendations</h2>
+                    <p class="section-subtitle">Cross-persona improvement opportunities</p>
+                </div>
+            </div>
+
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <h4 class="recommendation-title">🔴 Cross-Persona Issues</h4>
+                    <ul class="recommendation-list">
+                        
+                        <li>
+                            <strong>Address Brand Differentiation</strong><br>
+                            Affects 5 personas with average score 5.2/10
+                            <span class="impact-score">Impact: 4.8</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Address Calltoaction Effectiveness</strong><br>
+                            Affects 5 personas with average score 5.0/10
+                            <span class="impact-score">Impact: 5.0</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Address Corporate Positioning Alignment</strong><br>
+                            Affects 5 personas with average score 6.8/10
+                            <span class="impact-score">Impact: 3.2</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Address Trust Credibility Signals</strong><br>
+                            Affects 5 personas with average score 6.2/10
+                            <span class="impact-score">Impact: 3.8</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Address Value Proposition Clarity</strong><br>
+                            Affects 5 personas with average score 5.9/10
+                            <span class="impact-score">Impact: 4.1</span>
+                        </li>
+                        
+                    </ul>
+                </div>
+
+                <div class="recommendation-card">
+                    <h4 class="recommendation-title">🏗️ Tier Improvements</h4>
+                    <ul class="recommendation-list">
+                        
+                        <li>
+                            <strong>Brand Positioning</strong><br>
+                            Score: 5.4/10, Pages: 7
+                            <span class="impact-score">Medium Priority</span>
+                        </li>
+                        
+                    </ul>
+                </div>
+
+                <div class="recommendation-card">
+                    <h4 class="recommendation-title">⚡ Quick Wins</h4>
+                    <ul class="recommendation-list">
+                        
+                        <li>
+                            <strong>Quick Fix: Calltoaction Effectiveness</strong><br>
+                            Current: 4.1/10
+                            <span class="impact-score">Impact: 0.9</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Quick Fix: Corporate Positioning Alignment</strong><br>
+                            Current: 4.3/10
+                            <span class="impact-score">Impact: 0.8</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Quick Fix: Trust Credibility Signals</strong><br>
+                            Current: 4.3/10
+                            <span class="impact-score">Impact: 0.8</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Quick Fix: Value Proposition Clarity</strong><br>
+                            Current: 4.9/10
+                            <span class="impact-score">Impact: 0.6</span>
+                        </li>
+                        
+                        <li>
+                            <strong>Quick Fix: Brand Differentiation</strong><br>
+                            Current: 4.9/10
+                            <span class="impact-score">Impact: 0.6</span>
+                        </li>
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Brand Health -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎨</div>
+                <div>
+                    <h2 class="section-title">Overall Brand Health Assessment</h2>
+                    <p class="section-subtitle">Consolidated brand performance metrics</p>
+                </div>
+            </div>
+
+            <div class="brand-health-overview">
+                <div class="brand-metrics">
+                    <div class="brand-metric">
+                        <div class="brand-metric-value">6.0/10</div>
+                        <div class="brand-metric-label">Overall Brand Score</div>
+                    </div>
+                    <div class="brand-metric">
+                        <div class="brand-metric-value">43.9%</div>
+                        <div class="brand-metric-label">Compliance Rate</div>
+                    </div>
+                    <div class="brand-metric">
+                        <div class="brand-metric-value">173</div>
+                        <div class="brand-metric-label">Criteria Assessed</div>
+                    </div>
+                </div>
+
+                <h4>Brand Health by Persona:</h4>
+                <div class="persona-metrics">
+                    
+                    <div class="metric">
+                        <div class="metric-value">5.4/10</div>
+                        <div class="metric-label">Maker</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-value">6.0/10</div>
+                        <div class="metric-label">Executive)</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-value">5.8/10</div>
+                        <div class="metric-label">Leader</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-value">5.8/10</div>
+                        <div class="metric-label">Influencer</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-value">7.0/10</div>
+                        <div class="metric-label">The_BENELUX_Technology_Innovation_Leader</div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-content">
+                <p><strong>Sopra Steria Consolidated Brand Experience Report</strong></p>
+                <p>Generated on June 29, 2025 | Comprehensive analysis across all personas</p>
+                <p style="margin-top: 20px; opacity: 0.7;">This report provides strategic insights for transforming brand experience through cross-persona optimization and integrated engagement approach.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

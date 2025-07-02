@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Brand Experience Report | </title>
+    <style>
+        :root {
+            --primary-purple: #4D1D82;
+            --secondary-purple: #8b1d82;
+            --accent-red: #cf022b;
+            --accent-orange: #ef7d00;
+            --text-dark: #1d1d1b;
+            --text-gray: #666;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        }
+
+        .report-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--secondary-purple) 50%, var(--accent-red) 100%);
+            color: var(--white);
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .company-logo {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .report-title {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .report-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .executive-summary {
+            background: rgba(255,255,255,0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 50px 40px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-purple);
+        }
+
+        .section-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5em;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--primary-purple);
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        .tier-analysis {
+            display: grid;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .tier-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 6px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .tier-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tier-1 { border-left-color: var(--primary-purple); }
+        .tier-2 { border-left-color: var(--accent-red); }
+        .tier-3 { border-left-color: var(--accent-orange); }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tier-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tier-score {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .weightings {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .weighting {
+            background: var(--background-light);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid;
+        }
+
+        .brand-weight { 
+            border-color: var(--primary-purple); 
+            color: var(--primary-purple); 
+        }
+        
+        .performance-weight { 
+            border-color: var(--accent-red); 
+            color: var(--accent-red); 
+        }
+
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .evidence-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-top: 4px solid;
+        }
+
+        .working-evidence {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-top-color: var(--success-green);
+        }
+
+        .not-working-evidence {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-top-color: var(--danger-red);
+        }
+
+        .evidence-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            color: #155724;
+        }
+
+        .not-working-evidence .evidence-title {
+            color: #721c24;
+        }
+
+        .evidence-title .emoji {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .evidence-item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .working-evidence .evidence-item { 
+            border-left-color: var(--success-green); 
+        }
+        
+        .not-working-evidence .evidence-item { 
+            border-left-color: var(--danger-red); 
+        }
+
+        .persona-voice {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 6px solid #2196f3;
+        }
+
+        .voice-header {
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .voice-quote {
+            font-style: italic;
+            color: var(--text-dark);
+            line-height: 1.7;
+        }
+
+        .brand-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--primary-purple);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .metric-description {
+            color: var(--text-gray);
+            font-size: 0.9em;
+        }
+
+        .action-section {
+            background: var(--background-light);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .action-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            border-top: 4px solid var(--accent-red);
+        }
+
+        .action-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .action-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .report-footer {
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-content {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .report-header {
+                padding: 40px 20px;
+            }
+            
+            .evidence-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .section-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="company-logo"></div>
+            <h1 class="report-title">Strategic Brand Experience Report</h1>
+            <p class="report-subtitle"></p>
+            
+            <div class="executive-summary">
+                <p><strong>Executive Summary:</strong> {'total_pages_audited': 18, 'overall_score': np.float64(5.8), 'total_criteria_assessed': 90, 'critical_issues': 0, 'concerns': 19, 'warnings': 48, 'good_scores': 0, 'excellent_scores': 0, 'tier_breakdown': {'Brand Positioning': 5.5, 'Functional Content': 6.0, 'Value Propositions': 6.0}}</p>
+                
+                <div class="summary-stats">
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier Analysis Sections -->
+        
+
+        <!-- Brand Metrics Section -->
+        
+
+        <!-- Strategic Recommendations -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <div>
+                    <h2 class="section-title">Strategic Recommendations</h2>
+                    <p class="section-subtitle"></p>
+                </div>
+            </div>
+
+            
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-content">
+                <p><strong> Strategic Brand Experience Report</strong></p>
+                <p></p>
+                <p style="margin-top: 20px; opacity: 0.7;"></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -18,9 +18,19 @@ import io
 
 # Add parent directory to path to import components
 sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from components.data_loader import BrandHealthDataLoader
 from components.metrics_calculator import BrandHealthMetricsCalculator
+
+# Import HTML report generator with proper path handling
+try:
+    from audit_tool.html_report_generator import HTMLReportGenerator
+except ImportError:
+    # Try alternative import path
+    import sys
+    sys.path.append(str(Path(__file__).parent.parent.parent / "audit_tool"))
+    from html_report_generator import HTMLReportGenerator
 
 # Page configuration
 st.set_page_config(
@@ -55,7 +65,7 @@ def main():
         master_df = st.session_state['master_df']
     
     # Tab selection
-    tab1, tab2, tab3 = st.tabs(["📊 Data Explorer", "📈 Custom Reports", "📦 Export Center"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Data Explorer", "📈 Custom Reports", "🎨 HTML Reports", "📦 Export Center"])
     
     with tab1:
         display_data_explorer(master_df, datasets)
@@ -64,6 +74,9 @@ def main():
         display_custom_reports(master_df, datasets)
     
     with tab3:
+        display_html_reports(master_df)
+    
+    with tab4:
         display_export_center(master_df, datasets)
 
 def display_data_explorer(master_df, datasets):
@@ -462,29 +475,50 @@ def generate_custom_report(master_df, report_type):
         st.error(f"❌ Error generating report: {str(e)}")
 
 def generate_executive_summary_report(master_df, metrics_calc):
-    """Generate executive summary report"""
+    """Generate executive summary report using real data"""
     st.markdown("#### 🎯 Executive Summary Report")
     
-    # Generate executive summary
-    executive_summary = metrics_calc.generate_executive_summary()
+    if master_df.empty:
+        st.warning("⚠️ No data available for executive summary.")
+        return
     
-    if executive_summary:
-        # Brand health overview
-        brand_health = executive_summary.get('brand_health', {})
-        st.markdown(f"""
-        **Brand Health Score:** {brand_health.get('raw_score', 'N/A')}/10 ({brand_health.get('status', 'Unknown')})
-        
-        **Key Metrics:**
-        - Critical Issues: {executive_summary.get('key_metrics', {}).get('critical_issues', 0)}
-        - Quick Wins: {executive_summary.get('key_metrics', {}).get('quick_wins', 0)}
-        - Success Pages: {executive_summary.get('key_metrics', {}).get('success_pages', 0)}
-        """)
-        
-        # Strategic recommendations
-        if executive_summary.get('recommendations'):
-            st.markdown("**Strategic Recommendations:**")
-            for i, rec in enumerate(executive_summary['recommendations'], 1):
-                st.markdown(f"{i}. {rec}")
+    # Calculate real metrics from data
+    total_records = len(master_df)
+    unique_pages = master_df['page_id'].nunique() if 'page_id' in master_df.columns else 0
+    avg_score = master_df['final_score'].mean() if 'final_score' in master_df.columns else 0
+    
+    # Count issues by severity
+    critical_issues = len(master_df[master_df['descriptor'] == 'CRITICAL']) if 'descriptor' in master_df.columns else 0
+    concerns = len(master_df[master_df['descriptor'] == 'CONCERN']) if 'descriptor' in master_df.columns else 0
+    warnings = len(master_df[master_df['descriptor'] == 'WARN']) if 'descriptor' in master_df.columns else 0
+    good_scores = len(master_df[master_df['descriptor'] == 'GOOD']) if 'descriptor' in master_df.columns else 0
+    
+    # Display real metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Records", f"{total_records:,}")
+    with col2:
+        st.metric("Unique Pages", f"{unique_pages:,}")
+    with col3:
+        st.metric("Average Score", f"{avg_score:.1f}/10")
+    with col4:
+        st.metric("Critical Issues", critical_issues)
+    
+    st.markdown(f"""
+    **Audit Overview:**
+    - 🔴 Critical Issues: {critical_issues}
+    - 🟠 Concerns: {concerns}  
+    - 🟡 Warnings: {warnings}
+    - 🟢 Good Scores: {good_scores}
+    """)
+    
+    # Top issues by criteria
+    if 'criterion_id' in master_df.columns and 'final_score' in master_df.columns:
+        st.markdown("**Top Issues by Criteria:**")
+        low_scoring_criteria = master_df[master_df['final_score'] < 6].groupby('criterion_id')['final_score'].mean().sort_values().head(5)
+        for criterion, score in low_scoring_criteria.items():
+            st.markdown(f"- {criterion.replace('_', ' ').title()}: {score:.1f}/10")
 
 def generate_persona_performance_report(master_df, metrics_calc):
     """Generate persona performance report"""
@@ -519,20 +553,48 @@ def generate_content_tier_report(master_df, metrics_calc):
         st.dataframe(tier_performance)
 
 def generate_success_stories_report(master_df, metrics_calc):
-    """Generate success stories report"""
+    """Generate success stories report using real data"""
     st.markdown("#### 🌟 Success Stories Report")
     
-    success_stories = metrics_calc.calculate_success_stories()
+    if master_df.empty:
+        st.warning("⚠️ No data available for success stories.")
+        return
     
-    if success_stories:
-        st.markdown(f"**Found {len(success_stories)} success stories (score ≥ 7.7)**")
+    # Find high-scoring pages (success stories)
+    if 'final_score' in master_df.columns:
+        success_threshold = 7.5
+        success_stories = master_df[master_df['final_score'] >= success_threshold]
         
-        for i, story in enumerate(success_stories[:5], 1):
-            st.markdown(f"""
-            **#{i} - {story.get('page_title', 'Unknown Page')}**
-            - Score: {story['raw_score']:.1f}/10
-            - Tier: {story.get('tier', 'Unknown')}
-            """)
+        if not success_stories.empty:
+            st.markdown(f"**Found {len(success_stories)} success stories (score ≥ {success_threshold})**")
+            
+            # Group by page to show unique pages
+            if 'page_id' in success_stories.columns:
+                page_scores = success_stories.groupby(['page_id', 'url'])['final_score'].mean().sort_values(ascending=False).head(10)
+                
+                for i, ((page_id, url), score) in enumerate(page_scores.items(), 1):
+                    # Get additional info for this page
+                    page_data = success_stories[success_stories['page_id'] == page_id].iloc[0]
+                    tier = page_data.get('tier_name', 'Unknown') if 'tier_name' in page_data else 'Unknown'
+                    
+                    st.markdown(f"""
+                    **#{i} - Page {page_id}**
+                    - Score: {score:.1f}/10
+                    - Tier: {tier}
+                    - URL: {url[:100]}{'...' if len(url) > 100 else ''}
+                    """)
+            else:
+                # Fallback if no page grouping available
+                for i, (_, story) in enumerate(success_stories.head(5).iterrows(), 1):
+                    st.markdown(f"""
+                    **#{i} - Record {story.get('page_id', 'Unknown')}**
+                    - Score: {story['final_score']:.1f}/10
+                    - Tier: {story.get('tier_name', 'Unknown')}
+                    """)
+        else:
+            st.info(f"📊 No pages found with score ≥ {success_threshold}. Highest score: {master_df['final_score'].max():.1f}")
+    else:
+        st.warning("⚠️ No score data available for success stories analysis.")
 
 def display_export_center(master_df, datasets):
     """Display comprehensive export center"""
@@ -658,6 +720,282 @@ def display_bulk_export(master_df, datasets):
             file_name=f"brand_health_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
             mime="application/zip"
         )
+
+def display_html_reports(master_df):
+    """Display HTML report generation interface"""
+    st.markdown("## 🎨 HTML Brand Experience Reports")
+    
+    # Check if unified data exists
+    unified_data_path = 'audit_data/unified_audit_data.csv'
+    if not os.path.exists(unified_data_path):
+        st.error("❌ Unified audit data not found. Please ensure `audit_data/unified_audit_data.csv` exists.")
+        return
+    
+    # Load available personas
+    try:
+        unified_df = pd.read_csv(unified_data_path)
+        available_personas = sorted(unified_df['persona_id'].unique().tolist())
+    except Exception as e:
+        st.error(f"❌ Error loading persona data: {e}")
+        return
+    
+    if not available_personas:
+        st.warning("⚠️ No personas found in the unified data.")
+        return
+    
+    st.markdown("### 🎯 Report Configuration")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 👤 Persona Selection")
+        
+        # Option to generate for all personas or select specific ones
+        generation_mode = st.radio(
+            "Generation Mode",
+            ["Single Persona", "Multiple Personas", "All Personas", "Consolidated Report"],
+            key="html_generation_mode"
+        )
+        
+        if generation_mode == "Single Persona":
+            selected_persona = st.selectbox(
+                "Select Persona",
+                available_personas,
+                key="single_persona_select"
+            )
+            personas_to_generate = [selected_persona]
+            
+        elif generation_mode == "Multiple Personas":
+            selected_personas = st.multiselect(
+                "Select Personas",
+                available_personas,
+                default=[available_personas[0]] if available_personas else [],
+                key="multiple_personas_select"
+            )
+            personas_to_generate = selected_personas
+            
+        elif generation_mode == "All Personas":
+            personas_to_generate = available_personas
+            st.info(f"📊 Will generate reports for all {len(available_personas)} personas")
+            
+        else:  # Consolidated Report
+            personas_to_generate = ["CONSOLIDATED"]
+            st.info(f"📊 Will generate a single consolidated report across all {len(available_personas)} personas")
+    
+    with col2:
+        st.markdown("#### ⚙️ Report Options")
+        
+        # Report customization options
+        include_tier_analysis = st.checkbox("Include Tier Analysis", value=True)
+        include_persona_voice = st.checkbox("Include Persona Voice Insights", value=True)
+        include_recommendations = st.checkbox("Include Strategic Recommendations", value=True)
+        include_visual_brand = st.checkbox("Include Visual Brand Assessment", value=True)
+        
+        # Output options
+        st.markdown("**Output Options:**")
+        auto_open = st.checkbox("Auto-open reports in browser", value=False)
+        create_zip = st.checkbox("Create ZIP package for multiple reports", value=True)
+    
+    # Preview section
+    if personas_to_generate:
+        st.markdown("### 📋 Generation Preview")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Reports to Generate", len(personas_to_generate))
+        
+        with col2:
+            # Estimate data size
+            total_records = 0
+            for persona in personas_to_generate:
+                persona_data = unified_df[unified_df['persona_id'] == persona]
+                total_records += len(persona_data)
+            st.metric("Total Records", total_records)
+        
+        with col3:
+            estimated_time = len(personas_to_generate) * 2  # Rough estimate: 2 seconds per report
+            st.metric("Estimated Time", f"{estimated_time}s")
+        
+        # Show persona details
+        if len(personas_to_generate) <= 5:  # Only show details for small lists
+            st.markdown("**Personas to Generate:**")
+            for persona in personas_to_generate:
+                persona_data = unified_df[unified_df['persona_id'] == persona]
+                st.markdown(f"- **{persona}**: {len(persona_data)} records, {persona_data['page_id'].nunique()} pages")
+    
+    # Generation button
+    st.markdown("### 🚀 Generate Reports")
+    
+    if not personas_to_generate:
+        st.warning("⚠️ Please select at least one persona to generate reports.")
+    else:
+        if st.button("🎨 Generate HTML Reports", type="primary"):
+            generate_html_reports(personas_to_generate, {
+                'include_tier_analysis': include_tier_analysis,
+                'include_persona_voice': include_persona_voice,
+                'include_recommendations': include_recommendations,
+                'include_visual_brand': include_visual_brand,
+                'auto_open': auto_open,
+                'create_zip': create_zip
+            })
+
+def generate_html_reports(personas_to_generate, options):
+    """Generate HTML reports for selected personas"""
+    
+    # Initialize progress tracking
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    try:
+        # Initialize HTML report generator
+        generator = HTMLReportGenerator()
+        
+        generated_reports = []
+        
+        for i, persona in enumerate(personas_to_generate):
+            if persona == "CONSOLIDATED":
+                status_text.text(f"Generating consolidated report across all personas...")
+                progress_bar.progress((i + 1) / len(personas_to_generate))
+                
+                try:
+                    # Generate consolidated report
+                    output_path = generator.generate_consolidated_report()
+                    generated_reports.append({
+                        'persona': 'Consolidated Report',
+                        'path': output_path,
+                        'status': 'success'
+                    })
+                    
+                    st.success(f"✅ Generated consolidated report")
+                    
+                except Exception as e:
+                    st.error(f"❌ Error generating consolidated report: {e}")
+                    generated_reports.append({
+                        'persona': 'Consolidated Report',
+                        'path': None,
+                        'status': 'error',
+                        'error': str(e)
+                    })
+            else:
+                status_text.text(f"Generating report for {persona}...")
+                progress_bar.progress((i + 1) / len(personas_to_generate))
+                
+                try:
+                    # Generate individual persona report
+                    output_path = generator.generate_report(persona)
+                    generated_reports.append({
+                        'persona': persona,
+                        'path': output_path,
+                        'status': 'success'
+                    })
+                    
+                    st.success(f"✅ Generated report for {persona}")
+                    
+                except Exception as e:
+                    st.error(f"❌ Error generating report for {persona}: {e}")
+                    generated_reports.append({
+                        'persona': persona,
+                        'path': None,
+                        'status': 'error',
+                        'error': str(e)
+                    })
+        
+        # Update final status
+        successful_reports = [r for r in generated_reports if r['status'] == 'success']
+        failed_reports = [r for r in generated_reports if r['status'] == 'error']
+        
+        status_text.text(f"Completed: {len(successful_reports)} successful, {len(failed_reports)} failed")
+        
+        # Display results
+        display_generation_results(successful_reports, failed_reports, options)
+        
+    except Exception as e:
+        st.error(f"❌ Critical error during report generation: {e}")
+        status_text.text("Generation failed")
+
+def display_generation_results(successful_reports, failed_reports, options):
+    """Display the results of HTML report generation"""
+    
+    st.markdown("### 📊 Generation Results")
+    
+    if successful_reports:
+        st.success(f"✅ Successfully generated {len(successful_reports)} HTML reports")
+        
+        # Display successful reports
+        st.markdown("#### 🎉 Successful Reports")
+        
+        for report in successful_reports:
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                st.markdown(f"**{report['persona']}**")
+                st.markdown(f"`{report['path']}`")
+            
+            with col2:
+                # Get file size
+                try:
+                    file_size = os.path.getsize(report['path']) / 1024  # KB
+                    st.metric("Size", f"{file_size:.1f} KB")
+                except:
+                    st.metric("Size", "N/A")
+            
+            with col3:
+                # Open in browser button
+                if st.button(f"🌐 Open", key=f"open_{report['persona']}"):
+                    file_url = f"file://{os.path.abspath(report['path'])}"
+                    st.markdown(f"[Open Report]({file_url})")
+                    st.info(f"📋 Copy this URL to your browser: {file_url}")
+        
+        # Create ZIP package if requested and multiple reports
+        if options.get('create_zip', False) and len(successful_reports) > 1:
+            st.markdown("#### 📦 Download Package")
+            
+            if st.button("📦 Create ZIP Package"):
+                create_reports_zip_package(successful_reports)
+    
+    if failed_reports:
+        st.error(f"❌ Failed to generate {len(failed_reports)} reports")
+        
+        # Display failed reports
+        with st.expander("❌ Failed Reports Details"):
+            for report in failed_reports:
+                st.markdown(f"**{report['persona']}**: {report.get('error', 'Unknown error')}")
+
+def create_reports_zip_package(successful_reports):
+    """Create a ZIP package containing all generated HTML reports"""
+    
+    try:
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for report in successful_reports:
+                if os.path.exists(report['path']):
+                    # Add HTML file to zip
+                    zip_file.write(report['path'], f"{report['persona'].replace(' ', '_')}_report.html")
+            
+            # Add metadata
+            metadata = {
+                "generated_timestamp": datetime.now().isoformat(),
+                "total_reports": len(successful_reports),
+                "personas": [r['persona'] for r in successful_reports],
+                "generator_version": "1.0"
+            }
+            zip_file.writestr("package_metadata.json", json.dumps(metadata, indent=2))
+        
+        # Offer download
+        st.download_button(
+            label="📥 Download HTML Reports Package",
+            data=zip_buffer.getvalue(),
+            file_name=f"html_reports_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+            mime="application/zip"
+        )
+        
+        st.success("✅ ZIP package created successfully!")
+        
+    except Exception as e:
+        st.error(f"❌ Error creating ZIP package: {e}")
 
 if __name__ == "__main__":
     main() 

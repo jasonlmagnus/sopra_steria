@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Brand Experience Report | Sopra Steria</title>
+    <style>
+        /* Sopra Steria Brand Colors */
+        :root {
+            --primary-purple: #4D1D82;
+            --secondary-purple: #8b1d82;
+            --accent-red: #cf022b;
+            --accent-orange: #ef7d00;
+            --text-dark: #1d1d1b;
+            --text-gray: #666;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        }
+
+        .report-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Header */
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--secondary-purple) 50%, var(--accent-red) 100%);
+            color: var(--white);
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .report-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(45deg, transparent 50%, var(--white) 50%);
+        }
+
+        .sopra-logo {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .report-title {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .report-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .executive-summary {
+            background: rgba(255,255,255,0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 50px 40px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-purple);
+        }
+
+        .section-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5em;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--primary-purple);
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        /* Tier Analysis */
+        .tier-analysis {
+            display: grid;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .tier-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 6px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .tier-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tier-1 { border-left-color: var(--primary-purple); }
+        .tier-2 { border-left-color: var(--accent-red); }
+        .tier-3 { border-left-color: var(--accent-orange); }
+
+        .tier-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tier-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tier-score {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: auto;
+        }
+
+        .weightings {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .weighting {
+            background: var(--background-light);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid;
+        }
+
+        .brand-weight { border-color: var(--primary-purple); color: var(--primary-purple); }
+        .performance-weight { border-color: var(--accent-red); color: var(--accent-red); }
+
+        /* Evidence Grid */
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .evidence-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-top: 4px solid;
+        }
+
+        .working-evidence {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-top-color: var(--success-green);
+        }
+
+        .not-working-evidence {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-top-color: var(--danger-red);
+        }
+
+        .evidence-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            color: #155724;
+        }
+
+        .not-working-evidence .evidence-title {
+            color: #721c24;
+        }
+
+        .evidence-title .emoji {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .evidence-item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .working-evidence .evidence-item { border-left-color: var(--success-green); }
+        .not-working-evidence .evidence-item { border-left-color: var(--danger-red); }
+
+        .persona-voice {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 6px solid #2196f3;
+        }
+
+        .voice-header {
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .voice-quote {
+            font-style: italic;
+            color: var(--text-dark);
+            line-height: 1.7;
+        }
+
+        /* Visual Brand Section */
+        .brand-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--primary-purple);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .metric-description {
+            color: var(--text-gray);
+            font-size: 0.9em;
+        }
+
+        /* Positioning Strategy */
+        .positioning-strategy {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            color: var(--white);
+            padding: 50px 40px;
+            margin: 40px 0;
+            border-radius: 20px;
+        }
+
+        .strategy-title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .positioning-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .positioning-card {
+            background: rgba(255,255,255,0.15);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .card-text {
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* Persona Feedback */
+        .persona-feedback {
+            display: grid;
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .persona-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-left: 6px solid var(--accent-orange);
+        }
+
+        .persona-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .persona-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .resonance-indicator {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .high-resonance {
+            background: var(--success-green);
+            color: var(--white);
+        }
+
+        .medium-resonance {
+            background: var(--warning-yellow);
+            color: var(--text-dark);
+        }
+
+        .low-resonance {
+            background: var(--danger-red);
+            color: var(--white);
+        }
+
+        /* Action Items */
+        .action-section {
+            background: var(--background-light);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .action-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            border-top: 4px solid var(--accent-red);
+        }
+
+        .action-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .action-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .report-footer {
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-content {
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .report-header {
+                padding: 40px 20px;
+            }
+            
+            .evidence-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .section-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .report-container {
+                box-shadow: none;
+            }
+            
+            .content-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="sopra-logo">Sopra Steria</div>
+            <h1 class="report-title">Strategic Brand Experience Report</h1>
+            <p class="report-subtitle">Comprehensive Analysis and Recommendations for Benelux Market</p>
+            
+            <div class="executive-summary">
+                <p><strong>Executive Summary:</strong> This comprehensive audit of Sopra Steria's brand experience across 5 personas, 18 website touchpoints, and multiple channels reveals a systematic engagement crisis requiring strategic messaging realignment to address the innovation-security balance that drives all enterprise decision-making.</p>
+                
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">432</div>
+                        <div class="stat-label">Assessment Records</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5.6/10</div>
+                        <div class="stat-label">Average Experience Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Low Engagement Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">8.0/10</div>
+                        <div class="stat-label">Visual Brand Compliance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier 1 Analysis -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">1</div>
+                <div>
+                    <h2 class="section-title">Tier 1: Brand Positioning Analysis</h2>
+                    <p class="section-subtitle">Core brand positioning and corporate identity assessment</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-1">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Corporate Positioning Alignment Failure</h3>
+                        <div class="tier-score">6.2/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 80%</div>
+                        <div class="weighting performance-weight">Performance: 20%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">✅</span>
+                                Evidence - Working
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Regional Consistency:</strong> Netherlands/Belgium achieve identical 8.8/10 scores when tagline properly integrated
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Scale Credibility:</strong> "50,000 employees, 30 countries" establishes enterprise capability across all personas
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Visual Brand Integrity:</strong> 100% logo compliance maintains consistency
+                            </div>
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">❌</span>
+                                Evidence - Not Working
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Global Tagline Missing:</strong> Required "The world is how we shape it" absent triggers gating penalty (-2 points)
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Generic Differentiation:</strong> Messaging similar to many consultancies, lacks European positioning
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Digital Sovereignty Buried:</strong> EU trust advantages relegated to footer content
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="persona-voice">
+                        <div class="voice-header">Voice of Personas:</div>
+                        <div class="voice-quote">
+                            <strong>C-Suite Executive:</strong> <em>"The promise of efficiency and innovation is clear but very broad. It doesn't yet speak to specific C-suite concerns like AI or compliance"</em><br><br>
+                            <strong>Cybersecurity Decision Maker:</strong> <em>"Lacks security-specific messaging to immediately connect with a compliance-minded executive"</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier 2 Analysis -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">2</div>
+                <div>
+                    <h2 class="section-title">Tier 2: Value Propositions Strategy</h2>
+                    <p class="section-subtitle">Service offerings and technical capabilities evaluation</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-2">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Implementation-First Content Architecture Required</h3>
+                        <div class="tier-score">6.4/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 50%</div>
+                        <div class="weighting performance-weight">Performance: 50%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">🎯</span>
+                                Success Pattern Identified
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Azure Services (7.4/10):</strong> "From discovery and migration to modernization" provides clear methodology
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Security Integration:</strong> "Zero-trust-driven solutions" addresses core enterprise concerns
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Team Specifics:</strong> "50 consultants across Europe" builds implementation credibility
+                            </div>
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">⚠️</span>
+                                Critical Gaps
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Generic Value Props:</strong> "unlock the full potential" rated as meaningless across personas
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Missing Methodologies:</strong> Process clarity absent from most service descriptions
+                            </div>
+                            <div class="evidence-item">
+                                <strong>ROI Documentation:</strong> Business outcomes not quantified or demonstrated
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="persona-voice">
+                        <div class="voice-header">Voice of Personas:</div>
+                        <div class="voice-quote">
+                            <strong>Technical Influencer:</strong> <em>"This provides a clear, step-by-step methodology that helps me understand their approach and evaluate fit for our technical requirements"</em><br><br>
+                            <strong>Transformation Leader:</strong> <em>"I need concrete examples of operational improvements and measurable results, not abstract promises"</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier 3 Analysis -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">3</div>
+                <div>
+                    <h2 class="section-title">Tier 3: Functional Content Enhancement</h2>
+                    <p class="section-subtitle">Thought leadership and technical content optimization</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-3">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Technical Depth Gradient Implementation</h3>
+                        <div class="tier-score">6.1/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 30%</div>
+                        <div class="weighting performance-weight">Performance: 70%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">📚</span>
+                                Content Excellence
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Technical Specificity:</strong> LLM blog technical sections demonstrate real expertise
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Strategic Frameworks:</strong> DORA whitepaper provides valuable decision-making tools
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Data-Backed Insights:</strong> Gartner statistics provide credible strategic context
+                            </div>
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">📉</span>
+                                Engagement Issues
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Generic Openings:</strong> "LLMs have become essential tool" immediately signals shallow content
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Implementation Bridge Missing:</strong> Strategic insights don't connect to Sopra Steria capabilities
+                            </div>
+                            <div class="evidence-item">
+                                <strong>Executive Relevance Gap:</strong> Content lacks C-suite priority alignment
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="persona-voice">
+                        <div class="voice-header">Voice of Personas:</div>
+                        <div class="voice-quote">
+                            <strong>Technical Influencer:</strong> <em>"This provides concrete technical information that helps me understand implementation approaches and demonstrates real expertise"</em><br><br>
+                            <strong>Transformation Leader:</strong> <em>"This framework is useful for evaluating different AI initiatives and understanding strategic implications"</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Brand State -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎨</div>
+                <div>
+                    <h2 class="section-title">Visual Brand State Assessment</h2>
+                    <p class="section-subtitle">Strong foundation with critical execution gaps</p>
+                </div>
+            </div>
+
+            <div class="brand-metrics">
+                <div class="metric-card">
+                    <div class="metric-value">8.0/10</div>
+                    <div class="metric-label">Overall Score</div>
+                    <div class="metric-description">Strong and consistent brand implementation</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">Logo Compliance</div>
+                    <div class="metric-description">Exceptional consistency across all properties</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">9.2/10</div>
+                    <div class="metric-label">Best Page Score</div>
+                    <div class="metric-description">AI/Data Science page excellence</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">-2pts</div>
+                    <div class="metric-label">Critical Penalty</div>
+                    <div class="metric-description">Missing global homepage tagline</div>
+                </div>
+            </div>
+
+            <div class="evidence-grid">
+                <div class="evidence-box working-evidence">
+                    <div class="evidence-title">
+                        <span class="emoji">✨</span>
+                        Visual Excellence
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Brand Color Integration:</strong> Outstanding implementation on value proposition pages
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Typography Consistency:</strong> High adherence to Hurme Geometric Sans guidelines
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Regional Standardization:</strong> Netherlands/Belgium achieve identical visual treatment
+                    </div>
+                </div>
+
+                <div class="evidence-box not-working-evidence">
+                    <div class="evidence-title">
+                        <span class="emoji">🚨</span>
+                        Critical Issues
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Brand Messaging Violation:</strong> Missing corporate tagline triggers gating penalty
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Color Palette Variation:</strong> Conservative global vs. vibrant regional implementation
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Contact Friction:</strong> No digital forms across multiple touchpoints
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Media State -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">📱</div>
+                <div>
+                    <h2 class="section-title">Social Media State Analysis</h2>
+                    <p class="section-subtitle">Professional excellence with engagement gaps</p>
+                </div>
+            </div>
+
+            <div class="brand-metrics">
+                <div class="metric-card">
+                    <div class="metric-value">866K</div>
+                    <div class="metric-label">LinkedIn Followers</div>
+                    <div class="metric-description">Strong global professional presence</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">220K</div>
+                    <div class="metric-label">Facebook Reach</div>
+                    <div class="metric-description">UK page serves multiple audiences</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Low</div>
+                    <div class="metric-label">Regional Engagement</div>
+                    <div class="metric-description">Benelux accounts underperforming</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">High</div>
+                    <div class="metric-label">Brand Consistency</div>
+                    <div class="metric-description">Unified messaging across platforms</div>
+                </div>
+            </div>
+
+            <div class="evidence-grid">
+                <div class="evidence-box working-evidence">
+                    <div class="evidence-title">
+                        <span class="emoji">📈</span>
+                        Platform Strengths
+                    </div>
+                    <div class="evidence-item">
+                        <strong>LinkedIn Excellence:</strong> Hundreds of reactions per post with strong professional engagement
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Visual Standards:</strong> Professional imagery aligned with brand guidelines across platforms
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Content Consistency:</strong> Unified brand message delivery from global to regional
+                    </div>
+                </div>
+
+                <div class="evidence-box not-working-evidence">
+                    <div class="evidence-title">
+                        <span class="emoji">📉</span>
+                        Engagement Challenges
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Regional Disparity:</strong> Benelux Twitter (860 followers) vs Global LinkedIn success
+                    </div>
+                    <div class="evidence-item">
+                        <strong>Platform Strategy Gap:</strong> Social content disconnected from website conversion paths
+                    </div>
+                    <div class="evidence-item">
+                        <strong>B2B Focus Limitation:</strong> Instagram/Facebook underutilized for technical audiences
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secure Progress Positioning Strategy -->
+        <div class="positioning-strategy">
+            <h2 class="strategy-title">"Secure Progress" Positioning Strategy</h2>
+            
+            <div class="positioning-grid">
+                <div class="positioning-card">
+                    <span class="card-icon">🎯</span>
+                    <h3 class="card-title">Strategic Rationale</h3>
+                    <p class="card-text">Addresses universal enterprise tension between innovation ambition and risk management. Leverages European regulatory expertise as competitive advantage while enabling business growth narrative.</p>
+                </div>
+                
+                <div class="positioning-card">
+                    <span class="card-icon">🔒</span>
+                    <h3 class="card-title">Security-First Innovation</h3>
+                    <p class="card-text">Positions compliance and security as enablers, not blockers. Aligns with EU digital sovereignty trends and differentiates from US "move fast and break things" approach.</p>
+                </div>
+                
+                <div class="positioning-card">
+                    <span class="card-icon">📈</span>
+                    <h3 class="card-title">Measurable Advancement</h3>
+                    <p class="card-text">Creates framework for demonstrating business value while maintaining risk controls. Enables ROI demonstration that transformation leaders require.</p>
+                </div>
+            </div>
+
+            <div class="persona-feedback">
+                <div class="persona-card">
+                    <div class="persona-header">
+                        <div class="persona-name">Technology Innovation Leader</div>
+                        <div class="resonance-indicator high-resonance">High Resonance</div>
+                    </div>
+                    <div class="voice-quote">
+                        <em>"Secure Progress perfectly captures what we're trying to achieve - moving fast enough to stay competitive while ensuring we don't create vulnerabilities or compliance issues."</em>
+                    </div>
+                </div>
+
+                <div class="persona-card">
+                    <div class="persona-header">
+                        <div class="persona-name">Cybersecurity Decision Maker</div>
+                        <div class="resonance-indicator high-resonance">High Resonance</div>
+                    </div>
+                    <div class="voice-quote">
+                        <em>"Finally, positioning that puts security first while enabling business growth. This acknowledges that security isn't optional - it's the foundation for sustainable advancement."</em>
+                    </div>
+                </div>
+
+                <div class="persona-card">
+                    <div class="persona-header">
+                        <div class="persona-name">Transformation Leader</div>
+                        <div class="resonance-indicator medium-resonance">Medium Resonance</div>
+                    </div>
+                    <div class="voice-quote">
+                        <em>"Secure Progress makes sense from a risk perspective, but transformation programs need to show dramatic value, not just secure increments."</em>
+                    </div>
+                </div>
+
+                <div class="persona-card">
+                    <div class="persona-header">
+                        <div class="persona-name">Technical Influencer</div>
+                        <div class="resonance-indicator low-resonance">Low Resonance</div>
+                    </div>
+                    <div class="voice-quote">
+                        <em>"Secure Progress sounds like another marketing concept. I need to understand the actual technical methodology - what frameworks and implementation approaches does this translate to?"</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategic Recommendations -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <div>
+                    <h2 class="section-title">Strategic Recommendations</h2>
+                    <p class="section-subtitle">Integrated approach across web, social, and brand channels</p>
+                </div>
+            </div>
+
+            <!-- Tier 1 Recommendations -->
+            <div class="action-section">
+                <h3 style="color: var(--primary-purple); margin-bottom: 25px; font-size: 1.8em;">Tier 1: Brand Positioning Recommendations</h3>
+                
+                <div class="action-grid">
+                    <div class="action-card">
+                        <h4 class="action-title">🌐 Web Experience</h4>
+                        <ul class="action-list">
+                            <li>Implement "Secure Progress" positioning globally with consistent tagline</li>
+                            <li>Elevate European trust credentials to hero sections</li>
+                            <li>Create persona-specific entry points from homepage</li>
+                            <li>Add digital sovereignty messaging prominently</li>
+                            <li>Integrate contact forms across all brand pages</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">📱 Social Media</h4>
+                        <ul class="action-list">
+                            <li>Launch "Secure Progress" content series across LinkedIn</li>
+                            <li>Create European thought leadership video series</li>
+                            <li>Amplify regulatory expertise through executive LinkedIn posts</li>
+                            <li>Cross-pollinate successful global content to regional accounts</li>
+                            <li>Develop social-to-website conversion bridges</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">🎨 Brand Implementation</h4>
+                        <ul class="action-list">
+                            <li>Standardize vibrant color palette across all touchpoints</li>
+                            <li>Create "Secure Progress" visual identity system</li>
+                            <li>Develop European trust badge system</li>
+                            <li>Implement consistent messaging hierarchy</li>
+                            <li>Add brand tagline to all global properties</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier 2 Recommendations -->
+            <div class="action-section">
+                <h3 style="color: var(--accent-red); margin-bottom: 25px; font-size: 1.8em;">Tier 2: Value Propositions Recommendations</h3>
+                
+                <div class="action-grid">
+                    <div class="action-card">
+                        <h4 class="action-title">🌐 Web Experience</h4>
+                        <ul class="action-list">
+                            <li>Lead with implementation methodologies on all service pages</li>
+                            <li>Add "How We Deliver Secure Progress" sections to each service</li>
+                            <li>Integrate security considerations into all value propositions</li>
+                            <li>Create interactive process flows and capability demonstrations</li>
+                            <li>Add team credentials and certifications prominently</li>
+                            <li>Include ROI calculators and business impact tools</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">📱 Social Media</h4>
+                        <ul class="action-list">
+                            <li>Create service-specific LinkedIn showcase pages</li>
+                            <li>Develop "Behind the Methodology" content series</li>
+                            <li>Share implementation case studies with measurable outcomes</li>
+                            <li>Highlight team expertise through employee spotlights</li>
+                            <li>Create interactive polls about implementation challenges</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">🎨 Brand Implementation</h4>
+                        <ul class="action-list">
+                            <li>Apply Azure page success model across all services</li>
+                            <li>Create branded methodology visualization templates</li>
+                            <li>Develop security-first messaging framework</li>
+                            <li>Standardize proof point integration across services</li>
+                            <li>Implement consistent CTA and conversion paths</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tier 3 Recommendations -->
+            <div class="action-section">
+                <h3 style="color: var(--accent-orange); margin-bottom: 25px; font-size: 1.8em;">Tier 3: Functional Content Recommendations</h3>
+                
+                <div class="action-grid">
+                    <div class="action-card">
+                        <h4 class="action-title">🌐 Web Experience</h4>
+                        <ul class="action-list">
+                            <li>Implement technical depth gradient (executive summary → details → implementation)</li>
+                            <li>Add "How Sopra Steria Helps" bridges to all thought leadership</li>
+                            <li>Create persona-specific content tagging and filtering</li>
+                            <li>Develop implementation guides for strategic insights</li>
+                            <li>Add interactive elements to engage technical audiences</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">📱 Social Media</h4>
+                        <ul class="action-list">
+                            <li>Create LinkedIn newsletter focused on EU tech trends</li>
+                            <li>Develop expert Q&A series addressing implementation questions</li>
+                            <li>Share bite-sized technical insights with detailed blog links</li>
+                            <li>Create industry-specific content tracks</li>
+                            <li>Launch employee advocacy program for thought leadership</li>
+                        </ul>
+                    </div>
+
+                    <div class="action-card">
+                        <h4 class="action-title">🎨 Brand Implementation</h4>
+                        <ul class="action-list">
+                            <li>Create branded content templates for different technical depths</li>
+                            <li>Develop visual frameworks for complex technical concepts</li>
+                            <li>Implement consistent author branding and credibility markers</li>
+                            <li>Add interactive elements while maintaining brand consistency</li>
+                            <li>Create content series visual identity system</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Implementation Timeline -->
+            <div class="action-section">
+                <h3 style="color: var(--text-dark); margin-bottom: 25px; font-size: 1.8em;">Implementation Roadmap</h3>
+                
+                <div class="action-grid">
+                    <div class="action-card" style="border-top-color: var(--success-green);">
+                        <h4 class="action-title">Phase 1: Critical Fixes (0-30 days)</h4>
+                        <ul class="action-list">
+                            <li>Implement global homepage tagline (+2 point score recovery)</li>
+                            <li>Add contact forms across all touchpoints</li>
+                            <li>Launch "Secure Progress" positioning messaging</li>
+                            <li>Standardize color palette implementation</li>
+                            <li>Create technical-first messaging templates</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: var(--success-green);">Expected Impact: 6.2→8.2 homepage score, 15% engagement lift</p>
+                    </div>
+
+                    <div class="action-card" style="border-top-color: var(--warning-yellow);">
+                        <h4 class="action-title">Phase 2: Content Realignment (30-90 days)</h4>
+                        <ul class="action-list">
+                            <li>Implement methodology-first service page redesign</li>
+                            <li>Launch social media "Secure Progress" content series</li>
+                            <li>Create persona-specific content pathways</li>
+                            <li>Integrate EU regulatory expertise prominently</li>
+                            <li>Develop interactive capability demonstrations</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: #856404;">Expected Impact: 6.4→7.8 service page average, 25% conversion improvement</p>
+                    </div>
+
+                    <div class="action-card" style="border-top-color: var(--primary-purple);">
+                        <h4 class="action-title">Phase 3: Experience Optimization (90+ days)</h4>
+                        <ul class="action-list">
+                            <li>Build technical proof point library and integrations</li>
+                            <li>Launch advanced social media engagement programs</li>
+                            <li>Implement full brand experience personalization</li>
+                            <li>Create advanced interactive tools and assessments</li>
+                            <li>Develop comprehensive measurement and optimization system</li>
+                        </ul>
+                        <p style="margin-top: 15px; font-weight: bold; color: var(--primary-purple);">Expected Impact: 5.6→8.2 overall persona satisfaction, 40-60% engagement lift</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Metrics -->
+            <div class="action-section">
+                <h3 style="color: var(--text-dark); margin-bottom: 25px; font-size: 1.8em;">Success Metrics & KPIs</h3>
+                
+                <div class="brand-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">8.2/10</div>
+                        <div class="metric-label">Target Experience Score</div>
+                        <div class="metric-description">Up from current 5.6/10 average</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">60%</div>
+                        <div class="metric-label">Engagement Lift Target</div>
+                        <div class="metric-description">From 100% low to mixed high/medium</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">40%</div>
+                        <div class="metric-label">Conversion Improvement</div>
+                        <div class="metric-description">Through technical credibility enhancement</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">3x</div>
+                        <div class="metric-label">Social Engagement Target</div>
+                        <div class="metric-description">Regional account performance improvement</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-content">
+                <p><strong>Sopra Steria Strategic Brand Experience Report</strong></p>
+                <p>Comprehensive analysis based on 432 assessment records across 5 personas and 18 digital touchpoints</p>
+                <p style="margin-top: 20px; opacity: 0.7;">This report provides data-driven recommendations for transforming brand experience through "Secure Progress" positioning, implementation-first content strategy, and integrated persona engagement approach.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scrolling for internal links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add fade-in animation for cards
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            // Apply animation to cards
+            document.querySelectorAll('.tier-card, .action-card, .metric-card, .persona-card').forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+                observer.observe(card);
+            });
+
+            // Add hover effects for evidence items
+            document.querySelectorAll('.evidence-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                    this.style.transition = 'transform 0.2s ease';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+
+            // Add click to expand for long quotes
+            document.querySelectorAll('.voice-quote').forEach(quote => {
+                if (quote.textContent.length > 200) {
+                    quote.style.cursor = 'pointer';
+                    quote.title = 'Click to expand';
+                    
+                    let isExpanded = false;
+                    const originalText = quote.innerHTML;
+                    const truncatedText = originalText.substring(0, 200) + '...';
+                    
+                    quote.innerHTML = truncatedText;
+                    
+                    quote.addEventListener('click', function() {
+                        isExpanded = !isExpanded;
+                        this.innerHTML = isExpanded ? originalText : truncatedText;
+                        this.style.fontStyle = isExpanded ? 'normal' : 'italic';
+                    });
+                }
+            });
+
+            // Print optimization
+            window.addEventListener('beforeprint', function() {
+                document.querySelectorAll('.tier-card, .action-card').forEach(card => {
+                    card.style.pageBreakInside = 'avoid';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
