@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Brand Experience Report | Sopra Steria</title>
+    <style>
+        :root {
+            --primary-purple: #4D1D82;
+            --secondary-purple: #8b1d82;
+            --accent-red: #cf022b;
+            --accent-orange: #ef7d00;
+            --text-dark: #1d1d1b;
+            --text-gray: #666;
+            --background-light: #f8f9fa;
+            --white: #ffffff;
+            --success-green: #28a745;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--background-light) 0%, #e9ecef 100%);
+        }
+
+        .report-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--secondary-purple) 50%, var(--accent-red) 100%);
+            color: var(--white);
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .company-logo {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .report-title {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .report-subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .executive-summary {
+            background: rgba(255,255,255,0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 50px 40px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary-purple);
+        }
+
+        .section-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 1.5em;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--primary-purple);
+        }
+
+        .section-subtitle {
+            color: var(--text-gray);
+            margin-top: 5px;
+        }
+
+        .tier-analysis {
+            display: grid;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .tier-card {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-left: 6px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .tier-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tier-1 { border-left-color: var(--primary-purple); }
+        .tier-2 { border-left-color: var(--accent-red); }
+        .tier-3 { border-left-color: var(--accent-orange); }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tier-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tier-score {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-purple));
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .weightings {
+            display: flex;
+            gap: 15px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .weighting {
+            background: var(--background-light);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid;
+        }
+
+        .brand-weight { 
+            border-color: var(--primary-purple); 
+            color: var(--primary-purple); 
+        }
+        
+        .performance-weight { 
+            border-color: var(--accent-red); 
+            color: var(--accent-red); 
+        }
+
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .evidence-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-top: 4px solid;
+        }
+
+        .working-evidence {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-top-color: var(--success-green);
+        }
+
+        .not-working-evidence {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-top-color: var(--danger-red);
+        }
+
+        .evidence-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            color: #155724;
+        }
+
+        .not-working-evidence .evidence-title {
+            color: #721c24;
+        }
+
+        .evidence-title .emoji {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .evidence-item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            border-left: 3px solid;
+        }
+
+        .working-evidence .evidence-item { 
+            border-left-color: var(--success-green); 
+        }
+        
+        .not-working-evidence .evidence-item { 
+            border-left-color: var(--danger-red); 
+        }
+
+        .persona-voice {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 6px solid #2196f3;
+        }
+
+        .voice-header {
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .voice-quote {
+            font-style: italic;
+            color: var(--text-dark);
+            line-height: 1.7;
+        }
+
+        .brand-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--primary-purple);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .metric-description {
+            color: var(--text-gray);
+            font-size: 0.9em;
+        }
+
+        .action-section {
+            background: var(--background-light);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .action-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            border-top: 4px solid var(--accent-red);
+        }
+
+        .action-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .action-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .report-footer {
+            background: var(--text-dark);
+            color: var(--white);
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-content {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .report-header {
+                padding: 40px 20px;
+            }
+            
+            .evidence-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .section-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="company-logo">Sopra Steria</div>
+            <h1 class="report-title">Strategic Brand Experience Report</h1>
+            <p class="report-subtitle">Persona-specific brand experience analysis for The Benelux Cybersecurity Decision Maker</p>
+            
+            <div class="executive-summary">
+                <p><strong>Executive Summary:</strong> This comprehensive brand audit analyzed 18 pages 
+            across 3 content tiers, evaluating 90 
+            criteria. The overall brand experience score is 5.2/10, 
+            with 0 critical issues, 26 concerns, 
+            and 45 warnings identified.</p>
+                
+                <div class="summary-stats">
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">Pages Analyzed</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">5.2/10</div>
+                        <div class="stat-label">Overall Score</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">Critical Issues</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">71</div>
+                        <div class="stat-label">Areas for Improvement</div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier Analysis Sections -->
+        
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">1</div>
+                <div>
+                    <h2 class="section-title">Functional Content</h2>
+                    <p class="section-subtitle">Analysis of 5 pages with 25 criteria evaluated</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-1">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Functional Content Performance Analysis</h3>
+                        <div class="tier-score">5.3/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 30%</div>
+                        <div class="weighting performance-weight">Performance: 70%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">✅</span>
+                                Evidence - Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 1:</strong> **Evidence:** The blog emphasizes collaboration, trust, and cybersecurity within ecosystems, aligning with Sopra Steria’s positioning as a digital transformation and cybersecurity consulting firm. Quo...
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 2:</strong> **Evidence:** The blog discusses ecosystem collaboration and trust challenges, referencing common industry themes like data sharing, risk, and regulatory compliance. The inclusion of a client example ...
+                            </div>
+                            
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">❌</span>
+                                Evidence - Not Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Improvement Area 3:</strong> **Evidence:** The blog clearly states benefits of ecosystem collaboration: improved efficiency, risk mitigation, innovation, and competitive advantage. It also stresses the importance of trust, cybers...
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">2</div>
+                <div>
+                    <h2 class="section-title">Brand Positioning</h2>
+                    <p class="section-subtitle">Analysis of 7 pages with 35 criteria evaluated</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-2">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Brand Positioning Performance Analysis</h3>
+                        <div class="tier-score">4.9/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 80%</div>
+                        <div class="weighting performance-weight">Performance: 20%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">✅</span>
+                                Evidence - Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 1:</strong> The page is a 404 error page ("Page not found") with no visible content or brand messaging.
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 2:</strong> No content present to differentiate Sopra Steria Benelux from competitors or showcase uniqueness.
+                            </div>
+                            
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">❌</span>
+                                Evidence - Not Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Improvement Area 3:</strong> No value proposition or messaging visible; page is a broken link with error messages only.
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">3</div>
+                <div>
+                    <h2 class="section-title">Value Propositions</h2>
+                    <p class="section-subtitle">Analysis of 6 pages with 30 criteria evaluated</p>
+                </div>
+            </div>
+
+            <div class="tier-analysis">
+                <div class="tier-card tier-3">
+                    <div class="tier-header">
+                        <h3 class="tier-title">Value Propositions Performance Analysis</h3>
+                        <div class="tier-score">5.6/10</div>
+                    </div>
+                    
+                    <div class="weightings">
+                        <div class="weighting brand-weight">Brand Focus: 50%</div>
+                        <div class="weighting performance-weight">Performance: 50%</div>
+                    </div>
+
+                    <div class="evidence-grid">
+                        <div class="evidence-box working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">✅</span>
+                                Evidence - Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 1:</strong> The page communicates Sopra Steria Next’s commitment to operational efficiency and digital transformation through automation and process optimisation. It references a sizeable European consulting team...
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Effective Element 2:</strong> The content lists common services (e.g., robotic process automation, hyper automation, Pega low-code solutions) but does not clearly differentiate Sopra Steria from competitors. There are no unique me...
+                            </div>
+                            
+                        </div>
+
+                        <div class="evidence-box not-working-evidence">
+                            <div class="evidence-title">
+                                <span class="emoji">❌</span>
+                                Evidence - Not Working
+                            </div>
+                            
+                            <div class="evidence-item">
+                                <strong>Improvement Area 3:</strong> The value proposition centers on improving operational efficiency and innovation through automation. While this is relevant, it is not clearly tailored to the persona’s priorities such as regulatory c...
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Brand Metrics Section -->
+        
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎨</div>
+                <div>
+                    <h2 class="section-title">Brand Health Metrics</h2>
+                    <p class="section-subtitle">Key performance indicators for The Benelux Cybersecurity Decision Maker</p>
+                </div>
+            </div>
+
+            <div class="brand-metrics">
+                
+                <div class="metric-card">
+                    <div class="metric-value">5.4/10</div>
+                    <div class="metric-label">Brand Consistency</div>
+                    <div class="metric-description">Overall brand alignment across all touchpoints</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">33.3%</div>
+                    <div class="metric-label">Compliance Rate</div>
+                    <div class="metric-description">Percentage of criteria meeting brand standards</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">5.0/10</div>
+                    <div class="metric-label">Sentiment Score</div>
+                    <div class="metric-description">Average sentiment rating across content</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-value">2.0/10</div>
+                    <div class="metric-label">Engagement Score</div>
+                    <div class="metric-description">Predicted engagement level for this persona</div>
+                </div>
+                
+            </div>
+        </div>
+        
+
+        <!-- Strategic Recommendations -->
+        <div class="content-section">
+            <div class="section-header">
+                <div class="section-icon">🎯</div>
+                <div>
+                    <h2 class="section-title">Strategic Recommendations</h2>
+                    <p class="section-subtitle">Prioritized action plan for The Benelux Cybersecurity Decision Maker</p>
+                </div>
+            </div>
+
+            
+            <div class="action-section">
+                <h3 style="color: #dc3545; margin-bottom: 25px; font-size: 1.8em;">🔴 High Impact Improvements</h3>
+                
+                <div class="action-grid">
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Address Brand Differentiation</h4>
+                        <ul class="action-list">
+                            
+                            <li>The content lists common services (e.g., robotic process automation, hyper automation, Pega low-code solutions) but does not clearly differentiate Sopra Steria from competitors. There are no unique me...</li>
+                            
+                            <li>Impact Score: 2.8/10</li>
+                            
+                            <li>Complexity: Medium</li>
+                            
+                        </ul>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Address Trust Credibility Signals</h4>
+                        <ul class="action-list">
+                            
+                            <li>The page includes some client references in the “Our success stories” section (e.g., Curium, CZ Zorgverzekeringen), but these are not elaborated or linked to detailed case studies. There is no explici...</li>
+                            
+                            <li>Impact Score: 2.5/10</li>
+                            
+                            <li>Complexity: Medium</li>
+                            
+                        </ul>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Address Value Proposition Clarity</h4>
+                        <ul class="action-list">
+                            
+                            <li>The value proposition centers on improving operational efficiency and innovation through automation. While this is relevant, it is not clearly tailored to the persona’s priorities such as regulatory c...</li>
+                            
+                            <li>Impact Score: 2.5/10</li>
+                            
+                            <li>Complexity: Medium</li>
+                            
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="action-section">
+                <h3 style="color: #28a745; margin-bottom: 25px; font-size: 1.8em;">⚡ Quick Wins</h3>
+                
+                <div class="action-grid">
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Quick Fix: Calltoaction Effectiveness</h4>
+                        <ul class="action-list">
+                            
+                            <li>**Evidence:** The blog ends without a clear, persona-relevant call to action. There is no direct invitation to contact Sopra Steria for cybersecurity ecosystem consulting, download a whitepaper, or at...</li>
+                            
+                            <li>Impact Score: 1.0/10</li>
+                            
+                            <li>Complexity: Low</li>
+                            
+                        </ul>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Quick Fix: Brand Differentiation</h4>
+                        <ul class="action-list">
+                            
+                            <li>**Evidence:** The blog discusses ecosystem collaboration and trust challenges, referencing common industry themes like data sharing, risk, and regulatory compliance. The inclusion of a client example ...</li>
+                            
+                            <li>Impact Score: 1.0/10</li>
+                            
+                            <li>Complexity: Low</li>
+                            
+                        </ul>
+                    </div>
+                    
+                    <div class="action-card">
+                        <h4 class="action-title">Quick Fix: Value Proposition Clarity</h4>
+                        <ul class="action-list">
+                            
+                            <li>The value proposition is implied through broad statements about digital transformation, innovation, and consulting expertise. However, it is not clearly articulated in terms of specific benefits for c...</li>
+                            
+                            <li>Impact Score: 1.4/10</li>
+                            
+                            <li>Complexity: Low</li>
+                            
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <div class="footer-content">
+                <p><strong>Sopra Steria Strategic Brand Experience Report</strong></p>
+                <p>Generated on July 02, 2025 using unified audit data</p>
+                <p style="margin-top: 20px; opacity: 0.7;">Based on multi-criteria brand experience assessment methodology</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
