@@ -183,6 +183,79 @@ sopra_steria/
 4. **Strategic Pattern Recognition**: Cross-persona trend analysis
 5. **Visualization Generation**: Interactive chart and graph creation
 
+### Social Media Backfill Utility
+
+The audit tool includes a specialized utility for managing social media platform data:
+
+**Location**: `audit_tool/social_media_backfill.py`
+
+**Features**:
+
+- Adds missing social media platform entries (Instagram, Facebook, Twitter/X)
+- Updates scores based on master social media audit findings
+- Validates current state and provides detailed reporting
+- Creates automatic backups before any changes
+
+**Usage**:
+
+```bash
+# Navigate to audit tool directory
+cd audit_tool
+
+# Check current social media data state
+python social_media_backfill.py --check
+
+# Add missing social media platforms to CSV
+python social_media_backfill.py --add-platforms
+
+# Update social media scores from master audit
+python social_media_backfill.py --update-scores
+
+# Complete backfill process (recommended)
+python social_media_backfill.py --full-backfill
+```
+
+**Supported Platforms**:
+
+- **LinkedIn**: `/company/soprasteria-benelux/` (6.8/10 average score)
+- **Instagram**: `@soprasteria_bnl` (6.2/10 average score)
+- **Facebook**: `/soprasteriabenelux/` (2.8/10 average score)
+- **Twitter/X**: `@SopraSteria_Bnl` (1.2/10 average score)
+
+**Persona-Specific Scoring**:
+
+- P1 (C-Suite): LinkedIn 8.0, Instagram 7.0, Facebook 4.0, Twitter 2.0
+- P2 (Tech Leaders): LinkedIn 8.0, Instagram 6.0, Facebook 3.0, Twitter 1.0
+- P3 (Programme): LinkedIn 6.0, Instagram 8.0, Facebook 2.0, Twitter 1.0
+- P4 (Cybersecurity): LinkedIn 5.0, Instagram 3.0, Facebook 3.0, Twitter 1.0
+- P5 (Tech Influencers): LinkedIn 7.0, Instagram 7.0, Facebook 2.0, Twitter 1.0
+
+### Social Media Dashboard Integration
+
+The Social Media Analysis dashboard (`8_🔍_Social_Media_Analysis.py`) has been successfully migrated from static markdown to live CSV data:
+
+**✅ Migration Benefits**:
+
+- **Live Data**: Real-time access to updated social media scores from unified audit data
+- **Dynamic Analytics**: Interactive filtering by platform and persona
+- **Comprehensive Insights**: Automated generation of key insights and recommendations
+- **Executive Summary**: High-level metrics including health status and critical issues
+- **Action Plans**: Prioritized recommendations with timelines and expected impact
+
+**📊 Current Platform Performance** (Live from CSV):
+
+- **LinkedIn**: 6.5/10 (⚠️ Moderate) - Strongest platform with professional content
+- **Instagram**: 6.2/10 (⚠️ Moderate) - Strong visual storytelling, needs technical depth
+- **Facebook**: 2.8/10 (🚨 Critical) - Requires comprehensive strategy improvement
+- **Twitter/X**: 1.2/10 (🚨 Critical) - Platform abandonment, immediate revival needed
+
+**🎯 Key Features**:
+
+- **Platform Performance Matrix**: Persona-specific scores for each social media platform
+- **Interactive Heatmaps**: Visual representation of platform-persona performance
+- **Actionable Recommendations**: High/medium priority actions with timelines
+- **Executive Metrics**: Critical issues, success cases, and quick win opportunities
+
 ## 📋 Usage Examples
 
 ### Dashboard Navigation

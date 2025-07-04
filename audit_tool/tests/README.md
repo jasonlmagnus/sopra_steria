@@ -51,6 +51,53 @@ The test suite covers:
 - Average scores should be between 0-10
 - Output files should be created in specified directories
 
+## Social Media Backfill Testing
+
+The audit tool includes a social media backfill utility that can be tested independently:
+
+### Testing Social Media Backfill
+
+```bash
+# From the audit_tool directory
+cd ../
+
+# Check current state (safe, read-only operation)
+python social_media_backfill.py --check
+
+# Test help documentation
+python social_media_backfill.py --help
+```
+
+### Expected Social Media Test Results
+
+When running `--check`, you should see:
+
+- **4 platforms**: LinkedIn, Instagram, Facebook, Twitter/X
+- **35 total entries**: 5 entries per platform × 4 platforms + 15 existing LinkedIn entries
+- **Correct score averages**:
+  - LinkedIn: ~6.5 (expected: 6.8)
+  - Instagram: 6.2 (expected: 6.2)
+  - Facebook: 2.8 (expected: 2.8)
+  - Twitter: 1.2 (expected: 1.2)
+
+### Social Media Backfill Test Process
+
+1. **Pre-test backup**: Utility automatically creates backups before changes
+2. **Platform detection**: Tests URL pattern matching for all 4 platforms
+3. **Persona mapping**: Verifies persona text to persona code conversion
+4. **Score application**: Tests score updates from master social media audit
+5. **Validation**: Confirms final scores match expected platform averages
+
+### Social Media Test Troubleshooting
+
+If social media backfill tests fail:
+
+1. **CSV Path Issues**: Verify `audit_data/unified_audit_data.csv` exists
+2. **Backup Creation**: Check write permissions in `audit_data/` directory
+3. **Platform Detection**: Ensure URLs contain expected platform keywords
+4. **Persona Mapping**: Verify persona names match expected patterns
+5. **Score Validation**: Confirm scores are within 0-10 range
+
 ## Troubleshooting
 
 If tests fail:
