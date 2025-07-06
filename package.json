@@ -1,0 +1,23 @@
+{
+  "name": "sopra-steria-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "lint": "eslint \"{api,web}/**/*.{js,ts,tsx}\"",
+    "format": "prettier --check \"{api,web}/**/*.{js,ts,tsx,md}\"",
+    "test": "pnpm -r test --if-present",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "husky": "^9.0.11"
+  }
+}

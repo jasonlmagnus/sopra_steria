@@ -12,14 +12,14 @@ python3 -m pip install -r local_requirements.txt
 # 2. Node.js dependencies for frontend analysis (no build)
 echo "🟢 Installing Node.js dependencies for web..."
 if [ -f "web/package.json" ]; then
-    (cd web && npm install)
+    (cd web && pnpm install)
 else
     echo "web/package.json not found, skipping web dependencies."
 fi
 
 echo "🟢 Installing Node.js dependencies for api..."
 if [ -f "api/package.json" ]; then
-    (cd api && npm install)
+    (cd api && pnpm install)
 else
     echo "api/package.json not found, skipping api dependencies."
 fi
