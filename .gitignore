@@ -35,7 +35,7 @@ venv.bak/
 
 # Data Files (potentially sensitive)
 #*.csv
-*.json
+#*.json
 *.xlsx
 *.xls
 *.pdf
@@ -190,6 +190,7 @@ temp/
 
 # Large binary files
 *.png
+!logo.png
 *.jpg
 *.jpeg
 *.gif
