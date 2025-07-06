@@ -44,13 +44,13 @@ from components.brand_styling import get_brand_css
 st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
-    """Reports & Export - Comprehensive Data & Audit Management"""
+    """Reports Export Dashboard"""
     
-    # Header
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
     <div class="main-header">
-        <h1>📋 Reports & Export</h1>
-        <p>How do I analyze data and run new audits?</p>
+        <h1>📋 Reports Export</h1>
+        <p>Generate and export comprehensive audit reports and data summaries</p>
     </div>
     """, unsafe_allow_html=True)
     

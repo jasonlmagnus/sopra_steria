@@ -30,12 +30,13 @@ st.set_page_config(
 st.markdown(get_complete_brand_css(), unsafe_allow_html=True)
 
 def main():
-    """Persona Insights - Comprehensive Persona Analysis"""
+    """Main function for Persona Insights dashboard"""
     
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
-    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
-        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">Persona Insights</h1>
-        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Understand how different personas experience your brand across touchpoints</p>
+    <div class="main-header">
+        <h1>👥 Persona Insights</h1>
+        <p>Cross-persona performance analysis and strategic persona comparison</p>
     </div>
     """, unsafe_allow_html=True)
     

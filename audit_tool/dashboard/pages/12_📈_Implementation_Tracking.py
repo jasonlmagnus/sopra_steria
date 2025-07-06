@@ -30,8 +30,15 @@ st.set_page_config(
 apply_perfect_styling()
 
 def main():
-    # Create standardized page header
-    create_main_header("📈 Implementation Tracking", "Monitor progress on strategic recommendations")
+    """Implementation Tracking Dashboard"""
+    
+    # Header with brand styling - consistent with Run Audit page
+    st.markdown("""
+    <div class="main-header">
+        <h1>📈 Implementation Tracking</h1>
+        <p>Monitor progress on strategic initiatives and track optimization implementation</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Sample implementation data for demonstration
     sample_data = {

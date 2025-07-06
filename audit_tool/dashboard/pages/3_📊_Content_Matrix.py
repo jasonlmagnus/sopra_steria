@@ -31,13 +31,13 @@ from components.brand_styling import get_brand_css
 st.markdown(get_brand_css(), unsafe_allow_html=True)
 
 def main():
-    """Content Matrix - Comprehensive Content Analysis"""
+    """Content Matrix Dashboard - Enhanced version with unified data and advanced analytics"""
     
-    # Header
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
     <div class="main-header">
         <h1>📊 Content Matrix</h1>
-        <p>Where do we pass/fail across content types?</p>
+        <p>Comprehensive content analysis with performance scoring and strategic insights</p>
     </div>
     """, unsafe_allow_html=True)
     

@@ -57,8 +57,16 @@ st.set_page_config(
 # SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
 apply_perfect_styling()
 
-# Create standardized page header
-create_main_header("🎨 Visual Brand Hygiene", "Interactive dashboard for brand consistency")
+def main():
+    """Visual Brand Hygiene Dashboard"""
+    
+    # Header with brand styling - consistent with Run Audit page
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎨 Visual Brand Hygiene</h1>
+        <p>Visual consistency analysis and brand standards compliance assessment</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Load data
 @st.cache_data
@@ -816,4 +824,7 @@ with st.sidebar:
     st.markdown("### Quick Stats")
     st.metric("Avg Logo Score", f"{df['Logo Compliance'].mean():.1f}/10")
     st.metric("Avg Color Score", f"{df['Color Palette'].mean():.1f}/10")
-    st.metric("Avg Typography", f"{df['Typography'].mean():.1f}/10") 
+    st.metric("Avg Typography", f"{df['Typography'].mean():.1f}/10")
+
+if __name__ == "__main__":
+    main() 

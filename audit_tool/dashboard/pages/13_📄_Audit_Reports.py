@@ -150,8 +150,16 @@ def regenerate_reports():
         st.error(f"Error during report generation: {e}")
         return []
 
-# Main page content
-create_main_header("📄 Audit Report Viewer", "View and download comprehensive brand experience reports")
+def main():
+    """Audit Reports Dashboard"""
+    
+    # Header with brand styling - consistent with Run Audit page
+    st.markdown("""
+    <div class="main-header">
+        <h1>📄 Audit Reports</h1>
+        <p>Access and manage comprehensive audit reports and documentation</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Scan for audit reports
 reports = scan_html_reports()

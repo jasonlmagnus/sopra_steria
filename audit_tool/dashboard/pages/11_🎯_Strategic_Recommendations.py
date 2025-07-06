@@ -483,9 +483,13 @@ class StrategicRecommendationEngine:
     
     def get_friendly_page_title(self, url_slug: str) -> str:
         """Convert URL slug to friendly page title"""
-        if not url_slug:
+        # Handle NaN/None values
+        if pd.isna(url_slug) or not url_slug:
             return "Unknown Page"
-            
+        
+        # Convert to string to handle float values
+        url_slug = str(url_slug)
+        
         # Remove common prefixes
         title = url_slug.replace('www', '').replace('soprasteria', '').replace('com', '').replace('be', '').replace('nl', '')
         
@@ -515,9 +519,12 @@ class StrategicRecommendationEngine:
 
     def get_category_from_criterion(self, criterion_id: str) -> str:
         """Map criterion IDs to meaningful categories"""
-        if not criterion_id:
+        # Handle NaN/None values
+        if pd.isna(criterion_id) or not criterion_id:
             return 'General'
-            
+        
+        # Convert to string to handle float values    
+        criterion_id = str(criterion_id)
         criterion_lower = criterion_id.lower()
         
         # Brand and messaging
@@ -637,13 +644,15 @@ class StrategicRecommendationEngine:
         return themed_recommendations
 
 def main():
-    # Configure page layout for consistency with other pages
-    st.set_page_config(
-        page_title="Strategic Recommendations",
-        page_icon="🎯",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
+    """Strategic Recommendations Dashboard"""
+    
+    # Header with brand styling - consistent with Run Audit page
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎯 Strategic Recommendations</h1>
+        <p>Executive-level insights and actionable strategies for brand optimization</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
 apply_perfect_styling()

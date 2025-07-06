@@ -62,13 +62,13 @@ def extract_persona_quotes(text):
     return cleaned_quotes[:3]  # Return top 3 quotes
 
 def main():
-    """Opportunity & Impact - Comprehensive Improvement Roadmap"""
+    """Main dashboard function"""
     
-    # Header
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
     <div class="main-header">
-        <h1>💡 Opportunity & Impact</h1>
-        <p>Which gaps matter most and what should we do?</p>
+        <h1>💡 Opportunity Impact</h1>
+        <p>Strategic optimization opportunities with impact analysis and priority scoring</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -165,8 +165,12 @@ def display_opportunity_controls(master_df):
         )
     
     with col4:
-        # Tier filter
-        tier_options = ['All'] + sorted(master_df['tier'].unique().tolist()) if 'tier' in master_df.columns else ['All']
+        # Tier filter - handle mixed data types properly
+        if 'tier' in master_df.columns:
+            tier_values = [str(x) for x in master_df['tier'].dropna().unique() if pd.notna(x)]
+            tier_options = ['All'] + sorted(tier_values)
+        else:
+            tier_options = ['All']
         selected_tier = st.selectbox(
             "🏗️ Content Tier",
             tier_options,

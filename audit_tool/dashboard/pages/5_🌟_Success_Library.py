@@ -63,13 +63,13 @@ def extract_persona_quotes_success(text):
     return cleaned_quotes[:3]  # Return top 3 quotes
 
 def main():
-    """Success Library - Comprehensive Success Analysis"""
+    """Success Library - Showcase of high-performing content"""
     
-    # Header
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
     <div class="main-header">
         <h1>🌟 Success Library</h1>
-        <p>What already works that we can emulate?</p>
+        <p>Best practice examples and high-performing content showcase</p>
     </div>
     """, unsafe_allow_html=True)
     

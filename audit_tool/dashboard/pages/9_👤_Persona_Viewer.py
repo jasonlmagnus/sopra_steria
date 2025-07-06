@@ -295,13 +295,13 @@ def format_markdown_content(content):
     return sections
 
 def main():
-    """Main Persona Viewer application"""
+    """Persona Viewer - Enhanced version with voice analysis and brand alignment"""
     
-    # Page header with brand styling
+    # Header with brand styling - consistent with Run Audit page
     st.markdown("""
-    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
-        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">👤 Persona Viewer</h1>
-        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Deep-dive analysis of individual personas combining strategic context, journey experience, and performance data</p>
+    <div class="main-header">
+        <h1>👤 Persona Viewer</h1>
+        <p>In-depth persona analysis with voice profiling and content alignment insights</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -651,8 +651,13 @@ def display_persona_voice_analysis(persona_id, performance_data):
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        # Get available tiers
-        available_tiers = sorted(performance_data['tier_name'].unique()) if 'tier_name' in performance_data.columns else []
+        # Get available tiers - filter out NaN values and convert to strings
+        if 'tier_name' in performance_data.columns:
+            tier_values = [str(x) for x in performance_data['tier_name'].dropna().unique() if pd.notna(x)]
+            available_tiers = sorted(tier_values)
+        else:
+            available_tiers = []
+            
         if available_tiers:
             selected_tiers = st.multiselect(
                 "🏷️ Filter by Content Tier:",
