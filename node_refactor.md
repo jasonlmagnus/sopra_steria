@@ -34,6 +34,7 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 1. Merge current `dev` work to `codex` (done).
 2. Create the `/api` and `/web` folders with minimal `package.json`.
 3. Set up CI job that runs both `pytest` **and** `npm test`.
+4. Expose Python audit functions via FastAPI service.
+5. Install `axios` in the API to call the FastAPI endpoints.
+6. Begin migrating the dataset list page to React.
 
----
-For detailed task breakdowns use the project board **"Node Refactor"**. 

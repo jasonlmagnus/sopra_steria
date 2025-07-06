@@ -10,9 +10,11 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Stub routes for `/datasets`, `/pages`, `/recommendations`
 - Swagger UI documentation
 - Additional API tests (including docs endpoint)
+- Added axios dependency for future FastAPI integration
 
 ## In Progress
 - Bridge Python functionality via FastAPI or shell wrappers
+- Begin migrating dataset list page to React
 - Recreate Streamlit visuals using React components
 
 ## Todo
