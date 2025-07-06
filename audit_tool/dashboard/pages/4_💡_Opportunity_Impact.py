@@ -62,13 +62,13 @@ def extract_persona_quotes(text):
     return cleaned_quotes[:3]  # Return top 3 quotes
 
 def main():
-    """Main dashboard function"""
+    """Opportunity & Impact - Comprehensive Improvement Roadmap"""
     
-    # Header with brand styling - consistent with Run Audit page
+    # Header
     st.markdown("""
     <div class="main-header">
-        <h1>💡 Opportunity Impact</h1>
-        <p>Strategic optimization opportunities with impact analysis and priority scoring</p>
+        <h1>💡 Opportunity & Impact</h1>
+        <p>Which gaps matter most and what should we do?</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -114,7 +114,8 @@ def main():
         return
     
     # Initialize metrics calculator
-    recommendations_df = datasets.get('recommendations') if datasets else None
+    recs = datasets.get('recommendations') if datasets and hasattr(datasets, 'get') else None
+    recommendations_df = recs if isinstance(recs, pd.DataFrame) else pd.DataFrame()
     metrics_calc = BrandHealthMetricsCalculator(master_df, recommendations_df)
     
     # Opportunity analysis controls
@@ -165,10 +166,10 @@ def display_opportunity_controls(master_df):
         )
     
     with col4:
-        # Tier filter - handle mixed data types properly
+        # Tier filter
         if 'tier' in master_df.columns:
-            tier_values = [str(x) for x in master_df['tier'].dropna().unique() if pd.notna(x)]
-            tier_options = ['All'] + sorted(tier_values)
+            unique_tiers = master_df['tier'].dropna().astype(str).unique().tolist()
+            tier_options = ['All'] + sorted(unique_tiers)
         else:
             tier_options = ['All']
         selected_tier = st.selectbox(
@@ -272,7 +273,10 @@ def display_impact_overview(metrics_calc, master_df):
             }).round(2)
             
             tier_summary.columns = ['Count', 'Avg Impact', 'Max Impact', 'Avg Current Score']
-            tier_summary = tier_summary.sort_values('Avg Impact', ascending=False)
+            if not tier_summary.empty and 'Avg Impact' in tier_summary.columns:
+                tier_summary = tier_summary.reset_index()
+                tier_summary['Avg Impact'] = pd.to_numeric(tier_summary['Avg Impact'], errors='coerce')
+                tier_summary = tier_summary.sort_values('Avg Impact', ascending=False)
             
             # Display tier summary
             for tier_name, row in tier_summary.iterrows():
@@ -728,7 +732,7 @@ def display_criteria_correlation_analysis(master_df, criteria_cols):
                 st.markdown(f"""
                 <div class="criteria-insight">
                     <strong>{corr_strength} {corr_type} Correlation:</strong><br>
-                    {row['criteria1'].replace('_', ' ').title()} ↔ {row['criteria2'].replace('_', ' ').title()}<br>
+                    {str(row['criteria1']).replace('_', ' ').title()} ↔ {str(row['criteria2']).replace('_', ' ').title()}<br>
                     Correlation: {row['correlation']:.2f}
                 </div>
                 """, unsafe_allow_html=True)

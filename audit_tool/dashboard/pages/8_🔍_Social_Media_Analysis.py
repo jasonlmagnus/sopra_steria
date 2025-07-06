@@ -51,8 +51,8 @@ def load_social_media_data():
             return None
         
         # Add platform identification
-        social_df['platform'] = social_df['url'].apply(identify_platform_from_url)
-        social_df['platform_display'] = social_df['platform'].map({
+        social_df['platform'] = pd.Series(social_df['url']).apply(identify_platform_from_url)
+        social_df['platform_display'] = pd.Series(social_df['platform']).map({
             'linkedin': 'LinkedIn',
             'instagram': 'Instagram', 
             'facebook': 'Facebook',
@@ -60,7 +60,7 @@ def load_social_media_data():
         })
         
         # Add persona mapping for cleaner display
-        social_df['persona_clean'] = social_df['persona_id'].apply(clean_persona_name)
+        social_df['persona_clean'] = pd.Series(social_df['persona_id']).apply(clean_persona_name)
         
         # Calculate platform averages
         platform_metrics = calculate_platform_metrics(social_df)
@@ -123,11 +123,13 @@ def calculate_platform_metrics(social_df):
             status = "⚠️ Moderate"
             status_color = "warning"
         elif avg_score >= 3:
-            status = "🔶 Weak"
-            status_color = "warning"
+            status = "🟠 At Risk"
+            health_color = "#F97316"
+            gauge_color = "warning"
         else:
-            status = "🚨 Critical"
-            status_color = "error"
+            status = "🔴 Critical"
+            health_color = "#EF4444"
+            gauge_color = "error"
         
         # Count personas by performance
         high_performers = len(platform_data[platform_data['raw_score'] >= 7])
@@ -266,11 +268,13 @@ def generate_recommendations_from_csv(social_df):
     return pd.DataFrame(recommendations)
 
 def main():
-    # Header with brand styling - consistent with Run Audit page
+    """Social Media Analysis Dashboard"""
+    
     st.markdown("""
-    <div class="main-header">
-        <h1>🔍 Social Media Analysis</h1>
-        <p>Comprehensive social media performance analysis with multi-platform insights and strategic recommendations</p>
+    <div style="border: 1px solid #D1D5DB; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: white;">
+        <h1 style="color: #2C3E50; font-family: 'Crimson Text', serif; margin: 0;">🔍 Social Media Analysis</h1>
+        <p style="color: #6B7280; margin: 0.5rem 0 0 0;">Cross-platform brand presence and engagement insights</p>
+        <p style="color: #E85A4F; margin: 0.25rem 0 0 0; font-size: 0.9rem;">📊 <strong>Live Data:</strong> Powered by unified audit data with master scoring</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -626,20 +630,19 @@ def display_insights_and_recommendations(data):
                 st.markdown("#### 🔴 High Priority (Immediate Action)")
                 for _, rec in high_priority.iterrows():
                     st.markdown(f"""
-                    <div style="border-left: 4px solid #EF4444; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FEF2F2;">
+                    <div style=\"border-left: 4px solid #EF4444; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FEF2F2;\">
                         <strong>{rec['Platform']} - {rec['Category']}</strong><br/>
                         {rec['Recommendation']}<br/>
                         <small><em>Timeline: {rec['Timeline']} | Impact: {rec['Expected_Impact']}</em></small>
                     </div>
                     """, unsafe_allow_html=True)
-
             # Medium priority recommendations
             medium_priority = recommendations[recommendations['Priority'] == 'Medium']
             if not medium_priority.empty:
                 st.markdown("#### 🟡 Medium Priority (Next 1-3 months)")
                 for _, rec in medium_priority.iterrows():
                     st.markdown(f"""
-                    <div style="border-left: 4px solid #F59E0B; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FFFBEB;">
+                    <div style=\"border-left: 4px solid #F59E0B; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FFFBEB;\">
                         <strong>{rec['Platform']} - {rec['Category']}</strong><br/>
                         {rec['Recommendation']}<br/>
                         <small><em>Timeline: {rec['Timeline']} | Impact: {rec['Expected_Impact']}</em></small>
