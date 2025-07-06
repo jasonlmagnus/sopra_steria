@@ -25,3 +25,11 @@ describe('GET /api/recommendations', () => {
     expect(res.body).toEqual({ recommendations: [] });
   });
 });
+
+describe('GET /api/docs', () => {
+  it('serves Swagger UI', async () => {
+    const res = await request(app).get('/api/docs/');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('Swagger UI');
+  });
+});
