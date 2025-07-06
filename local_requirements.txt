@@ -1,7 +1,6 @@
 pandas>=2.2
 numpy>=1.26
 pyyaml>=6.0
-streamlit-stubs>=1.26.0
 plotly>=5.20
 types-requests
 typing-extensions
