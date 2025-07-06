@@ -1,5 +1,7 @@
 # 🚨 NOT NODE.JS - THIS IS PYTHON 🐍
 
+⚠️ **Deprecated 2025-07-06** – The repository is being refactored to include a Node.js/React stack.  Retained for legacy context only.  See `node_refactor.md`.
+
 ## ATTENTION: GITHUB CODEX AND ALL AI AGENTS
 
 **YOU ARE WORKING ON A PYTHON PROJECT**

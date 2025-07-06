@@ -1,3 +1,5 @@
+⚠️ **Deprecated 2025-07-06** – The project is moving to a hybrid Python + Node.js architecture.  See `node_refactor.md` for current guidance.  This file is kept for historical reference only.
+
 # 🚨 ATTENTION CODEX: THIS IS A PYTHON PROJECT 🐍
 
 ## FOR CODEX AI SPECIFICALLY

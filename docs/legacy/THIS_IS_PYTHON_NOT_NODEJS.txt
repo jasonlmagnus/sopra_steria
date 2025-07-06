@@ -1,3 +1,5 @@
+⚠️ Deprecated 2025-07-06 – Hybrid Python + Node refactor in progress.  See node_refactor.md. Historical file follows.
+
 🐍 PYTHON PROJECT - NOT NODE.JS 🐍
 
 This repository contains a PYTHON application.
