@@ -13,7 +13,7 @@ Refer to `node_refactor.md` for the detailed migration plan and `AGENTS.MD` for 
 ### Prerequisites
 
 - Python 3.10+
-- Node.js 20+
+- Node.js 22+
 - Git
 
 ### Installation & Launch
@@ -28,11 +28,11 @@ cd sopra_steria
 
 # To launch the React frontend (once implemented):
 cd web
-npm run dev
+pnpm dev
 
 # To launch the Node.js API (once implemented):
 cd api
-npm run dev
+pnpm start
 ```
 
 ## 🎯 Project Overview
