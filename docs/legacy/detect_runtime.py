@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 """
+⚠️ DEPRECATED 2025-07-06: This script is from the legacy Python-only architecture.
+The project is now a hybrid Python + Node.js stack. See `node_refactor.md`.
+Retained for historical context only.
+
 Runtime Environment Detection for AI Agents
 Sopra Steria Brand Audit Tool - Python Project
 

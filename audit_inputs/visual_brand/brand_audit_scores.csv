@@ -1,0 +1,17 @@
+URL,Page Type,Logo Compliance,Color Palette,Typography,Layout Structure,Image Quality,Brand Messaging,Gating Penalties,Final Score,Key Violations
+https://www.soprasteria.nl/,Tier 1 - Brand Positioning,9,8,8,9,9,10,0,8.8,"Minor: Could integrate more brand colors"
+https://www.soprasteria.be/,Tier 1 - Brand Positioning,9,8,8,9,9,10,0,8.8,"Minor: Could integrate more brand colors"
+https://www.soprasteria.com/,Tier 1 - Brand Positioning,9,6,8,7,8,5,-2,6.8,"Major: Missing brand tagline, Muted color usage"
+https://www.soprasteria.com/about-us/corporate-responsibility,Tier 1 - Brand Positioning,9,7,8,8,9,6,0,7.8,"Moderate: Less vibrant brand colors"
+https://www.soprasteria.com/about-us/history,Tier 1 - Brand Positioning,9,7,8,8,9,7,0,8.0,"Moderate: Less vibrant brand colors"
+https://www.soprasteria.be/whatwedo/data-ai/data-science-and-ai/the-future-of-generative-ai,Tier 2 - Value Propositions,9,10,9,9,10,8,0,9.2,"Minor: Content could be more brand-focused"
+https://www.soprasteria.be/whatwedo/digital-themes/deliver-flexible-always-on-performance/cloud-infrastructure-platforms/sopra-steria-transformation-services-for-microsoft-azure,Tier 2 - Value Propositions,8,9,8,8,9,7,0,8.2,"Minor: Long URL affects accessibility"
+https://www.soprasteria.be/whatwedo/management-digital-transformation-consulting/services-operations-automation,Tier 2 - Value Propositions,8,8,8,8,8,7,0,7.8,"Moderate: Generic content presentation"
+https://www.soprasteria.be/industries/financial-services,Tier 2 - Value Propositions,8,8,8,8,8,8,0,8.0,"Minor: Standard industry page layout"
+https://www.soprasteria.be/industries/industry-retail-logistics-telecom-media,Tier 2 - Value Propositions,8,8,8,8,8,7,0,7.8,"Moderate: Generic industry presentation"
+https://www.soprasteria.nl/newsroom/press-releases/details/welcome-to-the-future-of-innovation,Tier 3 - Functional Content,8,7,8,7,8,8,0,7.7,"Moderate: Less brand color integration"
+https://www.soprasteria.nl/newsroom/press-releases/details/sopra-steria-next-predicts,Tier 3 - Functional Content,8,7,8,7,8,8,0,7.7,"Moderate: Less brand color integration"
+https://www.soprasteria.nl/newsroom/blog,Tier 3 - Functional Content,9,8,8,8,9,8,0,8.3,"Minor: Good brand implementation"
+https://www.soprasteria.nl/newsroom/blog/details/interacting-with-large-language-models,Tier 3 - Functional Content,8,7,8,7,8,7,0,7.5,"Moderate: Content-focused, less brand emphasis"
+https://www.soprasteria.nl/newsroom/blog/details/ecosystems-yes-please-but-how-can-we-trust-each-other,Tier 3 - Functional Content,8,7,8,7,8,7,0,7.5,"Moderate: Content-focused, less brand emphasis"
+
