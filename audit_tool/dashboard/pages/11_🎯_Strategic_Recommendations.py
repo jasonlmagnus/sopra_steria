@@ -1,6 +1,12 @@
 import streamlit as st
 import sys
 from pathlib import Path
+import logging
+import traceback
+
+# Set up a logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add project root to Python path to fix import issues
 project_root = Path(__file__).parent.parent.parent.parent
@@ -53,6 +59,11 @@ from components.metrics_calculator import BrandHealthMetricsCalculator
 class StrategicRecommendationEngine:
     """Advanced recommendation aggregation and prioritization engine"""
     
+    @staticmethod
+    def _safe_lower(val):
+        """Return lowercase string for any value without raising errors."""
+        return str(val).lower() if val is not None else ""
+    
     def __init__(self, master_df: pd.DataFrame, visual_audit_path: Path, sm_audit_path: Path):
         self.master_df = master_df
         self.visual_audit_path = visual_audit_path
@@ -100,7 +111,7 @@ class StrategicRecommendationEngine:
         aggregated_recs = []
         
         # Group recommendations by page_id
-        for page_id in df['page_id'].unique():
+        for page_id in [pid for pid in df['page_id'].unique() if pd.notna(pid)]:
             page_recs = df[df['page_id'] == page_id]
             
             if len(page_recs) == 1:
@@ -131,7 +142,7 @@ class StrategicRecommendationEngine:
                 # Create aggregated recommendation
                 aggregated_rec = {
                     'id': f"aggregated_{page_id}",
-                    'title': first_rec['title'].replace('⚡ Quick Win: ', '').replace('🔴 CRITICAL: ', ''),
+                    'title': str(first_rec['title']).replace('⚡ Quick Win: ', '').replace('🔴 CRITICAL: ', ''),
                     'description': description,
                     'category': 'Multiple Categories',
                     'all_categories': all_categories,
@@ -149,7 +160,7 @@ class StrategicRecommendationEngine:
                 # Add priority indicators to title
                 if aggregated_rec['impact_score'] >= 8:
                     aggregated_rec['title'] = f"🔴 CRITICAL: {aggregated_rec['title']}"
-                elif 'Quick Win' in ', '.join(all_categories):
+                elif 'quick win' in self._safe_lower(aggregated_rec.get('category')):
                     aggregated_rec['title'] = f"⚡ Quick Win: {aggregated_rec['title']}"
                 
                 aggregated_recs.append(aggregated_rec)
@@ -171,20 +182,20 @@ class StrategicRecommendationEngine:
         recommendations = []
         
         for _, row in quick_wins.iterrows():
-            page_title = self.get_friendly_page_title(row.get('url_slug', ''))
-            score = row.get('raw_score', row.get('final_score', 0))
+            page_title = self.get_friendly_page_title(str(row.get('url_slug', '')))
+            score = row.get('raw_score', row.get('final_score', 0)) or 0
             url = row.get('url', '')
             evidence = row.get('evidence', 'Quick win opportunity identified')
             criterion = row.get('criterion_id', 'general')
             
             # Determine category based on criterion
-            category = self.get_category_from_criterion(criterion)
+            category = self.get_category_from_criterion(criterion or '')
             
             # Create comprehensive description
             full_description = f"Quick win opportunity for {page_title} (score: {score:.1f}/10). "
-            if evidence and len(evidence) > 20:
+            if evidence and len(str(evidence)) > 20:
                 # Clean and truncate evidence to avoid repetition
-                clean_evidence = evidence.strip()
+                clean_evidence = str(evidence).strip()
                 if len(clean_evidence) > 150:
                     clean_evidence = clean_evidence[:150] + "..."
                 full_description += f"Key insight: {clean_evidence}"
@@ -218,20 +229,20 @@ class StrategicRecommendationEngine:
         recommendations = []
         
         for _, row in critical.iterrows():
-            page_title = self.get_friendly_page_title(row.get('url_slug', ''))
-            score = row.get('raw_score', row.get('final_score', 0))
+            page_title = self.get_friendly_page_title(str(row.get('url_slug', '')))
+            score = row.get('raw_score', row.get('final_score', 0)) or 0
             url = row.get('url', '')
             evidence = row.get('evidence', 'Critical issue identified')
             criterion = row.get('criterion_id', 'general')
             
             # Determine category based on criterion
-            category = self.get_category_from_criterion(criterion)
+            category = self.get_category_from_criterion(criterion or '')
             
             # Create comprehensive description
             full_description = f"Critical issue requiring immediate attention (score: {score:.1f}/10). "
-            if evidence and len(evidence) > 20:
+            if evidence and len(str(evidence)) > 20:
                 # Clean and truncate evidence to avoid repetition
-                clean_evidence = evidence.strip()
+                clean_evidence = str(evidence).strip()
                 if len(clean_evidence) > 150:
                     clean_evidence = clean_evidence[:150] + "..."
                 full_description += f"Issue: {clean_evidence}"
@@ -288,7 +299,7 @@ class StrategicRecommendationEngine:
                     'title': f"🔄 Replicate Success Pattern: {pattern.replace('_', ' ').title()}",
                     'description': full_description,
                     'category': f'🔄 Success Replication - {self.get_category_from_criterion(pattern)}',
-                    'impact_score': min(10, avg_score),
+                    'impact_score': min(10, float(avg_score)),
                     'urgency_score': 5, # Medium urgency
                     'timeline': '30-90 days',
                     'page_id': 'multiple',
@@ -302,85 +313,81 @@ class StrategicRecommendationEngine:
         return recommendations
     
     def extract_persona_recommendations(self) -> List[Dict]:
-        """Extract persona-specific improvement opportunities"""
+        """Extract recommendations based on persona pain points"""
+        if 'persona_id' not in self.master_df.columns or 'persona_pain_points' not in self.master_df.columns:
+            return []
+        
+        persona_recs_df = self.master_df.dropna(subset=['persona_pain_points', 'raw_score'])
         recommendations = []
         
-        if 'persona_id' in self.master_df.columns:
-            # Analyze persona performance gaps
-            persona_scores = self.master_df.groupby('persona_id').agg({
-                'raw_score': 'mean',
-                'final_score': 'mean'
-            }).fillna(0)
+        for persona_id in persona_recs_df['persona_id'].unique():
+            persona_data = persona_recs_df[persona_recs_df['persona_id'] == persona_id]
+            # Find pages where this persona has the lowest scores (biggest pain points)
+            # pyright expects column name as str, list form is also allowed at runtime
+            lowest_score_pages = persona_data.sort_values('raw_score', ascending=True).head(3)
             
-            score_col = 'raw_score' if 'raw_score' in persona_scores.columns else 'final_score'
-            worst_personas = persona_scores.nsmallest(2, score_col)
-            
-            for persona_id, scores in worst_personas.iterrows():
-                avg_score = scores[score_col]
-                if avg_score < 7.0:  # Only recommend if below good threshold
-                    recommendations.append({
-                        'id': f"persona_{persona_id.replace(' ', '_')}",
-                        'title': f"🎭 Improve {persona_id} Experience",
-                        'description': f"Persona showing lower engagement (avg score: {avg_score:.1f}/10). Requires targeted content and UX improvements.",
-                        'category': '🎭 Persona Optimization',
-                        'impact_score': 8,
-                        'urgency_score': 6,
-                        'timeline': '30-90 days',
-                        'page_id': 'multiple',
-                        'persona': persona_id,
-                        'url': '',
-                        'evidence': f"Persona performance analysis shows {avg_score:.1f}/10 average score",
-                        'source': 'Unified Dataset - Persona Performance Analysis'
-                    })
-        
+            for _, row in lowest_score_pages.iterrows():
+                page_title = self.get_friendly_page_title(str(row.get('url_slug', '')))
+                score = float(row.get('raw_score', 0) or 0)
+                pain_points = row.get('persona_pain_points', 'General persona dissatisfaction')
+                
+                recommendations.append({
+                    'id': f"persona_{row.get('page_id', 'unknown')}_{str(persona_id).replace(' ', '_')}",
+                    'title': f"Address Persona Pain Point for {page_title}",
+                    'description': f"Improve experience for '{persona_id}' on {page_title} (score: {score:.1f}). Pain points: {pain_points}",
+                    'category': 'Persona Experience',
+                    'impact_score': min(10.0, 10.0 - score),
+                    'urgency_score': 6,
+                    'timeline': '30-90 days',
+                    'page_id': row.get('page_id'),
+                    'persona': persona_id,
+                    'url': row.get('url', ''),
+                    'evidence': f"Low score ({score:.1f}) for persona '{persona_id}'. Pain points: {pain_points}",
+                    'criterion': 'persona_alignment',
+                    'source': 'Unified Dataset - Persona Analysis'
+                })
         return recommendations
     
     def extract_content_recommendations(self) -> List[Dict]:
-        """Extract content and messaging improvement opportunities"""
-        recommendations = []
-        
-        # Analyze pages with poor evidence/content quality
-        if 'evidence' in self.master_df.columns:
-            poor_content = self.master_df[
-                (self.master_df['evidence'].str.len() < 50) |  # Very short evidence
-                (self.master_df['evidence'].str.contains('generic|unclear|confusing', case=False, na=False))
-            ]
+        """Extract recommendations based on content analysis (e.g., sentiment, engagement)"""
+        # Define content-related columns that should exist
+        required_cols = ['sentiment_label', 'engagement_level', 'raw_score']
+        if not all(col in self.master_df.columns for col in required_cols):
+            return []
             
-            if not poor_content.empty:
-                recommendations.append({
-                    'id': 'content_quality_improvement',
-                    'title': '📝 Improve Content Quality & Messaging',
-                    'description': f"Content quality issues identified across {len(poor_content)} page assessments. Focus on clarity, specificity, and persona relevance.",
-                    'category': '📝 Content & Copy',
-                    'impact_score': 7,
-                    'urgency_score': 5,
-                    'timeline': '30-90 days',
-                    'page_id': 'multiple',
-                    'persona': 'All',
-                    'url': '',
-                    'evidence': f"Content analysis across {len(poor_content)} assessments",
-                    'source': 'Unified Dataset - Content Quality Analysis'
-                })
+        # Focus on pages with negative sentiment or low engagement
+        content_issues = (
+            self.master_df[
+                (self.master_df['sentiment_label'] == 'Negative') |
+                (self.master_df['engagement_level'] == 'Low')
+            ]
+            .sort_values('raw_score', ascending=True)
+            .head(5)
+        )
         
-        # Analyze conversion-related issues
-        if 'conversion_likelihood' in self.master_df.columns:
-            low_conversion = self.master_df[self.master_df['conversion_likelihood'] == 'Low']
-            if not low_conversion.empty:
-                recommendations.append({
-                    'id': 'conversion_optimization',
-                    'title': '🎯 Optimize Conversion Paths',
-                    'description': f"Low conversion likelihood identified on {len(low_conversion)} page assessments. Focus on CTAs, trust signals, and user journey optimization.",
-                    'category': '🎯 Conversion Optimization',
-                    'impact_score': 9,
-                    'urgency_score': 8,
-                    'timeline': '0-30 days',
-                    'page_id': 'multiple',
-                    'persona': 'All',
-                    'url': '',
-                    'evidence': f"Conversion analysis across {len(low_conversion)} assessments",
-                    'source': 'Unified Dataset - Conversion Analysis'
-                })
-        
+        recommendations = []
+        for _, row in content_issues.iterrows():
+            page_title = self.get_friendly_page_title(str(row.get('url_slug', '')))
+            score = float(row.get('raw_score', 0) or 0)
+            sentiment = row.get('sentiment_label', 'N/A')
+            engagement = row.get('engagement_level', 'N/A')
+            
+            recommendations.append({
+                'id': f"content_{row.get('page_id', 'unknown')}",
+                'title': f"Improve Content Performance on {page_title}",
+                'description': f"Low content performance on {page_title} (Score: {score:.1f}, Sentiment: {sentiment}, Engagement: {engagement}).",
+                'category': 'Content Improvement',
+                'impact_score': min(10.0, 10.0 - score),
+                'urgency_score': 5,
+                'timeline': '30-90 days',
+                'page_id': row.get('page_id'),
+                'persona': row.get('persona_id', 'All'),
+                'url': row.get('url', ''),
+                'evidence': f"Sentiment: {sentiment}, Engagement: {engagement}",
+                'criterion': 'content_quality',
+                'source': 'Unified Dataset - Content Analysis'
+            })
+            
         return recommendations
     
     def extract_visual_brand_recommendations(self) -> List[Dict]:
@@ -411,7 +418,7 @@ class StrategicRecommendationEngine:
                 issue, impact_desc, action, timeline = [i.strip().replace('\n', ' ') for i in item]
                 
                 rec = {
-                    'id': f"visual_audit_{priority.lower()}_{len(recommendations)}",
+                    'id': f"visual_audit_{self._safe_lower(priority)}_{len(recommendations)}",
                     'title': f"🎨 Visual Brand: {issue}",
                     'description': f"**Issue:** {issue}. **Impact:** {impact_desc}. **Recommended Action:** {action}",
                     'category': '🎨 Visual & Design',
@@ -446,7 +453,7 @@ class StrategicRecommendationEngine:
             # Check for low engagement
             engagement_match = re.search(r"Engagement:\s(.*?)\.", section_content)
             if engagement_match:
-                engagement_text = engagement_match.group(1).lower()
+                engagement_text = self._safe_lower(engagement_match.group(1))
                 if "low" in engagement_text or "limited" in engagement_text or "modest" in engagement_text:
                     rec = {
                         'id': f"sm_engagement_{platform_name.replace(' ', '_')}",
@@ -494,7 +501,7 @@ class StrategicRecommendationEngine:
             return "LinkedIn Company Page"
         elif 'youtube' in title:
             return "YouTube Channel"
-        elif 'homepage' in title.lower() or title.strip() == '':
+        elif 'homepage' in self._safe_lower(title) or title.strip() == '':
             return "Homepage"
         elif 'about' in title:
             return "About Us Page"
@@ -518,7 +525,7 @@ class StrategicRecommendationEngine:
         if not criterion_id:
             return 'General'
             
-        criterion_lower = criterion_id.lower()
+        criterion_lower = self._safe_lower(criterion_id)
         
         # Brand and messaging
         if any(term in criterion_lower for term in ['brand', 'message', 'value_prop', 'positioning']):
@@ -549,7 +556,8 @@ class StrategicRecommendationEngine:
             return '👥 Social & Engagement'
         
         else:
-            return f'📋 {criterion_id.replace("_", " ").title()}'
+            # Ensure criterion_id is treated as string to avoid attribute errors
+            return f'📋 {str(criterion_id).replace("_", " ").title()}'
 
     def synthesize_findings(self, evidence_list: List[str]) -> List[str]:
         """
@@ -570,7 +578,7 @@ class StrategicRecommendationEngine:
 
         identified_themes = set()
         for evidence in evidence_list:
-            evidence_lower = evidence.lower()
+            evidence_lower = self._safe_lower(evidence)
             theme_found = False
             for theme, keywords in themes.items():
                 if any(keyword in evidence_lower for keyword in keywords):
@@ -614,11 +622,11 @@ class StrategicRecommendationEngine:
 
         for index, rec in self.recommendations.iterrows():
             # Handle list of categories for aggregated recommendations
-            categories = rec.get('all_categories', [rec.get('category')])
+            categories = rec.get('all_categories') or [rec.get('category')]
             
             assigned = False
             for cat in categories:
-                theme = category_to_theme_map.get(cat)
+                theme = category_to_theme_map.get(str(cat))  # cast for type checker
                 if theme:
                     themed_recommendations[theme].append(rec)
                     assigned = True
@@ -626,7 +634,7 @@ class StrategicRecommendationEngine:
             
             if not assigned:
                 # Fallback logic based on the recommendation's origin
-                source = rec.get('source', '').lower()
+                source = self._safe_lower(rec.get('source', ''))
                 if 'social media' in source:
                     themed_recommendations['Social Media Performance'].append(rec)
                 elif 'visual audit' in source:
@@ -637,117 +645,158 @@ class StrategicRecommendationEngine:
         return themed_recommendations
 
 def main():
+    """Main function to run the strategic recommendations page"""
     # Configure page layout for consistency with other pages
     st.set_page_config(
         page_title="Strategic Recommendations",
         page_icon="🎯",
-        layout="wide",
-        initial_sidebar_state="expanded"
+        layout="wide"
     )
 
-# SINGLE SOURCE OF TRUTH - REPLACES ALL 2,228 STYLING METHODS
-apply_perfect_styling()
-
-def main():
     # Create standardized page header
-    create_main_header("🎯 Strategic Recommendations", "Prioritized action plan for brand improvement")
+    st.markdown("""
+    <div class="main-header">
+        <h1>🎯 Strategic Recommendations</h1>
+        <p>Prioritized action plan for brand improvement</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Load data
     try:
-        loader = BrandHealthDataLoader()
-        datasets, master_df = loader.load_all_data()
-        
-        # Define paths for the markdown-based audits
-        visual_audit_path = project_root / "audit_inputs" / "visual_brand" / "visual_audit.md"
-        sm_audit_path = project_root / "audit_inputs" / "social_media" / "sm_audit_1.md"
-        
+        # Load data using the centralized data loader
+        if 'master_df' not in st.session_state or 'datasets' not in st.session_state:
+            data_loader = BrandHealthDataLoader()
+            datasets, master_df = data_loader.load_all_data()
+            st.session_state['datasets'] = datasets
+            st.session_state['master_df'] = master_df
+        else:
+            master_df = st.session_state['master_df']
+            datasets = st.session_state['datasets']
+            
         if master_df.empty:
-            st.error("No data available for recommendations analysis.")
+            st.error("❌ No data available. Please run an audit first.")
             return
             
-        # Initialize recommendation engine with all data sources
+        # Define paths for external audit files
+        base_path = Path(__file__).parent.parent.parent
+        visual_audit_path = base_path / 'audit_inputs' / 'visual_brand' / 'visual_audit.md'
+        sm_audit_path = base_path / 'audit_inputs' / 'social_media' / 'MASTER_SOCIAL_MEDIA_AUDIT.md'
+
+        # Initialize recommendation engine
         rec_engine = StrategicRecommendationEngine(master_df, visual_audit_path, sm_audit_path)
-        
-        # Get the new, theme-based recommendations
-        themed_recs = rec_engine.get_thematic_recommendations()
+        recommendations = rec_engine.aggregate_all_recommendations()
 
-        # --- NEW PAGE LAYOUT BASED ON USER STORIES ---
+        if recommendations.empty:
+            st.info("✅ No specific strategic recommendations required based on current performance.")
+            return
 
-        # 1. The 10-Second Summary
-        create_section_header("Executive Summary")
-        critical_count = sum(1 for _, r in rec_engine.recommendations.iterrows() if r.get('impact_score', 0) >= 9)
-        quick_win_count = sum(1 for _, r in rec_engine.recommendations.iterrows() if 'quick win' in r.get('title', '').lower())
-        strategic_count = len(rec_engine.recommendations) - critical_count - quick_win_count
-        avg_priority = rec_engine.recommendations['priority_score'].mean() if not rec_engine.recommendations.empty else 0.0
+        # Display Filters
+        display_filters(recommendations)
         
-        col1, col2, col3, col4 = create_four_column_layout()
-        with col1:
-            create_metric_card(str(critical_count), "🔴 Critical Issues")
-        with col2:
-            create_metric_card(str(quick_win_count), "⚡ Quick Wins")
-        with col3:
-            create_metric_card(str(strategic_count), "🎯 Strategic Moves")
-        with col4:
-            create_metric_card(f"{avg_priority:.1f}", "📈 Avg Priority")
-            
-        create_divider()
+        # Apply filters
+        filtered_recs = apply_filters(recommendations)
+        
+        # Display thematic recommendations
+        thematic_recs = rec_engine.get_thematic_recommendations()
+        if thematic_recs:
+            display_thematic_overview(thematic_recs)
+        
+        # Display recommendation cards
+        if not filtered_recs.empty:
+            display_recommendation_cards(filtered_recs.to_dict('records'))
+        else:
+            st.warning("No recommendations match the current filter criteria.")
 
-        # 2. The Top Priorities
-        create_section_header("Top 3 Strategic Priorities")
-        st.info("Based on a combined analysis of impact, urgency, and data quality, these are the most critical, high-level actions to take.")
-        
-        top_priorities_df = rec_engine.recommendations.sort_values(by='priority_score', ascending=False).head(3)
-        for i, (index, priority) in enumerate(top_priorities_df.iterrows()):
-            st.success(f"**Priority #{i+1}:** {priority['title']}")
-        
-        create_divider()
+        # Display resource planning
+        display_resource_planning(filtered_recs)
 
-        # 3. The "What To Do" Plan
-        create_section_header("Thematic Action Plan")
-        
-        for theme, rec_list in themed_recs.items():
-            if rec_list:
-                with st.expander(f"### {theme} ({len(rec_list)} recommendations)"):
-                    st.markdown(f"**Synthesized Summary of Key Issues for {theme}:**")
-                    
-                    # Create a summarized list of unique findings within the theme
-                    findings = set()
-                    for rec in rec_list:
-                        for finding in rec.get('synthesized_findings', []):
-                            findings.add(finding)
-                    
-                    if findings:
-                        # Use markdown lists for better formatting
-                        findings_list_str = "\n".join([f"- {finding}" for finding in sorted(list(findings))[:5]])
-                        st.markdown(findings_list_str)
-                    else:
-                        st.write("No specific sub-themes identified, general improvements needed.")
-                        
-                    st.markdown("**Affected Pages/Platforms:**")
-                    affected_pages = set()
-                    for rec in rec_list:
-                        url = rec.get('url')
-                        if url:
-                            affected_pages.add(f"[{url.replace('https://www.','')}]({url})")
-                        else:
-                            # Use a more descriptive fallback
-                            source_text = rec.get('source', 'General Recommendation')
-                            if 'Visual' in source_text:
-                                affected_pages.add("Multiple Pages (Visual Audit)")
-                            elif 'Social' in source_text:
-                                affected_pages.add(rec.get('page_id', "Multiple Platforms"))
-                            else:
-                                affected_pages.add(rec.get('page_id', 'General'))
-
-                    # Display pages in a more compact way
-                    st.markdown(" | ".join(sorted(list(affected_pages))[:10]))
-                    
-                    with st.expander("View All Underlying Recommendations for this Theme"):
-                        display_recommendation_cards(rec_list)
-        
     except Exception as e:
-        st.error(f"Error loading recommendations: {str(e)}")
-        st.exception(e)
+        st.error(f"Error loading recommendations: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+
+def display_filters(recommendations: pd.DataFrame):
+    """Display filtering options for recommendations"""
+    st.markdown("## 🎛️ Filter Recommendations")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        # Filter by Category – pull from flattened all_categories if present
+        category_options = set()
+        if 'all_categories' in recommendations.columns:
+            for cats in recommendations['all_categories'].dropna():
+                if isinstance(cats, list):
+                    category_options.update(cats)
+        # Fallback to single-value category column
+        if not category_options and 'category' in recommendations.columns:
+            category_options.update(recommendations['category'].unique().tolist())
+
+        categories = ['All'] + sorted(category_options)
+        st.selectbox("Filter by Category", categories, key="rec_category_filter")
+        
+    with col2:
+        # Filter by Timeline
+        if 'timeline' in recommendations.columns:
+            timelines = ['All'] + sorted(recommendations['timeline'].unique().tolist())
+            st.selectbox("Filter by Timeline", timelines, key="rec_timeline_filter")
+        
+    with col3:
+        # Filter by Impact Score
+        st.slider("Minimum Impact Score", 0, 10, 5, key="rec_impact_filter")
+        
+    with col4:
+        # Filter by Urgency Score
+        st.slider("Minimum Urgency Score", 0, 10, 5, key="rec_urgency_filter")
+
+def apply_filters(recommendations: pd.DataFrame) -> pd.DataFrame:
+    """Apply filters to the recommendations DataFrame"""
+    filtered_df = recommendations.copy()
+    
+    # Apply category filter
+    category_filter = st.session_state.get("rec_category_filter", "All")
+    if category_filter != "All":
+        # If all_categories exists use membership test, else fallback to equality
+        if 'all_categories' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['all_categories'].apply(lambda cats: isinstance(cats, list) and category_filter in cats)]
+        elif 'category' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['category'] == category_filter]
+        
+    # Apply timeline filter
+    timeline_filter = st.session_state.get("rec_timeline_filter", "All")
+    if timeline_filter != "All":
+        filtered_df = filtered_df[filtered_df['timeline'] == timeline_filter]
+        
+    # Apply impact score filter
+    impact_filter = st.session_state.get("rec_impact_filter", 5)
+    filtered_df = filtered_df[filtered_df['impact_score'] >= impact_filter]
+    
+    # Apply urgency score filter
+    urgency_filter = st.session_state.get("rec_urgency_filter", 5)
+    filtered_df = filtered_df[filtered_df['urgency_score'] >= urgency_filter]
+    
+    return filtered_df
+
+def display_thematic_overview(thematic_recs: Dict[str, List[Dict]]):
+    """Display thematic recommendations in an overview"""
+    st.markdown("## 🧠 Thematic Strategic Insights")
+    
+    # Get themes that actually have recommendations, then pick top 3
+    populated_themes = [(theme, recs) for theme, recs in thematic_recs.items() if recs]
+    if not populated_themes:
+        st.info("No thematic insights available yet.")
+        return
+
+    top_themes = sorted(populated_themes, key=lambda item: len(item[1]), reverse=True)[:3]
+    
+    cols = st.columns(len(top_themes))
+    for idx, (theme, recs) in enumerate(top_themes):
+        with cols[idx]:
+            st.markdown(f"### {theme}")
+            for rec in recs[:2]:  # Show top 2 recs per theme
+                st.markdown(f"- {rec['title']}")
+                st.markdown(f"**Supporting Evidence:**")
+                if isinstance(rec.get('all_evidence'), list):
+                    for evidence in rec.get('all_evidence', []):
+                        st.markdown(f" - _{evidence}_")
 
 def display_recommendation_cards(recommendations: List[Dict]):
     """Display detailed recommendation cards from a list of recommendation dicts."""
@@ -825,54 +874,44 @@ def display_recommendation_cards(recommendations: List[Dict]):
 def display_resource_planning(recommendations: pd.DataFrame):
     """Display resource planning insights"""
     
+    if recommendations.empty:
+        st.info("No recommendations to plan resources for.")
+        return
+        
+    st.markdown("## 📊 Resource & Timeline Planning")
+    
+    # Plot 1: Recommendations by Category
+    fig1 = px.pie(recommendations, names='category', title='Recommendations by Category')
+    
+    # Plot 2: Recommendations by Timeline
+    timeline_order = {'0-30 days': 0, '30-90 days': 1, '90+ days': 2}
+    if 'timeline' in recommendations.columns:
+        # Ensure stable chronological sort without relying on missing columns
+        timeline_counts = (
+            recommendations['timeline']
+            .value_counts()
+            .reset_index()
+            .rename(columns={'index': 'timeline', 'timeline': 'count'})
+        )
+
+        # Add explicit order mapping and sort accordingly
+        timeline_counts['timeline_order'] = timeline_counts['timeline'].map(timeline_order)  # type: ignore[arg-type]
+        timeline_counts = timeline_counts.sort_values('timeline_order').drop(columns=['timeline_order'])
+        
+        fig2 = px.bar(timeline_counts, x='timeline', y='count', title='Recommendations by Timeline')
+    else:
+        fig2 = go.Figure()
+
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.markdown("### 📊 Category Distribution")
-        category_counts = recommendations['category'].value_counts()
-        fig_cat = px.pie(
-            values=category_counts.values,
-            names=category_counts.index,
-            title="Recommendations by Category"
-        )
-        st.plotly_chart(fig_cat, use_container_width=True, key="category_pie")
-    
+        st.plotly_chart(fig1, use_container_width=True)
     with col2:
-        st.markdown("### ⏰ Timeline Distribution")
-        timeline_counts = recommendations['timeline'].value_counts()
-        fig_timeline = px.bar(
-            x=timeline_counts.index,
-            y=timeline_counts.values,
-            title="Recommendations by Timeline"
-        )
-        fig_timeline.update_layout(xaxis_title="Timeline", yaxis_title="Count")
-        st.plotly_chart(fig_timeline, use_container_width=True, key="timeline_bar")
-    
-    # Resource estimates
-    st.markdown("### 💼 Priority Analysis")
-    
-    total_recs = len(recommendations)
-    high_priority = len(recommendations[recommendations['priority_score'] >= 8])
-    avg_impact = recommendations['impact_score'].mean()
-    
-    col1, col2, col3 = create_three_column_layout()
-    
-    with col1:
-        create_metric_card(str(total_recs), "Total Recommendations", status="info")
-    
-    with col2:
-        create_metric_card(str(high_priority), "High Priority Items", status="warning" if high_priority > 0 else "success")
-    
-    with col3:
-        create_metric_card(f"{avg_impact:.1f}/10", "Average Impact Level", status="success" if avg_impact >= 7 else "info")
-    
-    # Priority distribution
-    priority_ranges = pd.cut(recommendations['priority_score'], 
-                           bins=[0, 4, 6, 8, 10], 
-                           labels=['Low (1-4)', 'Medium (4-6)', 'High (6-8)', 'Critical (8-10)'])
-    priority_dist = priority_ranges.value_counts()
-    st.markdown("### 🎯 Priority Distribution")
-    st.bar_chart(priority_dist)
+        st.plotly_chart(fig2, use_container_width=True)
+        
+    # Data table for planning
+    st.dataframe(recommendations[[
+        'title', 'category', 'impact_score', 'urgency_score', 'timeline', 'priority_score'
+    ]].sort_values('priority_score', ascending=False) if not recommendations.empty else recommendations)
 
 if __name__ == "__main__":
     main() 

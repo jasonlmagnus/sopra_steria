@@ -51,8 +51,8 @@ def load_social_media_data():
             return None
         
         # Add platform identification
-        social_df['platform'] = social_df['url'].apply(identify_platform_from_url)
-        social_df['platform_display'] = social_df['platform'].map({
+        social_df['platform'] = pd.Series(social_df['url']).apply(identify_platform_from_url)
+        social_df['platform_display'] = pd.Series(social_df['platform']).map({
             'linkedin': 'LinkedIn',
             'instagram': 'Instagram', 
             'facebook': 'Facebook',
@@ -60,7 +60,7 @@ def load_social_media_data():
         })
         
         # Add persona mapping for cleaner display
-        social_df['persona_clean'] = social_df['persona_id'].apply(clean_persona_name)
+        social_df['persona_clean'] = pd.Series(social_df['persona_id']).apply(clean_persona_name)
         
         # Calculate platform averages
         platform_metrics = calculate_platform_metrics(social_df)
@@ -123,11 +123,13 @@ def calculate_platform_metrics(social_df):
             status = "⚠️ Moderate"
             status_color = "warning"
         elif avg_score >= 3:
-            status = "🔶 Weak"
-            status_color = "warning"
+            status = "🟠 At Risk"
+            health_color = "#F97316"
+            gauge_color = "warning"
         else:
-            status = "🚨 Critical"
-            status_color = "error"
+            status = "🔴 Critical"
+            health_color = "#EF4444"
+            gauge_color = "error"
         
         # Count personas by performance
         high_performers = len(platform_data[platform_data['raw_score'] >= 7])
@@ -348,7 +350,7 @@ def display_executive_summary(data):
         health_status = "🟠 At Risk"
         health_color = "#F97316"
         gauge_color = "warning"
-            else:
+    else:
         health_status = "🔴 Critical"
         health_color = "#EF4444"
         gauge_color = "error"
@@ -627,21 +629,20 @@ def display_insights_and_recommendations(data):
             if not high_priority.empty:
                 st.markdown("#### 🔴 High Priority (Immediate Action)")
                 for _, rec in high_priority.iterrows():
-            st.markdown(f"""
-                    <div style="border-left: 4px solid #EF4444; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FEF2F2;">
+                    st.markdown(f"""
+                    <div style=\"border-left: 4px solid #EF4444; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FEF2F2;\">
                         <strong>{rec['Platform']} - {rec['Category']}</strong><br/>
                         {rec['Recommendation']}<br/>
                         <small><em>Timeline: {rec['Timeline']} | Impact: {rec['Expected_Impact']}</em></small>
-            </div>
-            """, unsafe_allow_html=True)
-
+                    </div>
+                    """, unsafe_allow_html=True)
             # Medium priority recommendations
             medium_priority = recommendations[recommendations['Priority'] == 'Medium']
             if not medium_priority.empty:
                 st.markdown("#### 🟡 Medium Priority (Next 1-3 months)")
                 for _, rec in medium_priority.iterrows():
                     st.markdown(f"""
-                    <div style="border-left: 4px solid #F59E0B; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FFFBEB;">
+                    <div style=\"border-left: 4px solid #F59E0B; padding: 0.5rem 1rem; margin: 0.5rem 0; background: #FFFBEB;\">
                         <strong>{rec['Platform']} - {rec['Category']}</strong><br/>
                         {rec['Recommendation']}<br/>
                         <small><em>Timeline: {rec['Timeline']} | Impact: {rec['Expected_Impact']}</em></small>
@@ -980,19 +981,19 @@ def display_quick_wins_analysis(data):
             persona = row['persona_clean']
             score = row['raw_score']
             
-                        st.markdown(f"""
+            st.markdown(f"""
             <div style="border: 1px solid #3B82F6; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; background: #EFF6FF;">
                 <h5 style="color: #1D4ED8; margin: 0 0 0.5rem 0;">
                     {platform} → {persona}
-                            </h5>
+                </h5>
                 <p style="margin: 0 0 0.5rem 0; color: #374151;">
                     High Performance: {score:.1f}/10 | <strong>Best practice identified</strong>
-                            </p>
+                </p>
                 <small style="color: #6B7280;">
                     ✨ Apply this approach to other platforms/personas
                 </small>
-                        </div>
-                        """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
 
 def display_action_priority_matrix(data):
     """Display impact vs effort priority matrix for recommendations"""
@@ -1099,7 +1100,7 @@ def display_action_priority_matrix(data):
     
     if not quick_wins.empty:
         for _, win in quick_wins.iterrows():
-        st.markdown(f"""
+            st.markdown(f"""
             <div style="border: 1px solid #10B981; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; background: #ECFDF5;">
                 <h5 style="color: #059669; margin: 0 0 0.5rem 0;">
                     🎯 {win['Platform']} - {win['Category']}
@@ -1110,8 +1111,8 @@ def display_action_priority_matrix(data):
                 <small style="color: #6B7280;">
                     <strong>Timeline:</strong> {win['Timeline']} | <strong>Priority:</strong> {win['Priority']}
                 </small>
-        </div>
-        """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
     else:
         st.info("💡 Focus on high-impact strategic projects for maximum long-term value.")
 
