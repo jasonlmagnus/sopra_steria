@@ -1,4 +1,7 @@
-# Agents Instructions for Sopra Steria Brand Audit Tool
+# 🚧 Upcoming Node.js / React Refactor
+
+> **Heads-up for AI agents:** the project is beginning a phased migration from a pure-Python Streamlit stack to a Node.js backend with a React front end. Until the refactor is complete **both** stacks will coexist. Follow `node_refactor.md` for the authoritative migration plan and prefer the Python implementation unless otherwise specified in the task.
+
 
 ## 🤖 AI Agent Guidelines for Codebase Interaction
 
