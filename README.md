@@ -33,6 +33,10 @@ pnpm dev
 # To launch the Node.js API (once implemented):
 cd api
 pnpm start
+
+# Test the API endpoint
+curl http://localhost:3000/api/hello
+# {"message":"Hello from API"}
 ```
 
 ## 🎯 Project Overview
