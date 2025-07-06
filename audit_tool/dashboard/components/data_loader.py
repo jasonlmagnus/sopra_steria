@@ -28,46 +28,44 @@ class BrandHealthDataLoader:
             logger.warning(f"Error sorting series: {e}")
             return list(series.dropna().unique())
     
-    def load_unified_data(self) -> pd.DataFrame:
-        """Load the unified dataset from CSV"""
+    def _load_csv(self, file_path: Path) -> pd.DataFrame:
+        """Helper to load a CSV file with error handling."""
         try:
-            # Load standard unified dataset (enhanced version removed - was identical)
-            standard_path = self.unified_data_dir / "unified_audit_data.csv"
-            if standard_path.exists():
-                df = pd.read_csv(standard_path)
-                logger.info(f"Loaded unified dataset: {len(df)} rows, {len(df.columns)} columns")
-                
-                # Ensure avg_score column exists for dashboard compatibility
-                if 'avg_score' not in df.columns:
-                    if 'final_score' in df.columns:
-                        df['avg_score'] = df['final_score']
-                    elif 'raw_score' in df.columns:
-                        df['avg_score'] = df['raw_score']
-                    else:
-                        df['avg_score'] = pd.NA
-                
+            if file_path.exists():
+                df = pd.read_csv(file_path)
+                logger.info(
+                    f"Loaded {file_path.name}: {len(df)} rows, {len(df.columns)} columns"
+                )
                 return df
-            
-            logger.error("No unified dataset found")
+            logger.warning(f"File not found: {file_path}")
             return pd.DataFrame()
-            
         except Exception as e:
-            logger.error(f"Error loading unified data: {e}")
+            logger.error(f"Error reading {file_path.name}: {e}")
             return pd.DataFrame()
 
-    @st.cache_data  
+    def load_unified_data(self) -> pd.DataFrame:
+        """Load the unified dataset from CSV"""
+        df = self._load_csv(self.unified_data_dir / "unified_audit_data.csv")
+        if df.empty:
+            logger.error("No unified dataset found")
+            return pd.DataFrame()
+
+        # Ensure avg_score column exists for dashboard compatibility
+        if "avg_score" not in df.columns:
+            if "final_score" in df.columns:
+                df["avg_score"] = df["final_score"]
+            elif "raw_score" in df.columns:
+                df["avg_score"] = df["raw_score"]
+            else:
+                df["avg_score"] = pd.NA
+
+        return df
+
+    @st.cache_data
     def load_experience_data(_self):
         """Load unified experience dataset"""
-        try:
-            experience_file = _self.unified_data_dir / "unified_experience_data.csv"
-            if experience_file.exists():
-                df = pd.read_csv(experience_file)
-                logger.info(f"Loaded unified experience data: {len(df)} rows, {len(df.columns)} columns")
-                return df
-            return pd.DataFrame()
-        except Exception as e:
-            logger.error(f"Error loading experience data: {str(e)}")
-            return pd.DataFrame()
+        df = _self._load_csv(_self.unified_data_dir / "unified_experience_data.csv")
+        return df
 
     def load_all_data(self):
         """Load all data (unified dataset only)"""
