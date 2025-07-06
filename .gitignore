@@ -34,7 +34,7 @@ venv.bak/
 */.venv/
 
 # Data Files (potentially sensitive)
-*.csv
+#*.csv
 *.json
 *.xlsx
 *.xls
@@ -214,6 +214,7 @@ temp/
 *.7z
 
 # Project specific exclusions
+docs/legacy/
 audit\ outputs/
 dashboard/venv/
 dashboard/dashboard_data.json
