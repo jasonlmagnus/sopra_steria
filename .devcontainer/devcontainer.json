@@ -1,0 +1,27 @@
+{
+  "name": "Sopra Steria Brand Audit Tool - Python Project",
+  "image": "python:3.12-slim",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  },
+  "postCreateCommand": ".devcontainer/setup.sh",
+  "forwardPorts": [8501, 8509],
+  "environment": {
+    "PYTHONPATH": "/workspace",
+    "PROJECT_TYPE": "PYTHON",
+    "LANGUAGE": "Python",
+    "FRAMEWORK": "Streamlit"
+  }
+} 

@@ -1,0 +1,38 @@
+{
+  "total_personas": 5,
+  "total_pages": 18,
+  "total_criteria": 5,
+  "total_evaluations": 432,
+  "average_score": 5.814814814814815,
+  "score_by_persona": {
+    "The Benelux Cybersecurity Decision Maker": 5.2444444444444445,
+    "The Benelux Strategic Business Leader (C-Suite Executive)": 5.811111111111111,
+    "The Benelux Transformation Programme Leader": 5.611111111111111,
+    "The Technical Influencer": 5.611111111111111,
+    "The_BENELUX_Technology_Innovation_Leader": 7.041666666666667
+  },
+  "score_by_tier": {
+    "tier_1": 5.419753086419753,
+    "tier_2": 6.075862068965518,
+    "tier_3": 6.024
+  },
+  "score_by_criterion": {
+    "brand_differentiation": 5.151162790697675,
+    "calltoaction_effectiveness": 5.0,
+    "corporate_positioning_alignment": 6.758620689655173,
+    "trust_credibility_signals": 6.232558139534884,
+    "value_proposition_clarity": 5.919540229885057
+  },
+  "descriptor_distribution": {
+    "WARN": 227,
+    "CONCERN": 90,
+    "PASS": 70,
+    "FAIL": 45
+  },
+  "generated_at": "2025-06-22T13:51:23.238277",
+  "experience_stats": {
+    "total_experience_records": 90,
+    "personas_with_experience": 5,
+    "pages_with_experience": 18
+  }
+}

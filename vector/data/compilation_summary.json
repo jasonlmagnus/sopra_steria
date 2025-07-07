@@ -1,0 +1,30 @@
+{
+  "total_documents": 87,
+  "personas": [
+    "The_BENELUX_Technology_Innovation_Leader",
+    "The Technical Influencer",
+    "The Benelux Strategic Business Leader (C-Suite Executive)",
+    "The Benelux Cybersecurity Decision Maker",
+    "The Benelux Transformation Programme Leader"
+  ],
+  "documents_per_persona": {
+    "The_BENELUX_Technology_Innovation_Leader": 15,
+    "The Technical Influencer": 18,
+    "The Benelux Strategic Business Leader (C-Suite Executive)": 18,
+    "The Benelux Cybersecurity Decision Maker": 18,
+    "The Benelux Transformation Programme Leader": 18
+  },
+  "unique_pages": 18,
+  "unique_domains": 6,
+  "content_types": [
+    "industry",
+    "service",
+    "blog",
+    "social_media",
+    "news",
+    "video",
+    "unknown",
+    "corporate"
+  ],
+  "compilation_timestamp": "2025-07-03T07:43:07.702765"
+}
