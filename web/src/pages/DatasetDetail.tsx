@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table'
 import React from 'react'
+import { PageContainer, DataTable } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -33,32 +34,10 @@ function DatasetDetail() {
     }))
   }, [dataArray])
 
-  const table = useReactTable({ data: dataArray, columns, getCoreRowModel: getCoreRowModel() })
-
   return (
-    <div>
-      <h2>Dataset: {name}</h2>
-      <table>
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id}>{header.isPlaceholder ? null : header.column.columnDef.header as string}</th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>{cell.renderValue<string>()}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <PageContainer title={`Dataset: ${name}`}>
+      <DataTable data={dataArray} columns={columns} />
+    </PageContainer>
   )
 }
 

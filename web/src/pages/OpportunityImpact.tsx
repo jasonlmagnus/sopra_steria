@@ -1,6 +1,8 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip } from 'recharts'
+import { ColumnDef } from '@tanstack/react-table'
+import { PageContainer, ScoreCard, DataTable, ChartCard } from '../components'
 
 interface Opportunity {
   page: string
@@ -41,58 +43,37 @@ function OpportunityImpact() {
   if (isLoading) return <p>Loading opportunities...</p>
   if (error) return <p>Error loading opportunities</p>
 
+  const columns = React.useMemo<ColumnDef<Opportunity>[]>(
+    () => [
+      { accessorKey: 'page', header: 'Page' },
+      { accessorKey: 'impact', header: 'Impact' },
+      { accessorKey: 'effort', header: 'Effort' },
+      { accessorKey: 'tier', header: 'Tier' },
+      { accessorKey: 'currentScore', header: 'Current Score' }
+    ],
+    []
+  )
+
   return (
-    <div>
-      <h2>Opportunity Impact</h2>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <div>
-          <strong>{total}</strong>
-          <div>Total Opps</div>
-        </div>
-        <div>
-          <strong>{avgImpact.toFixed(1)}</strong>
-          <div>Avg Impact</div>
-        </div>
-        <div>
-          <strong>{highImpact}</strong>
-          <div>High Impact</div>
-        </div>
-        <div>
-          <strong>{lowEffort}</strong>
-          <div>Low Effort</div>
-        </div>
+    <PageContainer title="Opportunity Impact">
+      <div className="filter-bar">
+        <ScoreCard label="Total Opps" value={total} />
+        <ScoreCard label="Avg Impact" value={avgImpact.toFixed(1)} />
+        <ScoreCard label="High Impact" value={highImpact} />
+        <ScoreCard label="Low Effort" value={lowEffort} />
       </div>
 
-      <ScatterChart width={600} height={300}>
-        <XAxis type="number" dataKey="effort" name="Effort" domain={[0,10]} />
-        <YAxis type="number" dataKey="impact" name="Impact" domain={[0,10]} />
-        <Tooltip cursor={{ stroke: '#8884d8', strokeDasharray: '3 3' }} />
-        <Scatter data={opps} fill="#dc3545" />
-      </ScatterChart>
+      <ChartCard title="Impact vs Effort">
+        <ScatterChart width={600} height={300}>
+          <XAxis type="number" dataKey="effort" name="Effort" domain={[0, 10]} />
+          <YAxis type="number" dataKey="impact" name="Impact" domain={[0, 10]} />
+          <Tooltip cursor={{ stroke: '#8884d8', strokeDasharray: '3 3' }} />
+          <Scatter data={opps} fill="#dc3545" />
+        </ScatterChart>
+      </ChartCard>
 
-      <table style={{ marginTop: '1rem' }}>
-        <thead>
-          <tr>
-            <th>Page</th>
-            <th>Impact</th>
-            <th>Effort</th>
-            <th>Tier</th>
-            <th>Current Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {opps.map((d, i) => (
-            <tr key={i}>
-              <td>{d.page}</td>
-              <td>{d.impact}</td>
-              <td>{d.effort}</td>
-              <td>{d.tier}</td>
-              <td>{d.currentScore}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <DataTable data={opps} columns={columns} />
+    </PageContainer>
   )
 }
 

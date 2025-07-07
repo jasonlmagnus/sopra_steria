@@ -40,3 +40,22 @@
 .read-the-docs {
   color: #888;
 }
+
+.filter-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.score-card {
+  text-align: center;
+}
+
+.page-container {
+  padding: 1rem;
+  text-align: left;
+}
+
+.chart-card {
+  margin-bottom: 1rem;
+}
