@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
-import { PageContainer, ScoreCard, ChartCard, PlotlyChart, ExpandableCard } from '../components'
+import { PageContainer, ScoreCard, ChartCard, PlotlyChart, ExpandableCard, MetricsCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -42,24 +42,10 @@ function ExecutiveDashboard() {
 
       <ExpandableCard title="Key Metrics" defaultExpanded>
         <div className="filter-bar">
-          <ScoreCard label="Total Pages" value={metrics.total_pages} />
-          <ScoreCard
-            label="Critical Issues"
-            value={metrics.critical_issues}
-            variant={
-              metrics.critical_issues > 10
-                ? 'danger'
-                : metrics.critical_issues > 0
-                ? 'warning'
-                : 'success'
-            }
-          />
-          <ScoreCard
-            label="Quick Wins"
-            value={metrics.quick_wins}
-            variant={metrics.quick_wins > 0 ? 'warning' : 'success'}
-          />
-          <ScoreCard label="Success Pages" value={metrics.success_pages} variant="success" />
+          <MetricsCard label="Total Pages" value={metrics.total_pages} />
+          <MetricsCard label="Critical Issues" value={metrics.critical_issues} multiplier={1.5} />
+          <MetricsCard label="Quick Wins" value={metrics.quick_wins} />
+          <MetricsCard label="Success Pages" value={metrics.success_pages} />
         </div>
       </ExpandableCard>
 

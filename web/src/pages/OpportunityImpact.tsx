@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type ColumnDef } from '@tanstack/react-table'
-import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart, ExpandableSection, FilterBar, FilterSystem } from '../components'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart, ExpandableSection, FilterBar, FilterSystem, ActionRoadmap } from '../components'
 import { useFilters } from '../context/FilterContext'
 
 interface Opportunity {
@@ -49,6 +49,27 @@ function OpportunityImpact() {
   const avgImpact = total ? filteredOpps.reduce((s, d) => s + d.impact, 0) / total : 0
   const highImpact = filteredOpps.filter(d => d.impact >= 7).length
   const lowEffort = filteredOpps.filter(d => d.effort <= 2).length
+
+  const roadmapData = [
+    {
+      phase: 'Phase 1 (0-30 days)',
+      category: 'Quick Wins',
+      count: filteredOpps.filter(o => o.effort <= 2 && o.impact >= 6).length,
+      color: '#10b981'
+    },
+    {
+      phase: 'Phase 2 (30-90 days)',
+      category: 'Fill-ins',
+      count: filteredOpps.filter(o => o.effort === 2).length,
+      color: '#f59e0b'
+    },
+    {
+      phase: 'Phase 3 (90+ days)',
+      category: 'Major Projects',
+      count: filteredOpps.filter(o => o.effort === 3 && o.impact >= 7).length,
+      color: '#dc2626'
+    }
+  ]
 
   if (isLoading) return <p>Loading opportunities...</p>
   if (error) return <p>Error loading opportunities</p>
@@ -98,6 +119,9 @@ function OpportunityImpact() {
 
       <ExpandableSection title="Opportunity Table" defaultExpanded>
         <DataTable data={filteredOpps} columns={columns} />
+      </ExpandableSection>
+      <ExpandableSection title="Action Roadmap" defaultExpanded>
+        <ActionRoadmap data={roadmapData} />
       </ExpandableSection>
     </PageContainer>
   )

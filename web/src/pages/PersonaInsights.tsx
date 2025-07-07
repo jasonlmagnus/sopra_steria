@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PlotlyChart } from '../components'
+import { PlotlyChart, PersonaSelector } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 function PersonaInsights() {
   const [personas, setPersonas] = useState<string[]>([])
+  const [selectedPersona, setSelectedPersona] = useState('')
 
   useEffect(() => {
     fetch(`${apiBase}/api/personas`)
@@ -22,19 +23,23 @@ function PersonaInsights() {
     }
   })
 
+  const chartData = Array.isArray(comparison)
+    ? comparison.filter((c: any) => !selectedPersona || c.persona_id === selectedPersona)
+    : []
+
   return (
     <div>
       <h2>Persona Insights</h2>
-      <ul>
-        {personas.map((p) => (
-          <li key={p}>{p}</li>
-        ))}
-      </ul>
-      {Array.isArray(comparison) && (
+      <PersonaSelector
+        personas={personas}
+        selected={selectedPersona}
+        onChange={setSelectedPersona}
+      />
+      {chartData.length > 0 && (
         <PlotlyChart
           data={[{
-            x: comparison.map((c: any) => c.persona_id),
-            y: comparison.map((c: any) => c.final_score_mean || c.raw_score_mean),
+            x: chartData.map((c: any) => c.persona_id),
+            y: chartData.map((c: any) => c.final_score_mean || c.raw_score_mean),
             type: 'bar',
             marker: { color: '#3d4a6b' }
           }]}
