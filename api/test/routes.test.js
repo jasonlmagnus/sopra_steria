@@ -47,6 +47,16 @@ describe('GET /api/opportunities', () => {
   });
 });
 
+describe('GET /api/summary', () => {
+  it('proxies summary from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: { brand_health: { raw_score: 8.2 } } });
+    const res = await request(app).get('/api/summary');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ brand_health: { raw_score: 8.2 } });
+    vi.restoreAllMocks();
+  });
+});
+
 describe('GET /api/methodology', () => {
   it('returns methodology yaml as json', async () => {
     const res = await request(app).get('/api/methodology');
