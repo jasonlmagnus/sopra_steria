@@ -51,7 +51,30 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] **Verified integration tests passing.** (2025-07-07)
 - [x] **Create dataset detail page using React Table.**
 - [x] **Start migration of additional pages (added Recommendations page).**
+- [x] **Added Methodology page, fetching YAML via new API route.**
 
-**⏳ Next Up**
-- Continue migrating remaining dashboard pages to React.
+**⏳ Next Up: Component Migration & Testing**
+
+The foundational data flow is complete. The next major effort is to migrate the remaining Streamlit pages to React and establish a comprehensive testing suite.
+
+**Page Migration Checklist:**
+*   [ ] **Content Matrix** (`3_📊_Content_Matrix.py`)
+*   [ ] **Opportunity Impact** (`4_💡_Opportunity_Impact.py`)
+*   [ ] **Success Library** (`5_🌟_Success_Library.py`)
+*   [ ] **Reports Export** (`6_📋_Reports_Export.py`)
+*   [ ] **Run Audit** (`7_🚀_Run_Audit.py`)
+*   [ ] **Social Media Analysis** (`8_🔍_Social_Media_Analysis.py`)
+*   [ ] **Persona Viewer** (`9_👤_Persona_Viewer.py`)
+*   [ ] **Visual Brand Hygiene** (`10_🎨_Visual_Brand_Hygiene.py`)
+*   [ ] **Persona Insights** (`2_👥_Persona_Insights.py`)
+*   [ ] **Implementation Tracking** (`12_📈_Implementation_Tracking.py`)
+*   [ ] **Audit Reports** (`13_📄_Audit_Reports.py`)
+
+**Component & Testing Strategy:**
+*   **Component Library:** Recreate Streamlit visuals using `@tanstack/react-table` for data grids and `Recharts` for charting. Develop a library of reusable components for common UI elements (e.g., scorecards, filter bars).
+*   **Testing Approach:**
+    *   **Unit Tests:** Use `Vitest` and `React Testing Library` for every component.
+    *   **Integration Tests:** Expand existing tests to cover the full data flow for each new page, mocking API calls where necessary.
+    -   **E2E Tests:** Implement `Playwright` tests for key user journeys on each page.
+    -   **API Tests:** Use `supertest` to test the Node.js API endpoints independently.
 

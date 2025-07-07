@@ -27,8 +27,7 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Added Methodology page in React fetching YAML via new API route
 
 ## In Progress
-- Recreate Streamlit visuals using React components
-- Migrating additional dashboard pages to React
+- **Page Migration:** The migration of the remaining dashboard pages from Streamlit to React is underway. For a detailed checklist of pages and the testing strategy, see the "Next Up" section in `node_refactor.md`.
 
 ## Next Tasks
 - Add authentication and environment-driven configuration
