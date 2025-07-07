@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
-import { PageContainer, ScoreCard, ChartCard, PlotlyChart } from '../components'
+import { PageContainer, ScoreCard, ChartCard, PlotlyChart, ExpandableCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -22,49 +22,86 @@ function ExecutiveDashboard() {
   const recs = Array.isArray(data?.recommendations) ? data.recommendations : []
   const tierMetrics = data?.score_by_tier || {}
 
+  const { data: oppData } = useQuery({
+    queryKey: ['opportunities'],
+    queryFn: async () => {
+      const res = await fetch(`${apiBase}/api/opportunities?limit=3`)
+      if (!res.ok) throw new Error('Failed to load opportunities')
+      return res.json()
+    }
+  })
+  const opps = Array.isArray(oppData?.opportunities) ? oppData.opportunities : []
+
   return (
     <PageContainer title="Executive Dashboard">
-      <p>
-        Brand Health: <strong>{brand.raw_score}</strong> {brand.emoji}
-      </p>
-      <div className="filter-bar">
-        <ScoreCard label="Total Pages" value={metrics.total_pages} />
-        <ScoreCard
-          label="Critical Issues"
-          value={metrics.critical_issues}
-          variant={
-            metrics.critical_issues > 10
-              ? 'danger'
-              : metrics.critical_issues > 0
-              ? 'warning'
-              : 'success'
-          }
-        />
-        <ScoreCard
-          label="Quick Wins"
-          value={metrics.quick_wins}
-          variant={metrics.quick_wins > 0 ? 'warning' : 'success'}
-        />
-        <ScoreCard label="Success Pages" value={metrics.success_pages} variant="success" />
-      </div>
+      <ExpandableCard title="Brand Health" defaultExpanded>
+        <p>
+          Score: <strong>{brand.raw_score}</strong> {brand.emoji}
+        </p>
+      </ExpandableCard>
 
-      <ChartCard title="Average Score by Tier">
-        <PlotlyChart
-          data={[{
-            x: Object.keys(tierMetrics),
-            y: Object.values(tierMetrics),
-            type: 'bar',
-            marker: { color: '#3d4a6b' }
-          }]}
-          layout={{ height: 300 }}
-        />
-      </ChartCard>
-      <h3>Top Recommendations</h3>
-      <ul>
-        {recs.map((r: string, idx: number) => (
-          <li key={idx}>{r}</li>
-        ))}
-      </ul>
+      <ExpandableCard title="Key Metrics" defaultExpanded>
+        <div className="filter-bar">
+          <ScoreCard label="Total Pages" value={metrics.total_pages} />
+          <ScoreCard
+            label="Critical Issues"
+            value={metrics.critical_issues}
+            variant={
+              metrics.critical_issues > 10
+                ? 'danger'
+                : metrics.critical_issues > 0
+                ? 'warning'
+                : 'success'
+            }
+          />
+          <ScoreCard
+            label="Quick Wins"
+            value={metrics.quick_wins}
+            variant={metrics.quick_wins > 0 ? 'warning' : 'success'}
+          />
+          <ScoreCard label="Success Pages" value={metrics.success_pages} variant="success" />
+        </div>
+      </ExpandableCard>
+
+      <ExpandableCard title="Sentiment" defaultExpanded>
+        <p>Net Sentiment: {data?.sentiment?.net_sentiment}%</p>
+      </ExpandableCard>
+
+      <ExpandableCard title="Conversion Readiness" defaultExpanded>
+        <p>
+          {data?.conversion?.status}: {data?.conversion?.score}
+        </p>
+      </ExpandableCard>
+
+      <ExpandableCard title="Average Score by Tier" defaultExpanded>
+        <ChartCard title="Average Score by Tier">
+          <PlotlyChart
+            data={[{
+              x: Object.keys(tierMetrics),
+              y: Object.values(tierMetrics),
+              type: 'bar',
+              marker: { color: '#3d4a6b' }
+            }]}
+            layout={{ height: 300 }}
+          />
+        </ChartCard>
+      </ExpandableCard>
+
+      <ExpandableCard title="Top Opportunities" defaultExpanded>
+        <ul>
+          {opps.map((o: any, idx: number) => (
+            <li key={idx}>{o.page_title}</li>
+          ))}
+        </ul>
+      </ExpandableCard>
+
+      <ExpandableCard title="Top Recommendations" defaultExpanded>
+        <ul>
+          {recs.map((r: string, idx: number) => (
+            <li key={idx}>{r}</li>
+          ))}
+        </ul>
+      </ExpandableCard>
     </PageContainer>
   )
 }

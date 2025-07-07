@@ -1,7 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type ColumnDef } from '@tanstack/react-table'
-import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart, FilterControls, ExpandableSection, FilterBar } from '../components'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart, ExpandableSection, FilterBar, FilterSystem } from '../components'
 import { useFilters } from '../context/FilterContext'
 
 interface Opportunity {
@@ -67,7 +67,7 @@ function OpportunityImpact() {
   return (
     <PageContainer title="Opportunity Impact">
       <FilterBar>
-        <FilterControls personas={personaOptions} tiers={tierOptions} />
+        <FilterSystem personaOptions={personaOptions} tierOptions={tierOptions} />
         <ScoreCard label="Total Opps" value={total} />
         <ScoreCard
           label="Avg Impact"

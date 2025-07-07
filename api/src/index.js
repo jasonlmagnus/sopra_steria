@@ -327,6 +327,54 @@ app.get('/api/personas/:name', async (req, res) => {
   }
 })
 
+app.get('/api/persona-journeys', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const dir = path.join(__dirname, '..', '..', 'audit_inputs', 'persona_journeys')
+    const files = await readdir(dir)
+    const personas = files.filter((f) => f.endsWith('.md')).map((f) => f.replace('.md', ''))
+    res.json({ personas })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list persona journeys' })
+  }
+})
+
+app.get('/api/persona-journeys/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'audit_inputs', 'persona_journeys', `${name}.md`)
+    const markdown = await readFile(filePath, 'utf8')
+    const lines = markdown.split('\n').filter((l) => l.trim().startsWith('| **'))
+    const steps = lines.map((l) => {
+      const cells = l.split('|').slice(1, -1).map((c) => c.trim())
+      return {
+        step: cells[0],
+        evaluation: cells[1],
+        severity: cells[2],
+        quickFix: cells[3]
+      }
+    })
+    res.json({ steps })
+  } catch (err) {
+    res.status(404).json({ error: 'Persona journey not found' })
+  }
+})
+
+app.get('/api/download/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'audit_data', name)
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' })
+    }
+    res.sendFile(filePath)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to download file' })
+  }
+})
+
 app.get('/api/social-media', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
