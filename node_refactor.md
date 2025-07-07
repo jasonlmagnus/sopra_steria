@@ -41,4 +41,7 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 **⏳ Next Up**
 - [ ] **Expose Python audit functions via FastAPI service.** This is the next major backend integration task.
 - [ ] **Complete migration of the dataset list page to React.** This is the next major frontend task and is currently in progress.
+- [ ] **Add Express proxy routes for FastAPI data.**
+- [ ] **Integrate React Query for dataset fetching.**
+- [ ] **Write integration tests for the new data flow.**
 
