@@ -13,12 +13,12 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Added axios dependency for future FastAPI integration
 
 ## In Progress
-- Bridge Python functionality via FastAPI or shell wrappers
+- Bridge Python functionality via FastAPI or shell wrappers *(FastAPI service created)*
 - Begin migrating dataset list page to React
 - Recreate Streamlit visuals using React components
 
 ## Next Tasks
-- Implement Express proxy routes to call the FastAPI service for datasets and pages
+- Implement Express proxy routes to call the FastAPI service for datasets and pages *(completed)*
 - Use React Query to fetch dataset data in the new React page
 - Add integration tests covering the Express → FastAPI call chain
 

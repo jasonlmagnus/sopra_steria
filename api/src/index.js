@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import axios from 'axios';
 
 const app = express();
 app.use(cors());
@@ -54,8 +55,23 @@ app.get('/api/hello', (_req, res) => {
  *                   items:
  *                     type: object
  */
-app.get('/api/datasets', (_req, res) => {
-  res.json({ datasets: [] });
+app.get('/api/datasets', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/datasets');
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch datasets' });
+  }
+});
+
+app.get('/api/datasets/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const response = await axios.get(`http://localhost:8000/datasets/${name}`);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch dataset' });
+  }
 });
 
 /**
@@ -76,8 +92,13 @@ app.get('/api/datasets', (_req, res) => {
  *                   items:
  *                     type: object
  */
-app.get('/api/pages', (_req, res) => {
-  res.json({ pages: [] });
+app.get('/api/pages', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/datasets/pages');
+    res.json({ pages: response.data });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch pages' });
+  }
 });
 
 /**
@@ -98,8 +119,13 @@ app.get('/api/pages', (_req, res) => {
  *                   items:
  *                     type: object
  */
-app.get('/api/recommendations', (_req, res) => {
-  res.json({ recommendations: [] });
+app.get('/api/recommendations', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/datasets/recommendations');
+    res.json({ recommendations: response.data });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
 });
 
 const port = process.env.PORT || 3000;

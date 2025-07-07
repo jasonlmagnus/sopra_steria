@@ -11,3 +11,5 @@ pandas
 plotly
 requests
 PyYAML
+fastapi
+uvicorn

@@ -28,11 +28,11 @@ def test_yaml_configuration():
         assert len(methodology.offsite_channels) == 3
         
         print("✅ YAML Configuration test passed")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ YAML Configuration test failed: {e}")
-        return False
+        assert False
 
 def test_persona_parsing():
     """Test persona parsing functionality"""
@@ -54,11 +54,11 @@ def test_persona_parsing():
         assert len(persona.pain_points) > 0
         
         print("✅ Persona Parsing test passed")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Persona Parsing test failed: {e}")
-        return False
+        assert False
 
 def test_scraper():
     """Test web scraping functionality"""
@@ -78,11 +78,11 @@ def test_scraper():
         assert 'objective_findings' in page_data.__dict__
         
         print("✅ Web Scraper test passed")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Web Scraper test failed: {e}")
-        return False
+        assert False
 
 def test_ai_interface():
     """Test AI interface functionality"""
@@ -103,11 +103,11 @@ def test_ai_interface():
         assert len(system_msg) > 10
         
         print("✅ AI Interface test passed")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ AI Interface test failed: {e}")
-        return False
+        assert False
 
 def test_full_audit_pipeline():
     """Test the complete audit pipeline"""
@@ -140,11 +140,11 @@ def test_full_audit_pipeline():
             assert len(output_files) >= 2  # At least hygiene and experience reports
             
         print("✅ Full Audit Pipeline test passed")
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Full Audit Pipeline test failed: {e}")
-        return False
+        assert False
 
 def run_all_tests():
     """Run all tests"""
