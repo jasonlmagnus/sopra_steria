@@ -49,6 +49,7 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] **Complete migration of the dataset list page to React.**
 - [x] **Write integration tests for the new data flow.**
 - [x] **Verified integration tests passing.** (2025-07-07)
+- [x] **Create dataset detail page using React Table.**
 
 **⏳ Next Up**
 - Begin migrating remaining dashboard pages to React.
