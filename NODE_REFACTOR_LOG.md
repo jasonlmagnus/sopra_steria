@@ -23,12 +23,13 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Integration tests covering the Express → FastAPI call chain
 - Integration tests verified passing on 2025-07-07
 - Added dataset detail page in React using @tanstack/react-table
+- Created recommendations page in React using React Table
 
 ## In Progress
 - Recreate Streamlit visuals using React components
+- Migrating additional dashboard pages to React
 
 ## Next Tasks
-- Begin migrating remaining dashboard pages to React
 - Add authentication and environment-driven configuration
 
 ## Todo
