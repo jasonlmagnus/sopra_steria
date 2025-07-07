@@ -49,4 +49,10 @@ describe('Integration Express->FastAPI', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('brand_health');
   });
+
+  it('lists reports', async () => {
+    const res = await request(app).get('/api/reports');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('reports');
+  });
 });

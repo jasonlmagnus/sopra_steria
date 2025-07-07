@@ -38,6 +38,10 @@ pnpm start
 curl http://localhost:3000/api/hello
 # {"message":"Hello from API"}
 
+# New endpoint to list generated HTML reports
+curl http://localhost:3000/api/reports
+# {"reports": ["report.html", ...]}
+
 # To launch the Python FastAPI service
 cd fastapi_service
 python server.py

@@ -1,41 +1,55 @@
-import React from 'react';
+import React from 'react'
 import {
   ColumnDef,
   getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+  useReactTable
+} from '@tanstack/react-table'
+import { useDataset } from '../hooks/useDataset'
 
 interface Success {
-  title: string;
-  url: string;
-  score: number;
+  title: string
+  url: string
+  score: number
 }
 
-const data: Success[] = [
-  { title: 'Case Study A', url: 'https://example.com/a', score: 8.5 },
-  { title: 'Landing Page B', url: 'https://example.com/b', score: 7.9 },
-  { title: 'Video Campaign C', url: 'https://example.com/c', score: 9.1 },
-];
-
 function SuccessLibrary() {
+  const { data: dataset, isLoading } = useDataset('master')
+
+  const tableData = React.useMemo<Success[]>(() => {
+    if (!dataset) return []
+    return dataset
+      .filter((d) => d.success_flag)
+      .map((d) => ({
+        title: d.url_slug,
+        url: d.url,
+        score: parseFloat(d.avg_score || 0)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+  }, [dataset])
+
   const columns = React.useMemo<ColumnDef<Success, any>[]>(
     () => [
       { accessorKey: 'title', header: 'Title' },
       {
         accessorKey: 'url',
         header: 'URL',
-        cell: (info) => <a href={info.getValue() as string}>Link</a>,
+        cell: (info) => <a href={info.getValue() as string}>Link</a>
       },
-      { accessorKey: 'score', header: 'Score' },
+      { accessorKey: 'score', header: 'Score' }
     ],
-    [],
-  );
+    []
+  )
 
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+    getCoreRowModel: getCoreRowModel()
+  })
+
+  if (isLoading) {
+    return <p>Loading...</p>
+  }
 
   return (
     <div>
@@ -65,7 +79,7 @@ function SuccessLibrary() {
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
 export default SuccessLibrary;

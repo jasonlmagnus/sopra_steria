@@ -3,7 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import axios from 'axios';
-import { readFile } from 'fs/promises';
+import { readFile, readdir } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
@@ -199,6 +199,31 @@ app.get('/api/methodology', async (_req, res) => {
     res.status(500).json({ error: 'Failed to load methodology' });
   }
 });
+
+app.get('/api/reports', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const dir = path.join(__dirname, '..', '..', 'html_reports')
+    const files = await readdir(dir)
+    const reports = files.filter((f) => f.endsWith('.html'))
+    res.json({ reports })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list reports' })
+  }
+})
+
+app.get('/api/reports/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'html_reports', name)
+    const file = await readFile(filePath, 'utf8')
+    res.setHeader('Content-Type', 'text/html')
+    res.send(file)
+  } catch (err) {
+    res.status(404).json({ error: 'Report not found' })
+  }
+})
 
 const port = process.env.PORT || 3000;
 
