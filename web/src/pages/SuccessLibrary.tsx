@@ -1,7 +1,7 @@
 import React from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { useDataset } from '../hooks/useDataset'
-import { PageContainer, DataTable } from '../components'
+import { PageContainer, DataTable, EvidenceBrowser } from '../components'
 
 interface Success {
   title: string
@@ -45,6 +45,7 @@ function SuccessLibrary() {
 
   return (
     <PageContainer title="Success Library">
+      <EvidenceBrowser items={tableData} />
       <DataTable data={tableData} columns={columns} />
     </PageContainer>
   )
