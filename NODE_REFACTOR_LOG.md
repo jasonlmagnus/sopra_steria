@@ -67,6 +67,7 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
   - Verify all filters, tabs, interactions, and data displays are preserved
   - Fix any missing functionality or data discrepancies
   - Ensure feature parity between old and new implementations
+  - Ongoing gap summary documented in `docs/react_vs_streamlit_gap.md`
 - Add authentication and environment-driven configuration
 
 ## Todo
