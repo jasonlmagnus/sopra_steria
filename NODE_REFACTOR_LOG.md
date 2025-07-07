@@ -17,18 +17,18 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Swagger UI documentation
 - Additional API tests (including docs endpoint)
 - Added axios dependency for future FastAPI integration
+- Bridge Python functionality via FastAPI or shell wrappers *(FastAPI service created)*
+- Implement Express proxy routes to call the FastAPI service for datasets and pages
+- React Query integrated for dataset list page
+- Integration tests covering the Express → FastAPI call chain
 
 ## In Progress
-- Bridge Python functionality via FastAPI or shell wrappers *(FastAPI service created)*
-- Begin migrating dataset list page to React
 - Recreate Streamlit visuals using React components
 
 ## Next Tasks
-- Implement Express proxy routes to call the FastAPI service for datasets and pages *(completed)*
-- Use React Query to fetch dataset data in the new React page
-- Add integration tests covering the Express → FastAPI call chain
+- Begin migrating remaining dashboard pages to React
+- Add authentication and environment-driven configuration
 
 ## Todo
-- Add authentication and environment-driven configuration
 - Production hardening (Docker, CI/CD, load testing)
 - Deprecate Streamlit dashboard once feature complete
