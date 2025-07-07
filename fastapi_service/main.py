@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
 from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
+from audit_tool.dashboard.components.metrics_calculator import (
+    BrandHealthMetricsCalculator,
+)
 
 app = FastAPI(title="Sopra Steria Audit FastAPI")
 
@@ -23,4 +26,14 @@ def get_dataset(name: str):
     df = datasets[name]
     json_str = df.to_json(orient="records")
     return Response(content=json_str, media_type="application/json")
+
+
+@app.get("/opportunities")
+def get_opportunities(limit: int = 20):
+    """Return top improvement opportunities"""
+    data_loader = BrandHealthDataLoader()
+    datasets, master_df = data_loader.load_all_data()
+    metrics = BrandHealthMetricsCalculator(master_df, datasets.get("recommendations"))
+    opportunities = metrics.get_top_opportunities(limit=limit)
+    return {"opportunities": opportunities}
 

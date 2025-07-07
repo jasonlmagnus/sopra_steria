@@ -37,6 +37,16 @@ describe('GET /api/recommendations', () => {
   });
 });
 
+describe('GET /api/opportunities', () => {
+  it('proxies opportunities from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: { opportunities: [{ id: 1 }] } });
+    const res = await request(app).get('/api/opportunities');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ opportunities: [{ id: 1 }] });
+    vi.restoreAllMocks();
+  });
+});
+
 describe('GET /api/methodology', () => {
   it('returns methodology yaml as json', async () => {
     const res = await request(app).get('/api/methodology');
