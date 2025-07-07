@@ -45,9 +45,10 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] Install `axios` in the API package to prepare for calling Python services.
 - [x] **Expose Python audit functions via FastAPI service.** (Initial version complete).
 - [x] **Add Express proxy routes for FastAPI data.**
+- [x] **Integrate React Query for dataset fetching.**
+- [x] **Complete migration of the dataset list page to React.**
+- [x] **Write integration tests for the new data flow.**
 
 **⏳ Next Up**
-- [ ] **Integrate React Query for dataset fetching.** This is the next major frontend task.
-- [ ] **Complete migration of the dataset list page to React.** This is currently in progress.
-- [ ] **Write integration tests for the new data flow.**
+- Begin migrating remaining dashboard pages to React.
 
