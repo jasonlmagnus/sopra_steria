@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart } from '../components'
+import { ColumnDef } from '@tanstack/react-table'
 
 interface Item {
   status: string
@@ -25,56 +26,45 @@ function ImplementationTracking() {
   const completionRate = totalItems ? (completed / totalItems) * 100 : 0
 
 
+  const columns = React.useMemo<ColumnDef<Item>[]>(
+    () => [
+      { accessorKey: 'name', header: 'Initiative' },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: info => (info.getValue() as string).replace('_', ' ')
+      },
+      { accessorKey: 'progress', header: 'Progress', cell: info => `${info.getValue()}%` },
+      { accessorKey: 'team', header: 'Team' }
+    ],
+    []
+  )
+
   return (
-    <div>
-      <h2>Implementation Tracking</h2>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <div>
-          <strong>{totalItems}</strong>
-          <div>Total Items</div>
-        </div>
-        <div>
-          <strong>{completionRate.toFixed(1)}%</strong>
-          <div>Completion Rate</div>
-        </div>
-        <div>
-          <strong>{avgProgress.toFixed(1)}%</strong>
-          <div>Avg Progress</div>
-        </div>
-        <div>
-          <strong>{inProgress}</strong>
-          <div>In Progress</div>
-        </div>
+    <PageContainer title="Implementation Tracking">
+      <div className="filter-bar">
+        <ScoreCard label="Total Items" value={totalItems} />
+        <ScoreCard label="Completion Rate" value={`${completionRate.toFixed(1)}%`} />
+        <ScoreCard label="Avg Progress" value={`${avgProgress.toFixed(1)}%`} />
+        <ScoreCard label="In Progress" value={inProgress} />
       </div>
 
-      <BarChart width={600} height={300} data={items} style={{ marginBottom: '1rem' }}>
-        <XAxis dataKey="name" hide={true} />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="progress" fill="#3d4a6b" />
-      </BarChart>
+      <ChartCard title="Progress by Initiative">
+        <PlotlyChart
+          data={[
+            {
+              x: items.map(i => i.name),
+              y: items.map(i => i.progress),
+              type: 'bar',
+              marker: { color: '#3d4a6b' }
+            }
+          ]}
+          layout={{ xaxis: { title: 'Initiative' }, yaxis: { title: 'Progress' }, height: 300 }}
+        />
+      </ChartCard>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Initiative</th>
-            <th>Status</th>
-            <th>Progress</th>
-            <th>Team</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map(item => (
-            <tr key={item.name}>
-              <td>{item.name}</td>
-              <td>{item.status.replace('_', ' ')}</td>
-              <td>{item.progress}%</td>
-              <td>{item.team}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <DataTable data={items} columns={columns} />
+    </PageContainer>
   )
 }
 

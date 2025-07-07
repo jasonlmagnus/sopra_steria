@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
+import { PageContainer, ScoreCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -21,24 +22,23 @@ function ExecutiveDashboard() {
   const recs = Array.isArray(data?.recommendations) ? data.recommendations : []
 
   return (
-    <div>
-      <h2>Executive Dashboard</h2>
+    <PageContainer title="Executive Dashboard">
       <p>
         Brand Health: <strong>{brand.raw_score}</strong> {brand.emoji}
       </p>
-      <ul>
-        <li>Total Pages: {metrics.total_pages}</li>
-        <li>Critical Issues: {metrics.critical_issues}</li>
-        <li>Quick Wins: {metrics.quick_wins}</li>
-        <li>Success Pages: {metrics.success_pages}</li>
-      </ul>
+      <div className="filter-bar">
+        <ScoreCard label="Total Pages" value={metrics.total_pages} />
+        <ScoreCard label="Critical Issues" value={metrics.critical_issues} />
+        <ScoreCard label="Quick Wins" value={metrics.quick_wins} />
+        <ScoreCard label="Success Pages" value={metrics.success_pages} />
+      </div>
       <h3>Top Recommendations</h3>
       <ul>
         {recs.map((r: string, idx: number) => (
           <li key={idx}>{r}</li>
         ))}
       </ul>
-    </div>
+    </PageContainer>
   )
 }
 

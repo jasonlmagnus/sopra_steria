@@ -1,10 +1,7 @@
 import React from 'react'
-import {
-  ColumnDef,
-  getCoreRowModel,
-  useReactTable
-} from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table'
 import { useDataset } from '../hooks/useDataset'
+import { PageContainer, DataTable } from '../components'
 
 interface Success {
   title: string
@@ -41,44 +38,15 @@ function SuccessLibrary() {
     []
   )
 
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel()
-  })
 
   if (isLoading) {
     return <p>Loading...</p>
   }
 
   return (
-    <div>
-      <h2>Success Library</h2>
-      <table>
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : (header.column.columnDef.header as string)}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id}>{cell.renderValue<string>()}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <PageContainer title="Success Library">
+      <DataTable data={tableData} columns={columns} />
+    </PageContainer>
   )
 }
 
