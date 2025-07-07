@@ -1,91 +1,249 @@
-#root {
-  max-width: 1280px;
+/* Brand Health Command Center Styles */
+:root {
+  --primary-color: #E85A4F;
+  --primary-hover: #d44a3a;
+  --secondary-color: #2C3E50;
+  --gray-border: #D1D5DB;
+  --background: #FFFFFF;
+  --text-selection: #E85A4F;
+  --green-status: #34c759;
+  --yellow-status: #ffb800;
+  --red-status: #ff3b30;
+  --orange-status: #ff9500;
+  --font-primary: "Inter", sans-serif;
+  --font-serif: "Crimson Text", serif;
+}
+
+/* Global Typography */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--secondary-color);
+  background-color: #f8fafc;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--secondary-color);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Text Selection */
+::selection {
+  background-color: var(--text-selection);
+  color: white;
+}
+
+/* Main Layout */
+.main {
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.block-container {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Header Styling */
+.main-header {
+  background: var(--background);
+  border-left: 4px solid var(--primary-color);
+  color: var(--secondary-color);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--gray-border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.score-card {
-  text-align: center;
-}
-
-.score-card progress {
-  width: 100%;
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.score-card--success {
-  color: #28a745;
-}
-
-.score-card--warning {
-  color: #ffc107;
-}
-
-.score-card--danger {
-  color: #dc3545;
-}
-.page-container {
-  padding: 1rem;
-  text-align: left;
-}
-
-.chart-card {
-  margin-bottom: 1rem;
-}
-
-.expandable-card__header {
+.main-header h1 {
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--secondary-color);
 }
 
-.tab-navigation__tabs {
-  margin-bottom: 0.5rem;
+.main-header p {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  font-weight: 400;
+  color: #666;
+  margin: 0 0 1rem 0;
 }
 
-.tab-navigation__tabs button.active {
-  font-weight: bold;
+/* Navigation */
+.nav-links {
+  font-family: var(--font-primary);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.nav-links a {
+  color: var(--primary-color);
+  text-decoration: none;
+  margin: 0 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid transparent;
+  transition: border-bottom-color 0.2s;
+}
+
+.nav-links a:hover {
+  border-bottom-color: var(--primary-color);
+}
+
+/* Metric Cards */
+.metric-card {
+  background: var(--background);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid var(--gray-border);
+  border-left: 4px solid var(--primary-color);
+  margin-bottom: 1rem;
+  font-family: var(--font-primary);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.metric-card.critical {
+  border-left-color: var(--red-status);
+}
+
+.metric-card.warning {
+  border-left-color: var(--yellow-status);
+}
+
+.metric-card.fair {
+  border-left-color: var(--orange-status);
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+  font-family: var(--font-primary);
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  color: var(--secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  font-family: var(--font-primary);
+}
+
+/* Status Colors */
+.status-excellent { color: var(--green-status); }
+.status-good { color: var(--yellow-status); }
+.status-fair { color: var(--orange-status); }
+.status-critical { color: var(--red-status); }
+
+/* Insights Box */
+.insights-box {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--gray-border);
+  margin: 1rem 0;
+  font-family: var(--font-primary);
+}
+
+.insights-box h3,
+.insights-box h4 {
+  font-family: var(--font-serif);
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+/* Business Impact Summary */
+.business-impact-summary {
+  background: linear-gradient(135deg, #f8fafc 0%, #e3f2fd 100%);
+  border-left: 4px solid var(--primary-color);
+}
+
+.business-impact-summary h3 {
+  font-family: var(--font-serif);
+  color: var(--secondary-color);
+  font-size: 1.3rem;
+}
+
+.business-impact-summary p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+/* So What Context */
+.so-what {
+  font-family: var(--font-primary);
+  font-weight: 500;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Badges */
+.quick-win-badge {
+  background: var(--green-status);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.critical-badge {
+  background: var(--red-status);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .block-container {
+    padding: 1rem;
+  }
+  
+  .nav-links {
+    font-size: 0.8rem;
+  }
+  
+  .nav-links a {
+    margin: 0 0.25rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+  }
+  
+  .main-header h1 {
+    font-size: 1.5rem;
+  }
 }

@@ -15,9 +15,6 @@ function Recommendations() {
     },
   })
 
-  if (isLoading) return <p>Loading recommendations...</p>
-  if (error) return <p>Error loading recommendations</p>
-
   const recs = Array.isArray(data?.recommendations) ? data.recommendations : []
 
   const columns = React.useMemo<ColumnDef<any, any>[]>(() => {
@@ -26,6 +23,9 @@ function Recommendations() {
   }, [recs])
 
   const table = useReactTable({ data: recs, columns, getCoreRowModel: getCoreRowModel() })
+
+  if (isLoading) return <p>Loading recommendations...</p>
+  if (error) return <p>Error loading recommendations</p>
 
   return (
     <div>

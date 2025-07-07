@@ -19,10 +19,6 @@ function DatasetDetail() {
     enabled: !!name,
   })
 
-  if (!name) return <p>No dataset specified</p>
-  if (isLoading) return <p>Loading dataset...</p>
-  if (error) return <p>Error loading dataset</p>
-
   const dataArray = Array.isArray(data) ? data : []
 
   // create columns dynamically from keys
@@ -33,6 +29,10 @@ function DatasetDetail() {
       header: key,
     }))
   }, [dataArray])
+
+  if (!name) return <p>No dataset specified</p>
+  if (isLoading) return <p>Loading dataset...</p>
+  if (error) return <p>Error loading dataset</p>
 
   return (
     <PageContainer title={`Dataset: ${name}`}>

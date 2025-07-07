@@ -10,6 +10,7 @@ interface Opportunity {
   effort: number
   tier: string
   currentScore: number
+  persona?: string
 }
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -38,7 +39,7 @@ function OpportunityImpact() {
       }))
     : []
 
-  const personaOptions = Array.from(new Set(opps.map(o => o.persona).filter(Boolean)))
+  const personaOptions = Array.from(new Set(opps.map(o => o.persona).filter(Boolean))) as string[]
   const tierOptions = Array.from(new Set(opps.map(o => o.tier).filter(Boolean)))
 
   const filteredOpps = opps.filter(o =>
@@ -71,9 +72,6 @@ function OpportunityImpact() {
     }
   ]
 
-  if (isLoading) return <p>Loading opportunities...</p>
-  if (error) return <p>Error loading opportunities</p>
-
   const columns = React.useMemo<ColumnDef<Opportunity>[]>(
     () => [
       { accessorKey: 'page', header: 'Page' },
@@ -84,6 +82,9 @@ function OpportunityImpact() {
     ],
     []
   )
+
+  if (isLoading) return <p>Loading opportunities...</p>
+  if (error) return <p>Error loading opportunities</p>
 
   return (
     <PageContainer title="Opportunity Impact">
