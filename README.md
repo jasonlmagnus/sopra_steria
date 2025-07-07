@@ -51,6 +51,14 @@ curl http://localhost:8000/hello
 # {"message":"Hello from FastAPI"}
 ```
 
+### Configure PNPM Registry
+
+To install Node dependencies from the public npm registry, run:
+
+```bash
+pnpm config set registry https://registry.npmjs.org
+```
+
 ## 🎯 Project Overview
 
 This repository contains a complete website audit system that combines:
