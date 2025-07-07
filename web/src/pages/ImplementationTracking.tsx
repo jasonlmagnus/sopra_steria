@@ -44,8 +44,20 @@ function ImplementationTracking() {
     <PageContainer title="Implementation Tracking">
       <div className="filter-bar">
         <ScoreCard label="Total Items" value={totalItems} />
-        <ScoreCard label="Completion Rate" value={`${completionRate.toFixed(1)}%`} />
-        <ScoreCard label="Avg Progress" value={`${avgProgress.toFixed(1)}%`} />
+        <ScoreCard
+          label="Completion Rate"
+          value={`${completionRate.toFixed(1)}%`}
+          progress={completionRate}
+          variant={
+            completionRate > 80 ? 'success' : completionRate > 50 ? 'warning' : 'danger'
+          }
+        />
+        <ScoreCard
+          label="Avg Progress"
+          value={`${avgProgress.toFixed(1)}%`}
+          progress={avgProgress}
+          variant={avgProgress > 80 ? 'success' : avgProgress > 50 ? 'warning' : 'danger'}
+        />
         <ScoreCard label="In Progress" value={inProgress} />
       </div>
 

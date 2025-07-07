@@ -69,9 +69,13 @@ function OpportunityImpact() {
       <FilterBar>
         <FilterControls personas={personaOptions} tiers={tierOptions} />
         <ScoreCard label="Total Opps" value={total} />
-        <ScoreCard label="Avg Impact" value={avgImpact.toFixed(1)} />
-        <ScoreCard label="High Impact" value={highImpact} />
-        <ScoreCard label="Low Effort" value={lowEffort} />
+        <ScoreCard
+          label="Avg Impact"
+          value={avgImpact.toFixed(1)}
+          variant={avgImpact >= 7 ? 'success' : avgImpact >= 4 ? 'warning' : 'danger'}
+        />
+        <ScoreCard label="High Impact" value={highImpact} variant="success" />
+        <ScoreCard label="Low Effort" value={lowEffort} variant="success" />
       </FilterBar>
 
       <ExpandableSection title="Impact vs Effort Chart" defaultExpanded>

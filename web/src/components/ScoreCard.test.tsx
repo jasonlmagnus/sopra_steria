@@ -7,4 +7,11 @@ describe('ScoreCard', () => {
     expect(screen.getByText('Test')).toBeInTheDocument()
     expect(screen.getByText('42')).toBeInTheDocument()
   })
+
+  it('shows progress when provided', () => {
+    render(<ScoreCard label="Progress" value="50%" progress={50} />)
+    const progress = screen.getByTestId('progress') as HTMLProgressElement
+    expect(progress).toBeInTheDocument()
+    expect(progress.value).toBe(50)
+  })
 })

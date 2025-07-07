@@ -51,6 +51,12 @@
   text-align: center;
 }
 
+.score-card progress {
+  width: 100%;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .score-card--success {
   color: #28a745;
 }

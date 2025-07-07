@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { ColumnDef } from '@tanstack/react-table'
 import { DataTable } from './DataTable'
 
@@ -22,5 +22,13 @@ describe('DataTable', () => {
     render(<DataTable data={data} columns={columns} />)
     expect(screen.getByText('Alice')).toBeInTheDocument()
     expect(screen.getByText('Bob')).toBeInTheDocument()
+  })
+
+  it('filters rows based on input', () => {
+    render(<DataTable data={data} columns={columns} />)
+    const input = screen.getByPlaceholderText('Filter...')
+    fireEvent.change(input, { target: { value: 'Alice' } })
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.queryByText('Bob')).toBeNull()
   })
 })

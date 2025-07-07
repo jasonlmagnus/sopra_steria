@@ -3,6 +3,7 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  getFilteredRowModel,
   useReactTable,
   type ColumnDef,
   type RowData,
@@ -16,18 +17,34 @@ export interface DataTableProps<T extends RowData> {
 
 export function DataTable<T extends RowData>({ data, columns }: DataTableProps<T>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [filter, setFilter] = React.useState('')
 
   const table = useReactTable({
     data,
     columns,
-    state: { sorting },
+    state: { sorting, globalFilter: filter },
     onSortingChange: setSorting,
+    onGlobalFilterChange: setFilter,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel()
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: (row, _columnId, filterValue: string) => {
+      const val = String(filterValue || '').toLowerCase()
+      return row
+        .getAllCells()
+        .some(cell => String(cell.getValue()).toLowerCase().includes(val))
+    }
   })
 
   return (
-    <table>
+    <div>
+      <input
+        placeholder="Filter..."
+        value={filter}
+        onChange={e => setFilter(e.target.value)}
+        style={{ marginBottom: '0.5rem' }}
+      />
+      <table>
       <thead>
         {table.getHeaderGroups().map(headerGroup => (
           <tr key={headerGroup.id}>
@@ -53,6 +70,7 @@ export function DataTable<T extends RowData>({ data, columns }: DataTableProps<T
         ))}
       </tbody>
     </table>
+    </div>
   )
 }
 

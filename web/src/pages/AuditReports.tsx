@@ -1,5 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { DataTable, PageContainer } from '../components'
+import { type ColumnDef } from '@tanstack/react-table'
 
 function AuditReports() {
   const { data, isLoading } = useQuery({
@@ -15,17 +17,22 @@ function AuditReports() {
     return <p>Loading...</p>
   }
 
+  const reports: { name: string }[] = (data?.reports || []).map((r: string) => ({ name: r }))
+
+  const columns: ColumnDef<{ name: string }>[] = [
+    {
+      accessorKey: 'name',
+      header: 'Report',
+      cell: info => (
+        <a href={`http://localhost:3000/api/reports/${info.getValue()}`}>{info.getValue()}</a>
+      )
+    }
+  ]
+
   return (
-    <div>
-      <h2>Audit Reports</h2>
-      <ul>
-        {data?.reports.map((r: string) => (
-          <li key={r}>
-            <a href={`http://localhost:3000/api/reports/${r}`}>{r}</a>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <PageContainer title="Audit Reports">
+      <DataTable data={reports} columns={columns} />
+    </PageContainer>
   )
 }
 
