@@ -17,6 +17,11 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Begin migrating dataset list page to React
 - Recreate Streamlit visuals using React components
 
+## Next Tasks
+- Implement Express proxy routes to call the FastAPI service for datasets and pages
+- Use React Query to fetch dataset data in the new React page
+- Add integration tests covering the Express → FastAPI call chain
+
 ## Todo
 - Add authentication and environment-driven configuration
 - Production hardening (Docker, CI/CD, load testing)
