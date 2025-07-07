@@ -6,7 +6,9 @@ This repository contains a comprehensive audit and analysis platform for evaluat
 - **API**: Node.js (Express/TypeScript) to serve data.
 - **Frontend**: React (Vite/TypeScript) for the interactive dashboard.
 
-Refer to `node_refactor.md` for the detailed migration plan and `AGENTS.MD` for specific instructions for AI agents.
+**For AI Agents:** See `CODEX_IMMEDIATE_TASKS.md` for current priorities and `AGENTS.MD` for detailed guidelines.
+
+**For Migration Status:** Refer to `node_refactor.md` for the detailed migration plan and current status.
 
 ## 🚀 Quick Start (Hybrid Development)
 
