@@ -1,9 +1,9 @@
 import React from 'react'
 import {
-  ColumnDef,
   getCoreRowModel,
   useReactTable
 } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { groupBy } from 'lodash-es'
 import { useDataset } from '../hooks/useDataset'
