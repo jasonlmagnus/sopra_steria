@@ -3,6 +3,10 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import axios from 'axios';
+import { readFile } from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import yaml from 'js-yaml';
 
 const app = express();
 app.use(cors());
@@ -125,6 +129,18 @@ app.get('/api/recommendations', async (_req, res) => {
     res.json({ recommendations: response.data });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
+app.get('/api/methodology', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    const filePath = path.join(__dirname, '..', '..', 'audit_tool', 'config', 'methodology.yaml');
+    const file = await readFile(filePath, 'utf8');
+    const data = yaml.load(file);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load methodology' });
   }
 });
 

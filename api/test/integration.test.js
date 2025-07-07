@@ -15,7 +15,7 @@ beforeAll(async () => {
     stdio: 'ignore'
   });
   // wait briefly for the FastAPI server to start
-  await new Promise((res) => setTimeout(res, 2000));
+  await new Promise((res) => setTimeout(res, 3000));
 });
 
 afterAll(() => {
@@ -29,5 +29,11 @@ describe('Integration Express->FastAPI', () => {
     const res = await request(app).get('/api/datasets');
     expect(res.status).toBe(200);
     expect(res.body.datasets).toContain('master');
+  });
+
+  it('serves methodology data', async () => {
+    const res = await request(app).get('/api/methodology');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('calculation');
   });
 });

@@ -11,11 +11,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^5.0.2",
+    "js-yaml": "^4.1.0",
     "swagger-jsdoc": "6.2.8",
-    "swagger-ui-express": "5.0.1",
-    "axios": "^1.6.0"
+    "swagger-ui-express": "5.0.1"
   },
   "devDependencies": {
     "supertest": "^7.1.1",
