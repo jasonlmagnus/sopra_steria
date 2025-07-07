@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 
 function RunAudit() {
-  const [url, setUrl] = useState('');
-  const [status, setStatus] = useState('');
+  const [url, setUrl] = useState('')
+  const [status, setStatus] = useState('')
 
-  const handleRun = () => {
-    setStatus(`Pretending to run audit for ${url}`);
-  };
+  const handleRun = async () => {
+    setStatus('Running...')
+    try {
+      const res = await fetch('http://localhost:3000/api/run-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      })
+      const data = await res.json()
+      setStatus(data.message)
+    } catch {
+      setStatus('Error starting audit')
+    }
+  }
 
   return (
     <div>

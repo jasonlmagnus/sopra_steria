@@ -1,25 +1,42 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import React, { useEffect, useState } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 
-const data = [
-  { month: 'Jan', mentions: 120 },
-  { month: 'Feb', mentions: 90 },
-  { month: 'Mar', mentions: 150 },
-  { month: 'Apr', mentions: 130 },
-];
+interface Row {
+  Platform: string
+  Region: string
+  Followers: string
+}
+
+function parseFollowers(value: string) {
+  return parseInt(value.replace(/,/g, ''), 10)
+}
 
 function SocialMediaAnalysis() {
+  const [rows, setRows] = useState<Row[]>([])
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/social-media')
+      .then((res) => res.json())
+      .then((data) => setRows(data.data || []))
+      .catch(() => setRows([]))
+  }, [])
+
+  const chartData = rows.map((r) => ({
+    name: `${r.Platform} ${r.Region}`,
+    followers: parseFollowers(r.Followers)
+  }))
+
   return (
     <div>
       <h2>Social Media Analysis</h2>
-      <LineChart width={600} height={300} data={data}>
-        <XAxis dataKey="month" />
+      <BarChart width={600} height={300} data={chartData}>
+        <XAxis dataKey="name" hide={true} />
         <YAxis />
         <Tooltip />
-        <Line type="monotone" dataKey="mentions" stroke="#dc3545" />
-      </LineChart>
+        <Bar dataKey="followers" fill="#dc3545" />
+      </BarChart>
     </div>
-  );
+  )
 }
 
 export default SocialMediaAnalysis;

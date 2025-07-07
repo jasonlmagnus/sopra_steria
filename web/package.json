@@ -15,11 +15,12 @@
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",
     "@tanstack/react-table": "^8.21.3",
+    "lodash-es": "^4.17.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.6.3",
-    "recharts": "^2.9.0",
-    "lodash-es": "^4.17.21"
+    "recharts": "^2.9.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",

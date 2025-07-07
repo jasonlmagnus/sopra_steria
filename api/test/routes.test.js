@@ -4,7 +4,12 @@ import app from '../src/index.js';
 import axios from 'axios';
 import * as fs from 'fs/promises';
 vi.mock('fs/promises', () => ({
-  readFile: vi.fn(() => Promise.resolve('calculation:\n  formula: TEST')),
+  readFile: vi.fn((filePath) => {
+    if (filePath.includes('implementation_tracking.json')) {
+      return Promise.resolve('[{"name":"Test","status":"completed","progress":100,"team":"Dev"}]')
+    }
+    return Promise.resolve('calculation:\n  formula: TEST')
+  }),
   readdir: vi.fn(() => Promise.resolve(['report1.html']))
 }));
 
@@ -79,6 +84,56 @@ describe('GET /api/reports/:name', () => {
     const res = await request(app).get('/api/reports/report1.html');
     expect(res.status).toBe(200);
     expect(res.text).toContain('formula: TEST');
+  });
+});
+
+describe('GET /api/personas', () => {
+  it('lists persona files', async () => {
+    const res = await request(app).get('/api/personas');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('personas');
+  });
+});
+
+describe('GET /api/personas/:name', () => {
+  it('returns persona markdown', async () => {
+    const res = await request(app).get('/api/personas/P1');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('content');
+  });
+});
+
+describe('GET /api/social-media', () => {
+  it('parses social media markdown', async () => {
+    const res = await request(app).get('/api/social-media');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('data');
+  });
+});
+
+describe('GET /api/brand-hygiene', () => {
+  it('aggregates descriptor counts', async () => {
+    const res = await request(app).get('/api/brand-hygiene');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('WARN');
+  });
+});
+
+describe('POST /api/run-audit', () => {
+  it('queues an audit', async () => {
+    const res = await request(app)
+      .post('/api/run-audit')
+      .send({ url: 'http://example.com' });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain('Audit queued');
+  });
+});
+
+describe('GET /api/implementation-tracking', () => {
+  it('returns implementation data', async () => {
+    const res = await request(app).get('/api/implementation-tracking');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 });
 
