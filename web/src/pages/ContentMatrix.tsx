@@ -7,7 +7,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { groupBy } from 'lodash-es'
 import { useDataset } from '../hooks/useDataset'
-import { FilterSystem, FilterBar, ExpandableSection, PlotlyChart } from '../components'
+import { FilterSystem, FilterBar, ExpandableSection, HeatmapChart } from '../components'
 import { useFilters } from '../context/FilterContext'
 
 interface ContentItem {
@@ -105,10 +105,7 @@ function ContentMatrix() {
         </BarChart>
       </ExpandableSection>
       <ExpandableSection title="Persona/Tier Heatmap" defaultExpanded>
-        <PlotlyChart
-          data={[{ x: heatmap.x, y: heatmap.y, z: heatmap.z, type: 'heatmap', colorscale: 'Blues' }]}
-          layout={{ height: 300, xaxis: { title: 'Persona' }, yaxis: { title: 'Tier' } }}
-        />
+        <HeatmapChart x={heatmap.x} y={heatmap.y} z={heatmap.z} />
       </ExpandableSection>
       <ExpandableSection title="Matrix Table" defaultExpanded>
       <table>
