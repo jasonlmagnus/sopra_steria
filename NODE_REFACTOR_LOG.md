@@ -25,16 +25,27 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Added dataset detail page in React using @tanstack/react-table
 - Created recommendations page in React using React Table
 - Added Methodology page in React fetching YAML via new API route
-- Migrated Implementation Tracking page to React using Recharts for progress visualization
-- Added Opportunity Impact page in React with scatter chart visualization
-
-## In Progress
-- *None at the moment*
-
-## Completed Since Last Update
-- Finished migrating the remaining Streamlit pages to React with placeholder data visualizations.
+- Migrated several pages to React with **live data connections**:
+    - `ExecutiveDashboard.tsx`
+    - `OpportunityImpact.tsx`
+    - `Methodology.tsx`
+    - `Recommendations.tsx`
+    - `PagesList.tsx`
+    - `DatasetList.tsx` & `DatasetDetail.tsx`
+- Migrated remaining Streamlit pages to React as **placeholders with mock/hardcoded data**:
+    - `ContentMatrix.tsx`
+    - `SuccessLibrary.tsx`
+    - `ReportsExport.tsx`
+    - `RunAudit.tsx`
+    - `SocialMediaAnalysis.tsx`
+    - `PersonaViewer.tsx`
+    - `VisualBrandHygiene.tsx`
+    - `PersonaInsights.tsx`
+    - `ImplementationTracking.tsx`
+    - `AuditReports.tsx`
 
 ## Next Tasks
+- **Connect Placeholder Pages:** Wire up the remaining placeholder pages to live API endpoints.
 - Add authentication and environment-driven configuration
 
 ## Todo

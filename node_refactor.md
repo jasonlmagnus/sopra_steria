@@ -6,7 +6,7 @@
 
 # Node.js + React Refactor Plan
 
-_Last updated: 2025-07-07_
+_Last updated: 2025-07-29_
 
 ## 🎯 Objective
 Migrate the current Streamlit-based Python dashboard to a modern web stack: **Node.js (Express + TypeScript) API** and **React (Vite + TypeScript) front-end** while preserving all data-science and AI workloads that are already written in Python.
@@ -52,23 +52,30 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] **Create dataset detail page using React Table.**
 - [x] **Start migration of additional pages (added Recommendations page).**
 - [x] **Added Methodology page, fetching YAML via new API route.**
+- [x] **Migrated core data pages:** Executive Dashboard, Opportunity Impact, Pages List.
+- [x] **Created placeholder UI for all remaining Streamlit pages.**
 
 **⏳ Next Up: Component Migration & Testing**
 
-The foundational data flow is complete. The next major effort is to migrate the remaining Streamlit pages to React and establish a comprehensive testing suite.
+The foundational data flow and initial page implementations are complete. The next major effort is to connect the placeholder pages to the API and establish a comprehensive testing suite.
 
-**Page Migration Checklist:**
-*   [x] **Content Matrix** (`3_📊_Content_Matrix.py`)
-*   [x] **Opportunity Impact** (`4_💡_Opportunity_Impact.py`)
-*   [x] **Success Library** (`5_🌟_Success_Library.py`)
-*   [x] **Reports Export** (`6_📋_Reports_Export.py`)
-*   [x] **Run Audit** (`7_🚀_Run_Audit.py`)
-*   [x] **Social Media Analysis** (`8_🔍_Social_Media_Analysis.py`)
-*   [x] **Persona Viewer** (`9_👤_Persona_Viewer.py`)
-*   [x] **Visual Brand Hygiene** (`10_🎨_Visual_Brand_Hygiene.py`)
-*   [x] **Persona Insights** (`2_👥_Persona_Insights.py`)
-*   [x] **Implementation Tracking** (`12_📈_Implementation_Tracking.py`)
-*   [x] **Audit Reports** (`13_📄_Audit_Reports.py`)
+**Page Migration Status:**
+*   `[x]` **Executive Dashboard** (`ExecutiveDashboard.tsx`) - **Implemented**
+*   `[x]` **Opportunity Impact** (`OpportunityImpact.tsx`) - **Implemented**
+*   `[x]` **Methodology** (`Methodology.tsx`) - **Implemented**
+*   `[x]` **Recommendations** (`Recommendations.tsx`) - **Implemented**
+*   `[x]` **Pages List** (`PagesList.tsx`) - **Implemented**
+*   `[x]` **Dataset List & Detail** (`DatasetList.tsx`, `DatasetDetail.tsx`) - **Implemented**
+*   `[ ]` **Content Matrix** (`ContentMatrix.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Success Library** (`SuccessLibrary.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Reports Export** (`ReportsExport.tsx`) - **Placeholder** with static links.
+*   `[ ]` **Run Audit** (`RunAudit.tsx`) - **Placeholder** with mock interaction.
+*   `[ ]` **Social Media Analysis** (`SocialMediaAnalysis.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Persona Viewer** (`PersonaViewer.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Visual Brand Hygiene** (`VisualBrandHygiene.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Persona Insights** (`PersonaInsights.tsx`) - **Placeholder**, static text.
+*   `[ ]` **Implementation Tracking** (`ImplementationTracking.tsx`) - **Placeholder** with hardcoded data.
+*   `[ ]` **Audit Reports** (`AuditReports.tsx`) - **Placeholder** with static links.
 
 **Component & Testing Strategy:**
 *   **Component Library:** Recreate Streamlit visuals using `@tanstack/react-table` for data grids and `Recharts` for charting. Develop a library of reusable components for common UI elements (e.g., scorecards, filter bars).
