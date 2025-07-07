@@ -63,6 +63,36 @@ describe('GET /api/summary', () => {
   });
 });
 
+describe('GET /api/tier-metrics', () => {
+  it('proxies tier metrics from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ tier: 'tier_1' }] });
+    const res = await request(app).get('/api/tier-metrics');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ tier: 'tier_1' }]);
+    vi.restoreAllMocks();
+  });
+});
+
+describe('GET /api/persona-comparison', () => {
+  it('proxies persona comparison from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ persona: 'P1' }] });
+    const res = await request(app).get('/api/persona-comparison');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ persona: 'P1' }]);
+    vi.restoreAllMocks();
+  });
+});
+
+describe('GET /api/full-recommendations', () => {
+  it('proxies full recommendations from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 1 }] });
+    const res = await request(app).get('/api/full-recommendations');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ recommendations: [{ id: 1 }] });
+    vi.restoreAllMocks();
+  });
+});
+
 describe('GET /api/methodology', () => {
   it('returns methodology yaml as json', async () => {
     const res = await request(app).get('/api/methodology');

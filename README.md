@@ -57,6 +57,7 @@ To install Node dependencies from the public npm registry, run:
 
 ```bash
 pnpm config set registry https://registry.npmjs.org
+pnpm install --registry https://registry.npmjs.org
 ```
 
 ## 🎯 Project Overview
