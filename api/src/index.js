@@ -376,6 +376,35 @@ app.get('/api/brand-hygiene', async (_req, res) => {
   }
 })
 
+/**
+ * @openapi
+ * /api/gap-analysis:
+ *   get:
+ *     summary: List gap analysis findings
+ *     responses:
+ *       200:
+ *         description: Array of gaps
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 items:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ */
+app.get('/api/gap-analysis', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', 'data', 'gap_analysis.json')
+    const file = await readFile(filePath, 'utf8')
+    res.json({ items: JSON.parse(file) })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load gap analysis' })
+  }
+})
+
 app.post('/api/run-audit', express.json(), async (req, res) => {
   const { url } = req.body || {}
   if (!url) {
