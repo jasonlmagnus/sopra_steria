@@ -132,6 +132,40 @@ app.get('/api/recommendations', async (_req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/opportunities:
+ *   get:
+ *     summary: List improvement opportunities
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of opportunities to return
+ *     responses:
+ *       200:
+ *         description: Array of opportunities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 opportunities:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+app.get('/api/opportunities', async (req, res) => {
+  const limit = req.query.limit || 20;
+  try {
+    const response = await axios.get(`http://localhost:8000/opportunities?limit=${limit}`);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch opportunities' });
+  }
+});
+
 app.get('/api/methodology', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
