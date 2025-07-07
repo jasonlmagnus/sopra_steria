@@ -4,7 +4,8 @@ import app from '../src/index.js';
 import axios from 'axios';
 import * as fs from 'fs/promises';
 vi.mock('fs/promises', () => ({
-  readFile: vi.fn(() => Promise.resolve('calculation:\n  formula: TEST'))
+  readFile: vi.fn(() => Promise.resolve('calculation:\n  formula: TEST')),
+  readdir: vi.fn(() => Promise.resolve(['report1.html']))
 }));
 
 describe('GET /api/datasets', () => {
@@ -62,6 +63,22 @@ describe('GET /api/methodology', () => {
     const res = await request(app).get('/api/methodology');
     expect(res.status).toBe(200);
     expect(res.body.calculation.formula).toBe('TEST');
+  });
+});
+
+describe('GET /api/reports', () => {
+  it('lists report files', async () => {
+    const res = await request(app).get('/api/reports');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ reports: ['report1.html'] });
+  });
+});
+
+describe('GET /api/reports/:name', () => {
+  it('returns report content', async () => {
+    const res = await request(app).get('/api/reports/report1.html');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('formula: TEST');
   });
 });
 

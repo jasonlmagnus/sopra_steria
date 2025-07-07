@@ -18,7 +18,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.6.3",
-    "recharts": "^2.9.0"
+    "recharts": "^2.9.0",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
