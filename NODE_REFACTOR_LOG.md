@@ -25,6 +25,7 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Added dataset detail page in React using @tanstack/react-table
 - Created recommendations page in React using React Table
 - Added Methodology page in React fetching YAML via new API route
+- Migrated Implementation Tracking page to React using Recharts for progress visualization
 
 ## In Progress
 - **Page Migration:** The migration of the remaining dashboard pages from Streamlit to React is underway. For a detailed checklist of pages and the testing strategy, see the "Next Up" section in `node_refactor.md`.
