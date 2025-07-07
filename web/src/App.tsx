@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
 import DatasetList from './pages/DatasetList'
 import DatasetDetail from './pages/DatasetDetail'
+import PagesList from './pages/PagesList'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -21,7 +22,8 @@ function App() {
     <>
       <nav>
         <Link to="/">Home</Link> |{' '}
-        <Link to="/datasets">Datasets</Link>
+        <Link to="/datasets">Datasets</Link> |{' '}
+        <Link to="/pages">Pages</Link>
       </nav>
       <Routes>
         <Route
@@ -54,6 +56,7 @@ function App() {
         />
         <Route path="/datasets" element={<DatasetList />} />
         <Route path="/datasets/:name" element={<DatasetDetail />} />
+        <Route path="/pages" element={<PagesList />} />
       </Routes>
     </>
   )
