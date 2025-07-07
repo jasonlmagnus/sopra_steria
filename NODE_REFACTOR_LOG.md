@@ -29,7 +29,10 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - Added Opportunity Impact page in React with scatter chart visualization
 
 ## In Progress
-- **Page Migration:** The migration of the remaining dashboard pages from Streamlit to React is underway. For a detailed checklist of pages and the testing strategy, see the "Next Up" section in `node_refactor.md`.
+- *None at the moment*
+
+## Completed Since Last Update
+- Finished migrating the remaining Streamlit pages to React with placeholder data visualizations.
 
 ## Next Tasks
 - Add authentication and environment-driven configuration
