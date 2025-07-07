@@ -191,6 +191,81 @@ app.get('/api/summary', async (_req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/tier-metrics:
+ *   get:
+ *     summary: Tier performance metrics
+ *     responses:
+ *       200:
+ *         description: Array of tier metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+app.get('/api/tier-metrics', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/tier-metrics');
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch tier metrics' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/persona-comparison:
+ *   get:
+ *     summary: Persona comparison metrics
+ *     responses:
+ *       200:
+ *         description: Array of persona metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+app.get('/api/persona-comparison', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/persona-comparison');
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch persona comparison data' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/full-recommendations:
+ *   get:
+ *     summary: Full list of recommendations
+ *     responses:
+ *       200:
+ *         description: Array of recommendations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+app.get('/api/full-recommendations', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/full-recommendations');
+    res.json({ recommendations: response.data });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch recommendations list' });
+  }
+});
+
 app.get('/api/methodology', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));

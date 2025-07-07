@@ -50,6 +50,24 @@ describe('Integration Express->FastAPI', () => {
     expect(res.body).toHaveProperty('brand_health');
   });
 
+  it('returns tier metrics', async () => {
+    const res = await request(app).get('/api/tier-metrics');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns persona comparison data', async () => {
+    const res = await request(app).get('/api/persona-comparison');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('returns full recommendations list', async () => {
+    const res = await request(app).get('/api/full-recommendations');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('length');
+  });
+
   it('lists reports', async () => {
     const res = await request(app).get('/api/reports');
     expect(res.status).toBe(200);

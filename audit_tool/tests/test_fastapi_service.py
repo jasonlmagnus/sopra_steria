@@ -20,3 +20,21 @@ def test_executive_summary_endpoint():
     resp = client.get('/executive-summary')
     assert resp.status_code == 200
     assert 'brand_health' in resp.json()
+
+
+def test_tier_metrics_endpoint():
+    resp = client.get('/tier-metrics')
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
+
+
+def test_persona_comparison_endpoint():
+    resp = client.get('/persona-comparison')
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
+
+
+def test_full_recommendations_endpoint():
+    resp = client.get('/full-recommendations')
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)

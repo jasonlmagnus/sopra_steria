@@ -49,3 +49,37 @@ def get_executive_summary():
     summary = metrics.generate_executive_summary()
     return summary
 
+
+@app.get("/tier-metrics", summary="Tier performance metrics")
+def get_tier_metrics():
+    """Return aggregated performance metrics by content tier"""
+    data_loader = BrandHealthDataLoader()
+    datasets, master_df = data_loader.load_all_data()
+    metrics = BrandHealthMetricsCalculator(master_df, datasets.get("recommendations"))
+    tier_df = metrics.calculate_tier_performance()
+    json_str = tier_df.to_json(orient="records")
+    return Response(content=json_str, media_type="application/json")
+
+
+@app.get("/persona-comparison", summary="Persona comparison metrics")
+def get_persona_comparison():
+    """Return metrics comparing performance across personas"""
+    data_loader = BrandHealthDataLoader()
+    datasets, master_df = data_loader.load_all_data()
+    metrics = BrandHealthMetricsCalculator(master_df, datasets.get("recommendations"))
+    persona_df = metrics.calculate_persona_comparison()
+    json_str = persona_df.to_json(orient="records")
+    return Response(content=json_str, media_type="application/json")
+
+
+@app.get("/full-recommendations", summary="Full list of recommendations")
+def get_full_recommendations():
+    """Return the complete recommendations dataset"""
+    data_loader = BrandHealthDataLoader()
+    datasets, _ = data_loader.load_all_data()
+    rec_df = datasets.get("recommendations")
+    if rec_df is None:
+        return JSONResponse(status_code=404, content={"error": "Recommendations dataset not found"})
+    json_str = rec_df.to_json(orient="records")
+    return Response(content=json_str, media_type="application/json")
+
