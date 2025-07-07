@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
 
 app = FastAPI(title="Sopra Steria Audit FastAPI")
@@ -21,5 +21,6 @@ def get_dataset(name: str):
     if name not in datasets:
         return JSONResponse(status_code=404, content={"error": "Dataset not found"})
     df = datasets[name]
-    return df.to_dict(orient="records")
+    json_str = df.to_json(orient="records")
+    return Response(content=json_str, media_type="application/json")
 
