@@ -10,10 +10,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 let fastapi;
 
 beforeAll(async () => {
-  fastapi = spawn('python', ['-m', 'fastapi_service.server'], {
+  fastapi = spawn('python3', ['-m', 'fastapi_service.server'], {
     cwd: path.join(__dirname, '..', '..'),
     stdio: 'ignore'
   });
+
   // wait briefly for the FastAPI server to start
   await new Promise((res) => setTimeout(res, 3000));
 });
