@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This is the Progress Log.** It is a detailed, chronological record of completed work.
+> - For the high-level strategy and major milestones, see `node_refactor.md`.
+> - **Rule:** When a milestone from the plan is completed, this log **MUST** be updated along with the plan in the same pull request.
+> - **AI Agents:** This file is the source of truth for recent, specific tasks. If it conflicts with the plan, update the plan to match this log.
+
 # Node Refactor Progress Log
 
 This file tracks the ongoing migration from the Streamlit dashboard to the Node.js + React stack. See `node_refactor.md` for the overall roadmap.

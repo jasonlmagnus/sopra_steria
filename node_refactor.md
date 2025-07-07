@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This is the Strategic Plan.** It defines the project's phases and major milestones.
+> - For a detailed, chronological progress report, see `NODE_REFACTOR_LOG.md`.
+> - **Rule:** When a milestone from this plan is completed, this file **MUST** be updated along with the log in the same pull request.
+> - **AI Agents:** If this file conflicts with the log, the log is likely more current. Update this plan to match the log's status.
+
 # Node.js + React Refactor Plan
 
 _Last updated: 2025-07-06_
@@ -37,11 +43,11 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] Create the `/api` and `/web` folders with `pnpm` monorepo structure.
 - [x] Set up CI job that runs both `pytest` and `pnpm test`.
 - [x] Install `axios` in the API package to prepare for calling Python services.
+- [x] **Expose Python audit functions via FastAPI service.** (Initial version complete).
+- [x] **Add Express proxy routes for FastAPI data.**
 
 **⏳ Next Up**
-- [ ] **Expose Python audit functions via FastAPI service.** This is the next major backend integration task.
-- [ ] **Complete migration of the dataset list page to React.** This is the next major frontend task and is currently in progress.
-- [ ] **Add Express proxy routes for FastAPI data.**
-- [ ] **Integrate React Query for dataset fetching.**
+- [ ] **Integrate React Query for dataset fetching.** This is the next major frontend task.
+- [ ] **Complete migration of the dataset list page to React.** This is currently in progress.
 - [ ] **Write integration tests for the new data flow.**
 
