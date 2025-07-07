@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useFilters } from '../context/FilterContext'
 
 function PersonaViewer() {
   const [personas, setPersonas] = useState<string[]>([])
-  const [selected, setSelected] = useState('')
+  const { persona: selected, setPersona: setSelected } = useFilters()
   const [content, setContent] = useState('')
 
   useEffect(() => {
