@@ -1,5 +1,6 @@
 import React from 'react'
-import ScoreCard, { ScoreCardProps } from './ScoreCard'
+import ScoreCard from './ScoreCard'
+import type { ScoreCardProps } from './ScoreCard'
 
 export interface MetricsCardProps extends Omit<ScoreCardProps, 'variant'> {
   multiplier?: number
