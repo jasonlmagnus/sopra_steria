@@ -276,7 +276,7 @@ def display_impact_overview(metrics_calc, master_df):
             if not tier_summary.empty and 'Avg Impact' in tier_summary.columns:
                 tier_summary = tier_summary.reset_index()
                 tier_summary['Avg Impact'] = pd.to_numeric(tier_summary['Avg Impact'], errors='coerce')
-                tier_summary = tier_summary.sort_values('Avg Impact', ascending=False)
+            tier_summary = tier_summary.sort_values('Avg Impact', ascending=False)
             
             # Display tier summary
             for tier_name, row in tier_summary.iterrows():

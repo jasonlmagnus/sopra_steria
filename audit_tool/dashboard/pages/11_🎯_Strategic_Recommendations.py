@@ -331,21 +331,21 @@ class StrategicRecommendationEngine:
                 score = float(row.get('raw_score', 0) or 0)
                 pain_points = row.get('persona_pain_points', 'General persona dissatisfaction')
                 
-                recommendations.append({
+                    recommendations.append({
                     'id': f"persona_{row.get('page_id', 'unknown')}_{str(persona_id).replace(' ', '_')}",
                     'title': f"Address Persona Pain Point for {page_title}",
                     'description': f"Improve experience for '{persona_id}' on {page_title} (score: {score:.1f}). Pain points: {pain_points}",
                     'category': 'Persona Experience',
                     'impact_score': min(10.0, 10.0 - score),
-                    'urgency_score': 6,
-                    'timeline': '30-90 days',
+                        'urgency_score': 6,
+                        'timeline': '30-90 days',
                     'page_id': row.get('page_id'),
-                    'persona': persona_id,
+                        'persona': persona_id,
                     'url': row.get('url', ''),
                     'evidence': f"Low score ({score:.1f}) for persona '{persona_id}'. Pain points: {pain_points}",
                     'criterion': 'persona_alignment',
                     'source': 'Unified Dataset - Persona Analysis'
-                })
+                    })
         return recommendations
     
     def extract_content_recommendations(self) -> List[Dict]:
@@ -372,22 +372,22 @@ class StrategicRecommendationEngine:
             sentiment = row.get('sentiment_label', 'N/A')
             engagement = row.get('engagement_level', 'N/A')
             
-            recommendations.append({
+                recommendations.append({
                 'id': f"content_{row.get('page_id', 'unknown')}",
                 'title': f"Improve Content Performance on {page_title}",
                 'description': f"Low content performance on {page_title} (Score: {score:.1f}, Sentiment: {sentiment}, Engagement: {engagement}).",
                 'category': 'Content Improvement',
                 'impact_score': min(10.0, 10.0 - score),
-                'urgency_score': 5,
-                'timeline': '30-90 days',
+                    'urgency_score': 5,
+                    'timeline': '30-90 days',
                 'page_id': row.get('page_id'),
                 'persona': row.get('persona_id', 'All'),
                 'url': row.get('url', ''),
                 'evidence': f"Sentiment: {sentiment}, Engagement: {engagement}",
                 'criterion': 'content_quality',
                 'source': 'Unified Dataset - Content Analysis'
-            })
-            
+                })
+        
         return recommendations
     
     def extract_visual_brand_recommendations(self) -> List[Dict]:
@@ -671,7 +671,7 @@ def main():
         else:
             master_df = st.session_state['master_df']
             datasets = st.session_state['datasets']
-            
+        
         if master_df.empty:
             st.error("❌ No data available. Please run an audit first.")
             return
@@ -716,10 +716,10 @@ def main():
 def display_filters(recommendations: pd.DataFrame):
     """Display filtering options for recommendations"""
     st.markdown("## 🎛️ Filter Recommendations")
-    
+        
     col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
+        with col1:
         # Filter by Category – pull from flattened all_categories if present
         category_options = set()
         if 'all_categories' in recommendations.columns:
@@ -733,17 +733,17 @@ def display_filters(recommendations: pd.DataFrame):
         categories = ['All'] + sorted(category_options)
         st.selectbox("Filter by Category", categories, key="rec_category_filter")
         
-    with col2:
+        with col2:
         # Filter by Timeline
         if 'timeline' in recommendations.columns:
             timelines = ['All'] + sorted(recommendations['timeline'].unique().tolist())
             st.selectbox("Filter by Timeline", timelines, key="rec_timeline_filter")
         
-    with col3:
+        with col3:
         # Filter by Impact Score
         st.slider("Minimum Impact Score", 0, 10, 5, key="rec_impact_filter")
         
-    with col4:
+        with col4:
         # Filter by Urgency Score
         st.slider("Minimum Urgency Score", 0, 10, 5, key="rec_urgency_filter")
 
@@ -901,7 +901,7 @@ def display_resource_planning(recommendations: pd.DataFrame):
         fig2 = px.bar(timeline_counts, x='timeline', y='count', title='Recommendations by Timeline')
     else:
         fig2 = go.Figure()
-
+    
     col1, col2 = st.columns(2)
     with col1:
         st.plotly_chart(fig1, use_container_width=True)
