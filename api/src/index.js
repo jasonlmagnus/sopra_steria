@@ -4,6 +4,9 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import axios from 'axios';
 import { readFile, readdir } from 'fs/promises';
+import fs from 'fs';
+import csv from 'csv-parser';
+import { createMarkdownObjectTable } from 'parse-markdown-table';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
@@ -222,6 +225,99 @@ app.get('/api/reports/:name', async (req, res) => {
     res.send(file)
   } catch (err) {
     res.status(404).json({ error: 'Report not found' })
+  }
+})
+
+app.get('/api/personas', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const dir = path.join(__dirname, '..', '..', 'audit_inputs', 'personas')
+    const files = await readdir(dir)
+    const personas = files.filter((f) => f.endsWith('.md')).map((f) => f.replace('.md', ''))
+    res.json({ personas })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list personas' })
+  }
+})
+
+app.get('/api/personas/:name', async (req, res) => {
+  try {
+    const { name } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'audit_inputs', 'personas', `${name}.md`)
+    const content = await readFile(filePath, 'utf8')
+    res.json({ content })
+  } catch (err) {
+    res.status(404).json({ error: 'Persona not found' })
+  }
+})
+
+app.get('/api/social-media', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(
+      __dirname,
+      '..',
+      '..',
+      'audit_inputs',
+      'social_media',
+      'archive',
+      'sm_dashboard_data_enhanced.md'
+    )
+    const markdown = await readFile(filePath, 'utf8')
+    const table = await createMarkdownObjectTable(markdown)
+    const rows = []
+    for await (const row of table) {
+      rows.push(row)
+    }
+    res.json({ data: rows })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to load social media data' })
+  }
+})
+
+app.get('/api/brand-hygiene', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'audit_data', 'unified_audit_data.csv')
+    const results = {}
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', (row) => {
+        const desc = row.descriptor
+        if (desc) {
+          results[desc] = (results[desc] || 0) + 1
+        }
+      })
+      .on('end', () => {
+        res.json(results)
+      })
+      .on('error', () => {
+        res.status(500).json({ error: 'Failed to parse CSV' })
+      })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load brand hygiene data' })
+  }
+})
+
+app.post('/api/run-audit', express.json(), async (req, res) => {
+  const { url } = req.body || {}
+  if (!url) {
+    return res.status(400).json({ error: 'URL required' })
+  }
+  // Placeholder implementation
+  res.json({ message: `Audit queued for ${url}` })
+})
+
+app.get('/api/implementation-tracking', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', 'data', 'implementation_tracking.json')
+    const file = await readFile(filePath, 'utf8')
+    res.json(JSON.parse(file))
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load implementation data' })
   }
 })
 

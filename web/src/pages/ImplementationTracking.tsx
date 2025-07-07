@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 
 interface Item {
@@ -8,25 +8,22 @@ interface Item {
   name: string
 }
 
-const sampleData: Record<string, Omit<Item, 'name'>> = {
-  'Homepage Messaging': { status: 'completed', progress: 100, team: 'Marketing' },
-  'Navigation UX': { status: 'in_progress', progress: 65, team: 'UX Team' },
-  'Visual Brand Elements': { status: 'in_progress', progress: 30, team: 'Design' },
-  'Social Media Consistency': { status: 'not_started', progress: 0, team: 'Social' },
-  'Page Performance': { status: 'completed', progress: 100, team: 'Tech' }
-}
-
 function ImplementationTracking() {
-  const items: Item[] = Object.entries(sampleData).map(([name, d]) => ({
-    name,
-    ...d
-  }))
+  const [items, setItems] = useState<Item[]>([])
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/implementation-tracking')
+      .then((res) => res.json())
+      .then((data: Item[]) => setItems(data))
+      .catch(() => setItems([]))
+  }, [])
 
   const totalItems = items.length
   const completed = items.filter(i => i.status === 'completed').length
   const inProgress = items.filter(i => i.status === 'in_progress').length
-  const avgProgress = items.reduce((sum, i) => sum + i.progress, 0) / totalItems
-  const completionRate = (completed / totalItems) * 100
+  const avgProgress = items.reduce((sum, i) => sum + i.progress, 0) / (totalItems || 1)
+  const completionRate = totalItems ? (completed / totalItems) * 100 : 0
+
 
   return (
     <div>

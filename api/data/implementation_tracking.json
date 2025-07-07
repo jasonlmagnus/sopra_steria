@@ -1,0 +1,7 @@
+[
+  {"name": "Homepage Messaging", "status": "completed", "progress": 100, "team": "Marketing"},
+  {"name": "Navigation UX", "status": "in_progress", "progress": 65, "team": "UX Team"},
+  {"name": "Visual Brand Elements", "status": "in_progress", "progress": 30, "team": "Design"},
+  {"name": "Social Media Consistency", "status": "not_started", "progress": 0, "team": "Social"},
+  {"name": "Page Performance", "status": "completed", "progress": 100, "team": "Tech"}
+]

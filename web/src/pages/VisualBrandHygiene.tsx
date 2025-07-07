@@ -1,15 +1,24 @@
-import React from 'react';
-import { PieChart, Pie, Tooltip, Cell } from 'recharts';
+import React, { useEffect, useState } from 'react'
+import { PieChart, Pie, Tooltip, Cell } from 'recharts'
 
-const data = [
-  { name: 'Compliant', value: 70 },
-  { name: 'Needs Update', value: 20 },
-  { name: 'Off Brand', value: 10 },
-];
+interface Counts {
+  [key: string]: number
+}
 
-const colors = ['#3d4a6b', '#dc3545', '#8884d8'];
+const colors = ['#3d4a6b', '#dc3545', '#8884d8']
 
 function VisualBrandHygiene() {
+  const [counts, setCounts] = useState<Counts>({})
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/brand-hygiene')
+      .then((res) => res.json())
+      .then((data) => setCounts(data))
+      .catch(() => setCounts({}))
+  }, [])
+
+  const data = Object.entries(counts).map(([name, value]) => ({ name, value }))
+
   return (
     <div>
       <h2>Visual Brand Hygiene</h2>
@@ -22,7 +31,7 @@ function VisualBrandHygiene() {
         <Tooltip />
       </PieChart>
     </div>
-  );
+  )
 }
 
 export default VisualBrandHygiene;
