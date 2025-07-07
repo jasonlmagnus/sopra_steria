@@ -1,28 +1,35 @@
 import request from 'supertest';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import app from '../src/index.js';
+import axios from 'axios';
 
 describe('GET /api/datasets', () => {
-  it('returns empty datasets array', async () => {
+  it('proxies dataset list from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: { datasets: ['pages'] } });
     const res = await request(app).get('/api/datasets');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ datasets: [] });
+    expect(res.body).toEqual({ datasets: ['pages'] });
+    vi.restoreAllMocks();
   });
 });
 
 describe('GET /api/pages', () => {
-  it('returns empty pages array', async () => {
+  it('proxies pages from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 1 }] });
     const res = await request(app).get('/api/pages');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ pages: [] });
+    expect(res.body).toEqual({ pages: [{ id: 1 }] });
+    vi.restoreAllMocks();
   });
 });
 
 describe('GET /api/recommendations', () => {
-  it('returns empty recommendations array', async () => {
+  it('proxies recommendations from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 1 }] });
     const res = await request(app).get('/api/recommendations');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ recommendations: [] });
+    expect(res.body).toEqual({ recommendations: [{ id: 1 }] });
+    vi.restoreAllMocks();
   });
 });
 

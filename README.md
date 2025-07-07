@@ -37,6 +37,14 @@ pnpm start
 # Test the API endpoint
 curl http://localhost:3000/api/hello
 # {"message":"Hello from API"}
+
+# To launch the Python FastAPI service
+cd fastapi_service
+python server.py
+
+# Test the FastAPI endpoint
+curl http://localhost:8000/hello
+# {"message":"Hello from FastAPI"}
 ```
 
 ## 🎯 Project Overview

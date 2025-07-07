@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 function DatasetList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets'],
     queryFn: async () => {
-      const res = await fetch('http://localhost:3000/api/datasets');
+      const res = await fetch(`${apiBase}/api/datasets`);
       if (!res.ok) throw new Error('Failed to load datasets');
       return res.json();
     },
