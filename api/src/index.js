@@ -166,6 +166,28 @@ app.get('/api/opportunities', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/summary:
+ *   get:
+ *     summary: Executive summary metrics
+ *     responses:
+ *       200:
+ *         description: Summary object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+app.get('/api/summary', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/executive-summary');
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch executive summary' });
+  }
+});
+
 app.get('/api/methodology', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));

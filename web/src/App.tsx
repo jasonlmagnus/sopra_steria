@@ -16,6 +16,7 @@ import PersonaViewer from './pages/PersonaViewer'
 import VisualBrandHygiene from './pages/VisualBrandHygiene'
 import ImplementationTracking from './pages/ImplementationTracking'
 import AuditReports from './pages/AuditReports'
+import ExecutiveDashboard from './pages/ExecutiveDashboard'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -35,6 +36,7 @@ function App() {
     <>
       <nav>
         <Link to="/">Home</Link> |{' '}
+        <Link to="/executive-dashboard">Executive Dashboard</Link> |{' '}
         <Link to="/datasets">Datasets</Link> |{' '}
         <Link to="/pages">Pages</Link> |{' '}
         <Link to="/recommendations">Recommendations</Link> |{' '}
@@ -80,6 +82,7 @@ function App() {
             </div>
           )}
         />
+        <Route path="/executive-dashboard" element={<ExecutiveDashboard />} />
         <Route path="/datasets" element={<DatasetList />} />
         <Route path="/datasets/:name" element={<DatasetDetail />} />
         <Route path="/pages" element={<PagesList />} />

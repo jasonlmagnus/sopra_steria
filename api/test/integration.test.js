@@ -43,4 +43,10 @@ describe('Integration Express->FastAPI', () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('opportunities');
   });
+
+  it('returns executive summary', async () => {
+    const res = await request(app).get('/api/summary');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('brand_health');
+  });
 });

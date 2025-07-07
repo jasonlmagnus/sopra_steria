@@ -37,3 +37,15 @@ def get_opportunities(limit: int = 20):
     opportunities = metrics.get_top_opportunities(limit=limit)
     return {"opportunities": opportunities}
 
+
+@app.get("/executive-summary")
+def get_executive_summary():
+    """Return executive summary metrics"""
+    data_loader = BrandHealthDataLoader()
+    datasets, master_df = data_loader.load_all_data()
+    metrics = BrandHealthMetricsCalculator(
+        master_df, datasets.get("recommendations")
+    )
+    summary = metrics.generate_executive_summary()
+    return summary
+
