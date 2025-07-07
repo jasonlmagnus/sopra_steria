@@ -7,7 +7,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { groupBy } from 'lodash-es'
 import { useDataset } from '../hooks/useDataset'
-import { FilterControls, FilterBar, ExpandableSection } from '../components'
+import { FilterSystem, FilterBar, ExpandableSection, PlotlyChart } from '../components'
 import { useFilters } from '../context/FilterContext'
 
 interface ContentItem {
@@ -50,6 +50,22 @@ function ContentMatrix() {
     })
   }, [dataset, persona, tier, personaOptions, tierOptions])
 
+  const heatmap = React.useMemo(() => {
+    if (!dataset) return { x: [], y: [], z: [] }
+    const personas = personaOptions
+    const tiers = tierOptions
+    const z = tiers.map(t =>
+      personas.map(p => {
+        const rows = dataset.filter(
+          d => d.persona_id === p && (d.tier_name === t || d.tier === t)
+        )
+        const avg = rows.reduce((s, r) => s + parseFloat(r.avg_score || 0), 0) / (rows.length || 1)
+        return Number(avg.toFixed(2))
+      })
+    )
+    return { x: personas, y: tiers, z }
+  }, [dataset, personaOptions, tierOptions])
+
   const columns = React.useMemo<ColumnDef<ContentItem, any>[]>(
     () => [
       { accessorKey: 'type', header: 'Type' },
@@ -73,7 +89,7 @@ function ContentMatrix() {
     <div>
       <h2>Content Matrix</h2>
       <FilterBar>
-        <FilterControls personas={options.personas} tiers={options.tiers} />
+        <FilterSystem personaOptions={options.personas} tierOptions={options.tiers} />
       </FilterBar>
       <ExpandableSection title="Tier Scores" defaultExpanded>
         <BarChart
@@ -87,6 +103,12 @@ function ContentMatrix() {
           <Tooltip />
           <Bar dataKey="avgScore" fill="#3d4a6b" />
         </BarChart>
+      </ExpandableSection>
+      <ExpandableSection title="Persona/Tier Heatmap" defaultExpanded>
+        <PlotlyChart
+          data={[{ x: heatmap.x, y: heatmap.y, z: heatmap.z, type: 'heatmap', colorscale: 'Blues' }]}
+          layout={{ height: 300, xaxis: { title: 'Persona' }, yaxis: { title: 'Tier' } }}
+        />
       </ExpandableSection>
       <ExpandableSection title="Matrix Table" defaultExpanded>
       <table>

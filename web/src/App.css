@@ -76,3 +76,16 @@
 .chart-card {
   margin-bottom: 1rem;
 }
+
+.expandable-card__header {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.tab-navigation__tabs {
+  margin-bottom: 0.5rem;
+}
+
+.tab-navigation__tabs button.active {
+  font-weight: bold;
+}
