@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
-import { PageContainer, ScoreCard } from '../components'
+import { PageContainer, ScoreCard, ChartCard, PlotlyChart } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -20,6 +20,7 @@ function ExecutiveDashboard() {
   const brand = data?.brand_health || {}
   const metrics = data?.key_metrics || {}
   const recs = Array.isArray(data?.recommendations) ? data.recommendations : []
+  const tierMetrics = data?.score_by_tier || {}
 
   return (
     <PageContainer title="Executive Dashboard">
@@ -28,10 +29,36 @@ function ExecutiveDashboard() {
       </p>
       <div className="filter-bar">
         <ScoreCard label="Total Pages" value={metrics.total_pages} />
-        <ScoreCard label="Critical Issues" value={metrics.critical_issues} />
-        <ScoreCard label="Quick Wins" value={metrics.quick_wins} />
-        <ScoreCard label="Success Pages" value={metrics.success_pages} />
+        <ScoreCard
+          label="Critical Issues"
+          value={metrics.critical_issues}
+          variant={
+            metrics.critical_issues > 10
+              ? 'danger'
+              : metrics.critical_issues > 0
+              ? 'warning'
+              : 'success'
+          }
+        />
+        <ScoreCard
+          label="Quick Wins"
+          value={metrics.quick_wins}
+          variant={metrics.quick_wins > 0 ? 'warning' : 'success'}
+        />
+        <ScoreCard label="Success Pages" value={metrics.success_pages} variant="success" />
       </div>
+
+      <ChartCard title="Average Score by Tier">
+        <PlotlyChart
+          data={[{
+            x: Object.keys(tierMetrics),
+            y: Object.values(tierMetrics),
+            type: 'bar',
+            marker: { color: '#3d4a6b' }
+          }]}
+          layout={{ height: 300 }}
+        />
+      </ChartCard>
       <h3>Top Recommendations</h3>
       <ul>
         {recs.map((r: string, idx: number) => (
