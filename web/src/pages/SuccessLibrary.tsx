@@ -1,5 +1,5 @@
 import React from 'react'
-import { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useDataset } from '../hooks/useDataset'
 import { PageContainer, DataTable, EvidenceBrowser } from '../components'
 

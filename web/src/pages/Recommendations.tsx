@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
 import React from 'react'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
