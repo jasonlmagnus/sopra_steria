@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
-import { PageContainer, ScoreCard, DataTable, ChartCard } from '../components'
-import { ColumnDef } from '@tanstack/react-table'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart } from '../components'
+import { type ColumnDef } from '@tanstack/react-table'
 
 interface Item {
   status: string
@@ -51,12 +50,17 @@ function ImplementationTracking() {
       </div>
 
       <ChartCard title="Progress by Initiative">
-        <BarChart width={600} height={300} data={items} style={{ marginBottom: '1rem' }}>
-          <XAxis dataKey="name" hide={true} />
-          <YAxis />
-          <Tooltip />
-          <Bar dataKey="progress" fill="#3d4a6b" />
-        </BarChart>
+        <PlotlyChart
+          data={[
+            {
+              x: items.map(i => i.name),
+              y: items.map(i => i.progress),
+              type: 'bar',
+              marker: { color: '#3d4a6b' }
+            }
+          ]}
+          layout={{ xaxis: { title: 'Initiative' }, yaxis: { title: 'Progress' }, height: 300 }}
+        />
       </ChartCard>
 
       <DataTable data={items} columns={columns} />

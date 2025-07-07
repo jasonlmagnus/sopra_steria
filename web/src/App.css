@@ -51,6 +51,17 @@
   text-align: center;
 }
 
+.score-card--success {
+  color: #28a745;
+}
+
+.score-card--warning {
+  color: #ffc107;
+}
+
+.score-card--danger {
+  color: #dc3545;
+}
 .page-container {
   padding: 1rem;
   text-align: left;

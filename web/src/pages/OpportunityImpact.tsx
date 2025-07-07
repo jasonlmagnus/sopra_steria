@@ -1,8 +1,7 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ScatterChart, Scatter, XAxis, YAxis, Tooltip } from 'recharts'
-import { ColumnDef } from '@tanstack/react-table'
-import { PageContainer, ScoreCard, DataTable, ChartCard } from '../components'
+import { type ColumnDef } from '@tanstack/react-table'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart } from '../components'
 
 interface Opportunity {
   page: string
@@ -64,12 +63,19 @@ function OpportunityImpact() {
       </div>
 
       <ChartCard title="Impact vs Effort">
-        <ScatterChart width={600} height={300}>
-          <XAxis type="number" dataKey="effort" name="Effort" domain={[0, 10]} />
-          <YAxis type="number" dataKey="impact" name="Impact" domain={[0, 10]} />
-          <Tooltip cursor={{ stroke: '#8884d8', strokeDasharray: '3 3' }} />
-          <Scatter data={opps} fill="#dc3545" />
-        </ScatterChart>
+        <PlotlyChart
+          data={[
+            {
+              x: opps.map(o => o.effort),
+              y: opps.map(o => o.impact),
+              text: opps.map(o => o.page),
+              mode: 'markers',
+              type: 'scatter',
+              marker: { color: '#dc3545' }
+            }
+          ]}
+          layout={{ xaxis: { title: 'Effort' }, yaxis: { title: 'Impact' }, height: 300 }}
+        />
       </ChartCard>
 
       <DataTable data={opps} columns={columns} />
