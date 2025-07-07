@@ -17,6 +17,7 @@ import VisualBrandHygiene from './pages/VisualBrandHygiene'
 import ImplementationTracking from './pages/ImplementationTracking'
 import AuditReports from './pages/AuditReports'
 import ExecutiveDashboard from './pages/ExecutiveDashboard'
+import GapAnalysis from './pages/GapAnalysis'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -51,6 +52,7 @@ function App() {
         <Link to="/persona-viewer">Persona Viewer</Link> |{' '}
         <Link to="/visual-brand-hygiene">Visual Brand Hygiene</Link> |{' '}
         <Link to="/implementation-tracking">Implementation Tracking</Link> |{' '}
+        <Link to="/gap-analysis">Gap Analysis</Link> |{' '}
         <Link to="/audit-reports">Audit Reports</Link>
       </nav>
       <Routes>
@@ -98,6 +100,7 @@ function App() {
         <Route path="/persona-viewer" element={<PersonaViewer />} />
         <Route path="/visual-brand-hygiene" element={<VisualBrandHygiene />} />
         <Route path="/implementation-tracking" element={<ImplementationTracking />} />
+        <Route path="/gap-analysis" element={<GapAnalysis />} />
         <Route path="/audit-reports" element={<AuditReports />} />
       </Routes>
     </>

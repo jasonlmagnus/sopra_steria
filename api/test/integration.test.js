@@ -32,6 +32,12 @@ describe('Integration Express->FastAPI', () => {
     expect(res.body.datasets).toContain('master');
   });
 
+  it('proxies dataset detail', async () => {
+    const res = await request(app).get('/api/datasets/master');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
   it('serves methodology data', async () => {
     const res = await request(app).get('/api/methodology');
     expect(res.status).toBe(200);
@@ -65,12 +71,18 @@ describe('Integration Express->FastAPI', () => {
   it('returns full recommendations list', async () => {
     const res = await request(app).get('/api/full-recommendations');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('length');
+    expect(Array.isArray(res.body.recommendations)).toBe(true);
   });
 
   it('lists reports', async () => {
     const res = await request(app).get('/api/reports');
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('reports');
+  });
+
+  it('returns gap analysis data', async () => {
+    const res = await request(app).get('/api/gap-analysis');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.items)).toBe(true);
   });
 });

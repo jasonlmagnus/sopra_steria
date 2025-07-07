@@ -8,6 +8,9 @@ vi.mock('fs/promises', () => ({
     if (filePath.includes('implementation_tracking.json')) {
       return Promise.resolve('[{"name":"Test","status":"completed","progress":100,"team":"Dev"}]')
     }
+    if (filePath.includes('gap_analysis.json')) {
+      return Promise.resolve('["gap1","gap2"]')
+    }
     return Promise.resolve('calculation:\n  formula: TEST')
   }),
   readdir: vi.fn(() => Promise.resolve(['report1.html']))
@@ -19,6 +22,16 @@ describe('GET /api/datasets', () => {
     const res = await request(app).get('/api/datasets');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ datasets: ['pages'] });
+    vi.restoreAllMocks();
+  });
+});
+
+describe('GET /api/datasets/:name', () => {
+  it('proxies dataset detail from FastAPI', async () => {
+    vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 1 }] });
+    const res = await request(app).get('/api/datasets/test');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: 1 }]);
     vi.restoreAllMocks();
   });
 });
@@ -164,6 +177,14 @@ describe('GET /api/implementation-tracking', () => {
     const res = await request(app).get('/api/implementation-tracking');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+describe('GET /api/gap-analysis', () => {
+  it('returns gap analysis items', async () => {
+    const res = await request(app).get('/api/gap-analysis');
+    expect(res.status).toBe(200);
+    expect(res.body.items).toEqual(['gap1', 'gap2']);
   });
 });
 
