@@ -32,9 +32,10 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
     - `Recommendations.tsx`
     - `PagesList.tsx`
     - `DatasetList.tsx` & `DatasetDetail.tsx`
-- Migrated remaining Streamlit pages to React as **placeholders with mock/hardcoded data**:
     - `ContentMatrix.tsx`
     - `SuccessLibrary.tsx`
+    - `AuditReports.tsx`
+- Migrated remaining Streamlit pages to React as **placeholders with mock/hardcoded data**:
     - `ReportsExport.tsx`
     - `RunAudit.tsx`
     - `SocialMediaAnalysis.tsx`
@@ -42,7 +43,6 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
     - `VisualBrandHygiene.tsx`
     - `PersonaInsights.tsx`
     - `ImplementationTracking.tsx`
-    - `AuditReports.tsx`
 
 ## Next Tasks
 - **Connect Placeholder Pages:** Wire up the remaining placeholder pages to live API endpoints.
