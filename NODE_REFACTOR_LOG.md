@@ -22,6 +22,7 @@ This file tracks the ongoing migration from the Streamlit dashboard to the Node.
 - React Query integrated for dataset list page
 - Integration tests covering the Express → FastAPI call chain
 - Integration tests verified passing on 2025-07-07
+- Added dataset detail page in React using @tanstack/react-table
 
 ## In Progress
 - Recreate Streamlit visuals using React components

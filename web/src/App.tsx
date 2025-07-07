@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
 import DatasetList from './pages/DatasetList'
+import DatasetDetail from './pages/DatasetDetail'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -52,6 +53,7 @@ function App() {
           )}
         />
         <Route path="/datasets" element={<DatasetList />} />
+        <Route path="/datasets/:name" element={<DatasetDetail />} />
       </Routes>
     </>
   )

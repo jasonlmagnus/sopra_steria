@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -22,11 +23,13 @@ function DatasetList() {
       <h2>Datasets</h2>
       <ul>
         {datasets.map((d: any, idx: number) => (
-          <li key={idx}>{JSON.stringify(d)}</li>
+          <li key={idx}>
+            <Link to={`/datasets/${d}`}>{d}</Link>
+          </li>
         ))}
       </ul>
     </div>
-  );
+  )
 }
 
 export default DatasetList;
