@@ -6,7 +6,7 @@
 
 # Node.js + React Refactor Plan
 
-_Last updated: 2025-07-06_
+_Last updated: 2025-07-07_
 
 ## 🎯 Objective
 Migrate the current Streamlit-based Python dashboard to a modern web stack: **Node.js (Express + TypeScript) API** and **React (Vite + TypeScript) front-end** while preserving all data-science and AI workloads that are already written in Python.
@@ -48,6 +48,7 @@ Migrate the current Streamlit-based Python dashboard to a modern web stack: **No
 - [x] **Integrate React Query for dataset fetching.**
 - [x] **Complete migration of the dataset list page to React.**
 - [x] **Write integration tests for the new data flow.**
+- [x] **Verified integration tests passing.** (2025-07-07)
 
 **⏳ Next Up**
 - Begin migrating remaining dashboard pages to React.
