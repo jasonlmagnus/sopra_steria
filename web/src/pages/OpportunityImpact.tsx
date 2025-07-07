@@ -1,7 +1,8 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { type ColumnDef } from '@tanstack/react-table'
-import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart } from '../components'
+import { PageContainer, ScoreCard, DataTable, ChartCard, PlotlyChart, FilterControls, ExpandableSection, FilterBar } from '../components'
+import { useFilters } from '../context/FilterContext'
 
 interface Opportunity {
   page: string
@@ -23,6 +24,8 @@ function OpportunityImpact() {
     }
   })
 
+  const { persona, tier } = useFilters()
+
   const opps: Opportunity[] = Array.isArray(data?.opportunities)
     ? data.opportunities.map((o: any) => ({
         page: o.page_title,
@@ -30,14 +33,22 @@ function OpportunityImpact() {
         effort:
           o.effort_level === 'Low' ? 1 : o.effort_level === 'Medium' ? 2 : 3,
         tier: o.tier_name || o.tier,
-        currentScore: o.current_score
+        currentScore: o.current_score,
+        persona: o.persona_id
       }))
     : []
 
-  const total = opps.length
-  const avgImpact = total ? opps.reduce((s, d) => s + d.impact, 0) / total : 0
-  const highImpact = opps.filter(d => d.impact >= 7).length
-  const lowEffort = opps.filter(d => d.effort <= 2).length
+  const personaOptions = Array.from(new Set(opps.map(o => o.persona).filter(Boolean)))
+  const tierOptions = Array.from(new Set(opps.map(o => o.tier).filter(Boolean)))
+
+  const filteredOpps = opps.filter(o =>
+    (!persona || o.persona === persona) && (!tier || o.tier === tier)
+  )
+
+  const total = filteredOpps.length
+  const avgImpact = total ? filteredOpps.reduce((s, d) => s + d.impact, 0) / total : 0
+  const highImpact = filteredOpps.filter(d => d.impact >= 7).length
+  const lowEffort = filteredOpps.filter(d => d.effort <= 2).length
 
   if (isLoading) return <p>Loading opportunities...</p>
   if (error) return <p>Error loading opportunities</p>
@@ -55,30 +66,35 @@ function OpportunityImpact() {
 
   return (
     <PageContainer title="Opportunity Impact">
-      <div className="filter-bar">
+      <FilterBar>
+        <FilterControls personas={personaOptions} tiers={tierOptions} />
         <ScoreCard label="Total Opps" value={total} />
         <ScoreCard label="Avg Impact" value={avgImpact.toFixed(1)} />
         <ScoreCard label="High Impact" value={highImpact} />
         <ScoreCard label="Low Effort" value={lowEffort} />
-      </div>
+      </FilterBar>
 
-      <ChartCard title="Impact vs Effort">
-        <PlotlyChart
-          data={[
-            {
-              x: opps.map(o => o.effort),
-              y: opps.map(o => o.impact),
-              text: opps.map(o => o.page),
-              mode: 'markers',
-              type: 'scatter',
-              marker: { color: '#dc3545' }
-            }
-          ]}
-          layout={{ xaxis: { title: 'Effort' }, yaxis: { title: 'Impact' }, height: 300 }}
-        />
-      </ChartCard>
+      <ExpandableSection title="Impact vs Effort Chart" defaultExpanded>
+        <ChartCard title="Impact vs Effort">
+          <PlotlyChart
+            data={[
+              {
+                x: filteredOpps.map(o => o.effort),
+                y: filteredOpps.map(o => o.impact),
+                text: filteredOpps.map(o => o.page),
+                mode: 'markers',
+                type: 'scatter',
+                marker: { color: '#dc3545' }
+              }
+            ]}
+            layout={{ xaxis: { title: 'Effort' }, yaxis: { title: 'Impact' }, height: 300 }}
+          />
+        </ChartCard>
+      </ExpandableSection>
 
-      <DataTable data={opps} columns={columns} />
+      <ExpandableSection title="Opportunity Table" defaultExpanded>
+        <DataTable data={filteredOpps} columns={columns} />
+      </ExpandableSection>
     </PageContainer>
   )
 }
