@@ -7,6 +7,8 @@ import {
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { groupBy } from 'lodash-es'
 import { useDataset } from '../hooks/useDataset'
+import { FilterControls, FilterBar, ExpandableSection } from '../components'
+import { useFilters } from '../context/FilterContext'
 
 interface ContentItem {
   type: string
@@ -16,10 +18,27 @@ interface ContentItem {
 
 function ContentMatrix() {
   const { data: dataset, isLoading } = useDataset('master')
+  const { persona, tier } = useFilters()
+  const options: { personas: string[]; tiers: string[] } = { personas: [], tiers: [] }
+
+  const personaOptions = React.useMemo(
+    () => (dataset ? Array.from(new Set(dataset.map(d => d.persona_id).filter(Boolean))) : []),
+    [dataset]
+  )
+  const tierOptions = React.useMemo(
+    () => (dataset ? Array.from(new Set(dataset.map(d => d.tier_name || d.tier).filter(Boolean))) : []),
+    [dataset]
+  )
 
   const tableData = React.useMemo<ContentItem[]>(() => {
     if (!dataset) return []
-    const groups = groupBy(dataset, (d) => d.tier_name || 'Unknown') as Record<
+    options.personas = personaOptions
+    options.tiers = tierOptions
+    const filtered = dataset.filter(d =>
+      (!persona || d.persona_id === persona) &&
+      (!tier || d.tier_name === tier || d.tier === tier)
+    )
+    const groups = groupBy(filtered, (d) => d.tier_name || 'Unknown') as Record<
       string,
       any[]
     >
@@ -29,7 +48,7 @@ function ContentMatrix() {
         rows.reduce((sum, r) => sum + parseFloat(r.avg_score || 0), 0) / count
       return { type, count, avgScore: Number(avgScore.toFixed(2)) }
     })
-  }, [dataset])
+  }, [dataset, persona, tier, personaOptions, tierOptions])
 
   const columns = React.useMemo<ColumnDef<ContentItem, any>[]>(
     () => [
@@ -53,17 +72,23 @@ function ContentMatrix() {
   return (
     <div>
       <h2>Content Matrix</h2>
-      <BarChart
-        width={600}
-        height={300}
-        data={tableData}
-        style={{ marginBottom: '1rem' }}
-      >
-        <XAxis dataKey="type" hide={true} />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="avgScore" fill="#3d4a6b" />
-      </BarChart>
+      <FilterBar>
+        <FilterControls personas={options.personas} tiers={options.tiers} />
+      </FilterBar>
+      <ExpandableSection title="Tier Scores" defaultExpanded>
+        <BarChart
+          width={600}
+          height={300}
+          data={tableData}
+          style={{ marginBottom: '1rem' }}
+        >
+          <XAxis dataKey="type" hide={true} />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="avgScore" fill="#3d4a6b" />
+        </BarChart>
+      </ExpandableSection>
+      <ExpandableSection title="Matrix Table" defaultExpanded>
       <table>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -88,6 +113,7 @@ function ContentMatrix() {
           ))}
         </tbody>
       </table>
+      </ExpandableSection>
     </div>
   )
 }
