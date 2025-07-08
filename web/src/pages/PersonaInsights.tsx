@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PlotlyChart } from '../components'
+import { PlotlyChart, StandardCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -100,35 +100,31 @@ function PersonaInsights() {
 
 function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
   return (
-    <div style={{ border: '1px solid #D1D5DB', padding: '1.5rem', borderRadius: '8px', margin: '1rem 0' }}>
+    <div className="section">
       <h2>📊 Persona Performance Comparison</h2>
       
       {/* Persona Performance Cards */}
       <h3>👥 Persona Performance Cards</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="metrics-grid">
         {personas.map((persona: any) => {
           const score = persona.avg_score || 0
-          const status = score >= 7 ? 'EXCELLENT' : score >= 5 ? 'GOOD' : score >= 3 ? 'FAIR' : 'POOR'
+          const status = score >= 7 ? 'excellent' : score >= 5 ? 'good' : score >= 3 ? 'warning' : 'critical'
+          const statusText = score >= 7 ? 'EXCELLENT' : score >= 5 ? 'GOOD' : score >= 3 ? 'FAIR' : 'POOR'
           const statusEmoji = score >= 7 ? '🌟' : score >= 5 ? '✅' : score >= 3 ? '⚠️' : '🚨'
-          const statusColor = score >= 7 ? '#28a745' : score >= 5 ? '#ffc107' : score >= 3 ? '#fd7e14' : '#dc3545'
           
           return (
-            <div key={persona.persona_id} className="metric-card">
-              <h4 style={{ fontFamily: 'Crimson Text, serif', color: '#2C3E50', fontSize: '1.25rem' }}>
-                {statusEmoji} {persona.persona_id.replace('_', ' ')}
-              </h4>
-              <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-                <div className="metric-value" style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#E85A4F' }}>
-                  {score.toFixed(1)}/10
-                </div>
-                <div className="metric-label" style={{ color: '#6B7280' }}>
-                  OVERALL SCORE ({status})
-                </div>
-              </div>
+            <StandardCard
+              key={persona.persona_id}
+              title={`${statusEmoji} ${persona.persona_id.replace('_', ' ')}`}
+              value={`${score.toFixed(1)}/10`}
+              label={`OVERALL SCORE (${statusText})`}
+              status={status}
+              variant="persona"
+            >
               <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <strong style={{ color: '#2C3E50' }}>{persona.page_count || 0} pages analyzed</strong>
               </div>
-            </div>
+            </StandardCard>
           )
         })}
       </div>
@@ -224,23 +220,27 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
       {/* Performance Overview */}
       <div className="insights-box">
         <h3>📊 Performance Overview</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div className="metric-card">
-            <div className="metric-value">{(metrics.avg_score || 0).toFixed(1)}/10</div>
-            <div className="metric-label">Overall Score</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{metrics.page_count || 0}</div>
-            <div className="metric-label">Pages Analyzed</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{metrics.primary_tier || 'Unknown'}</div>
-            <div className="metric-label">Primary Tier</div>
-          </div>
-          <div className="metric-card">
-            <div className="metric-value">{metrics.critical_issues || 0}</div>
-            <div className="metric-label">Critical Issues</div>
-          </div>
+        <div className="metrics-grid">
+          <StandardCard
+            value={`${(metrics.avg_score || 0).toFixed(1)}/10`}
+            label="Overall Score"
+            status={metrics.avg_score >= 7 ? 'excellent' : metrics.avg_score >= 5 ? 'good' : metrics.avg_score >= 3 ? 'warning' : 'critical'}
+          />
+          <StandardCard
+            value={metrics.page_count || 0}
+            label="Pages Analyzed"
+            status="default"
+          />
+          <StandardCard
+            value={metrics.primary_tier || 'Unknown'}
+            label="Primary Tier"
+            status="default"
+          />
+          <StandardCard
+            value={metrics.critical_issues || 0}
+            label="Critical Issues"
+            status={metrics.critical_issues > 0 ? 'critical' : 'excellent'}
+          />
         </div>
       </div>
 

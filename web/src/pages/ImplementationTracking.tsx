@@ -479,7 +479,7 @@ function ImplementationTracking() {
         <div className="section">
           <h2>📅 Timeline View</h2>
           <div className="chart-container">
-            <PlotlyChart
+        <PlotlyChart
               data={getTimelineData()}
               layout={{
                 title: 'Implementation Timeline',

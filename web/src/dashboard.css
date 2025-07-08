@@ -2375,3 +2375,45 @@ input:focus {
         height: 600px !important;
     }
 }
+
+/* ===== STANDARD CARD COMPONENT STYLES ===== */
+.card-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.metric-display {
+  text-align: center;
+}
+
+/* Ensure consistent grid layouts */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Override any inconsistent persona card styling */
+.persona-card {
+  text-align: center;
+}
+
+.persona-card .card-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.persona-card .metric-value {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+}
+
+.persona-card .metric-label {
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
