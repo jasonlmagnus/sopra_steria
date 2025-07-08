@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import React from 'react'
-import { PageContainer, ScoreCard, ChartCard, PlotlyChart, ExpandableCard, MetricsCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -42,7 +40,7 @@ function ExecutiveDashboard() {
       </div>
 
       {/* Key Metrics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="grid grid--auto-200 mb-4">
         <div className={`metric-card ${brand.raw_score < 4 ? 'critical' : brand.raw_score < 6 ? 'warning' : brand.raw_score < 8 ? 'fair' : ''}`}>
           <div className={`metric-value ${brand.raw_score < 4 ? 'status-critical' : brand.raw_score < 6 ? 'status-fair' : brand.raw_score < 8 ? 'status-good' : 'status-excellent'}`}>
             {brand.raw_score || 0} {brand.emoji || ''}
@@ -80,20 +78,20 @@ function ExecutiveDashboard() {
       </div>
 
       {/* Charts Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="grid grid--auto-400 mb-4">
         <div className="insights-box">
           <h4>📊 Sentiment Breakdown</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
+          <div className="grid grid--cols-3 text-center">
             <div>
-              <div className="metric-value status-excellent" style={{ fontSize: '1.5rem' }}>{sentiment.positive?.toFixed(1)}%</div>
+              <div className="metric-value status-excellent text-xl">{sentiment.positive?.toFixed(1)}%</div>
               <div className="metric-label">Positive</div>
             </div>
             <div>
-              <div className="metric-value" style={{ fontSize: '1.5rem', color: '#666' }}>{sentiment.neutral?.toFixed(1)}%</div>
+              <div className="metric-value text-xl text-secondary">{sentiment.neutral?.toFixed(1)}%</div>
               <div className="metric-label">Neutral</div>
             </div>
             <div>
-              <div className="metric-value status-critical" style={{ fontSize: '1.5rem' }}>{sentiment.negative?.toFixed(1)}%</div>
+              <div className="metric-value status-critical text-xl">{sentiment.negative?.toFixed(1)}%</div>
               <div className="metric-label">Negative</div>
             </div>
           </div>
@@ -101,11 +99,11 @@ function ExecutiveDashboard() {
 
         <div className="insights-box">
           <h4>💡 Top Opportunities</h4>
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <div className="scrollable">
             {opps.slice(0, 5).map((opp: any, idx: number) => (
-              <div key={idx} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
-                <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{opp.page_title || `Opportunity ${idx + 1}`}</div>
-                <div style={{ fontSize: '0.8rem', color: '#666' }}>
+              <div key={idx} className="list-item">
+                <div className="font-semibold text-sm">{opp.page_title || `Opportunity ${idx + 1}`}</div>
+                <div className="text-sm text-secondary">
                   Impact: {opp.potential_impact || 'Medium'} | Effort: {opp.effort_level || 'Low'}
                 </div>
               </div>
@@ -117,9 +115,9 @@ function ExecutiveDashboard() {
       {/* Strategic Recommendations */}
       <div className="insights-box">
         <h4>🎯 Strategic Recommendations</h4>
-        <div style={{ display: 'grid', gap: '0.5rem' }}>
+        <div className="grid grid--gap-sm">
           {recs.slice(0, 3).map((rec: any, idx: number) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div key={idx} className="flex flex--center">
               <span className={idx === 0 ? 'critical-badge' : 'quick-win-badge'}>
                 {idx === 0 ? 'CRITICAL' : 'QUICK WIN'}
               </span>
@@ -132,7 +130,7 @@ function ExecutiveDashboard() {
       {/* Navigation Guidance */}
       <div className="insights-box">
         <h4>🧭 Next Steps</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        <div className="grid grid--auto-200">
           <div>
             <strong>🔍 Detailed Analysis:</strong><br/>
             <small>Visit Persona Insights for audience-specific performance</small>

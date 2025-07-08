@@ -3,7 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import axios from 'axios';
-import { readFile, readdir } from 'fs/promises';
+import { readFile, readdir, stat } from 'fs/promises';
 import fs from 'fs';
 import csv from 'csv-parser';
 import { createMarkdownObjectTable } from 'parse-markdown-table';
@@ -426,6 +426,121 @@ app.get('/api/brand-hygiene', async (_req, res) => {
 
 /**
  * @openapi
+ * /api/persona-insights:
+ *   get:
+ *     summary: Get persona-specific insights from audit data
+ *     responses:
+ *       200:
+ *         description: Persona insights data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 personas:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+app.get('/api/persona-insights', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const filePath = path.join(__dirname, '..', '..', 'audit_data', 'unified_audit_data.csv')
+    
+    const personaData = {}
+    
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on('data', (row) => {
+        const personaId = row.persona_id
+        if (!personaId || personaId === 'persona_id') return // Skip header row
+        
+        if (!personaData[personaId]) {
+          personaData[personaId] = {
+            persona_id: personaId,
+            pages: [],
+            metrics: {
+              total_pages: 0,
+              avg_score: 0,
+              critical_issues: 0,
+              quick_wins: 0,
+              success_stories: 0
+            }
+          }
+        }
+        
+        // Add page data
+        const pageId = row.page_id
+        const existingPage = personaData[personaId].pages.find(p => p.page_id === pageId)
+        
+        if (!existingPage) {
+          personaData[personaId].pages.push({
+            page_id: pageId,
+            url: row.url,
+            url_slug: row.url_slug,
+            tier: row.tier,
+            tier_name: row.tier_name,
+            criteria: [],
+            avg_score: parseFloat(row.avg_score) || 0,
+            sentiment: row.overall_sentiment,
+            engagement: row.engagement_level,
+            conversion: row.conversion_likelihood
+          })
+          personaData[personaId].metrics.total_pages++
+        }
+        
+        // Add criterion data
+        const page = personaData[personaId].pages.find(p => p.page_id === pageId)
+        if (page) {
+          page.criteria.push({
+            criterion_id: row.criterion_id,
+            criterion_code: row.criterion_code,
+            raw_score: parseFloat(row.raw_score) || 0,
+            final_score: parseFloat(row.final_score) || 0,
+            descriptor: row.descriptor,
+            evidence: row.evidence,
+            effective_copy_examples: row.effective_copy_examples,
+            ineffective_copy_examples: row.ineffective_copy_examples,
+            quick_win_flag: row.quick_win_flag === 'True',
+            critical_issue_flag: row.critical_issue_flag === 'True',
+            success_flag: row.success_flag === 'True'
+          })
+        }
+        
+        // Update metrics
+        if (row.critical_issue_flag === 'True') {
+          personaData[personaId].metrics.critical_issues++
+        }
+        if (row.quick_win_flag === 'True') {
+          personaData[personaId].metrics.quick_wins++
+        }
+        if (row.success_flag === 'True') {
+          personaData[personaId].metrics.success_stories++
+        }
+      })
+      .on('end', () => {
+        // Calculate average scores
+        Object.values(personaData).forEach(persona => {
+          const totalScores = persona.pages.reduce((sum, page) => sum + page.avg_score, 0)
+          persona.metrics.avg_score = persona.metrics.total_pages > 0 
+            ? (totalScores / persona.metrics.total_pages).toFixed(1)
+            : 0
+        })
+        
+        res.json({ personas: Object.values(personaData) })
+      })
+      .on('error', (err) => {
+        console.error('Error reading CSV:', err)
+        res.status(500).json({ error: 'Failed to parse persona insights data' })
+      })
+  } catch (err) {
+    console.error('Error loading persona insights:', err)
+    res.status(500).json({ error: 'Failed to load persona insights data' })
+  }
+})
+
+/**
+ * @openapi
  * /api/gap-analysis:
  *   get:
  *     summary: List gap analysis findings
@@ -472,6 +587,282 @@ app.get('/api/implementation-tracking', async (_req, res) => {
     res.status(500).json({ error: 'Failed to load implementation data' })
   }
 })
+
+/**
+ * @openapi
+ * /api/personas:
+ *   get:
+ *     summary: List available personas
+ *     responses:
+ *       200:
+ *         description: Array of persona IDs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 personas:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ */
+app.get('/api/personas', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const personasDir = path.join(__dirname, '..', '..', 'audit_inputs', 'personas')
+    
+    const files = await readdir(personasDir)
+    const personaIds = files
+      .filter(file => file.endsWith('.md'))
+      .map(file => file.replace('.md', ''))
+      .sort()
+    
+    res.json({ personas: personaIds })
+  } catch (err) {
+    console.error('Error loading personas:', err)
+    res.status(500).json({ error: 'Failed to load personas' })
+  }
+})
+
+/**
+ * @openapi
+ * /api/persona/{id}:
+ *   get:
+ *     summary: Get specific persona details
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Persona ID (e.g., P1, P2, etc.)
+ *     responses:
+ *       200:
+ *         description: Persona details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 content:
+ *                   type: string
+ *       404:
+ *         description: Persona not found
+ */
+app.get('/api/persona/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const personaPath = path.join(__dirname, '..', '..', 'audit_inputs', 'personas', `${id}.md`)
+    
+    const content = await readFile(personaPath, 'utf8')
+    
+    // Extract persona name from content
+    const lines = content.trim().split('\n')
+    let name = id
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim()
+      if (firstLine.startsWith('Persona Brief:')) {
+        name = firstLine.replace('Persona Brief:', '').trim()
+      }
+    }
+    
+    res.json({
+      id,
+      name,
+      content
+    })
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      res.status(404).json({ error: 'Persona not found' })
+    } else {
+      console.error('Error loading persona:', err)
+      res.status(500).json({ error: 'Failed to load persona' })
+    }
+  }
+})
+
+/**
+ * @openapi
+ * /api/html-reports:
+ *   get:
+ *     summary: List available HTML reports
+ *     responses:
+ *       200:
+ *         description: Array of HTML reports
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 reports:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+app.get('/api/html-reports', async (_req, res) => {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const htmlReportsDir = path.join(__dirname, '..', '..', 'html_reports')
+    
+    const reports = await scanHtmlReports(htmlReportsDir)
+    res.json({ reports })
+  } catch (err) {
+    console.error('Error scanning HTML reports:', err)
+    res.status(500).json({ error: 'Failed to scan HTML reports' })
+  }
+})
+
+/**
+ * @openapi
+ * /api/html-reports/{path}:
+ *   get:
+ *     summary: Get HTML report content
+ *     parameters:
+ *       - in: path
+ *         name: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Relative path to HTML report
+ *     responses:
+ *       200:
+ *         description: HTML report content
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       404:
+ *         description: Report not found
+ */
+app.get('/api/html-reports/:path(*)', async (req, res) => {
+  try {
+    const { path: reportPath } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const fullPath = path.join(__dirname, '..', '..', 'html_reports', reportPath)
+    
+    // Security check - ensure path is within html_reports directory
+    const resolvedPath = path.resolve(fullPath)
+    const htmlReportsDir = path.resolve(path.join(__dirname, '..', '..', 'html_reports'))
+    
+    if (!resolvedPath.startsWith(htmlReportsDir)) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
+    const content = await readFile(fullPath, 'utf8')
+    res.setHeader('Content-Type', 'text/html')
+    res.send(content)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      res.status(404).json({ error: 'Report not found' })
+    } else {
+      console.error('Error loading HTML report:', err)
+      res.status(500).json({ error: 'Failed to load HTML report' })
+    }
+  }
+})
+
+async function scanHtmlReports(htmlReportsDir) {
+  const reports = []
+  
+  try {
+    const items = await readdir(htmlReportsDir)
+    
+    for (const item of items) {
+      const itemPath = path.join(htmlReportsDir, item)
+      const stats = await stat(itemPath)
+      
+      if (stats.isFile() && item.endsWith('.html')) {
+        // Root level HTML files
+        const report = await createReportInfo(itemPath, item, htmlReportsDir)
+        if (report) reports.push(report)
+      } else if (stats.isDirectory()) {
+        // Subdirectories with HTML files
+        try {
+          const subItems = await readdir(itemPath)
+          for (const subItem of subItems) {
+            if (subItem.endsWith('.html')) {
+              const subItemPath = path.join(itemPath, subItem)
+              const relativePath = path.join(item, subItem)
+              const report = await createReportInfo(subItemPath, relativePath, htmlReportsDir)
+              if (report) reports.push(report)
+            }
+          }
+        } catch (err) {
+          console.error(`Error reading subdirectory ${item}:`, err)
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error scanning HTML reports directory:', err)
+  }
+  
+  return reports
+}
+
+async function createReportInfo(filePath, relativePath, baseDir) {
+  try {
+    const stats = await stat(filePath)
+    const fileName = path.basename(relativePath)
+    
+    // Determine persona name and report type
+    let personaName = 'Unknown'
+    let reportType = 'Report'
+    let category = 'Other'
+    
+    if (relativePath.includes('Consolidated')) {
+      personaName = 'Consolidated Brand Report'
+      reportType = 'Consolidated Report'
+      category = 'Executive'
+    } else if (fileName === 'index.html') {
+      personaName = 'Index/Root'
+      reportType = 'Strategic Analysis'
+      category = 'Executive'
+    } else if (fileName.includes('brand_audit')) {
+      personaName = 'Index/Root'
+      reportType = 'Strategic Analysis'
+      category = 'Executive'
+    } else if (relativePath.includes('Technical_Influencer')) {
+      personaName = 'The Technical Influencer'
+      reportType = 'Persona Report'
+      category = 'Persona'
+    } else if (relativePath.includes('Cybersecurity_Decision_Maker')) {
+      personaName = 'The Benelux Cybersecurity Decision Maker'
+      reportType = 'Persona Report'
+      category = 'Persona'
+    } else if (relativePath.includes('Strategic_Business_Leader')) {
+      personaName = 'The Benelux Strategic Business Leader (C-Suite Executive)'
+      reportType = 'Persona Report'
+      category = 'Persona'
+    } else if (relativePath.includes('Transformation_Programme_Leader')) {
+      personaName = 'The Benelux Transformation Programme Leader'
+      reportType = 'Persona Report'
+      category = 'Persona'
+    } else if (relativePath.includes('Technology_Innovation_Leader')) {
+      personaName = 'The BENELUX Technology Innovation Leader'
+      reportType = 'Persona Report'
+      category = 'Persona'
+    }
+    
+    return {
+      file_path: filePath,
+      file_name: fileName,
+      persona_name: personaName,
+      report_type: reportType,
+      category: category,
+      size: `${(stats.size / 1024).toFixed(1)} KB`,
+      modified: stats.mtime.toISOString().split('T')[0] + ' ' + stats.mtime.toTimeString().split(' ')[0],
+      relative_path: relativePath.replace(/\\/g, '/')
+    }
+  } catch (err) {
+    console.error(`Error creating report info for ${filePath}:`, err)
+    return null
+  }
+}
 
 const port = process.env.PORT || 3000;
 

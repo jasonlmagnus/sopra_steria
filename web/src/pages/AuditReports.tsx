@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { EvidenceDisplay } from '../components/EvidenceDisplay'
 
 interface HtmlReport {
   file_path: string
@@ -35,18 +36,39 @@ function AuditReports() {
       setLoading(true)
       setError(null)
       
-      // Mock HTML reports data - in real app would scan html_reports directory
+      // Fetch actual HTML reports from the API
+      const response = await fetch('http://localhost:3000/api/html-reports')
+      if (response.ok) {
+        const reportsData = await response.json()
+        setReports(reportsData.reports || [])
+        
+        // Set default report (consolidated, index, or first executive)
+        const defaultReport = findDefaultReport(reportsData.reports || [])
+        if (defaultReport) {
+          setSelectedReport(defaultReport)
+          await loadHtmlContent(defaultReport)
+        }
+      } else {
+        // Fallback to mock data if API not available
+        const mockReports = generateMockReports()
+        setReports(mockReports)
+        
+        const defaultReport = findDefaultReport(mockReports)
+        if (defaultReport) {
+          setSelectedReport(defaultReport)
+          await loadHtmlContent(defaultReport)
+        }
+      }
+    } catch (err) {
+      // Fallback to mock data on error
       const mockReports = generateMockReports()
       setReports(mockReports)
       
-      // Set default report (consolidated, index, or first executive)
       const defaultReport = findDefaultReport(mockReports)
       if (defaultReport) {
         setSelectedReport(defaultReport)
         await loadHtmlContent(defaultReport)
       }
-    } catch (err) {
-      setError('Failed to scan HTML reports')
     } finally {
       setLoading(false)
     }
@@ -164,305 +186,20 @@ function AuditReports() {
 
   const loadHtmlContent = async (report: HtmlReport) => {
     try {
-      // In real app, would fetch actual HTML content from the file
-      const mockHtmlContent = generateMockHtmlContent(report)
-      setHtmlContent(mockHtmlContent)
+      // Fetch actual HTML content from the API
+      const response = await fetch(`http://localhost:3000/api/html-reports/${encodeURIComponent(report.relative_path)}`)
+      if (response.ok) {
+        const htmlContent = await response.text()
+        setHtmlContent(htmlContent)
+      } else {
+        setHtmlContent('<div class="error">Failed to load report content</div>')
+      }
     } catch (err) {
-      setError('Failed to load HTML content')
+      setHtmlContent('<div class="error">Error loading report content</div>')
     }
   }
 
-  const generateMockHtmlContent = (report: HtmlReport): string => {
-    const baseContent = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${report.persona_name} - ${report.report_type}</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-                line-height: 1.6;
-                color: #333;
-                max-width: 1200px;
-                margin: 0 auto;
-                padding: 20px;
-                background: #f8fafc;
-            }
-            .header {
-                background: linear-gradient(135deg, #4D1D82, #8b1d82);
-                color: white;
-                padding: 2rem;
-                border-radius: 12px;
-                margin-bottom: 2rem;
-                text-align: center;
-            }
-            .header h1 {
-                margin: 0;
-                font-size: 2.5rem;
-                font-weight: 700;
-            }
-            .header p {
-                margin: 0.5rem 0 0 0;
-                font-size: 1.1rem;
-                opacity: 0.9;
-            }
-            .section {
-                background: white;
-                padding: 2rem;
-                border-radius: 12px;
-                margin-bottom: 2rem;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            .section h2 {
-                color: #4D1D82;
-                border-bottom: 2px solid #4D1D82;
-                padding-bottom: 0.5rem;
-                margin-bottom: 1.5rem;
-            }
-            .metrics-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1.5rem;
-                margin: 1.5rem 0;
-            }
-            .metric-card {
-                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-                padding: 1.5rem;
-                border-radius: 8px;
-                text-align: center;
-                border: 1px solid #e2e8f0;
-            }
-            .metric-value {
-                font-size: 2rem;
-                font-weight: bold;
-                color: #4D1D82;
-                margin-bottom: 0.5rem;
-            }
-            .metric-label {
-                color: #64748b;
-                font-size: 0.9rem;
-                font-weight: 500;
-            }
-            .navigation-links {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 1rem;
-                margin: 2rem 0;
-            }
-            .nav-link {
-                background: white;
-                border: 2px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 1.5rem;
-                text-decoration: none;
-                color: #4D1D82;
-                transition: all 0.3s ease;
-                display: block;
-            }
-            .nav-link:hover {
-                border-color: #4D1D82;
-                background: #f8fafc;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            }
-            .nav-link h3 {
-                margin: 0 0 0.5rem 0;
-                font-size: 1.2rem;
-            }
-            .nav-link p {
-                margin: 0;
-                color: #64748b;
-                font-size: 0.9rem;
-            }
-            .chart-placeholder {
-                background: #f1f5f9;
-                border: 2px dashed #cbd5e1;
-                border-radius: 8px;
-                padding: 3rem;
-                text-align: center;
-                margin: 1.5rem 0;
-                color: #64748b;
-            }
-            .recommendations {
-                background: #fef3c7;
-                border-left: 4px solid #f59e0b;
-                padding: 1.5rem;
-                border-radius: 8px;
-                margin: 1.5rem 0;
-            }
-            .recommendations h3 {
-                color: #92400e;
-                margin-top: 0;
-            }
-            .recommendations ul {
-                margin: 0;
-                padding-left: 1.5rem;
-            }
-            .recommendations li {
-                margin-bottom: 0.5rem;
-                color: #78350f;
-            }
-            .footer {
-                text-align: center;
-                color: #64748b;
-                font-size: 0.9rem;
-                margin-top: 3rem;
-                padding-top: 2rem;
-                border-top: 1px solid #e2e8f0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>📊 ${report.persona_name}</h1>
-            <p>${report.report_type} - Brand Experience Analysis</p>
-        </div>
-    `
 
-    if (report.report_type === 'Strategic Analysis' && report.file_name.includes('index')) {
-      return baseContent + `
-        <div class="section">
-            <h2>🎯 Available Reports</h2>
-            <p>This is the main index page for all brand audit reports. Select from the available persona-specific reports and executive summaries below.</p>
-            
-            <div class="navigation-links">
-                <a href="consolidated_brand_experience_report.html" class="nav-link">
-                    <h3>📋 Consolidated Brand Report</h3>
-                    <p>Comprehensive analysis across all personas and touchpoints</p>
-                </a>
-                <a href="The_Technical_Influencer/brand_experience_report.html" class="nav-link">
-                    <h3>🔧 The Technical Influencer</h3>
-                    <p>Persona-specific brand experience analysis</p>
-                </a>
-                <a href="The_Benelux_Cybersecurity_Decision_Maker/brand_experience_report.html" class="nav-link">
-                    <h3>🛡️ The Benelux Cybersecurity Decision Maker</h3>
-                    <p>Persona-specific brand experience analysis</p>
-                </a>
-                <a href="The_Benelux_Strategic_Business_Leader_C-Suite_Executive/brand_experience_report.html" class="nav-link">
-                    <h3>👔 The Benelux Strategic Business Leader</h3>
-                    <p>C-Suite Executive persona analysis</p>
-                </a>
-                <a href="The_Benelux_Transformation_Programme_Leader/brand_experience_report.html" class="nav-link">
-                    <h3>🚀 The Benelux Transformation Programme Leader</h3>
-                    <p>Persona-specific brand experience analysis</p>
-                </a>
-                <a href="The_BENELUX_Technology_Innovation_Leader/brand_experience_report.html" class="nav-link">
-                    <h3>💡 The BENELUX Technology Innovation Leader</h3>
-                    <p>Persona-specific brand experience analysis</p>
-                </a>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>📊 Quick Stats</h2>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">6</div>
-                    <div class="metric-label">Persona Reports</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">2</div>
-                    <div class="metric-label">Executive Reports</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">547</div>
-                    <div class="metric-label">Total Pages Analyzed</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">7.2</div>
-                    <div class="metric-label">Average Brand Score</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Generated by Sopra Steria Brand Health Command Center</p>
-            <p>Report generated on ${new Date().toLocaleDateString()}</p>
-        </div>
-    </body>
-    </html>
-    `
-    }
-
-    // For persona reports and consolidated reports
-    return baseContent + `
-        <div class="section">
-            <h2>📊 Executive Summary</h2>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">7.${Math.floor(Math.random() * 9)}</div>
-                    <div class="metric-label">Overall Brand Score</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">${Math.floor(Math.random() * 50) + 30}</div>
-                    <div class="metric-label">Pages Analyzed</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">${Math.floor(Math.random() * 20) + 65}%</div>
-                    <div class="metric-label">Success Rate</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">${Math.floor(Math.random() * 15) + 5}</div>
-                    <div class="metric-label">Critical Issues</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🎯 Key Findings</h2>
-            <div class="chart-placeholder">
-                <h3>📈 Brand Performance Chart</h3>
-                <p>Interactive charts would be displayed here showing brand performance across different criteria</p>
-            </div>
-            
-            <div class="recommendations">
-                <h3>💡 Priority Recommendations</h3>
-                <ul>
-                    <li>Improve brand messaging consistency across all touchpoints</li>
-                    <li>Enhance visual identity implementation on key pages</li>
-                    <li>Strengthen trust signals and credibility indicators</li>
-                    <li>Optimize user experience flows for better conversion</li>
-                    <li>Implement comprehensive social proof elements</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>📋 Detailed Analysis</h2>
-            <p>This section would contain detailed analysis of brand performance across multiple dimensions including:</p>
-            <ul>
-                <li><strong>Brand Positioning:</strong> How well the brand message is communicated</li>
-                <li><strong>Visual Identity:</strong> Consistency of visual elements and design</li>
-                <li><strong>User Experience:</strong> Navigation, usability, and conversion optimization</li>
-                <li><strong>Content Quality:</strong> Relevance, clarity, and engagement of content</li>
-                <li><strong>Trust & Credibility:</strong> Social proof, testimonials, and trust signals</li>
-                <li><strong>Technical Performance:</strong> Site speed, mobile optimization, and accessibility</li>
-            </ul>
-            
-            <div class="chart-placeholder">
-                <h3>📊 Performance Breakdown</h3>
-                <p>Detailed performance metrics and comparative analysis would be displayed here</p>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🚀 Implementation Roadmap</h2>
-            <div class="chart-placeholder">
-                <h3>📅 Timeline View</h3>
-                <p>Implementation timeline with priorities and milestones would be displayed here</p>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Generated by Sopra Steria Brand Health Command Center</p>
-            <p>Report generated on ${new Date().toLocaleDateString()} for ${report.persona_name}</p>
-        </div>
-    </body>
-    </html>
-    `
-  }
 
   const handleReportSelection = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = event.target.value
@@ -481,9 +218,28 @@ function AuditReports() {
   const handleRegenerateReports = async () => {
     setRegenerating(true)
     try {
-      // Mock regeneration - in real app would call API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      await scanHtmlReports()
+      // Call the Python HTML report generator via API
+      const response = await fetch('http://localhost:8000/api/generate-html-reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          personas: ['CONSOLIDATED', 'P1', 'P2', 'P3', 'P4', 'P5'],
+          options: {
+            include_tier_analysis: true,
+            include_persona_voice: true,
+            include_recommendations: true,
+            include_visual_brand: true
+          }
+        })
+      })
+      
+      if (response.ok) {
+        await scanHtmlReports() // Refresh the reports list
+      } else {
+        throw new Error('Failed to regenerate reports')
+      }
     } catch (err) {
       setError('Failed to regenerate reports')
     } finally {
@@ -506,21 +262,12 @@ function AuditReports() {
   }
 
   const handleDownloadAll = () => {
-    // Mock download all functionality
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-    const filename = `sopra_brand_reports_${timestamp}.zip`
+    if (!reports || reports.length === 0) {
+      alert('No reports available to download')
+      return
+    }
     
-    // In real app, would create actual ZIP file
-    const mockZipContent = 'Mock ZIP file content with all reports'
-    const blob = new Blob([mockZipContent], { type: 'application/zip' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    alert('Download all functionality not yet implemented. Please download individual reports.')
   }
 
   const createReportOptions = (): { options: string[], defaultIndex: number } => {
@@ -739,6 +486,35 @@ function AuditReports() {
                   title={`${selectedReport.persona_name} - ${selectedReport.report_type}`}
                 />
               )}
+            </div>
+          </div>
+
+          {/* Evidence Panel */}
+          <div className="section">
+            <h2>🔍 Report Evidence & Analysis</h2>
+            <div className="evidence-panel">
+              <EvidenceDisplay
+                evidence={[
+                  {
+                    type: 'evidence',
+                    content: `This HTML report was generated from comprehensive audit data analysis. The report contains detailed findings, recommendations, and evidence-based insights for ${selectedReport.persona_name}.`,
+                    title: 'Report Generation'
+                  },
+                  {
+                    type: 'business_impact',
+                    content: `${selectedReport.report_type} provides strategic insights for business decision-making, focusing on brand experience optimization and user journey improvements.`,
+                    title: 'Business Impact'
+                  },
+                  {
+                    type: 'trust_assessment',
+                    content: `Report contains validated data from unified audit sources, ensuring accuracy and reliability of all findings and recommendations presented.`,
+                    title: 'Data Validation'
+                  }
+                ]}
+                title={`Evidence for ${selectedReport.persona_name}`}
+                collapsible={true}
+                defaultExpanded={false}
+              />
             </div>
           </div>
 

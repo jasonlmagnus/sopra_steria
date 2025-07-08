@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PlotlyChart } from '../components'
+import { EvidenceDisplay } from '../components/EvidenceDisplay'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -565,10 +566,48 @@ function PageDrillDown({ pageData }: any) {
                 const page = pageData.find((p: any) => p.id === selectedPage)
                 if (!page) return null
                 
+                // Extract evidence from page data
+                const evidenceItems = []
+                if (page.evidence) {
+                  evidenceItems.push({
+                    type: 'evidence' as const,
+                    content: page.evidence,
+                    title: 'AI Analysis'
+                  })
+                }
+                if (page.effective_copy_examples) {
+                  evidenceItems.push({
+                    type: 'effective_copy' as const,
+                    content: page.effective_copy_examples,
+                    title: 'Effective Copy Examples'
+                  })
+                }
+                if (page.ineffective_copy_examples) {
+                  evidenceItems.push({
+                    type: 'ineffective_copy' as const,
+                    content: page.ineffective_copy_examples,
+                    title: 'Areas for Improvement'
+                  })
+                }
+                if (page.trust_credibility_assessment) {
+                  evidenceItems.push({
+                    type: 'trust_assessment' as const,
+                    content: page.trust_credibility_assessment,
+                    title: 'Trust & Credibility Assessment'
+                  })
+                }
+                if (page.business_impact_analysis) {
+                  evidenceItems.push({
+                    type: 'business_impact' as const,
+                    content: page.business_impact_analysis,
+                    title: 'Business Impact Analysis'
+                  })
+                }
+                
                 return (
                   <div className="insights-box">
                     <h3>🔍 Detailed Analysis: {page.title}</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                       <div className="metric-card">
                         <div className="metric-value">{page.avgScore.toFixed(1)}/10</div>
                         <div className="metric-label">Overall Score</div>
@@ -581,7 +620,28 @@ function PageDrillDown({ pageData }: any) {
                         <div className="metric-value">{page.personas}</div>
                         <div className="metric-label">Personas</div>
                       </div>
+                      {page.url && (
+                        <div className="metric-card">
+                          <div className="metric-value">
+                            <a href={page.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>
+                              🔗 View Page
+                            </a>
+                          </div>
+                          <div className="metric-label">External Link</div>
+                        </div>
+                      )}
                     </div>
+                    
+                    {evidenceItems.length > 0 && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <EvidenceDisplay
+                          evidence={evidenceItems}
+                          title={`Evidence Analysis for ${page.title}`}
+                          collapsible={true}
+                          defaultExpanded={true}
+                        />
+                      </div>
+                    )}
                   </div>
                 )
               })()}

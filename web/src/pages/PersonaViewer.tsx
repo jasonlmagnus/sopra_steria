@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlotlyChart } from '../components/PlotlyChart'
+import { EvidenceDisplay, EvidenceBrowser } from '../components/EvidenceDisplay'
 
 interface PersonaProfile {
   id: string
@@ -11,6 +12,8 @@ interface PersonaProfile {
 interface ProfileSection {
   title: string
   content: string
+  subsections?: ProfileSection[]
+  isCollapsed?: boolean
 }
 
 interface JourneyStep {
@@ -36,12 +39,24 @@ interface PerformanceData {
   effective_copy_examples?: string
   ineffective_copy_examples?: string
   business_impact_analysis?: string
+  evidence?: string
+  trust_credibility_assessment?: string
+  information_gaps?: string
+  raw_score?: number
+  url_slug?: string
 }
 
 interface VoiceStats {
-  populated: number
-  total: number
-  percentage: number
+  effective_copy_examples?: {
+    populated: number
+    total: number
+    percentage: number
+  }
+  ineffective_copy_examples?: {
+    populated: number
+    total: number
+    percentage: number
+  }
 }
 
 const PERSONA_NAMES: Record<string, string> = {
@@ -50,6 +65,59 @@ const PERSONA_NAMES: Record<string, string> = {
   'P3': 'The Benelux Transformation Programme Leader',
   'P4': 'The Benelux Cybersecurity Decision Maker',
   'P5': 'The Technical Influencer'
+}
+
+// Utility function to parse markdown content into structured sections
+const parseMarkdownToSections = (content: string): ProfileSection[] => {
+  const lines = content.split('\n')
+  const sections: ProfileSection[] = []
+  let currentSection: ProfileSection | null = null
+  let currentContent: string[] = []
+
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    
+    // Check if this is a main section header (number followed by period)
+    const mainSectionMatch = trimmedLine.match(/^(\d+)\.\s+(.+)$/)
+    if (mainSectionMatch) {
+      // Save previous section if exists
+      if (currentSection) {
+        currentSection.content = currentContent.join('\n').trim()
+        sections.push(currentSection)
+      }
+      
+      // Start new section
+      currentSection = {
+        title: mainSectionMatch[2],
+        content: '',
+        subsections: [],
+        isCollapsed: true
+      }
+      currentContent = []
+    } else if (currentSection) {
+      currentContent.push(line)
+    }
+  }
+  
+  // Add the last section
+  if (currentSection) {
+    currentSection.content = currentContent.join('\n').trim()
+    sections.push(currentSection)
+  }
+  
+  return sections
+}
+
+// Utility function to extract persona name from content
+const extractPersonaName = (content: string): string => {
+  const lines = content.trim().split('\n')
+  if (lines.length > 0) {
+    const firstLine = lines[0].trim()
+    if (firstLine.startsWith('Persona Brief:')) {
+      return firstLine.replace('Persona Brief:', '').trim()
+    }
+  }
+  return 'Unknown Persona'
 }
 
 function PersonaViewer() {
@@ -62,9 +130,11 @@ function PersonaViewer() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('profile')
   const [selectedTiers, setSelectedTiers] = useState<string[]>([])
+  const [auditData, setAuditData] = useState<any[]>([])
 
   useEffect(() => {
     fetchPersonas()
+    fetchAuditData()
   }, [])
 
   useEffect(() => {
@@ -76,16 +146,47 @@ function PersonaViewer() {
   const fetchPersonas = async () => {
     try {
       setLoading(true)
-      // Mock persona data - in real app would fetch from API
+      // Get available personas from the API
+      const response = await fetch('http://localhost:3000/api/personas')
+      if (response.ok) {
+        const data = await response.json()
+        const personaIds = data.personas || ['P1', 'P2', 'P3', 'P4', 'P5']
+        setPersonas(personaIds)
+        if (personaIds.length > 0) {
+          setSelectedPersona(personaIds[0])
+        }
+      } else {
+        // Fallback to mock data
+        const mockPersonas = ['P1', 'P2', 'P3', 'P4', 'P5']
+        setPersonas(mockPersonas)
+        if (mockPersonas.length > 0) {
+          setSelectedPersona(mockPersonas[0])
+        }
+      }
+    } catch (err) {
+      // Fallback to mock data
       const mockPersonas = ['P1', 'P2', 'P3', 'P4', 'P5']
       setPersonas(mockPersonas)
       if (mockPersonas.length > 0) {
         setSelectedPersona(mockPersonas[0])
       }
-    } catch (err) {
-      setError('Failed to load personas')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAuditData = async () => {
+    try {
+      // Fetch audit data with evidence for this persona
+      const response = await fetch('http://localhost:8000/api/audit-data')
+      if (response.ok) {
+        const data = await response.json()
+        setAuditData(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch audit data:', err)
+      // Set empty array as fallback
+      setAuditData([])
     }
   }
 
@@ -93,25 +194,42 @@ function PersonaViewer() {
     try {
       setLoading(true)
       
-      // Mock profile data
-      const mockProfile: PersonaProfile = {
-        id: personaId,
-        name: PERSONA_NAMES[personaId] || `Business Professional ${personaId}`,
-        content: generateMockProfileContent(personaId),
-        sections: generateMockProfileSections(personaId)
+      // Try to fetch real persona data from markdown files
+      const personaResponse = await fetch(`http://localhost:3000/api/persona/${personaId}`)
+      let personaProfile: PersonaProfile
+      
+      if (personaResponse.ok) {
+        const personaData = await personaResponse.json()
+        const sections = parseMarkdownToSections(personaData.content)
+        const extractedName = extractPersonaName(personaData.content)
+        
+        personaProfile = {
+          id: personaId,
+          name: extractedName,
+          content: sections.length > 0 ? sections[0].content.substring(0, 300) + '...' : 'No content available',
+          sections: sections
+        }
+      } else {
+        // Fallback to mock data
+        personaProfile = {
+          id: personaId,
+          name: PERSONA_NAMES[personaId] || `Business Professional ${personaId}`,
+          content: generateMockProfileContent(personaId),
+          sections: generateMockProfileSections(personaId)
+        }
       }
       
-      // Mock journey data
+      // Mock journey data (would be replaced with real data)
       const mockJourney: JourneyData = {
         steps: generateMockJourneySteps(personaId),
         persona_id: personaId,
-        persona_name: PERSONA_NAMES[personaId] || personaId
+        persona_name: personaProfile.name
       }
       
-      // Mock performance data
+      // Mock performance data (would be replaced with real data)
       const mockPerformance: PerformanceData[] = generateMockPerformanceData(personaId)
       
-      setProfile(mockProfile)
+      setProfile(personaProfile)
       setJourney(mockJourney)
       setPerformance(mockPerformance)
       
@@ -126,8 +244,19 @@ function PersonaViewer() {
     }
   }
 
+  const toggleSection = (sectionIndex: number) => {
+    if (profile) {
+      const updatedSections = [...profile.sections]
+      updatedSections[sectionIndex].isCollapsed = !updatedSections[sectionIndex].isCollapsed
+      setProfile({
+        ...profile,
+        sections: updatedSections
+      })
+    }
+  }
+
   const generateMockProfileContent = (personaId: string) => {
-    const profiles = {
+    const profiles: Record<string, string> = {
       'P1': 'Strategic business leader focused on digital transformation, ROI, and competitive advantage. Seeks proven solutions with measurable business impact.',
       'P2': 'Technology innovation leader driving digital transformation initiatives. Balances cutting-edge technology with practical business applications.',
       'P3': 'Transformation programme leader managing large-scale organizational change. Focuses on change management, stakeholder alignment, and measurable outcomes.',
@@ -141,234 +270,155 @@ function PersonaViewer() {
     return [
       {
         title: 'Role & Responsibilities',
-        content: `Primary decision maker for ${personaId === 'P1' ? 'strategic business initiatives' : personaId === 'P2' ? 'technology innovation' : personaId === 'P3' ? 'transformation programmes' : personaId === 'P4' ? 'cybersecurity strategy' : 'technical architecture'}. Manages budget allocation and vendor relationships.`
+        content: `Primary decision maker for ${personaId === 'P1' ? 'strategic business initiatives' : personaId === 'P2' ? 'technology innovation' : personaId === 'P3' ? 'transformation programmes' : personaId === 'P4' ? 'cybersecurity strategy' : 'technical architecture'}. Manages budget allocation and vendor relationships.`,
+        isCollapsed: true
       },
       {
         title: 'Key Priorities',
-        content: `Focuses on ${personaId === 'P1' ? 'business growth and competitive advantage' : personaId === 'P2' ? 'innovation and digital transformation' : personaId === 'P3' ? 'change management and stakeholder alignment' : personaId === 'P4' ? 'risk management and compliance' : 'technical excellence and solution architecture'}.`
+        content: `Focuses on ${personaId === 'P1' ? 'business growth and competitive advantage' : personaId === 'P2' ? 'innovation and digital transformation' : personaId === 'P3' ? 'change management and stakeholder alignment' : personaId === 'P4' ? 'risk management and compliance' : 'technical excellence and solution architecture'}.`,
+        isCollapsed: true
       },
       {
         title: 'Pain Points',
-        content: `Challenges include ${personaId === 'P1' ? 'proving ROI and managing stakeholder expectations' : personaId === 'P2' ? 'balancing innovation with practical implementation' : personaId === 'P3' ? 'managing resistance to change' : personaId === 'P4' ? 'staying ahead of emerging threats' : 'evaluating vendor capabilities and technical fit'}.`
+        content: `Challenges include ${personaId === 'P1' ? 'proving ROI and managing stakeholder expectations' : personaId === 'P2' ? 'balancing innovation with practical implementation' : personaId === 'P3' ? 'managing resistance to change' : personaId === 'P4' ? 'staying ahead of emerging threats' : 'evaluating vendor capabilities and technical fit'}.`,
+        isCollapsed: true
       },
       {
         title: 'Success Metrics',
-        content: `Measured by ${personaId === 'P1' ? 'revenue growth and operational efficiency' : personaId === 'P2' ? 'successful technology implementations' : personaId === 'P3' ? 'transformation programme success rates' : personaId === 'P4' ? 'security incident reduction' : 'technical solution performance and adoption'}.`
+        content: `Measured by ${personaId === 'P1' ? 'revenue growth and operational efficiency' : personaId === 'P2' ? 'successful technology implementations' : personaId === 'P3' ? 'transformation programme success rates' : personaId === 'P4' ? 'security incident reduction' : 'technical solution performance and adoption'}.`,
+        isCollapsed: true
       }
     ]
   }
 
-  const generateMockJourneySteps = (personaId: string): JourneyStep[] => {
-    const reactions = {
-      'P1': [
-        'Seeks strategic alignment, concerned about generic messaging',
-        'Appreciates calm leadership tone, wants concrete outcomes',
-        'Strong alignment with compliance and security goals',
-        'Values strategic advantage framing of regulations',
-        'Appreciates local presence, frustrated by lack of digital options'
-      ],
-      'P2': [
-        'Reassured by scale and tech focus, wants proof beyond messaging',
-        'High relevance to transformation agenda, seeks compliance mention',
-        'High relevance for balancing innovation and compliance',
-        'Appreciates topical coverage and practical guidance',
-        'Likes low-friction language, wants role-specific context'
-      ],
-      'P3': [
-        'Looks for outcome-focused messaging, ROI indicators',
-        'Strong alignment with goals, wants success metrics',
-        'Measurable outcomes, trusted partner positioning',
-        'High-value thought leadership, compliance + innovation narrative',
-        'Values partnership emphasis, needs easier contact methods'
-      ],
-      'P4': [
-        'Limited security-specific messaging, feels disconnected',
-        'Mixed clarity - poetic tone may obscure practical offerings',
-        'Very high relevance for regulatory alignment',
-        'Demonstrates thought leadership and regulatory fluency',
-        'Comfortable with expert access, wants specialist routing'
-      ],
-      'P5': [
-        'Curious but cautious, wants technical depth',
-        'Confidence builds, appreciates technical depth',
-        'Reassured by technical depth and delivery capability',
-        'Validated and informed, recognizes expertise',
-        'Ready to engage, appreciates local presence'
-      ]
-    }
-
-    const severities = {
-      'P1': [3, 2, 1, 2, 4],
-      'P2': [2, 3, 2, 2, 3],
-      'P3': [3, 2, 2, 1, 3],
-      'P4': [3, 2, 2, 1, 2],
-      'P5': [2, 1, 1, 1, 2]
-    }
-
-    const stepNames = [
-      'Step 1: Homepage (Awareness)',
-      'Step 2: Service Pages (Consideration)',
-      'Step 3: Proof Points (Validation)',
-      'Step 4: Thought Leadership (Education)',
-      'Step 5: Contact (Conversion)'
+  const generateMockJourneySteps = (_personaId: string): JourneyStep[] => {
+    const baseSteps = [
+      { name: 'Problem Recognition', reaction: 'Identifies business challenge or opportunity', severity: 2 },
+      { name: 'Research & Discovery', reaction: 'Researches potential solutions and vendors', severity: 3 },
+      { name: 'Stakeholder Alignment', reaction: 'Builds consensus among key stakeholders', severity: 4 },
+      { name: 'Solution Evaluation', reaction: 'Evaluates technical and business fit', severity: 3 },
+      { name: 'Vendor Selection', reaction: 'Selects preferred vendor and solution', severity: 2 },
+      { name: 'Implementation Planning', reaction: 'Plans deployment and change management', severity: 3 },
+      { name: 'Execution & Monitoring', reaction: 'Oversees implementation and tracks progress', severity: 2 }
     ]
 
-    const quickFixes = [
-      [
-        'Sharpen value proposition with specific domains',
-        'Add prominent CTA button',
-        'Include persona-guided navigation',
-        'Surface EU trust credentials in hero section'
-      ],
-      [
-        'Add bullet points or sidebar summary',
-        'Include compliance and regulatory mentions',
-        'Surface case study teasers',
-        'Balance inspirational tone with practical deliverables'
-      ],
-      [
-        'Add visual summary with key stats upfront',
-        'Include quantified outcomes in case studies',
-        'Add filtering by industry/use case',
-        'Strengthen proof points with metrics'
-      ],
-      [
-        'Add author credentials and publication dates',
-        'Include related articles suggestions',
-        'Add social sharing and engagement features',
-        'Create downloadable resources'
-      ],
-      [
-        'Add online scheduling/contact form',
-        'Include role-specific contact routing',
-        'Add local office information',
-        'Create specialist team pages'
-      ]
-    ]
-
-    return stepNames.map((name, index) => ({
+    return baseSteps.map((step, index) => ({
       step_number: index + 1,
-      step_name: name,
-      persona_reaction: reactions[personaId]?.[index] || 'Standard persona reaction',
-      gap_severity: severities[personaId]?.[index] || 2,
-      quick_fixes: quickFixes[index] || []
+      step_name: step.name,
+      persona_reaction: step.reaction,
+      gap_severity: step.severity,
+      quick_fixes: [
+        'Improve content clarity and relevance',
+        'Provide better supporting evidence',
+        'Enhance user experience and navigation'
+      ]
     }))
   }
 
-  const generateMockPerformanceData = (personaId: string): PerformanceData[] => {
-    const baseScore = personaId === 'P1' ? 7.2 : personaId === 'P2' ? 6.8 : personaId === 'P3' ? 7.5 : personaId === 'P4' ? 6.5 : 7.0
-    const pages = [
-      { id: 'homepage', title: 'Homepage', tier: 'Tier 1' },
-      { id: 'services', title: 'Services Overview', tier: 'Tier 1' },
-      { id: 'about', title: 'About Us', tier: 'Tier 2' },
-      { id: 'case-studies', title: 'Case Studies', tier: 'Tier 2' },
-      { id: 'contact', title: 'Contact', tier: 'Tier 3' },
-      { id: 'blog', title: 'Blog', tier: 'Tier 3' }
+  const generateMockPerformanceData = (_personaId: string): PerformanceData[] => {
+    const mockPages = [
+      { title: 'Homepage', url: 'https://example.com/', score: 7.5, tier: 'Tier 1' },
+      { title: 'Services', url: 'https://example.com/services', score: 6.8, tier: 'Tier 1' },
+      { title: 'About Us', url: 'https://example.com/about', score: 8.2, tier: 'Tier 2' },
+      { title: 'Contact', url: 'https://example.com/contact', score: 5.9, tier: 'Tier 2' },
+      { title: 'Case Studies', url: 'https://example.com/cases', score: 7.1, tier: 'Tier 3' }
     ]
 
-    return pages.map(page => ({
-      page_id: page.id,
-      url: `https://soprasteria.be/${page.id}`,
+    return mockPages.map((page, index) => ({
+      page_id: `page_${index + 1}`,
+      url: page.url,
       title: page.title,
-      avg_score: baseScore + (Math.random() - 0.5) * 2,
+      avg_score: page.score,
       tier_name: page.tier,
-      effective_copy_examples: Math.random() > 0.3 ? `Effective messaging example for ${page.title}` : undefined,
-      ineffective_copy_examples: Math.random() > 0.5 ? `Area for improvement in ${page.title}` : undefined,
-      business_impact_analysis: Math.random() > 0.4 ? `Business impact analysis for ${page.title}` : undefined
+      effective_copy_examples: 'Strong value proposition and clear call-to-action',
+      ineffective_copy_examples: 'Technical jargon that may confuse users',
+      business_impact_analysis: 'High potential for conversion improvement'
     }))
   }
 
   const calculateOverallScore = () => {
     if (performance.length === 0) return 0
-    return performance.reduce((sum, p) => sum + p.avg_score, 0) / performance.length
+    return performance.reduce((sum, item) => sum + item.avg_score, 0) / performance.length
   }
 
   const getCriticalIssuesCount = () => {
-    return performance.filter(p => p.avg_score < 4.0).length
+    return performance.filter(item => item.avg_score < 4.0).length
   }
 
   const getAverageGapSeverity = () => {
-    if (!journey) return 0
+    if (!journey || journey.steps.length === 0) return 0
     return journey.steps.reduce((sum, step) => sum + step.gap_severity, 0) / journey.steps.length
   }
 
   const getFilteredPerformanceData = () => {
-    if (selectedTiers.length === 0) return performance
-    return performance.filter(p => selectedTiers.includes(p.tier_name))
+    return performance.filter(item => selectedTiers.includes(item.tier_name))
   }
 
   const getVoiceStats = () => {
     const filteredData = getFilteredPerformanceData()
-    const voiceColumns = ['effective_copy_examples', 'ineffective_copy_examples', 'business_impact_analysis']
-    
-    return voiceColumns.reduce((stats, col) => {
-      const populated = filteredData.filter(p => p[col as keyof PerformanceData] !== undefined).length
-      const total = filteredData.length
-      stats[col] = {
-        populated,
-        total,
-        percentage: total > 0 ? (populated / total) * 100 : 0
+    const total = filteredData.length
+    const effectivePopulated = filteredData.filter(item => item.effective_copy_examples && item.effective_copy_examples.trim().length > 0).length
+    const ineffectivePopulated = filteredData.filter(item => item.ineffective_copy_examples && item.ineffective_copy_examples.trim().length > 0).length
+
+    return {
+      effective_copy_examples: {
+        populated: effectivePopulated,
+        total: total,
+        percentage: total > 0 ? (effectivePopulated / total) * 100 : 0
+      },
+      ineffective_copy_examples: {
+        populated: ineffectivePopulated,
+        total: total,
+        percentage: total > 0 ? (ineffectivePopulated / total) * 100 : 0
       }
-      return stats
-    }, {} as Record<string, VoiceStats>)
+    }
   }
 
   const getScoreDistributionData = () => {
-    const scores = getFilteredPerformanceData().map(p => p.avg_score)
+    const scores = performance.map(item => item.avg_score)
     return [{
       x: scores,
-      type: 'histogram' as const,
-      nbinsx: 20,
-      marker: { color: '#E85A4F' }
+      type: 'histogram',
+      nbinsx: 10,
+      marker: { color: '#3B82F6' }
     }]
   }
 
   const getJourneyFlowData = () => {
     if (!journey) return []
     
-    const stepNames = journey.steps.map(step => step.step_name.replace('Step ', '').replace(': ', ':\\n'))
-    const gapScores = journey.steps.map(step => step.gap_severity)
-    const colors = gapScores.map(score => score <= 2 ? '#10B981' : score <= 3 ? '#F59E0B' : '#EF4444')
-    
     return [{
-      x: journey.steps.map((_, index) => index),
-      y: gapScores,
-      mode: 'lines+markers+text' as const,
-      text: gapScores.map(score => `Gap: ${score}/5`),
-      textposition: 'top center' as const,
-      line: { color: '#E85A4F', width: 3 },
-      marker: { size: 15, color: colors, line: { width: 2, color: 'white' } },
-      name: 'Journey Flow',
-      hovertemplate: '<b>%{text}</b><br>Step: %{x}<br>Severity: %{y}/5<extra></extra>'
+      x: journey.steps.map(step => step.step_number),
+      y: journey.steps.map(step => step.gap_severity),
+      type: 'scatter',
+      mode: 'lines+markers',
+      name: 'Gap Severity',
+      line: { color: '#EF4444', width: 3 },
+      marker: { size: 8, color: '#EF4444' }
     }]
   }
 
   const getJourneyFlowLayout = () => {
-    if (!journey) return {}
-    
-    const stepNames = journey.steps.map(step => step.step_name.replace('Step ', '').replace(': ', ':\\n'))
-    
     return {
-      title: 'Journey Gap Severity by Step',
-      xaxis: {
-        title: 'Journey Steps',
+      title: 'Journey Step Gap Analysis',
+      xaxis: { 
+        title: 'Journey Step',
         tickmode: 'array',
-        tickvals: journey.steps.map((_, index) => index),
-        ticktext: stepNames.map(name => name.includes(':') ? name.split(':')[1].trim() : name)
+        tickvals: journey?.steps.map(step => step.step_number) || [],
+        ticktext: journey?.steps.map(step => step.step_name.substring(0, 15) + '...') || []
       },
-      yaxis: {
-        title: 'Gap Severity (1=Low, 5=High)',
-        range: [0, 5]
-      },
-      height: 400,
-      showlegend: false
+      yaxis: { title: 'Gap Severity (1-5)', range: [0, 5] },
+      height: 400
     }
   }
 
   if (loading) {
     return (
       <div className="page-container">
-        <div className="loading-spinner">Loading Persona Analysis...</div>
+        <div className="main-header">
+          <h1>👤 Persona Viewer</h1>
+          <p>Loading persona data...</p>
+        </div>
       </div>
     )
   }
@@ -376,7 +426,10 @@ function PersonaViewer() {
   if (error) {
     return (
       <div className="page-container">
-        <div className="error-message">{error}</div>
+        <div className="main-header">
+          <h1>👤 Persona Viewer</h1>
+          <p>Error: {error}</p>
+        </div>
       </div>
     )
   }
@@ -473,6 +526,12 @@ function PersonaViewer() {
                 >
                   🗣️ Voice
                 </button>
+                <button 
+                  className={`tab-button ${activeTab === 'evidence' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('evidence')}
+                >
+                  🔍 Evidence
+                </button>
               </div>
 
               <div className="tab-content">
@@ -490,10 +549,23 @@ function PersonaViewer() {
                     <div className="profile-sections">
                       {profile.sections.map((section, index) => (
                         <div key={index} className="profile-section">
-                          <h4>📋 {section.title}</h4>
-                          <div className="section-content">
-                            <p>{section.content}</p>
+                          <div 
+                            className="section-header"
+                            onClick={() => toggleSection(index)}
+                            style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                          >
+                            <h4>📋 {section.title}</h4>
+                            <span className="collapse-icon">
+                              {section.isCollapsed ? '▼' : '▲'}
+                            </span>
                           </div>
+                          {!section.isCollapsed && (
+                            <div className="section-content">
+                              <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+                                {section.content}
+                              </pre>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -680,100 +752,100 @@ function PersonaViewer() {
                                 </div>
                                 <div className="metric-label">Pages with ineffective copy examples</div>
                               </div>
-                              
-                              <div className="voice-metric">
-                                <h4>Strategic Analysis</h4>
-                                <div className="metric-value">
-                                  {voiceStats.business_impact_analysis?.populated || 0}/
-                                  {voiceStats.business_impact_analysis?.total || 0}
-                                </div>
-                                <div className="metric-percentage">
-                                  {(voiceStats.business_impact_analysis?.percentage || 0).toFixed(1)}%
-                                </div>
-                                <div className="metric-label">Pages with business impact analysis</div>
-                              </div>
                             </>
                           )
                         })()}
                       </div>
                     </div>
 
-                    <div className="voice-filters">
-                      <h3>🎯 Voice Analysis Filters</h3>
+                    <div className="voice-examples">
+                      <h3>📝 Voice Examples</h3>
                       
-                      <div className="filter-controls">
-                        <div className="tier-filter">
-                          <label>🏷️ Filter by Content Tier:</label>
-                          <div className="tier-checkboxes">
-                            {[...new Set(performance.map(p => p.tier_name))].map(tier => (
-                              <label key={tier} className="checkbox-label">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedTiers.includes(tier)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setSelectedTiers([...selectedTiers, tier])
-                                    } else {
-                                      setSelectedTiers(selectedTiers.filter(t => t !== tier))
-                                    }
-                                  }}
-                                />
-                                {tier}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="tier-distribution">
-                          <h4>Tier Distribution:</h4>
-                          {[...new Set(performance.map(p => p.tier_name))].map(tier => {
-                            const count = performance.filter(p => p.tier_name === tier).length
-                            return (
-                              <div key={tier} className="tier-count">
-                                <strong>{tier}:</strong> {count} entries
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="voice-analysis">
-                      <h3>🔍 Voice Analysis Results</h3>
-                      <div className="analysis-info">
-                        📊 Analyzing {getFilteredPerformanceData().length} entries from {selectedTiers.length} tier(s)
-                      </div>
-                      
-                      <div className="voice-examples">
-                        {getFilteredPerformanceData()
-                          .filter(p => p.effective_copy_examples || p.ineffective_copy_examples || p.business_impact_analysis)
-                          .map((page, index) => (
-                            <div key={index} className="voice-example">
-                              <h4>{page.title}</h4>
-                              <div className="example-content">
-                                {page.effective_copy_examples && (
-                                  <div className="effective-example">
-                                    <h5>✅ Effective Copy:</h5>
-                                    <p>{page.effective_copy_examples}</p>
-                                  </div>
-                                )}
-                                {page.ineffective_copy_examples && (
-                                  <div className="ineffective-example">
-                                    <h5>❌ Areas for Improvement:</h5>
-                                    <p>{page.ineffective_copy_examples}</p>
-                                  </div>
-                                )}
-                                {page.business_impact_analysis && (
-                                  <div className="business-impact">
-                                    <h5>📈 Business Impact:</h5>
-                                    <p>{page.business_impact_analysis}</p>
-                                  </div>
-                                )}
-                              </div>
+                      <div className="voice-examples-grid">
+                        <div className="voice-examples-column">
+                          <h4>✅ Effective Copy Examples</h4>
+                          {performance.filter(page => page.effective_copy_examples).map((page, index) => (
+                            <div key={index} className="voice-example effective">
+                              <h5>{page.title}</h5>
+                              <p>{page.effective_copy_examples}</p>
                             </div>
                           ))}
+                        </div>
+                        
+                        <div className="voice-examples-column">
+                          <h4>❌ Ineffective Copy Examples</h4>
+                          {performance.filter(page => page.ineffective_copy_examples).map((page, index) => (
+                            <div key={index} className="voice-example ineffective">
+                              <h5>{page.title}</h5>
+                              <p>{page.ineffective_copy_examples}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {activeTab === 'evidence' && (
+                  <div className="evidence-tab">
+                    <h2>🔍 Evidence & Analysis</h2>
+                    
+                    <div className="evidence-overview">
+                      <p>Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
+                    </div>
+
+                    {auditData.length > 0 ? (
+                      <div className="evidence-browser">
+                        <EvidenceBrowser
+                          data={auditData.filter(row => {
+                            const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
+                            return row.persona_id === personaName || row.persona_id === selectedPersona
+                          })}
+                          evidenceColumns={[
+                            'evidence',
+                            'effective_copy_examples',
+                            'ineffective_copy_examples',
+                            'trust_credibility_assessment',
+                            'business_impact_analysis',
+                            'information_gaps'
+                          ]}
+                        />
+                      </div>
+                    ) : (
+                      <div className="no-evidence">
+                        <h3>📊 Sample Evidence Display</h3>
+                        <p>Audit data is being loaded. Here's how evidence will be displayed:</p>
+                        
+                        <div className="sample-evidence">
+                          <EvidenceDisplay
+                            evidence={[
+                              {
+                                type: 'evidence',
+                                content: 'The homepage clearly positions Sopra Steria as a major European tech player with expertise in consulting, digital services, AI, and cybersecurity. However, the messaging is somewhat generic and lacks explicit emphasis on cybersecurity leadership critical to this persona.',
+                                title: 'AI Analysis'
+                              },
+                              {
+                                type: 'effective_copy',
+                                content: 'Cybersecurity listed explicitly as a service offering alongside Consulting, Artificial Intelligence, and Technology Services signals recognition of cybersecurity as a core capability.',
+                                title: 'Effective Copy Examples'
+                              },
+                              {
+                                type: 'ineffective_copy',
+                                content: 'The world is how we shape it - This slogan is generic and abstract; it does not communicate any specific value or differentiator related to cybersecurity, compliance, or risk management.',
+                                title: 'Areas for Improvement'
+                              },
+                              {
+                                type: 'trust_assessment',
+                                content: 'The site includes corporate governance, financial reports, ethics and compliance, and data protection notices, which are positive trust signals. However, there are no explicit cybersecurity certifications visible.',
+                                title: 'Trust & Credibility Assessment'
+                              }
+                            ]}
+                            title="Sample Evidence Analysis"
+                            defaultExpanded={true}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

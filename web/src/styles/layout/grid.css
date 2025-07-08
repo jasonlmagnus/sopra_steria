@@ -18,6 +18,16 @@
 .grid--responsive-sm { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .grid--responsive-md { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 .grid--responsive-lg { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.grid--responsive-xl { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+
+/* Common specific widths found in inline styles */
+.grid--auto-200 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.grid--auto-150 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.grid--auto-300 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.grid--auto-400 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+
+/* Two column equal split */
+.grid--split { grid-template-columns: 1fr 1fr; }
 
 /* Grid gaps */
 .grid--gap-sm { gap: var(--spacing-sm); }
@@ -64,54 +74,30 @@
   .dashboard-grid__item--md-8 { grid-column: span 8; }
 }
 
-@media (min-width: 1024px) {
-  .dashboard-grid__item--lg-6 { grid-column: span 6; }
-  .dashboard-grid__item--lg-4 { grid-column: span 4; }
-  .dashboard-grid__item--lg-3 { grid-column: span 3; }
-  .dashboard-grid__item--lg-8 { grid-column: span 8; }
-  .dashboard-grid__item--lg-9 { grid-column: span 9; }
-}
-
-/* Flexbox utilities */
+/* Flexbox utilities for simple layouts */
 .flex {
   display: flex;
 }
 
-.flex--column {
-  flex-direction: column;
-}
-
-.flex--wrap {
-  flex-wrap: wrap;
-}
-
 .flex--center {
+  display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .flex--between {
+  display: flex;
   justify-content: space-between;
-}
-
-.flex--around {
-  justify-content: space-around;
-}
-
-.flex--end {
-  justify-content: flex-end;
-}
-
-.flex--align-center {
   align-items: center;
 }
 
-.flex--align-start {
-  align-items: flex-start;
+.flex--column {
+  display: flex;
+  flex-direction: column;
 }
 
-.flex--align-end {
-  align-items: flex-end;
+.flex--wrap {
+  flex-wrap: wrap;
 }
 
 /* Gap utilities */

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlotlyChart } from '../components/PlotlyChart'
+import { EvidenceDisplay } from '../components/EvidenceDisplay'
 
 interface SocialMediaData {
   platform: string
@@ -12,6 +13,11 @@ interface SocialMediaData {
   success_flag: boolean
   quick_win_flag: boolean
   url: string
+  evidence?: string
+  effective_copy_examples?: string
+  ineffective_copy_examples?: string
+  trust_credibility_assessment?: string
+  business_impact_analysis?: string
 }
 
 interface Insight {
@@ -125,7 +131,6 @@ function SocialMediaAnalysis() {
   }
 
   const generateMockRecommendations = (data: any[]) => {
-    const criticalIssues = data.filter(d => d.critical_issue_flag).length
     const quickWins = data.filter(d => d.quick_win_flag).length
     
     return [
@@ -224,7 +229,7 @@ function SocialMediaAnalysis() {
       const highPerformers = platformData.filter(item => item.raw_score >= 7).length
       const quickWins = platformData.filter(item => item.quick_win_flag).length
       
-      let status, statusColor, bgColor, icon
+      let status, statusColor, bgColor
       if (avgScore >= 7) {
         status = '✅ Healthy'
         statusColor = '#10B981'
@@ -249,7 +254,7 @@ function SocialMediaAnalysis() {
         'Facebook': '👥',
         'Twitter/X': '🐦'
       }
-      icon = platformIcons[platform] || '📱'
+      const icon = platformIcons[platform] || '📱'
       
       return {
         platform,
@@ -552,30 +557,51 @@ function SocialMediaAnalysis() {
         <h2>📱 Platform Health Overview</h2>
         
         <div className="platform-health-grid">
-          {platformHealthCards.map(card => (
-            <div 
-              key={card.platform}
-              className="platform-health-card"
-              style={{ 
-                borderColor: card.statusColor,
-                backgroundColor: card.bgColor 
-              }}
-            >
-              <div className="platform-icon">{card.icon}</div>
-              <h4>{card.platform}</h4>
-              <div className="platform-score">
-                <div className="score-value" style={{ color: card.statusColor }}>
-                  {card.avgScore.toFixed(1)}/10
+          {platformHealthCards.map(card => {
+            const platformData = getFilteredData().filter(item => item.platform_display === card.platform)
+            const evidenceItems = platformData.slice(0, 3).map(item => ({
+              type: 'evidence' as const,
+              content: item.evidence || `Platform analysis for ${card.platform}: Average score ${card.avgScore.toFixed(1)}/10 with ${card.totalEntries} entries analyzed.`,
+              title: 'Platform Analysis'
+            }))
+            
+            return (
+              <div 
+                key={card.platform}
+                className="platform-health-card"
+                style={{ 
+                  borderColor: card.statusColor,
+                  backgroundColor: card.bgColor 
+                }}
+              >
+                <div className="platform-icon">{card.icon}</div>
+                <h4>{card.platform}</h4>
+                <div className="platform-score">
+                  <div className="score-value" style={{ color: card.statusColor }}>
+                    {card.avgScore.toFixed(1)}/10
+                  </div>
+                  <div className="score-status">{card.status}</div>
                 </div>
-                <div className="score-status">{card.status}</div>
+                <div className="platform-stats">
+                  📊 {card.totalEntries} entries<br/>
+                  🎯 {card.highPerformers} high performers<br/>
+                  ⚡ {card.quickWins} quick wins
+                </div>
+                
+                {evidenceItems.length > 0 && (
+                  <div className="platform-evidence">
+                    <EvidenceDisplay
+                      evidence={evidenceItems}
+                      title="Platform Evidence"
+                      collapsible={true}
+                      defaultExpanded={false}
+                      maxHeight="200px"
+                    />
+                  </div>
+                )}
               </div>
-              <div className="platform-stats">
-                📊 {card.totalEntries} entries<br/>
-                🎯 {card.highPerformers} high performers<br/>
-                ⚡ {card.quickWins} quick wins
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

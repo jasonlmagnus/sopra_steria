@@ -147,7 +147,7 @@ const ReportsExport: React.FC = () => {
   };
 
   const applyDataFilters = () => {
-    let filtered = masterData.filter(item => {
+    const filtered = masterData.filter(item => {
       if (filters.persona && filters.persona !== 'All' && item.persona_id !== filters.persona) return false;
       if (filters.tier && filters.tier !== 'All' && item.tier !== filters.tier) return false;
       const [minScore, maxScore] = filters.scoreRange;
