@@ -3,142 +3,172 @@ import { useQuery } from '@tanstack/react-query'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+// Fallback methodology data used when the API is unavailable
+const defaultMethodology = {
+  metadata: {
+    name: 'Sopra Steria Brand Health Audit Methodology',
+    version: '2.1',
+    updated: '2024-12-15',
+    tagline: 'The world is how we shape it',
+    description:
+      'Comprehensive brand health assessment framework for digital touchpoints and customer experience optimization.'
+  },
+  calculation: {
+    formula: 'Brand Health = (Onsite × 0.7) + (Offsite × 0.3) × Crisis_Multiplier',
+    onsite_weight: 0.7,
+    offsite_weight: 0.3,
+    crisis_multipliers: {
+      no_crisis: 1.0,
+      minor_issue: 0.95,
+      moderate_concern: 0.85,
+      major_crisis: 0.6,
+      severe_crisis: 0.3
+    }
+  },
+  scoring: {
+    scale: { min: 0, max: 10 },
+    descriptors: {
+      '9-10': {
+        label: 'Excellent',
+        status: 'Best-in-class brand execution',
+        color: 'dark-green'
+      },
+      '7-8': {
+        label: 'Good',
+        status: 'Strong brand presence with minor improvements',
+        color: 'green'
+      },
+      '5-6': {
+        label: 'Fair',
+        status: 'Moderate brand execution needing attention',
+        color: 'yellow'
+      },
+      '3-4': {
+        label: 'Poor',
+        status: 'Significant brand issues requiring immediate action',
+        color: 'orange'
+      },
+      '0-2': {
+        label: 'Critical',
+        status: 'Brand crisis requiring urgent intervention',
+        color: 'red'
+      }
+    }
+  },
+  evidence: {
+    high_scores: {
+      requirement: 'Must provide specific quotes and examples from audited content',
+      penalty: 'Scores reduced by 2 points if evidence is insufficient'
+    },
+    low_scores: {
+      requirement: 'Must document specific issues and provide improvement recommendations',
+      penalty: 'Cannot assign low scores without documented evidence'
+    }
+  },
+  classification: {
+    onsite: {
+      tier_1: {
+        name: 'Brand Pages',
+        weight_in_onsite: 0.5,
+        brand_percentage: 80,
+        performance_percentage: 20,
+        triggers: ['Homepage', 'About Us', 'Company History', 'Leadership'],
+        examples: ['Corporate overview', 'Mission/Vision', 'Company values', 'Executive profiles']
+      },
+      tier_2: {
+        name: 'Value Proposition Pages',
+        weight_in_onsite: 0.3,
+        brand_percentage: 60,
+        performance_percentage: 40,
+        triggers: ['Services', 'Solutions', 'Industries', 'Capabilities'],
+        examples: ['Service descriptions', 'Industry solutions', 'Case studies', 'Capabilities overview']
+      },
+      tier_3: {
+        name: 'Functional Pages',
+        weight_in_onsite: 0.2,
+        brand_percentage: 30,
+        performance_percentage: 70,
+        triggers: ['Contact', 'Careers', 'News', 'Resources'],
+        examples: ['Contact forms', 'Job listings', 'Press releases', 'Resource downloads']
+      }
+    }
+  },
+  messaging: {
+    corporate_hierarchy: {
+      global: 'The world is how we shape it',
+      regional: 'Digital transformation partner for the BENELUX region',
+      sub_narratives: {
+        technology: 'Leading technology innovation and digital transformation',
+        consulting: 'Strategic consulting for business transformation',
+        services: 'End-to-end digital services and solutions'
+      }
+    },
+    value_propositions: [
+      'Digital transformation expertise',
+      'Industry-specific solutions',
+      'Innovation and technology leadership',
+      'Trusted partnership approach'
+    ],
+    strategic_ctas: [
+      'Transform your business',
+      'Discover our solutions',
+      'Partner with us',
+      'Explore possibilities'
+    ]
+  },
+  gating_rules: {
+    broken_links: {
+      trigger: 'Any broken internal or external links',
+      penalty: 'Automatic 2-point deduction from overall score',
+      severity: 'CRITICAL'
+    },
+    missing_corporate_messaging: {
+      trigger: 'Corporate tagline or positioning not found',
+      penalty: '1-point deduction from brand criteria',
+      severity: 'HIGH'
+    },
+    poor_user_experience: {
+      trigger: 'Navigation issues or poor mobile experience',
+      penalty: '1-point deduction from performance criteria',
+      severity: 'MEDIUM'
+    }
+  },
+  quality_penalties: {
+    grammar_errors: {
+      points: -0.5,
+      example: 'Spelling mistakes, grammatical errors, or typos'
+    },
+    inconsistent_messaging: {
+      points: -1,
+      example: 'Conflicting value propositions or brand messaging'
+    },
+    poor_content_quality: {
+      points: -1.5,
+      example: 'Generic content, poor writing quality, or unclear messaging'
+    }
+  }
+}
+
 function Methodology() {
   const [activeTab, setActiveTab] = useState('overview')
 
   const { data: methodologyData, isLoading } = useQuery({
     queryKey: ['methodology'],
     queryFn: async () => {
-      // For now, return mock data that matches the YAML structure
-      return {
-        metadata: {
-          name: 'Sopra Steria Brand Health Audit Methodology',
-          version: '2.1',
-          updated: '2024-12-15',
-          tagline: 'The world is how we shape it',
-          description: 'Comprehensive brand health assessment framework for digital touchpoints and customer experience optimization.'
-        },
-        calculation: {
-          formula: 'Brand Health = (Onsite × 0.7) + (Offsite × 0.3) × Crisis_Multiplier',
-          onsite_weight: 0.7,
-          offsite_weight: 0.3,
-          crisis_multipliers: {
-            'no_crisis': 1.0,
-            'minor_issue': 0.95,
-            'moderate_concern': 0.85,
-            'major_crisis': 0.6,
-            'severe_crisis': 0.3
-          }
-        },
-        scoring: {
-          scale: { min: 0, max: 10 },
-          descriptors: {
-            '9-10': { label: 'Excellent', status: 'Best-in-class brand execution', color: 'dark-green' },
-            '7-8': { label: 'Good', status: 'Strong brand presence with minor improvements', color: 'green' },
-            '5-6': { label: 'Fair', status: 'Moderate brand execution needing attention', color: 'yellow' },
-            '3-4': { label: 'Poor', status: 'Significant brand issues requiring immediate action', color: 'orange' },
-            '0-2': { label: 'Critical', status: 'Brand crisis requiring urgent intervention', color: 'red' }
-          }
-        },
-        evidence: {
-          high_scores: {
-            requirement: 'Must provide specific quotes and examples from audited content',
-            penalty: 'Scores reduced by 2 points if evidence is insufficient'
-          },
-          low_scores: {
-            requirement: 'Must document specific issues and provide improvement recommendations',
-            penalty: 'Cannot assign low scores without documented evidence'
-          }
-        },
-        classification: {
-          onsite: {
-            tier_1: {
-              name: 'Brand Pages',
-              weight_in_onsite: 0.5,
-              brand_percentage: 80,
-              performance_percentage: 20,
-              triggers: ['Homepage', 'About Us', 'Company History', 'Leadership'],
-              examples: ['Corporate overview', 'Mission/Vision', 'Company values', 'Executive profiles']
-            },
-            tier_2: {
-              name: 'Value Proposition Pages',
-              weight_in_onsite: 0.3,
-              brand_percentage: 60,
-              performance_percentage: 40,
-              triggers: ['Services', 'Solutions', 'Industries', 'Capabilities'],
-              examples: ['Service descriptions', 'Industry solutions', 'Case studies', 'Capabilities overview']
-            },
-            tier_3: {
-              name: 'Functional Pages',
-              weight_in_onsite: 0.2,
-              brand_percentage: 30,
-              performance_percentage: 70,
-              triggers: ['Contact', 'Careers', 'News', 'Resources'],
-              examples: ['Contact forms', 'Job listings', 'Press releases', 'Resource downloads']
-            }
-          }
-        },
-        messaging: {
-          corporate_hierarchy: {
-            global: 'The world is how we shape it',
-            regional: 'Digital transformation partner for the BENELUX region',
-            sub_narratives: {
-              technology: 'Leading technology innovation and digital transformation',
-              consulting: 'Strategic consulting for business transformation',
-              services: 'End-to-end digital services and solutions'
-            }
-          },
-          value_propositions: [
-            'Digital transformation expertise',
-            'Industry-specific solutions',
-            'Innovation and technology leadership',
-            'Trusted partnership approach'
-          ],
-          strategic_ctas: [
-            'Transform your business',
-            'Discover our solutions',
-            'Partner with us',
-            'Explore possibilities'
-          ]
-        },
-        gating_rules: {
-          broken_links: {
-            trigger: 'Any broken internal or external links',
-            penalty: 'Automatic 2-point deduction from overall score',
-            severity: 'CRITICAL'
-          },
-          missing_corporate_messaging: {
-            trigger: 'Corporate tagline or positioning not found',
-            penalty: '1-point deduction from brand criteria',
-            severity: 'HIGH'
-          },
-          poor_user_experience: {
-            trigger: 'Navigation issues or poor mobile experience',
-            penalty: '1-point deduction from performance criteria',
-            severity: 'MEDIUM'
-          }
-        },
-        quality_penalties: {
-          grammar_errors: {
-            points: -0.5,
-            example: 'Spelling mistakes, grammatical errors, or typos'
-          },
-          inconsistent_messaging: {
-            points: -1,
-            example: 'Conflicting value propositions or brand messaging'
-          },
-          poor_content_quality: {
-            points: -1.5,
-            example: 'Generic content, poor writing quality, or unclear messaging'
-          }
-        }
+      try {
+        const res = await fetch(`${apiBase}/api/methodology`)
+        if (!res.ok) throw new Error('Failed to load methodology')
+        return await res.json()
+      } catch {
+        // Use bundled fallback if API request fails
+        return defaultMethodology
       }
     }
   })
 
   if (isLoading) return <div className="main-header"><h1>🔬 Methodology</h1><p>Loading methodology...</p></div>
 
-  const data = methodologyData || {} as any
+  const data = methodologyData || defaultMethodology as any
 
   const tabs = [
     { id: 'overview', label: 'Overview' },

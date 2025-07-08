@@ -76,12 +76,21 @@ function SocialMediaAnalysis() {
       
       setData(transformedData)
       
-      // Generate mock insights and recommendations
-      const mockInsights = generateMockInsights(transformedData)
-      const mockRecommendations = generateMockRecommendations(transformedData)
-      
-      setInsights(mockInsights)
-      setRecommendations(mockRecommendations)
+      // Calculate insights from the real data
+      const calcInsights = calculateInsights(transformedData)
+      setInsights(calcInsights)
+
+      // Fetch strategic recommendations from the API
+      try {
+        const recRes = await fetch('http://localhost:3000/api/recommendations')
+        if (recRes.ok) {
+          const recData = await recRes.json()
+          setRecommendations(recData.recommendations || [])
+        }
+      } catch (recErr) {
+        console.error('Failed to load recommendations:', recErr)
+        setRecommendations([])
+      }
       
       // Initialize filters
       const platforms = [...new Set(transformedData.map((d: any) => d.platform_display))] as string[]
@@ -97,7 +106,7 @@ function SocialMediaAnalysis() {
     }
   }
 
-  const generateMockInsights = (data: any[]) => {
+  const calculateInsights = (data: any[]) => {
     const avgScore = data.reduce((sum, item) => sum + item.raw_score, 0) / data.length
     const platforms = [...new Set(data.map(d => d.platform_display))]
     const platformScores = platforms.map(platform => {
@@ -128,31 +137,7 @@ function SocialMediaAnalysis() {
         Type: 'warning'
       }
     ]
-  }
 
-  const generateMockRecommendations = (data: any[]) => {
-    const quickWins = data.filter(d => d.quick_win_flag).length
-    
-    return [
-      {
-        Category: 'Content Optimization',
-        Recommendation: 'Focus on improving low-performing content areas identified in the analysis',
-        Priority: 'High',
-        Impact: 'High'
-      },
-      {
-        Category: 'Platform Strategy',
-        Recommendation: 'Leverage best-performing platforms to drive engagement across other channels',
-        Priority: 'Medium',
-        Impact: 'Medium'
-      },
-      {
-        Category: 'Quick Wins',
-        Recommendation: `Implement ${quickWins} quick win opportunities for immediate impact`,
-        Priority: 'High',
-        Impact: 'Medium'
-      }
-    ]
   }
 
   const getFilteredData = () => {

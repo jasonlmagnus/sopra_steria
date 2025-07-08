@@ -74,71 +74,17 @@ const ReportsExport: React.FC = () => {
   const fetchReportData = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API calls
-      const mockMasterData = [
-        {
-          page_id: 'page-1',
-          persona_id: 'Strategic Business Leader',
-          tier: 'Tier 1',
-          avg_score: 8.5,
-          url: 'https://soprasteria.be/financial-services',
-          title: 'Financial Services',
-          sentiment: 'Positive',
-          engagement: 'High'
-        },
-        {
-          page_id: 'page-2',
-          persona_id: 'Technology Innovation Leader',
-          tier: 'Tier 1',
-          avg_score: 8.2,
-          url: 'https://soprasteria.be/cloud-infrastructure',
-          title: 'Cloud Infrastructure',
-          sentiment: 'Positive',
-          engagement: 'Medium'
-        },
-        {
-          page_id: 'page-3',
-          persona_id: 'Cybersecurity Decision Maker',
-          tier: 'Tier 2',
-          avg_score: 7.8,
-          url: 'https://soprasteria.be/data-science-ai',
-          title: 'Data Science & AI',
-          sentiment: 'Neutral',
-          engagement: 'High'
-        },
-        {
-          page_id: 'page-4',
-          persona_id: 'Transformation Programme Leader',
-          tier: 'Tier 2',
-          avg_score: 7.5,
-          url: 'https://soprasteria.be/digital-transformation',
-          title: 'Digital Transformation',
-          sentiment: 'Positive',
-          engagement: 'Medium'
-        },
-        {
-          page_id: 'page-5',
-          persona_id: 'Strategic Business Leader',
-          tier: 'Tier 3',
-          avg_score: 7.2,
-          url: 'https://soprasteria.com/corporate-responsibility',
-          title: 'Corporate Responsibility',
-          sentiment: 'Positive',
-          engagement: 'Low'
-        }
-      ];
+      const res = await fetch('http://localhost:3000/api/datasets/master');
+      if (!res.ok) throw new Error('Failed to load data');
+      const data = await res.json();
+      setMasterData(data);
+      setFilteredData(data);
+      setSelectedColumns(Object.keys(data[0] || {}));
 
-      const mockDatasets: DatasetInfo[] = [
-        { name: 'Experience Data', records: 150, columns: 25, memoryMB: '2.1' },
-        { name: 'Hygiene Scorecard', records: 150, columns: 15, memoryMB: '1.3' },
-        { name: 'Page Analysis', records: 30, columns: 20, memoryMB: '0.8' },
-        { name: 'Recommendations', records: 75, columns: 10, memoryMB: '0.5' }
-      ];
-
-      setMasterData(mockMasterData);
-      setDatasets(mockDatasets);
-      setFilteredData(mockMasterData);
-      setSelectedColumns(Object.keys(mockMasterData[0]).slice(0, 6));
+      const dsRes = await fetch('http://localhost:3000/api/datasets');
+      if (dsRes.ok) {
+        setDatasets(dsRes.json().datasets || []);
+      }
     } catch (error) {
       console.error('Error fetching report data:', error);
     } finally {

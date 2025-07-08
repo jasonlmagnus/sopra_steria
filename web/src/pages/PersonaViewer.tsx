@@ -150,26 +150,16 @@ function PersonaViewer() {
       const response = await fetch('http://localhost:3000/api/personas')
       if (response.ok) {
         const data = await response.json()
-        const personaIds = data.personas || ['P1', 'P2', 'P3', 'P4', 'P5']
+        const personaIds = data.personas || []
         setPersonas(personaIds)
         if (personaIds.length > 0) {
           setSelectedPersona(personaIds[0])
         }
       } else {
-        // Fallback to mock data
-        const mockPersonas = ['P1', 'P2', 'P3', 'P4', 'P5']
-        setPersonas(mockPersonas)
-        if (mockPersonas.length > 0) {
-          setSelectedPersona(mockPersonas[0])
-        }
+        setError('Failed to load personas')
       }
     } catch (err) {
-      // Fallback to mock data
-      const mockPersonas = ['P1', 'P2', 'P3', 'P4', 'P5']
-      setPersonas(mockPersonas)
-      if (mockPersonas.length > 0) {
-        setSelectedPersona(mockPersonas[0])
-      }
+      setError('Failed to load personas')
     } finally {
       setLoading(false)
     }
@@ -210,31 +200,41 @@ function PersonaViewer() {
           sections: sections
         }
       } else {
-        // Fallback to mock data
-        personaProfile = {
-          id: personaId,
-          name: PERSONA_NAMES[personaId] || `Business Professional ${personaId}`,
-          content: generateMockProfileContent(personaId),
-          sections: generateMockProfileSections(personaId)
+        setError('Failed to load persona profile')
+        return
+      }
+
+      // Load journey data
+      let journeyData: JourneyData | null = null
+      try {
+        const journeyRes = await fetch(`http://localhost:3000/api/persona-journeys/${personaId}`)
+        if (journeyRes.ok) {
+          const j = await journeyRes.json()
+          journeyData = { ...j, persona_id: personaId, persona_name: personaProfile.name }
         }
+      } catch (journeyErr) {
+        console.error('Failed to load persona journey', journeyErr)
       }
-      
-      // Mock journey data (would be replaced with real data)
-      const mockJourney: JourneyData = {
-        steps: generateMockJourneySteps(personaId),
-        persona_id: personaId,
-        persona_name: personaProfile.name
+
+      // Load performance data
+      let performanceData: PerformanceData[] = []
+      try {
+        const perfRes = await fetch('http://localhost:3000/api/persona-insights')
+        if (perfRes.ok) {
+          const perfJson = await perfRes.json()
+          const personaItem = (perfJson.personas || []).find((p: any) => p.persona_id === personaId)
+          if (personaItem) performanceData = personaItem.pages
+        }
+      } catch (perfErr) {
+        console.error('Failed to load performance data', perfErr)
       }
-      
-      // Mock performance data (would be replaced with real data)
-      const mockPerformance: PerformanceData[] = generateMockPerformanceData(personaId)
-      
+
       setProfile(personaProfile)
-      setJourney(mockJourney)
-      setPerformance(mockPerformance)
-      
+      if (journeyData) setJourney(journeyData)
+      setPerformance(performanceData)
+
       // Initialize tier selection
-      const availableTiers = [...new Set(mockPerformance.map(p => p.tier_name))]
+      const availableTiers = [...new Set(performanceData.map(p => p.tier_name))]
       setSelectedTiers(availableTiers)
       
     } catch (err) {
@@ -255,86 +255,6 @@ function PersonaViewer() {
     }
   }
 
-  const generateMockProfileContent = (personaId: string) => {
-    const profiles: Record<string, string> = {
-      'P1': 'Strategic business leader focused on digital transformation, ROI, and competitive advantage. Seeks proven solutions with measurable business impact.',
-      'P2': 'Technology innovation leader driving digital transformation initiatives. Balances cutting-edge technology with practical business applications.',
-      'P3': 'Transformation programme leader managing large-scale organizational change. Focuses on change management, stakeholder alignment, and measurable outcomes.',
-      'P4': 'Cybersecurity decision maker responsible for organizational security strategy. Prioritizes risk management, compliance, and threat protection.',
-      'P5': 'Technical influencer with deep expertise in specific technology domains. Influences technical decisions and evaluates solution architectures.'
-    }
-    return profiles[personaId] || 'Business professional with strategic decision-making responsibilities.'
-  }
-
-  const generateMockProfileSections = (personaId: string): ProfileSection[] => {
-    return [
-      {
-        title: 'Role & Responsibilities',
-        content: `Primary decision maker for ${personaId === 'P1' ? 'strategic business initiatives' : personaId === 'P2' ? 'technology innovation' : personaId === 'P3' ? 'transformation programmes' : personaId === 'P4' ? 'cybersecurity strategy' : 'technical architecture'}. Manages budget allocation and vendor relationships.`,
-        isCollapsed: true
-      },
-      {
-        title: 'Key Priorities',
-        content: `Focuses on ${personaId === 'P1' ? 'business growth and competitive advantage' : personaId === 'P2' ? 'innovation and digital transformation' : personaId === 'P3' ? 'change management and stakeholder alignment' : personaId === 'P4' ? 'risk management and compliance' : 'technical excellence and solution architecture'}.`,
-        isCollapsed: true
-      },
-      {
-        title: 'Pain Points',
-        content: `Challenges include ${personaId === 'P1' ? 'proving ROI and managing stakeholder expectations' : personaId === 'P2' ? 'balancing innovation with practical implementation' : personaId === 'P3' ? 'managing resistance to change' : personaId === 'P4' ? 'staying ahead of emerging threats' : 'evaluating vendor capabilities and technical fit'}.`,
-        isCollapsed: true
-      },
-      {
-        title: 'Success Metrics',
-        content: `Measured by ${personaId === 'P1' ? 'revenue growth and operational efficiency' : personaId === 'P2' ? 'successful technology implementations' : personaId === 'P3' ? 'transformation programme success rates' : personaId === 'P4' ? 'security incident reduction' : 'technical solution performance and adoption'}.`,
-        isCollapsed: true
-      }
-    ]
-  }
-
-  const generateMockJourneySteps = (_personaId: string): JourneyStep[] => {
-    const baseSteps = [
-      { name: 'Problem Recognition', reaction: 'Identifies business challenge or opportunity', severity: 2 },
-      { name: 'Research & Discovery', reaction: 'Researches potential solutions and vendors', severity: 3 },
-      { name: 'Stakeholder Alignment', reaction: 'Builds consensus among key stakeholders', severity: 4 },
-      { name: 'Solution Evaluation', reaction: 'Evaluates technical and business fit', severity: 3 },
-      { name: 'Vendor Selection', reaction: 'Selects preferred vendor and solution', severity: 2 },
-      { name: 'Implementation Planning', reaction: 'Plans deployment and change management', severity: 3 },
-      { name: 'Execution & Monitoring', reaction: 'Oversees implementation and tracks progress', severity: 2 }
-    ]
-
-    return baseSteps.map((step, index) => ({
-      step_number: index + 1,
-      step_name: step.name,
-      persona_reaction: step.reaction,
-      gap_severity: step.severity,
-      quick_fixes: [
-        'Improve content clarity and relevance',
-        'Provide better supporting evidence',
-        'Enhance user experience and navigation'
-      ]
-    }))
-  }
-
-  const generateMockPerformanceData = (_personaId: string): PerformanceData[] => {
-    const mockPages = [
-      { title: 'Homepage', url: 'https://example.com/', score: 7.5, tier: 'Tier 1' },
-      { title: 'Services', url: 'https://example.com/services', score: 6.8, tier: 'Tier 1' },
-      { title: 'About Us', url: 'https://example.com/about', score: 8.2, tier: 'Tier 2' },
-      { title: 'Contact', url: 'https://example.com/contact', score: 5.9, tier: 'Tier 2' },
-      { title: 'Case Studies', url: 'https://example.com/cases', score: 7.1, tier: 'Tier 3' }
-    ]
-
-    return mockPages.map((page, index) => ({
-      page_id: `page_${index + 1}`,
-      url: page.url,
-      title: page.title,
-      avg_score: page.score,
-      tier_name: page.tier,
-      effective_copy_examples: 'Strong value proposition and clear call-to-action',
-      ineffective_copy_examples: 'Technical jargon that may confuse users',
-      business_impact_analysis: 'High potential for conversion improvement'
-    }))
-  }
 
   const calculateOverallScore = () => {
     if (performance.length === 0) return 0
