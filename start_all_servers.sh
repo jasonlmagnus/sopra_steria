@@ -10,6 +10,9 @@ echo "  • Express API Server (Port 3000) - Node.js middleware"
 echo "  • React Frontend (Port 5173) - Vite dev server"
 echo ""
 
+# Create logs directory if it doesn't exist
+mkdir -p logs
+
 # Kill any existing processes on these ports
 echo "🧹 Cleaning up existing processes..."
 lsof -ti:8000 | xargs kill -9 2>/dev/null || true
@@ -46,9 +49,6 @@ REACT_PID=$!
 echo "React PID: $REACT_PID"
 cd ..
 
-# Create logs directory if it doesn't exist
-mkdir -p logs
-
 # Save PIDs for cleanup
 echo "$FASTAPI_PID" > logs/fastapi.pid
 echo "$EXPRESS_PID" > logs/express.pid
@@ -68,6 +68,10 @@ echo "  • Express API: PID $EXPRESS_PID"
 echo "  • React Frontend: PID $REACT_PID"
 echo ""
 echo "📝 Logs are available in the logs/ directory"
+echo "  • FastAPI: logs/fastapi.log"
+echo "  • Express: logs/express.log"
+echo "  • React: logs/react.log"
+echo ""
 echo "🛑 To stop all servers, run: ./stop_all_servers.sh"
 echo ""
 echo "Press Ctrl+C to stop monitoring (servers will continue running)"
@@ -77,14 +81,17 @@ while true; do
     sleep 5
     if ! kill -0 $FASTAPI_PID 2>/dev/null; then
         echo "❌ FastAPI service stopped unexpectedly"
+        echo "Check logs/fastapi.log for details"
         break
     fi
     if ! kill -0 $EXPRESS_PID 2>/dev/null; then
         echo "❌ Express API server stopped unexpectedly"
+        echo "Check logs/express.log for details"
         break
     fi
     if ! kill -0 $REACT_PID 2>/dev/null; then
         echo "❌ React frontend stopped unexpectedly"
+        echo "Check logs/react.log for details"
         break
     fi
 done 
