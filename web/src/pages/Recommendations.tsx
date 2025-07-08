@@ -67,10 +67,11 @@ function Recommendations() {
   const fetchRecommendations = async () => {
     try {
       setLoading(true)
-      // Mock strategic recommendations data - in real app would fetch from API
-      const mockRecommendations = generateMockRecommendations()
-      setRecommendations(mockRecommendations)
-      setThematicRecommendations(groupByTheme(mockRecommendations))
+      const res = await fetch('http://localhost:3000/api/full-recommendations')
+      if (!res.ok) throw new Error('Failed to load recommendations')
+      const data = await res.json()
+      setRecommendations(data.recommendations || [])
+      setThematicRecommendations(groupByTheme(data.recommendations || []))
     } catch (err) {
       setError('Failed to load strategic recommendations')
     } finally {
@@ -78,168 +79,6 @@ function Recommendations() {
     }
   }
 
-  const generateMockRecommendations = (): Recommendation[] => {
-    const mockData = [
-      {
-        id: 'rec_1',
-        title: '🔴 CRITICAL: Homepage Brand Messaging Inconsistency',
-        description: 'Critical brand messaging inconsistencies detected across homepage sections requiring immediate attention to maintain brand integrity.',
-        category: '🏢 Brand & Messaging',
-        all_categories: ['🏢 Brand & Messaging', '📝 Content & Copy'],
-        all_evidence: [
-          'Inconsistent value propositions across hero section and footer',
-          'Mixed messaging between Dutch and English content',
-          'Brand voice varies significantly between sections'
-        ],
-        synthesized_findings: [
-          'Brand messaging lacks cohesion across page sections',
-          'Multilingual content requires standardization',
-          'Value proposition needs unified presentation'
-        ],
-        impact_score: 9,
-        urgency_score: 9,
-        priority_score: 9.5,
-        timeline: '0-30 days',
-        page_id: 'homepage_001',
-        persona: 'The Benelux Strategic Business Leader',
-        url: 'https://www.soprasteria.be',
-        source: 'Brand Audit Engine',
-        evidence: 'Critical brand messaging inconsistencies detected requiring immediate intervention'
-      },
-      {
-        id: 'rec_2',
-        title: '⚡ Quick Win: Improve Call-to-Action Visibility',
-        description: 'Multiple pages have low-visibility CTAs that can be quickly improved for better conversion rates.',
-        category: '🎯 Conversion Optimization',
-        all_categories: ['🎯 Conversion Optimization', '🎨 Visual & Design'],
-        all_evidence: [
-          'CTAs using low-contrast colors on 8 pages',
-          'Button sizes below recommended 44px minimum',
-          'CTA text lacks action-oriented language'
-        ],
-        synthesized_findings: [
-          'CTA visibility severely impacts conversion potential',
-          'Design consistency needed across all pages',
-          'Copy optimization required for action orientation'
-        ],
-        impact_score: 7,
-        urgency_score: 6,
-        priority_score: 7.2,
-        timeline: '0-30 days',
-        page_id: 'services_001',
-        persona: 'The Benelux Cybersecurity Decision Maker',
-        url: 'https://www.soprasteria.be/services',
-        source: 'UX Analysis Engine',
-        evidence: 'Quick win opportunity identified for CTA optimization'
-      },
-      {
-        id: 'rec_3',
-        title: 'Visual Brand Standards Implementation',
-        description: 'Systematic implementation of visual brand standards across all digital touchpoints to ensure consistent brand experience.',
-        category: '🎨 Visual & Design',
-        all_categories: ['🎨 Visual & Design', '🏢 Brand & Messaging'],
-        all_evidence: [
-          'Logo placement inconsistencies across 12 pages',
-          'Color palette deviations from brand guidelines',
-          'Typography hierarchy not following brand standards'
-        ],
-        synthesized_findings: [
-          'Visual consistency critical for brand recognition',
-          'Brand guidelines need systematic implementation',
-          'Design system required for scalable consistency'
-        ],
-        impact_score: 8,
-        urgency_score: 7,
-        priority_score: 8.1,
-        timeline: '30-90 days',
-        page_id: 'about_001',
-        persona: 'The Technical Influencer',
-        url: 'https://www.soprasteria.be/about',
-        source: 'Visual Brand Audit',
-        evidence: 'Visual brand standards implementation needed across digital properties'
-      },
-      {
-        id: 'rec_4',
-        title: 'Social Media Engagement Strategy Enhancement',
-        description: 'Comprehensive enhancement of social media engagement strategy to improve brand visibility and audience interaction.',
-        category: '👥 Social & Engagement',
-        all_categories: ['👥 Social & Engagement', '📝 Content & Copy'],
-        all_evidence: [
-          'LinkedIn engagement rates below industry average',
-          'Content publishing frequency inconsistent',
-          'Cross-platform messaging lacks coordination'
-        ],
-        synthesized_findings: [
-          'Social media performance requires strategic overhaul',
-          'Content calendar needs systematic approach',
-          'Platform-specific optimization opportunities identified'
-        ],
-        impact_score: 6,
-        urgency_score: 5,
-        priority_score: 6.3,
-        timeline: '30-90 days',
-        page_id: 'social_001',
-        persona: 'The Benelux Transformation Programme Leader',
-        url: 'https://www.linkedin.com/company/soprasteria-benelux',
-        source: 'Social Media Audit',
-        evidence: 'Social media engagement strategy requires comprehensive enhancement'
-      },
-      {
-        id: 'rec_5',
-        title: 'Navigation Structure Optimization',
-        description: 'Optimize navigation structure to improve user experience and reduce friction in customer journey.',
-        category: '🧭 Navigation & UX',
-        all_categories: ['🧭 Navigation & UX', '🛡️ Trust & Credibility'],
-        all_evidence: [
-          'High bounce rates on service pages',
-          'Complex navigation hierarchy confuses users',
-          'Mobile navigation lacks intuitive structure'
-        ],
-        synthesized_findings: [
-          'Navigation complexity impedes user journey',
-          'Mobile experience requires dedicated optimization',
-          'Information architecture needs restructuring'
-        ],
-        impact_score: 7,
-        urgency_score: 6,
-        priority_score: 7.0,
-        timeline: '90+ days',
-        page_id: 'navigation_001',
-        persona: 'The BENELUX Technology Innovation Leader',
-        url: 'https://www.soprasteria.nl',
-        source: 'UX Analysis Engine',
-        evidence: 'Navigation structure optimization needed for improved user experience'
-      },
-      {
-        id: 'rec_6',
-        title: '⚡ Quick Win: Trust Signal Implementation',
-        description: 'Add trust signals and credibility indicators to key conversion pages for immediate trust building.',
-        category: '🛡️ Trust & Credibility',
-        all_categories: ['🛡️ Trust & Credibility', '🎯 Conversion Optimization'],
-        all_evidence: [
-          'Missing security badges on contact forms',
-          'No client testimonials on service pages',
-          'Certification logos not prominently displayed'
-        ],
-        synthesized_findings: [
-          'Trust signals critical for B2B decision making',
-          'Social proof elements need strategic placement',
-          'Security indicators essential for form completion'
-        ],
-        impact_score: 6,
-        urgency_score: 7,
-        priority_score: 6.8,
-        timeline: '0-30 days',
-        page_id: 'contact_001',
-        persona: 'The Benelux Strategic Business Leader',
-        url: 'https://www.soprasteria.be/contact',
-        source: 'Trust Analysis Engine',
-        evidence: 'Quick win opportunity for trust signal implementation'
-      }
-    ]
-
-    return mockData
-  }
 
   const groupByTheme = (recs: Recommendation[]): ThematicRecommendations => {
     const thematic: ThematicRecommendations = {

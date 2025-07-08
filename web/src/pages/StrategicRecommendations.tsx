@@ -49,94 +49,12 @@ function StrategicRecommendations() {
   const { data: recommendationsData, isLoading: recLoading } = useQuery({
     queryKey: ['strategic-recommendations'],
     queryFn: async () => {
-      const res = await fetch(`${apiBase}/api/strategic-recommendations`)
-      if (!res.ok) {
-        // Return mock data if API not available
-        return generateMockRecommendations()
-      }
+      const res = await fetch(`${apiBase}/api/full-recommendations`)
+      if (!res.ok) throw new Error('Failed to load recommendations')
       return res.json()
     }
   })
 
-  const generateMockRecommendations = (): StrategicRecommendation[] => {
-    return [
-      {
-        id: 'content-optimization',
-        category: 'Content Strategy',
-        title: 'Optimize Content for Cybersecurity Decision Makers',
-        description: 'Enhance content messaging to better address cybersecurity concerns and compliance requirements across key pages.',
-        priority: 'High',
-        impact: 'High',
-        effort: 'Medium',
-        timeframe: 'Short-term',
-        evidence: [
-          'Multiple pages lack explicit cybersecurity messaging',
-          'Generic corporate language fails to address specific security concerns',
-          'Missing compliance and certification information'
-        ],
-        affectedPages: ['Homepage', 'Services', 'About Us', 'Industries'],
-        personas: ['The Benelux Cybersecurity Decision Maker', 'The Technical Influencer'],
-        businessValue: 'Improved conversion rates for cybersecurity-focused prospects and enhanced credibility in security markets',
-        implementation: [
-          'Audit current content for security-specific messaging',
-          'Develop cybersecurity-focused content templates',
-          'Add compliance certifications and security credentials',
-          'Create security-focused case studies and testimonials'
-        ],
-        risks: ['Resource allocation', 'Content consistency challenges']
-      },
-      {
-        id: 'trust-signals',
-        category: 'Trust & Credibility',
-        title: 'Strengthen Trust Signals Across Platform',
-        description: 'Implement comprehensive trust signals including certifications, testimonials, and social proof to build credibility.',
-        priority: 'High',
-        impact: 'High',
-        effort: 'Low',
-        timeframe: 'Immediate',
-        evidence: [
-          'Missing security certifications on key pages',
-          'Limited client testimonials and case studies',
-          'Insufficient social proof elements'
-        ],
-        affectedPages: ['Homepage', 'Services', 'Case Studies'],
-        personas: ['The Benelux Strategic Business Leader', 'The Benelux Cybersecurity Decision Maker'],
-        businessValue: 'Increased user confidence and higher conversion rates through enhanced credibility',
-        implementation: [
-          'Add security certifications and compliance badges',
-          'Implement client testimonial sections',
-          'Display industry awards and recognition',
-          'Add social proof elements (client logos, case studies)'
-        ],
-        risks: ['Verification of claims', 'Maintenance of current information']
-      },
-      {
-        id: 'user-experience',
-        category: 'User Experience',
-        title: 'Improve Navigation and Information Architecture',
-        description: 'Streamline user journey and improve findability of key information for different persona types.',
-        priority: 'Medium',
-        impact: 'Medium',
-        effort: 'High',
-        timeframe: 'Medium-term',
-        evidence: [
-          'Complex navigation structure creates friction',
-          'Key information difficult to locate',
-          'Poor mobile experience on several pages'
-        ],
-        affectedPages: ['Navigation', 'Services', 'Solutions', 'Contact'],
-        personas: ['All Personas'],
-        businessValue: 'Reduced bounce rates and improved user engagement leading to higher conversion',
-        implementation: [
-          'Conduct user journey mapping',
-          'Simplify navigation structure',
-          'Implement persona-based content paths',
-          'Optimize mobile experience'
-        ],
-        risks: ['User confusion during transition', 'SEO impact from URL changes']
-      }
-    ]
-  }
 
   const aggregateEvidence = (auditData: any[]): AggregatedEvidence[] => {
     if (!auditData || auditData.length === 0) return []

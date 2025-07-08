@@ -71,9 +71,27 @@ function VisualBrandHygiene() {
   const fetchBrandData = async () => {
     try {
       setLoading(true)
-      // Mock brand data - in real app would fetch from API
-      const mockData: BrandData[] = generateMockBrandData()
-      setData(mockData)
+      const res = await fetch('http://localhost:3000/api/brand-hygiene')
+      if (!res.ok) throw new Error('Failed to load brand hygiene data')
+      const json = await res.json()
+      const items = Object.entries(json || {}).map(([descriptor, count]) => ({
+        url: descriptor,
+        page_type: descriptor,
+        final_score: count as number,
+        logo_compliance: 0,
+        color_palette: 0,
+        typography: 0,
+        layout_structure: 0,
+        image_quality: 0,
+        brand_messaging: 0,
+        key_violations: '',
+        domain: '',
+        page_name: '',
+        tier_number: '',
+        tier_name: '',
+        region: ''
+      })) as BrandData[]
+      setData(items)
     } catch (err) {
       setError('Failed to load brand hygiene data')
     } finally {
@@ -81,52 +99,6 @@ function VisualBrandHygiene() {
     }
   }
 
-  const generateMockBrandData = (): BrandData[] => {
-    const pages = [
-      { url: 'soprasteria.be', type: 'Tier 1 - Homepage', region: 'Belgium' },
-      { url: 'soprasteria.be/services', type: 'Tier 1 - Services', region: 'Belgium' },
-      { url: 'soprasteria.be/about', type: 'Tier 2 - About', region: 'Belgium' },
-      { url: 'soprasteria.be/case-studies', type: 'Tier 2 - Case Studies', region: 'Belgium' },
-      { url: 'soprasteria.be/contact', type: 'Tier 3 - Contact', region: 'Belgium' },
-      { url: 'soprasteria.nl', type: 'Tier 1 - Homepage', region: 'Netherlands' },
-      { url: 'soprasteria.nl/services', type: 'Tier 1 - Services', region: 'Netherlands' },
-      { url: 'soprasteria.nl/about', type: 'Tier 2 - About', region: 'Netherlands' },
-      { url: 'soprasteria.com', type: 'Tier 1 - Homepage', region: 'Global' },
-      { url: 'soprasteria.com/services', type: 'Tier 1 - Services', region: 'Global' }
-    ]
-
-    return pages.map(page => {
-      const baseScore = Math.random() * 3 + 6.5 // 6.5-9.5 range
-      const variation = () => baseScore + (Math.random() - 0.5) * 2
-      
-      return {
-        url: `https://www.${page.url}`,
-        page_type: page.type,
-        final_score: baseScore,
-        logo_compliance: variation(),
-        color_palette: variation(),
-        typography: variation(),
-        layout_structure: variation(),
-        image_quality: variation(),
-        brand_messaging: variation(),
-        key_violations: generateViolations(baseScore),
-        domain: page.url,
-        page_name: page.url.split('/').pop() || 'Homepage',
-        tier_number: page.type.includes('Tier 1') ? '1' : page.type.includes('Tier 2') ? '2' : '3',
-        tier_name: page.type.split(' - ')[1] || page.type,
-        region: page.region
-      }
-    })
-  }
-
-  const generateViolations = (score: number): string => {
-    const violations = []
-    if (score < 7) violations.push('Logo placement inconsistent')
-    if (score < 7.5) violations.push('Color palette deviations')
-    if (score < 8) violations.push('Typography inconsistencies')
-    if (score < 8.5) violations.push('Layout structure issues')
-    return violations.join(', ') || 'Minor brand consistency improvements needed'
-  }
 
   const calculateOverallMetrics = () => {
     if (data.length === 0) return { totalPages: 0, avgScore: 0, topPerformers: 0, complianceRate: 0 }
