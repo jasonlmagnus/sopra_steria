@@ -11,7 +11,7 @@ interface StandardCardProps {
   onClick?: () => void
 }
 
-export function StandardCard({ 
+export default function StandardCard({ 
   title, 
   value, 
   label, 
@@ -21,32 +21,44 @@ export function StandardCard({
   className = '',
   onClick 
 }: StandardCardProps) {
-  const getStatusClass = () => {
-    switch (status) {
-      case 'excellent': return 'status-excellent'
-      case 'good': return 'status-good'
-      case 'warning': return 'status-warning'
-      case 'critical': return 'status-critical'
-      default: return ''
+  const getCardClasses = () => {
+    const baseClasses = ['card']
+    
+    // Add variant class
+    if (variant !== 'metric') {
+      baseClasses.push(`card--${variant}`)
+    } else {
+      baseClasses.push('card--metric')
     }
+    
+    // Add status class
+    if (status !== 'default') {
+      baseClasses.push(`card--${status}`)
+    }
+    
+    // Add clickable class
+    if (onClick) {
+      baseClasses.push('card--clickable')
+    }
+    
+    // Add custom classes
+    if (className) {
+      baseClasses.push(className)
+    }
+    
+    return baseClasses.join(' ')
   }
 
-  const cardClass = `metric-card ${variant === 'persona' ? 'persona-card' : ''} ${getStatusClass()} ${className}`
-
   return (
-    <div className={cardClass} onClick={onClick} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      {title && <h4 className="card-title">{title}</h4>}
+    <div className={getCardClasses()} onClick={onClick}>
+      {title && <h3 className="card__title">{title}</h3>}
       
-      {value && (
-        <div className="metric-display">
-          <div className="metric-value">{value}</div>
-          {label && <div className="metric-label">{label}</div>}
+      {children || (
+        <div className="card__metric">
+          {value && <div className="card__metric-value">{value}</div>}
+          {label && <div className="card__metric-label">{label}</div>}
         </div>
       )}
-      
-      {children}
     </div>
   )
-}
-
-export default StandardCard 
+} 

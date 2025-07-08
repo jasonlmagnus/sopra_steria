@@ -14,7 +14,7 @@ import VisualBrandHygiene from './pages/VisualBrandHygiene'
 import StrategicRecommendations from './pages/Recommendations'
 import ImplementationTracking from './pages/ImplementationTracking'
 import AuditReports from './pages/AuditReports'
-import './App.css'
+import './styles/dashboard.css'
 
 function App() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
@@ -38,17 +38,17 @@ function App() {
   ]
 
   return (
-    <div className="app-container">
+    <div className="app">
       {/* Sidebar */}
-      <div className={`sidebar ${sidebarExpanded ? 'expanded' : 'collapsed'}`}>
+      <div className={`sidebar ${sidebarExpanded ? '' : 'sidebar--collapsed'}`}>
         {/* Sidebar Header */}
-        <div className="sidebar-header">
-          <div className="sidebar-brand">
-            <h1>🎯 Brand Health Command Center</h1>
-            <p>30-second strategic marketing decision engine</p>
-          </div>
+        <div className="sidebar__header">
+          <Link to="/" className="sidebar__logo">
+            <span className="sidebar__logo-icon">🎯</span>
+            <span className="sidebar__logo-text">Brand Health Command Center</span>
+          </Link>
           <button 
-            className="sidebar-toggle"
+            className="sidebar__toggle"
             onClick={() => setSidebarExpanded(!sidebarExpanded)}
           >
             {sidebarExpanded ? '◀' : '▶'}
@@ -56,45 +56,22 @@ function App() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="sidebar-nav">
+        <nav className="sidebar__nav">
           {navigationItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
+              className={`sidebar__link ${location.pathname === item.path ? 'sidebar__link--active' : ''}`}
             >
-              <span className="sidebar-icon">{item.icon}</span>
-              {sidebarExpanded && <span className="sidebar-label">{item.label}</span>}
+              <span className="sidebar__link-icon">{item.icon}</span>
+              <span className="sidebar__link-label">{item.label}</span>
             </Link>
           ))}
         </nav>
-
-        {/* Sidebar Footer */}
-        {sidebarExpanded && (
-          <div className="sidebar-footer">
-            <div className="sidebar-info">
-              <h4>📊 Data Overview</h4>
-              <div className="sidebar-stats">
-                <div className="stat-item">
-                  <span className="stat-value">247</span>
-                  <span className="stat-label">Total Pages</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">1,235</span>
-                  <span className="stat-label">Total Records</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">6.8/10</span>
-                  <span className="stat-label">Avg Score</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
-      <div className={`main-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+      <div className={`main-content ${sidebarExpanded ? '' : 'main-content--sidebar-collapsed'}`}>
         <Routes>
           <Route path="/" element={<ExecutiveDashboard />} />
           <Route path="/methodology" element={<Methodology />} />
