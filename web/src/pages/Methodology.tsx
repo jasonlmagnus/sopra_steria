@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -306,7 +306,7 @@ function Methodology() {
         {Object.entries(data.messaging?.corporate_hierarchy?.sub_narratives || {}).map(([domain, narrative]) => (
           <div key={domain} style={{ border: '1px solid #dee2e6', padding: '10px', borderRadius: '5px' }}>
             <strong>{domain.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong><br/>
-            "{narrative}"
+            "{String(narrative)}"
           </div>
         ))}
       </div>

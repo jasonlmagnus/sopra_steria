@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-07-09T08:11:39.836561",
+  "summary": {
+    "total_gaps": 17,
+    "critical_gaps": 1,
+    "high_gaps": 0,
+    "medium_gaps": 14,
+    "low_gaps": 2
+  },
+  "gaps": [
+    {
+      "component": "ExecutiveDashboard",
+      "feature": "chart_sparklines",
+      "description": "Missing chart implementation for sparklines",
+      "severity": "low",
+      "detected_at": "2025-07-09T08:11:39.836718",
+      "fix_suggestion": "Add sparklines visualization to ExecutiveDashboard"
+    },
+    {
+      "component": "ExecutiveDashboard",
+      "feature": "chart_trend_analysis",
+      "description": "Missing chart implementation for trend_analysis",
+      "severity": "low",
+      "detected_at": "2025-07-09T08:11:39.836742",
+      "fix_suggestion": "Add trend_analysis visualization to ExecutiveDashboard"
+    },
+    {
+      "component": "PersonaInsights",
+      "feature": "filter_persona_selector",
+      "description": "Missing persona_selector filter implementation",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.836828",
+      "fix_suggestion": "Implement persona_selector filter in PersonaInsights"
+    },
+    {
+      "component": "PersonaInsights",
+      "feature": "filter_comparison_mode",
+      "description": "Missing comparison_mode filter implementation",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.836840",
+      "fix_suggestion": "Implement comparison_mode filter in PersonaInsights"
+    },
+    {
+      "component": "PersonaInsights",
+      "feature": "api__api_persona-comparison",
+      "description": "Missing API endpoint /api/persona-comparison",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.836849",
+      "fix_suggestion": "Add /api/persona-comparison API call to PersonaInsights"
+    },
+    {
+      "component": "ContentMatrix",
+      "feature": "filter_performance_level",
+      "description": "Missing performance_level filter implementation",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.836945",
+      "fix_suggestion": "Implement performance_level filter in ContentMatrix"
+    },
+    {
+      "component": "Recommendations",
+      "feature": "api__api_recommendations",
+      "description": "Missing API endpoint /api/recommendations",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.837022",
+      "fix_suggestion": "Add /api/recommendations API call to Recommendations"
+    },
+    {
+      "component": "SuccessLibrary",
+      "feature": "filter_score_filter",
+      "description": "Missing score_filter filter implementation",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.837097",
+      "fix_suggestion": "Implement score_filter filter in SuccessLibrary"
+    },
+    {
+      "component": "SuccessLibrary",
+      "feature": "filter_category_filter",
+      "description": "Missing category_filter filter implementation",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.837106",
+      "fix_suggestion": "Implement category_filter filter in SuccessLibrary"
+    },
+    {
+      "component": "SuccessLibrary",
+      "feature": "api__api_success-stories",
+      "description": "Missing API endpoint /api/success-stories",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.837115",
+      "fix_suggestion": "Add /api/success-stories API call to SuccessLibrary"
+    },
+    {
+      "component": "API Server",
+      "feature": "connection",
+      "description": "Cannot connect to API server",
+      "severity": "critical",
+      "detected_at": "2025-07-09T08:11:39.842789",
+      "fix_suggestion": "Start API server: npm run dev (in api directory)"
+    },
+    {
+      "component": "Routing",
+      "feature": "route_ExecutiveDashboard",
+      "description": "ExecutiveDashboard not configured in routing",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842904",
+      "fix_suggestion": "Add route for ExecutiveDashboard in App.tsx"
+    },
+    {
+      "component": "Routing",
+      "feature": "route_PersonaInsights",
+      "description": "PersonaInsights not configured in routing",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842912",
+      "fix_suggestion": "Add route for PersonaInsights in App.tsx"
+    },
+    {
+      "component": "Routing",
+      "feature": "route_ContentMatrix",
+      "description": "ContentMatrix not configured in routing",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842917",
+      "fix_suggestion": "Add route for ContentMatrix in App.tsx"
+    },
+    {
+      "component": "Routing",
+      "feature": "import_Recommendations",
+      "description": "Recommendations not imported in App.tsx",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842921",
+      "fix_suggestion": "Add import for Recommendations in App.tsx"
+    },
+    {
+      "component": "Routing",
+      "feature": "route_Recommendations",
+      "description": "Recommendations not configured in routing",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842926",
+      "fix_suggestion": "Add route for Recommendations in App.tsx"
+    },
+    {
+      "component": "Routing",
+      "feature": "route_SuccessLibrary",
+      "description": "SuccessLibrary not configured in routing",
+      "severity": "medium",
+      "detected_at": "2025-07-09T08:11:39.842930",
+      "fix_suggestion": "Add route for SuccessLibrary in App.tsx"
+    }
+  ]
+}

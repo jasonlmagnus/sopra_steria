@@ -271,8 +271,8 @@ function OpportunityControls({ controls, setControls, data }: any) {
             onChange={(e) => setControls({...controls, contentTier: e.target.value})}
             style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
           >
-            {tiers.map(tier => (
-              <option key={tier} value={tier}>{tier}</option>
+            {tiers.map((tier, index) => (
+              <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
             ))}
           </select>
         </div>

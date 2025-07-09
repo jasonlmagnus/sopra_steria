@@ -169,8 +169,8 @@ function ContentFilters({ filters, setFilters, data }: any) {
               border: '1px solid #D1D5DB'
             }}
           >
-            {personas.map(persona => (
-              <option key={persona} value={persona}>{persona}</option>
+            {personas.map((persona, index) => (
+              <option key={`persona-${index}-${persona}`} value={persona}>{persona}</option>
             ))}
           </select>
         </div>
@@ -189,8 +189,8 @@ function ContentFilters({ filters, setFilters, data }: any) {
               border: '1px solid #D1D5DB'
             }}
           >
-            {tiers.map(tier => (
-              <option key={tier} value={tier}>{tier}</option>
+            {tiers.map((tier, index) => (
+              <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
             ))}
           </select>
         </div>
@@ -224,8 +224,8 @@ function ContentFilters({ filters, setFilters, data }: any) {
               border: '1px solid #D1D5DB'
             }}
           >
-            {performanceLevels.map(level => (
-              <option key={level} value={level}>{level}</option>
+            {performanceLevels.map((level, index) => (
+              <option key={`level-${index}-${level}`} value={level}>{level}</option>
             ))}
           </select>
         </div>

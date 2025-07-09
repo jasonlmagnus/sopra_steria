@@ -444,28 +444,15 @@ app.get('/api/download/:name', async (req, res) => {
   }
 })
 
-app.get('/api/social-media', async (_req, res) => {
+app.get('/api/social-media', async (req, res) => {
   try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const filePath = path.join(
-      __dirname,
-      '..',
-      '..',
-      'audit_inputs',
-      'social_media',
-      'archive',
-      'sm_dashboard_data_enhanced.md'
-    )
-    const markdown = await readFile(filePath, 'utf8')
-    const table = await createMarkdownObjectTable(markdown)
-    const rows = []
-    for await (const row of table) {
-      rows.push(row)
-    }
-    res.json({ data: rows })
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/api/social-media${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Failed to load social media data' })
+    console.error('FastAPI social-media error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch social media data', details: err.message })
   }
 })
 
@@ -1014,6 +1001,102 @@ async function createReportInfo(filePath, relativePath, baseDir) {
 
 /**
  * @openapi
+ * /api/content-matrix:
+ *   get:
+ *     summary: Content matrix analysis with filtering
+ *     parameters:
+ *       - in: query
+ *         name: persona
+ *         schema:
+ *           type: string
+ *         description: Filter by persona
+ *       - in: query
+ *         name: tier
+ *         schema:
+ *           type: string
+ *         description: Filter by content tier
+ *       - in: query
+ *         name: minScore
+ *         schema:
+ *           type: number
+ *         description: Minimum score filter
+ *       - in: query
+ *         name: performanceLevel
+ *         schema:
+ *           type: string
+ *         description: Filter by performance level
+ *     responses:
+ *       200:
+ *         description: Content matrix data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+app.get('/api/content-matrix', async (req, res) => {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/content-matrix${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI content-matrix error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch content matrix', details: err.message })
+  }
+})
+
+/**
+ * @openapi
+ * /api/opportunity-impact:
+ *   get:
+ *     summary: Opportunity impact analysis with filtering
+ *     parameters:
+ *       - in: query
+ *         name: impactThreshold
+ *         schema:
+ *           type: number
+ *         description: Impact threshold filter
+ *       - in: query
+ *         name: effortLevel
+ *         schema:
+ *           type: string
+ *         description: Filter by effort level
+ *       - in: query
+ *         name: priorityLevel
+ *         schema:
+ *           type: string
+ *         description: Filter by priority level
+ *       - in: query
+ *         name: contentTier
+ *         schema:
+ *           type: string
+ *         description: Filter by content tier
+ *       - in: query
+ *         name: maxOpportunities
+ *         schema:
+ *           type: integer
+ *         description: Maximum number of opportunities to return
+ *     responses:
+ *       200:
+ *         description: Opportunity impact data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+app.get('/api/opportunity-impact', async (req, res) => {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/opportunity-impact${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch opportunity impact' })
+  }
+})
+
+/**
+ * @openapi
  * /api/strategic-intelligence:
  *   get:
  *     summary: Business-focused strategic recommendations with ROI impact
@@ -1058,6 +1141,202 @@ app.get('/api/strategic-intelligence', async (req, res) => {
     res.json(response.data)
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch strategic intelligence' })
+  }
+})
+
+/**
+ * @openapi
+ * /api/success-library:
+ *   get:
+ *     summary: Success library with filtering and analysis
+ *     parameters:
+ *       - in: query
+ *         name: persona
+ *         schema:
+ *           type: string
+ *         description: Filter by persona
+ *       - in: query
+ *         name: tier
+ *         schema:
+ *           type: string
+ *         description: Filter by content tier
+ *       - in: query
+ *         name: successThreshold
+ *         schema:
+ *           type: number
+ *         description: Minimum success score threshold
+ *       - in: query
+ *         name: maxStories
+ *         schema:
+ *           type: integer
+ *         description: Maximum number of success stories to return
+ *       - in: query
+ *         name: evidenceType
+ *         schema:
+ *           type: string
+ *         description: Filter by evidence type
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering success stories
+ *     responses:
+ *       200:
+ *         description: Success library data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+app.get('/api/success-library', async (req, res) => {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/success-library${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI success-library error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch success library', details: err.message })
+  }
+})
+
+// Additional proxy endpoints for FastAPI (only non-duplicates)
+app.get('/api/persona-pages', async (req, res) => {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/persona-pages${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI persona-pages error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch persona pages', details: err.message })
+  }
+})
+
+app.get('/api/audit/status/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params
+    const response = await axios.get(`http://localhost:8000/api/audit/status/${sessionId}`)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI audit status error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch audit status', details: err.message })
+  }
+})
+
+app.get('/api/audit/processing-status/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params
+    const response = await axios.get(`http://localhost:8000/api/audit/processing-status/${sessionId}`)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI audit processing status error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch audit processing status', details: err.message })
+  }
+})
+
+app.get('/api/persona/:personaId/voice-analysis', async (req, res) => {
+  try {
+    const { personaId } = req.params
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/api/persona/${personaId}/voice-analysis${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI persona voice-analysis error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch persona voice analysis', details: err.message })
+  }
+})
+
+// Missing POST endpoints for audit functionality
+app.post('/api/audit/run', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/audit/run', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI audit run error:', err.message)
+    res.status(500).json({ error: 'Failed to run audit', details: err.message })
+  }
+})
+
+app.post('/api/audit/stop/:sessionId', express.json(), async (req, res) => {
+  try {
+    const { sessionId } = req.params
+    const response = await axios.post(`http://localhost:8000/api/audit/stop/${sessionId}`, req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI audit stop error:', err.message)
+    res.status(500).json({ error: 'Failed to stop audit', details: err.message })
+  }
+})
+
+app.post('/api/audit/process', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/audit/process', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI audit process error:', err.message)
+    res.status(500).json({ error: 'Failed to process audit', details: err.message })
+  }
+})
+
+app.post('/api/regenerate-reports', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/regenerate-reports', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI regenerate reports error:', err.message)
+    res.status(500).json({ error: 'Failed to regenerate reports', details: err.message })
+  }
+})
+
+app.get('/api/download-all-reports', async (req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/download-all-reports')
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI download all reports error:', err.message)
+    res.status(500).json({ error: 'Failed to download all reports', details: err.message })
+  }
+})
+
+app.post('/api/reports/generate', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/reports/generate', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI reports generate error:', err.message)
+    res.status(500).json({ error: 'Failed to generate reports', details: err.message })
+  }
+})
+
+app.post('/api/reports/html', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/reports/html', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI reports html error:', err.message)
+    res.status(500).json({ error: 'Failed to generate HTML reports', details: err.message })
+  }
+})
+
+app.post('/api/export', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/export', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI export error:', err.message)
+    res.status(500).json({ error: 'Failed to export', details: err.message })
+  }
+})
+
+app.post('/api/export/bulk', express.json(), async (req, res) => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/export/bulk', req.body)
+    res.json(response.data)
+  } catch (err) {
+    console.error('FastAPI export bulk error:', err.message)
+    res.status(500).json({ error: 'Failed to bulk export', details: err.message })
   }
 })
 

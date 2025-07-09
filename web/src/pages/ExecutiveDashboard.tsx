@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import PagesList from './PagesList'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -384,6 +385,14 @@ function ExecutiveDashboard() {
           </div>
         </div>
       )}
+
+      {/* Page Performance Overview */}
+      <h2>📄 Page Performance Overview</h2>
+      <p className="text-sm text-secondary mb-3">*Quick visual overview of brand scores across all audited pages*</p>
+      
+      <div className="page-performance-section">
+        <PagesList />
+      </div>
 
       {/* Deep-Dive Analysis Navigation */}
       <h2>🧭 Deep-Dive Analysis</h2>

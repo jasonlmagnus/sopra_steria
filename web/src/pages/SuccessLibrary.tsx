@@ -5,6 +5,8 @@ import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
 import { EvidenceDisplay } from '../components/EvidenceDisplay';
 
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 interface SuccessStory {
   id: string;
   title: string;
@@ -83,7 +85,7 @@ const SuccessLibrary: React.FC = () => {
         searchTerm: searchTerm
       });
       
-      const response = await fetch(`/api/success-library?${params}`);
+      const response = await fetch(`${apiBase}/api/success-library?${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch success library data');
@@ -221,8 +223,8 @@ const SuccessLibrary: React.FC = () => {
               value={filters.persona || 'All'} 
               onChange={(e) => filters.setPersona(e.target.value === 'All' ? '' : e.target.value)}
             >
-              {availablePersonas.map(persona => (
-                <option key={persona} value={persona}>{persona}</option>
+              {availablePersonas.map((persona, index) => (
+                <option key={`persona-${index}-${persona}`} value={persona}>{persona}</option>
               ))}
             </select>
           </div>
@@ -233,8 +235,8 @@ const SuccessLibrary: React.FC = () => {
               value={filters.tier || 'All'} 
               onChange={(e) => filters.setTier(e.target.value === 'All' ? '' : e.target.value)}
             >
-              {availableTiers.map(tier => (
-                <option key={tier} value={tier}>{tier}</option>
+              {availableTiers.map((tier, index) => (
+                <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
               ))}
             </select>
           </div>

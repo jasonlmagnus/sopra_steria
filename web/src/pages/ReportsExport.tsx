@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useFilters } from '../context/FilterContext';
 import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
+import DatasetList from './DatasetList';
 
 interface DatasetInfo {
   name: string;
@@ -114,7 +114,14 @@ const ReportsExport: React.FC = () => {
       const dsRes = await fetch('http://localhost:3000/api/datasets');
       if (dsRes.ok) {
         const dsData = await dsRes.json();
-        setDatasets(dsData.datasets || []);
+        // Convert string array to dataset objects with safe defaults
+        const datasetObjects = (dsData.datasets || []).map((name: string) => ({
+          name: name,
+          records: 0, // Default since API doesn't provide this info
+          columns: 0, // Default since API doesn't provide this info  
+          memoryMB: 'N/A' // Default since API doesn't provide this info
+        }));
+        setDatasets(datasetObjects);
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -147,7 +154,7 @@ const ReportsExport: React.FC = () => {
 
   const datasetChartData = [
     {
-      x: datasets.map(d => d.records),
+      x: datasets.map(d => d.records || 0),
       y: datasets.map(d => d.name),
       type: 'bar',
       orientation: 'h',
@@ -156,8 +163,8 @@ const ReportsExport: React.FC = () => {
   ];
 
   const datasetChartLayout = {
-    title: 'Dataset Breakdown',
-    xaxis: { title: 'Records' },
+    title: 'Available Datasets',
+    xaxis: { title: 'Records (Not Available)' },
     height: 400
   };
 
@@ -352,6 +359,12 @@ const ReportsExport: React.FC = () => {
         >
           📦 Export Center
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'dataset-browser' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dataset-browser')}
+        >
+          🗂️ Dataset Browser
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -400,10 +413,10 @@ const ReportsExport: React.FC = () => {
                   <tbody>
                     {datasets.map((dataset, index) => (
                       <tr key={index}>
-                        <td>{dataset.name}</td>
-                        <td>{dataset.records.toLocaleString()}</td>
-                        <td>{dataset.columns}</td>
-                        <td>{dataset.memoryMB}</td>
+                        <td>{dataset.name || 'Unknown'}</td>
+                        <td>{(dataset.records || 0).toLocaleString()}</td>
+                        <td>{dataset.columns || 0}</td>
+                        <td>{dataset.memoryMB || 'N/A'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1064,6 +1077,17 @@ const ReportsExport: React.FC = () => {
                 {exporting ? '🔄 Creating Package...' : '📦 Create Complete Export Package'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'dataset-browser' && (
+        <div className="tab-content">
+          <h2>🗂️ Dataset Browser</h2>
+          <p>Browse and explore available datasets with detailed views and analysis capabilities.</p>
+          
+          <div className="dataset-browser-container">
+            <DatasetList />
           </div>
         </div>
       )}

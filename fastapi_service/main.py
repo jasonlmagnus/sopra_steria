@@ -1183,16 +1183,23 @@ def get_content_matrix(
     # Calculate metrics
     metrics = BrandHealthMetricsCalculator(filtered_df, recommendations_df)
     
-    # Performance overview metrics
-    avg_score = filtered_df['avg_score'].mean() if 'avg_score' in filtered_df.columns else 0
+    # Performance overview metrics - handle NaN values
+    if 'avg_score' in filtered_df.columns:
+        # Fill NaN values with 0 for calculations
+        score_series = filtered_df['avg_score'].fillna(0)
+        avg_score = float(score_series.mean()) if len(score_series) > 0 else 0.0
+        excellent = len(filtered_df[score_series >= 8.0])
+        good = len(filtered_df[(score_series >= 6.0) & (score_series < 8.0)])
+        fair = len(filtered_df[(score_series >= 4.0) & (score_series < 6.0)])
+        poor = len(filtered_df[score_series < 4.0])
+    else:
+        avg_score = 0.0
+        excellent = good = fair = poor = 0
+    
     total_pages = len(filtered_df['page_id'].unique()) if 'page_id' in filtered_df.columns else len(filtered_df)
-    excellent = len(filtered_df[filtered_df['avg_score'] >= 8.0]) if 'avg_score' in filtered_df.columns else 0
-    good = len(filtered_df[(filtered_df['avg_score'] >= 6.0) & (filtered_df['avg_score'] < 8.0)]) if 'avg_score' in filtered_df.columns else 0
-    fair = len(filtered_df[(filtered_df['avg_score'] >= 4.0) & (filtered_df['avg_score'] < 6.0)]) if 'avg_score' in filtered_df.columns else 0
-    poor = len(filtered_df[filtered_df['avg_score'] < 4.0]) if 'avg_score' in filtered_df.columns else 0
     poor_performers = fair + poor
     
-    # Tier analysis
+    # Tier analysis - handle NaN values
     tier_analysis = []
     if 'tier' in filtered_df.columns and 'tier_name' in filtered_df.columns:
         tier_data = filtered_df.groupby(['tier', 'tier_name']).agg({
@@ -1201,24 +1208,28 @@ def get_content_matrix(
         }).reset_index()
         
         for _, row in tier_data.iterrows():
+            # Handle NaN values in tier analysis
+            avg_score_val = float(row['avg_score']) if pd.notna(row['avg_score']) else 0.0
             tier_analysis.append({
-                'tier': row['tier'],
-                'name': row['tier_name'],
-                'avgScore': round(row['avg_score'], 2),
+                'tier': str(row['tier']),
+                'name': str(row['tier_name']),
+                'avgScore': round(avg_score_val, 2),
                 'pageCount': int(row['page_id']),
                 'weight': 0.33  # Default weight, could be calculated from methodology
             })
     
-    # Criteria analysis
+    # Criteria analysis - handle NaN values
     criteria_data = []
     if 'criterion_id' in filtered_df.columns and 'raw_score' in filtered_df.columns:
         criteria_performance = filtered_df.groupby('criterion_id')['raw_score'].mean().reset_index()
         criteria_performance = criteria_performance.sort_values('raw_score', ascending=False)
         
         for _, row in criteria_performance.iterrows():
+            # Handle NaN values in criteria analysis
+            raw_score_val = float(row['raw_score']) if pd.notna(row['raw_score']) else 0.0
             criteria_data.append({
-                'name': row['criterion_id'],
-                'avgScore': round(row['raw_score'], 2)
+                'name': str(row['criterion_id']),
+                'avgScore': round(raw_score_val, 2)
             })
     
     # Page analysis
@@ -1251,19 +1262,21 @@ def get_content_matrix(
                 url = str(data['url'])
                 title = url.split('/')[-1].replace('-', ' ').title()[:50]
             
+            # Handle NaN values in page data
+            avg_score_val = float(data['avg_score']) if pd.notna(data['avg_score']) else 0.0
             page_data.append({
-                'id': page_id,
+                'id': str(page_id),
                 'title': title,
-                'avgScore': data['avg_score'],
-                'tier': data['tier'],
-                'personas': data['persona_id'],
-                'url': data['url'],
-                'evidence': data.get('evidence'),
-                'effective_copy_examples': data.get('effective_copy_examples'),
-                'ineffective_copy_examples': data.get('ineffective_copy_examples'),
-                'trust_credibility_assessment': data.get('trust_credibility_assessment'),
-                'business_impact_analysis': data.get('business_impact_analysis'),
-                'information_gaps': data.get('information_gaps')
+                'avgScore': round(avg_score_val, 2),
+                'tier': str(data['tier']) if pd.notna(data['tier']) else '',
+                'personas': str(data['persona_id']) if pd.notna(data['persona_id']) else '',
+                'url': str(data['url']) if pd.notna(data['url']) else '',
+                'evidence': str(data.get('evidence', '')) if pd.notna(data.get('evidence')) else '',
+                'effective_copy_examples': str(data.get('effective_copy_examples', '')) if pd.notna(data.get('effective_copy_examples')) else '',
+                'ineffective_copy_examples': str(data.get('ineffective_copy_examples', '')) if pd.notna(data.get('ineffective_copy_examples')) else '',
+                'trust_credibility_assessment': str(data.get('trust_credibility_assessment', '')) if pd.notna(data.get('trust_credibility_assessment')) else '',
+                'business_impact_analysis': str(data.get('business_impact_analysis', '')) if pd.notna(data.get('business_impact_analysis')) else '',
+                'information_gaps': str(data.get('information_gaps', '')) if pd.notna(data.get('information_gaps')) else ''
             })
     
     # Heatmap data

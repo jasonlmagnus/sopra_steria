@@ -1,4 +1,17 @@
-[
-  "Missing filter on Recommendations page",
-  "Incorrect metrics on Persona Insights"
-]
+{
+  "notice": "Gap analysis is now dynamic! Use the Python tool for real-time analysis.",
+  "tool_location": "audit_tool/gap_analyzer.py",
+  "usage": "python audit_tool/gap_analyzer.py",
+  "features": [
+    "Real-time component validation",
+    "API endpoint testing", 
+    "Routing verification",
+    "Data consistency checks",
+    "Health scoring with actionable suggestions"
+  ],
+  "legacy_gaps": [
+    "Missing filter on Recommendations page - RESOLVED",
+    "Incorrect metrics on Persona Insights - NEEDS VERIFICATION"
+  ],
+  "last_updated": "2024-01-XX - Converted to dynamic analysis tool"
+}

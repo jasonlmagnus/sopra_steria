@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ScoreCard } from '../components/ScoreCard';
+import '../styles/pages/RunAudit.css';
 
 interface AuditState {
   sessionId: string | null;

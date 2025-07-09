@@ -201,6 +201,53 @@ python social_media_backfill.py --update-scores
 python social_media_backfill.py --full-backfill
 ```
 
+### Gap Analysis Tool
+
+The project includes a dynamic gap analysis tool for validating React component functionality and detecting missing features:
+
+**Location**: `audit_tool/gap_analyzer.py`
+
+**Features**:
+
+- **Component Validation**: Checks React components for expected features
+- **API Endpoint Testing**: Validates API connectivity and response codes
+- **Routing Verification**: Ensures proper component integration
+- **Data Consistency Checks**: Verifies required data files exist
+- **Health Scoring**: Provides overall dashboard health assessment
+- **Regression Prevention**: Automatically detects when features are accidentally removed
+
+**Usage**:
+
+```bash
+# Run gap analysis (from project root)
+python audit_tool/gap_analyzer.py
+
+# Generate detailed JSON report
+python audit_tool/gap_analyzer.py --output gap_report.json
+
+# Test with different API base URL
+python audit_tool/gap_analyzer.py --api-base http://localhost:8000
+```
+
+**Integration with CI/CD**:
+
+```bash
+# Example CI/CD usage
+python audit_tool/gap_analyzer.py
+if [ $? -ne 0 ]; then
+  echo "Critical gaps detected! Failing build."
+  exit 1
+fi
+```
+
+**Health Scoring**:
+- **90-100%**: Excellent - Dashboard is in great shape
+- **70-89%**: Good - Minor improvements needed  
+- **50-69%**: Fair - Several issues need attention
+- **<50%**: Poor - Significant issues require immediate attention
+
+For detailed documentation, see `audit_tool/README_gap_analyzer.md`
+
 **Supported Platforms**:
 
 - **LinkedIn**: `/company/soprasteria-benelux/` (6.8/10 average score)

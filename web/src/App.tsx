@@ -12,6 +12,7 @@ import SocialMediaAnalysis from './pages/SocialMediaAnalysis'
 import PersonaViewer from './pages/PersonaViewer'
 import VisualBrandHygiene from './pages/VisualBrandHygiene'
 import StrategicRecommendations from './pages/Recommendations'
+import DatasetDetail from './pages/DatasetDetail'
 
 import AuditReports from './pages/AuditReports'
 import './styles/dashboard.css'
@@ -84,6 +85,7 @@ function App() {
           <Route path="/persona-viewer" element={<PersonaViewer />} />
           <Route path="/visual-brand-hygiene" element={<VisualBrandHygiene />} />
           <Route path="/strategic-recommendations" element={<StrategicRecommendations />} />
+          <Route path="/datasets/:name" element={<DatasetDetail />} />
 
           <Route path="/audit-reports" element={<AuditReports />} />
         </Routes>
