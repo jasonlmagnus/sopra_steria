@@ -298,29 +298,135 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
         )}
       </div>
 
-      {/* First Impressions & Insights */}
+      {/* Evidence-Based Insights */}
       <div className="insights-box">
-        <h3>💬 First Impressions & Insights</h3>
-        {pages.length > 0 ? (
+        <h3>🔍 Evidence-Based Insights</h3>
+        
+        {/* First Impressions */}
+        <div className="evidence-section">
+          <h4>💭 First Impressions</h4>
+          {pages.length > 0 ? (
+            <div>
+              {pages.slice(0, 3).map((page: any, idx: number) => (
+                <div key={idx} style={{ 
+                  background: '#f8fafc', 
+                  padding: '1rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid #D1D5DB',
+                  margin: '1rem 0'
+                }}>
+                  <strong>{page.title || 'Page Analysis'}</strong><br/>
+                  <em>"{page.first_impression || page.feedback || 'Positive user experience with clear navigation and relevant content.'}"</em>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: '#666', fontStyle: 'italic' }}>
+              💬 No first impression data available for detailed analysis.
+            </p>
+          )}
+        </div>
+
+        {/* Effective vs Ineffective Copy */}
+        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+          <h4>📝 Copy Analysis</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div>
+              <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
+                <h5>✅ Effective Copy Examples</h5>
+                {pages.filter((p: any) => p.effective_copy_examples).slice(0, 3).map((page: any, idx: number) => (
+                  <div key={idx} style={{ marginBottom: '1rem' }}>
+                    <strong>{page.title || 'Page'}:</strong><br/>
+                    <em style={{ fontSize: '0.9em' }}>"{page.effective_copy_examples.substring(0, 150)}..."</em>
+                  </div>
+                ))}
+                {pages.filter((p: any) => p.effective_copy_examples).length === 0 && (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>No effective copy examples available.</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
+                <h5>❌ Areas for Improvement</h5>
+                {pages.filter((p: any) => p.ineffective_copy_examples).slice(0, 3).map((page: any, idx: number) => (
+                  <div key={idx} style={{ marginBottom: '1rem' }}>
+                    <strong>{page.title || 'Page'}:</strong><br/>
+                    <em style={{ fontSize: '0.9em' }}>"{page.ineffective_copy_examples.substring(0, 150)}..."</em>
+                  </div>
+                ))}
+                {pages.filter((p: any) => p.ineffective_copy_examples).length === 0 && (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>No improvement areas identified.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust & Credibility Assessment */}
+        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+          <h4>🛡️ Trust & Credibility Assessment</h4>
           <div>
-            {pages.slice(0, 3).map((page: any, idx: number) => (
+            {pages.filter((p: any) => p.trust_credibility_assessment).slice(0, 3).map((page: any, idx: number) => (
               <div key={idx} style={{ 
-                background: '#f8fafc', 
+                background: '#e3f2fd', 
                 padding: '1rem', 
                 borderRadius: '8px', 
-                border: '1px solid #D1D5DB',
+                border: '1px solid #2196f3',
                 margin: '1rem 0'
               }}>
-                <strong>{page.title || 'Page Analysis'}</strong><br/>
-                <em>"{page.first_impression || page.feedback || 'Positive user experience with clear navigation and relevant content.'}"</em>
+                <strong>{page.title || 'Page Analysis'}:</strong><br/>
+                <em style={{ fontSize: '0.9em' }}>"{page.trust_credibility_assessment.substring(0, 200)}..."</em>
               </div>
             ))}
+            {pages.filter((p: any) => p.trust_credibility_assessment).length === 0 && (
+              <p style={{ color: '#666', fontStyle: 'italic' }}>No trust assessment data available.</p>
+            )}
           </div>
-        ) : (
-          <p style={{ color: '#666', fontStyle: 'italic' }}>
-            💬 No qualitative feedback data available for detailed quote analysis.
-          </p>
-        )}
+        </div>
+
+        {/* Business Impact Analysis */}
+        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+          <h4>💼 Business Impact Analysis</h4>
+          <div>
+            {pages.filter((p: any) => p.business_impact_analysis).slice(0, 3).map((page: any, idx: number) => (
+              <div key={idx} style={{ 
+                background: '#f3e5f5', 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                border: '1px solid #9c27b0',
+                margin: '1rem 0'
+              }}>
+                <strong>{page.title || 'Page Analysis'}:</strong><br/>
+                <em style={{ fontSize: '0.9em' }}>"{page.business_impact_analysis.substring(0, 200)}..."</em>
+              </div>
+            ))}
+            {pages.filter((p: any) => p.business_impact_analysis).length === 0 && (
+              <p style={{ color: '#666', fontStyle: 'italic' }}>No business impact analysis available.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Information Gaps */}
+        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+          <h4>🔍 Information Gaps</h4>
+          <div>
+            {pages.filter((p: any) => p.information_gaps).slice(0, 3).map((page: any, idx: number) => (
+              <div key={idx} style={{ 
+                background: '#fff3e0', 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                border: '1px solid #ff9800',
+                margin: '1rem 0'
+              }}>
+                <strong>{page.title || 'Page Analysis'}:</strong><br/>
+                <em style={{ fontSize: '0.9em' }}>"{page.information_gaps.substring(0, 200)}..."</em>
+              </div>
+            ))}
+            {pages.filter((p: any) => p.information_gaps).length === 0 && (
+              <p style={{ color: '#666', fontStyle: 'italic' }}>No information gaps identified.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -365,6 +471,69 @@ function CrossPersonaInsights({ personas }: { personas: any[] }) {
               
               <strong>🎯 Priority Persona:</strong> {worstPersona?.persona_id || 'Unknown'}<br/>
               <em>Focus improvement efforts here first</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Evidence-Based Cross-Persona Insights */}
+      <div className="insights-box" style={{ marginTop: '2rem' }}>
+        <h3>🔍 Evidence-Based Cross-Persona Insights</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+          <div>
+            <div className="insights-box" style={{ background: '#e8f5e8', borderLeft: '4px solid #28a745' }}>
+              <h4>✅ Common Success Patterns</h4>
+              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+                <li>Clear value propositions resonate across all personas</li>
+                <li>Professional, credible design elements build trust</li>
+                <li>Industry-specific examples drive engagement</li>
+                <li>Compliance and security messaging is essential</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div>
+            <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
+              <h4>❌ Common Pain Points</h4>
+              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+                <li>Generic messaging fails to address specific needs</li>
+                <li>Missing technical depth for decision makers</li>
+                <li>Lack of regulatory compliance frameworks</li>
+                <li>Insufficient case studies and proof points</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '1rem' }}>
+          <div className="insights-box" style={{ background: '#fff3e0', borderLeft: '4px solid #ff9800' }}>
+            <h4>🎯 Priority Actions Based on Evidence</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+              <div>
+                <strong>Short-term (1-3 months):</strong>
+                <ul style={{ fontSize: '0.9em', margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+                  <li>Add compliance frameworks (DORA, NIS2, GDPR)</li>
+                  <li>Include security certifications</li>
+                  <li>Add executive-focused case studies</li>
+                </ul>
+              </div>
+              <div>
+                <strong>Medium-term (3-6 months):</strong>
+                <ul style={{ fontSize: '0.9em', margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+                  <li>Develop persona-specific landing pages</li>
+                  <li>Create technical white papers</li>
+                  <li>Enhance trust signals throughout</li>
+                </ul>
+              </div>
+              <div>
+                <strong>Long-term (6+ months):</strong>
+                <ul style={{ fontSize: '0.9em', margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+                  <li>Build interactive assessment tools</li>
+                  <li>Develop personalized content experiences</li>
+                  <li>Implement AI-driven content optimization</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

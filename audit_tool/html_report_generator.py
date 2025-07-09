@@ -6,7 +6,7 @@ Generates comprehensive HTML reports from audit data
 
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class HTMLReportGenerator:
     """Generates comprehensive HTML brand experience reports."""
     
-    def __init__(self, template_dir="audit_tool/templates"):
+    def __init__(self, template_dir: str = "audit_tool/templates"):
         """
         Initialize the HTML report generator.
         
@@ -30,7 +30,7 @@ class HTMLReportGenerator:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
     
-    def load_unified_data(self, persona_name=None):
+    def load_unified_data(self, persona_name: Optional[str] = None) -> pd.DataFrame:
         """Load unified audit data from CSV file"""
         try:
             # Load the unified CSV
@@ -47,7 +47,7 @@ class HTMLReportGenerator:
             self.logger.error(f"Error loading unified data: {e}")
             raise
     
-    def generate_executive_summary(self, df):
+    def generate_executive_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate executive summary from unified data"""
         # Calculate key metrics
         total_pages = df['page_id'].nunique()
@@ -75,7 +75,7 @@ class HTMLReportGenerator:
             'tier_breakdown': tier_scores
         }
     
-    def get_tier_analysis(self, df):
+    def get_tier_analysis(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate tier-based analysis from unified data"""
         tier_analysis = {}
         
@@ -103,33 +103,37 @@ class HTMLReportGenerator:
                 'evidence_examples': evidence_examples,
                 'top_issues': top_issues,
                 'effective_copy': effective_copy,
-                'ineffective_copy': ineffective_copy,
-                'sentiment_distribution': tier_data['overall_sentiment'].value_counts().to_dict(),
-                'engagement_distribution': tier_data['engagement_level'].value_counts().to_dict()
+                'ineffective_copy': ineffective_copy
             }
         
         return tier_analysis
     
-    def get_persona_voice_insights(self, df):
+    def get_persona_voice_insights(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Extract persona voice insights from unified data"""
-        # Get sentiment and engagement distributions
-        sentiment_dist = df['overall_sentiment'].value_counts().to_dict()
-        engagement_dist = df['engagement_level'].value_counts().to_dict()
-        conversion_dist = df['conversion_likelihood'].value_counts().to_dict()
         
         # Get copy examples
         effective_examples = df['effective_copy_examples'].dropna().head(5).tolist()
         ineffective_examples = df['ineffective_copy_examples'].dropna().head(5).tolist()
         
-        # Calculate average numeric scores
+        # Calculate average numeric scores based on evidence data
         avg_sentiment = df['sentiment_numeric'].mean() if 'sentiment_numeric' in df.columns else 0
         avg_engagement = df['engagement_numeric'].mean() if 'engagement_numeric' in df.columns else 0
         avg_conversion = df['conversion_numeric'].mean() if 'conversion_numeric' in df.columns else 0
         
+        # Derive sentiment from scores for onsite data
+        score_col = 'final_score' if 'final_score' in df.columns else 'raw_score'
+        if score_col in df.columns:
+            scores = df[score_col].dropna()
+            sentiment_derived = {
+                'positive': int((scores >= 7.0).sum()),
+                'neutral': int(((scores >= 4.0) & (scores < 7.0)).sum()),
+                'negative': int((scores < 4.0).sum())
+            }
+        else:
+            sentiment_derived = {'positive': 0, 'neutral': 0, 'negative': 0}
+        
         return {
-            'sentiment_distribution': sentiment_dist,
-            'engagement_distribution': engagement_dist,
-            'conversion_distribution': conversion_dist,
+            'sentiment_distribution': sentiment_derived,
             'effective_copy_examples': effective_examples,
             'ineffective_copy_examples': ineffective_examples,
             'avg_sentiment_score': round(avg_sentiment, 1),
@@ -138,7 +142,7 @@ class HTMLReportGenerator:
             'total_pages_analyzed': df['page_id'].nunique()
         }
     
-    def get_strategic_recommendations(self, df):
+    def get_strategic_recommendations(self, df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
         """Generate strategic recommendations based on audit findings"""
         recommendations = {
             'high_impact': [],
@@ -184,7 +188,7 @@ class HTMLReportGenerator:
         
         return recommendations
     
-    def get_visual_brand_assessment(self, df):
+    def get_visual_brand_assessment(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Generate visual brand assessment from criteria scores"""
         # Brand-related criteria
         brand_criteria = df[df['criterion_id'].str.contains('brand|visual|positioning|consistency', case=False, na=False)]
@@ -194,20 +198,21 @@ class HTMLReportGenerator:
             brand_criteria = df
         
         brand_score = brand_criteria['final_score'].mean()
-        compliance_rate = len(brand_criteria[brand_criteria['final_score'] >= 7]) / len(brand_criteria) * 100
+        
+        # Calculate compliance rate
+        compliance_rate = (brand_criteria['final_score'] >= 7).mean() * 100
         
         return {
             'overall_brand_score': round(brand_score, 1),
-            'compliance_rate': round(compliance_rate, 1),
-            'total_criteria_assessed': len(brand_criteria),
-            'areas_of_concern': brand_criteria[brand_criteria['final_score'] < 6]['criterion_id'].head(5).tolist(),
-            'top_performing_areas': brand_criteria[brand_criteria['final_score'] >= 8]['criterion_id'].head(5).tolist()
+            'compliance_rate': compliance_rate,
+            'brand_criteria_count': len(brand_criteria),
+            'areas_for_improvement': len(brand_criteria[brand_criteria['final_score'] < 7])
         }
     
-    def generate_report(self, persona_name, output_path=None):
-        """Generate HTML report for a persona using unified data"""
+    def generate_report(self, persona_name: str, output_path: Optional[str] = None) -> str:
+        """Generate HTML report for a specific persona"""
         try:
-            # Load unified data
+            # Load data for this persona
             df = self.load_unified_data(persona_name)
             
             if len(df) == 0:
@@ -220,8 +225,8 @@ class HTMLReportGenerator:
             recommendations = self.get_strategic_recommendations(df)
             visual_brand = self.get_visual_brand_assessment(df)
             
-            # Get some sample URLs for context
-            sample_urls = df[['url', 'final_score']].drop_duplicates().head(5).to_dict('records')
+            # Get some sample URLs for context - fix the type annotation issue
+            sample_urls = df[['url', 'final_score']].drop_duplicates().head(5).to_dict(orient='records')
             
             # Format executive summary properly for template
             executive_summary_text = f"""
@@ -348,6 +353,9 @@ class HTMLReportGenerator:
                 ]
             }
             
+            # Get audit timestamp safely
+            audit_timestamp = df['audited_ts'].iloc[0] if 'audited_ts' in df.columns and len(df) > 0 else datetime.now()
+            
             # Prepare template context with properly formatted data
             context = {
                 'company_name': 'Sopra Steria',
@@ -361,7 +369,7 @@ class HTMLReportGenerator:
                 'recommendations': formatted_recommendations,
                 'footer_description': f'Generated on {datetime.now().strftime("%B %d, %Y")} using unified audit data',
                 'footer_methodology': 'Based on multi-criteria brand experience assessment methodology',
-                'audit_timestamp': df['audited_ts'].iloc[0] if 'audited_ts' in df.columns and len(df) > 0 else datetime.now()
+                'audit_timestamp': audit_timestamp
             }
             
             # Load and render template
@@ -386,7 +394,7 @@ class HTMLReportGenerator:
             self.logger.error(f"Error generating report: {e}")
             raise
 
-    def generate_consolidated_report(self, output_path=None):
+    def generate_consolidated_report(self, output_path: Optional[str] = None) -> str:
         """Generate a single consolidated HTML report for all personas"""
         try:
             # Load unified data for all personas
@@ -398,12 +406,15 @@ class HTMLReportGenerator:
             # Get all personas
             all_personas = sorted(df['persona_id'].unique())
             
+            # Get audit timestamp safely
+            audit_timestamp = df['audited_ts'].iloc[0] if 'audited_ts' in df.columns and len(df) > 0 else datetime.now()
+            
             # Generate consolidated sections
             consolidated_data = {
                 'total_personas': len(all_personas),
                 'personas': all_personas,
                 'generated_date': datetime.now().strftime('%B %d, %Y'),
-                'audit_timestamp': df['audited_ts'].iloc[0] if 'audited_ts' in df.columns and len(df) > 0 else datetime.now()
+                'audit_timestamp': audit_timestamp
             }
             
             # Overall executive summary across all personas
@@ -413,27 +424,32 @@ class HTMLReportGenerator:
             consolidated_data['persona_comparison'] = self.generate_persona_comparison(df, all_personas)
             
             # Cross-persona tier analysis
-            consolidated_data['cross_tier_analysis'] = self.generate_cross_tier_analysis(df)
+            consolidated_data['tier_analysis'] = self.generate_cross_tier_analysis(df)
             
             # Consolidated recommendations
-            consolidated_data['consolidated_recommendations'] = self.generate_consolidated_recommendations(df)
+            consolidated_data['recommendations'] = self.generate_consolidated_recommendations(df)
             
-            # Overall brand health
-            consolidated_data['overall_brand_health'] = self.generate_overall_brand_health(df)
+            # Overall brand health metrics
+            consolidated_data['brand_health'] = self.generate_overall_brand_health(df)
             
-            # Sample URLs across all personas
-            consolidated_data['sample_urls'] = df[['url', 'final_score', 'persona_id']].drop_duplicates().head(10).to_dict('records')
+            # Prepare template context
+            context = {
+                'company_name': 'Sopra Steria',
+                'report_subtitle': 'Consolidated brand experience analysis across all personas',
+                'generated_date': datetime.now().strftime('%B %d, %Y'),
+                'audit_timestamp': audit_timestamp,
+                **consolidated_data
+            }
             
-            # Load and render consolidated template
+            # Load and render template
             template = self.env.get_template('consolidated_brand_report.html')
-            html_content = template.render(consolidated_data)
+            html_content = template.render(context)
             
             # Determine output path
             if output_path is None:
-                output_path = 'audit_outputs/Consolidated_Brand_Report/consolidated_brand_experience_report.html'
-                
-                # Create directory if it doesn't exist
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                output_dir = 'html_reports/Consolidated_Brand_Report'
+                os.makedirs(output_dir, exist_ok=True)
+                output_path = f'{output_dir}/consolidated_brand_experience_report.html'
             
             # Write HTML file
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -445,23 +461,21 @@ class HTMLReportGenerator:
         except Exception as e:
             self.logger.error(f"Error generating consolidated report: {e}")
             raise
-    
-    def generate_consolidated_executive_summary(self, df):
-        """Generate executive summary across all personas"""
+
+    def generate_consolidated_executive_summary(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Generate executive summary for all personas combined"""
         total_personas = df['persona_id'].nunique()
         total_pages = df['page_id'].nunique()
         total_criteria = len(df)
         avg_score = df['final_score'].mean()
         
-        # Issues across all personas
+        # Count issues by severity across all personas
         critical_issues = len(df[df['descriptor'] == 'CRITICAL'])
         concerns = len(df[df['descriptor'] == 'CONCERN'])
         warnings = len(df[df['descriptor'] == 'WARN'])
-        good_scores = len(df[df['descriptor'] == 'GOOD'])
-        excellent_scores = len(df[df['descriptor'] == 'EXCELLENT'])
         
-        # Tier performance across all personas
-        tier_performance = df.groupby('tier_name')['final_score'].mean().round(1).to_dict()
+        # Get tier breakdown across all personas
+        tier_breakdown = df.groupby('tier_name')['final_score'].mean().round(1).to_dict()
         
         return {
             'total_personas': total_personas,
@@ -471,12 +485,10 @@ class HTMLReportGenerator:
             'critical_issues': critical_issues,
             'concerns': concerns,
             'warnings': warnings,
-            'good_scores': good_scores,
-            'excellent_scores': excellent_scores,
-            'tier_performance': tier_performance
+            'tier_breakdown': tier_breakdown
         }
-    
-    def generate_persona_comparison(self, df, all_personas):
+
+    def generate_persona_comparison(self, df: pd.DataFrame, all_personas: List[str]) -> Dict[str, Any]:
         """Generate comparison analysis between personas"""
         persona_comparison = {}
         
@@ -484,116 +496,115 @@ class HTMLReportGenerator:
             persona_data = df[df['persona_id'] == persona]
             
             persona_comparison[persona] = {
-                'total_records': len(persona_data),
-                'unique_pages': persona_data['page_id'].nunique(),
                 'avg_score': round(persona_data['final_score'].mean(), 1),
+                'page_count': persona_data['page_id'].nunique(),
+                'criteria_count': len(persona_data),
                 'critical_issues': len(persona_data[persona_data['descriptor'] == 'CRITICAL']),
-                'concerns': len(persona_data[persona_data['descriptor'] == 'CONCERN']),
-                'warnings': len(persona_data[persona_data['descriptor'] == 'WARN']),
-                'sentiment_positive': len(persona_data[persona_data['overall_sentiment'] == 'Positive']),
-                'sentiment_neutral': len(persona_data[persona_data['overall_sentiment'] == 'Neutral']),
-                'sentiment_negative': len(persona_data[persona_data['overall_sentiment'] == 'Negative']),
-                'engagement_high': len(persona_data[persona_data['engagement_level'] == 'High']),
-                'engagement_medium': len(persona_data[persona_data['engagement_level'] == 'Medium']),
-                'engagement_low': len(persona_data[persona_data['engagement_level'] == 'Low'])
+                'top_performing_tier': persona_data.groupby('tier_name')['final_score'].mean().idxmax(),
+                'lowest_performing_tier': persona_data.groupby('tier_name')['final_score'].mean().idxmin()
             }
         
         return persona_comparison
-    
-    def generate_cross_tier_analysis(self, df):
-        """Generate tier analysis across all personas"""
-        cross_tier = {}
+
+    def generate_cross_tier_analysis(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Generate cross-persona tier analysis"""
+        tier_analysis = {}
         
         for tier_name in df['tier_name'].unique():
             tier_data = df[df['tier_name'] == tier_name]
             
-            cross_tier[tier_name] = {
-                'total_records': len(tier_data),
-                'unique_pages': tier_data['page_id'].nunique(),
-                'personas_affected': tier_data['persona_id'].nunique(),
+            tier_analysis[tier_name] = {
                 'avg_score': round(tier_data['final_score'].mean(), 1),
-                'score_range': f"{tier_data['final_score'].min():.1f} - {tier_data['final_score'].max():.1f}",
-                'top_issues': tier_data[tier_data['descriptor'].isin(['CRITICAL', 'CONCERN'])]['criterion_id'].value_counts().head(3).to_dict(),
-                'persona_performance': tier_data.groupby('persona_id')['final_score'].mean().round(1).to_dict()
+                'total_pages': tier_data['page_id'].nunique(),
+                'persona_performance': tier_data.groupby('persona_id')['final_score'].mean().round(1).to_dict(),
+                'critical_issues': len(tier_data[tier_data['descriptor'] == 'CRITICAL']),
+                'concerns': len(tier_data[tier_data['descriptor'] == 'CONCERN'])
             }
         
-        return cross_tier
-    
-    def generate_consolidated_recommendations(self, df):
-        """Generate consolidated strategic recommendations across all personas"""
+        return tier_analysis
+
+    def generate_consolidated_recommendations(self, df: pd.DataFrame) -> Dict[str, List[Dict[str, Any]]]:
+        """Generate consolidated recommendations across all personas"""
         recommendations = {
             'cross_persona_issues': [],
             'tier_specific_improvements': [],
             'quick_wins': []
         }
         
-        # Cross-persona issues (affecting multiple personas)
-        criterion_persona_counts = df.groupby('criterion_id')['persona_id'].nunique()
-        cross_persona_criteria = criterion_persona_counts[criterion_persona_counts >= 3].index
+        # Find issues that affect multiple personas
+        cross_persona_issues = df.groupby('criterion_id').agg({
+            'persona_id': 'nunique',
+            'final_score': 'mean',
+            'descriptor': lambda x: x.mode().iloc[0] if len(x) > 0 else 'UNKNOWN',
+            'evidence': 'first'
+        }).sort_values(['persona_id', 'final_score'], ascending=[False, True])
         
-        for criterion in cross_persona_criteria[:5]:
-            criterion_data = df[df['criterion_id'] == criterion]
-            avg_score = criterion_data['final_score'].mean()
-            affected_personas = criterion_data['persona_id'].nunique()
-            
+        # Issues affecting 2+ personas
+        multi_persona_issues = cross_persona_issues[cross_persona_issues['persona_id'] >= 2].head(5)
+        
+        for criterion_id, row in multi_persona_issues.iterrows():
             recommendations['cross_persona_issues'].append({
-                'title': f"Address {criterion.replace('_', ' ').title()}",
-                'description': f"Affects {affected_personas} personas with average score {avg_score:.1f}/10",
-                'impact_score': round((10 - avg_score) * (affected_personas / len(df['persona_id'].unique())), 1),
-                'affected_personas': affected_personas
+                'title': f"Cross-Persona Issue: {criterion_id.replace('_', ' ').title()}",
+                'description': row['evidence'][:200] + "..." if len(row['evidence']) > 200 else row['evidence'],
+                'affected_personas': row['persona_id'],
+                'avg_score': round(row['final_score'], 1),
+                'severity': row['descriptor']
             })
         
         # Tier-specific improvements
         for tier_name in df['tier_name'].unique():
             tier_data = df[df['tier_name'] == tier_name]
-            if tier_data['final_score'].mean() < 6:
+            worst_criteria = tier_data.groupby('criterion_id')['final_score'].mean().sort_values().head(3)
+            
+            for criterion_id, score in worst_criteria.items():
                 recommendations['tier_specific_improvements'].append({
-                    'tier': tier_name,
-                    'avg_score': round(tier_data['final_score'].mean(), 1),
-                    'pages_affected': tier_data['page_id'].nunique(),
-                    'priority': 'High' if tier_data['final_score'].mean() < 5 else 'Medium'
+                    'title': f"{tier_name}: {criterion_id.replace('_', ' ').title()}",
+                    'description': f"Improve {criterion_id} performance in {tier_name}",
+                    'current_score': round(score, 1),
+                    'tier': tier_name
                 })
         
-        # Quick wins (low complexity, high impact)
-        quick_win_criteria = df[
+        # Quick wins (low-hanging fruit across all personas)
+        quick_wins = df[
+            (df['descriptor'] == 'WARN') & 
             (df['final_score'] < 7) & 
             (df['tier_weight'] <= 0.3)
         ].groupby('criterion_id')['final_score'].mean().sort_values().head(5)
         
-        for criterion, score in quick_win_criteria.items():
+        for criterion_id, score in quick_wins.items():
             recommendations['quick_wins'].append({
-                'title': f"Quick Fix: {criterion.replace('_', ' ').title()}",
+                'title': f"Quick Win: {criterion_id.replace('_', ' ').title()}",
+                'description': f"Low-effort improvement opportunity with score of {score:.1f}",
                 'current_score': round(score, 1),
-                'potential_impact': round((7 - score) * 0.3, 1),
-                'complexity': 'Low'
+                'effort': 'Low'
             })
         
         return recommendations
-    
-    def generate_overall_brand_health(self, df):
-        """Generate overall brand health assessment"""
-        brand_criteria = df[df['criterion_id'].str.contains('brand|visual|positioning|consistency', case=False, na=False)]
+
+    def generate_overall_brand_health(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Generate overall brand health metrics"""
+        overall_score = df['final_score'].mean()
         
-        if len(brand_criteria) == 0:
-            brand_criteria = df
+        # Calculate health by tier
+        tier_health = df.groupby('tier_name')['final_score'].mean().to_dict()
         
-        overall_score = brand_criteria['final_score'].mean()
-        compliance_rate = len(brand_criteria[brand_criteria['final_score'] >= 7]) / len(brand_criteria) * 100
+        # Calculate health by persona
+        persona_health = df.groupby('persona_id')['final_score'].mean().to_dict()
         
-        # Brand health by persona
-        persona_brand_health = {}
-        for persona in df['persona_id'].unique():
-            persona_brand = brand_criteria[brand_criteria['persona_id'] == persona]
-            if len(persona_brand) > 0:
-                persona_brand_health[persona] = round(persona_brand['final_score'].mean(), 1)
+        # Overall compliance rates
+        excellent_rate = (df['descriptor'] == 'EXCELLENT').mean() * 100
+        good_rate = (df['descriptor'] == 'GOOD').mean() * 100
+        concerning_rate = (df['descriptor'].isin(['CRITICAL', 'CONCERN'])).mean() * 100
         
         return {
             'overall_score': round(overall_score, 1),
-            'compliance_rate': round(compliance_rate, 1),
-            'total_criteria_assessed': len(brand_criteria),
-            'persona_brand_health': persona_brand_health,
-            'critical_brand_issues': brand_criteria[brand_criteria['final_score'] < 5]['criterion_id'].head(5).tolist(),
-            'brand_strengths': brand_criteria[brand_criteria['final_score'] >= 8]['criterion_id'].head(5).tolist()
+            'tier_health': {k: round(v, 1) for k, v in tier_health.items()},
+            'persona_health': {k: round(v, 1) for k, v in persona_health.items()},
+            'excellent_rate': round(excellent_rate, 1),
+            'good_rate': round(good_rate, 1),
+            'concerning_rate': round(concerning_rate, 1),
+            'total_pages_analyzed': df['page_id'].nunique(),
+            'total_criteria_assessed': len(df)
         }
 
 

@@ -12,7 +12,7 @@ import SocialMediaAnalysis from './pages/SocialMediaAnalysis'
 import PersonaViewer from './pages/PersonaViewer'
 import VisualBrandHygiene from './pages/VisualBrandHygiene'
 import StrategicRecommendations from './pages/Recommendations'
-import ImplementationTracking from './pages/ImplementationTracking'
+
 import AuditReports from './pages/AuditReports'
 import './styles/dashboard.css'
 
@@ -33,7 +33,6 @@ function App() {
     { path: '/persona-viewer', label: 'Persona Viewer', icon: '👤' },
     { path: '/visual-brand-hygiene', label: 'Visual Brand Hygiene', icon: '🎨' },
     { path: '/strategic-recommendations', label: 'Strategic Recommendations', icon: '🎯' },
-    { path: '/implementation-tracking', label: 'Implementation Tracking', icon: '📈' },
     { path: '/audit-reports', label: 'Audit Reports', icon: '📄' }
   ]
 
@@ -85,7 +84,7 @@ function App() {
           <Route path="/persona-viewer" element={<PersonaViewer />} />
           <Route path="/visual-brand-hygiene" element={<VisualBrandHygiene />} />
           <Route path="/strategic-recommendations" element={<StrategicRecommendations />} />
-          <Route path="/implementation-tracking" element={<ImplementationTracking />} />
+
           <Route path="/audit-reports" element={<AuditReports />} />
         </Routes>
       </div>

@@ -42,21 +42,95 @@ interface PerformanceData {
   evidence?: string
   trust_credibility_assessment?: string
   information_gaps?: string
+  first_impression?: string
+  language_tone_feedback?: string
+  overall_sentiment?: string
+
+  conversion_likelihood?: string
   raw_score?: number
   url_slug?: string
 }
 
 interface VoiceStats {
-  effective_copy_examples?: {
+  total_entries: number
+  effective_copy_examples: {
     populated: number
     total: number
     percentage: number
   }
-  ineffective_copy_examples?: {
+  ineffective_copy_examples: {
     populated: number
     total: number
     percentage: number
   }
+  business_impact_analysis: {
+    populated: number
+    total: number
+    percentage: number
+  }
+}
+
+interface VoiceExample {
+  type: 'quoted_copy' | 'persona_insight'
+  quote: string
+  analysis: string
+}
+
+interface VoiceAnalysisPage {
+  page_title: string
+  url: string
+  tier_name: string
+  avg_score: number
+  examples: VoiceExample[]
+}
+
+interface BusinessInsight {
+  type: 'strategic_insight'
+  content: string
+}
+
+interface BusinessAnalysisPage {
+  page_title: string
+  url: string
+  tier_name: string
+  avg_score: number
+  insights: BusinessInsight[]
+}
+
+interface VoicePatterns {
+  themes: Record<string, number>
+  sentiment: {
+    positive: number
+    negative: number
+  }
+}
+
+interface CopyReadyQuotes {
+  positive: string[]
+  negative: string[]
+  strategic: string[]
+}
+
+interface AdvancedVoiceAnalysis {
+  persona_id: string
+  persona_name: string
+  voice_stats: VoiceStats
+  effective_analysis: {
+    pages: VoiceAnalysisPage[]
+    total_examples: number
+  }
+  ineffective_analysis: {
+    pages: VoiceAnalysisPage[]
+    total_examples: number
+  }
+  business_impact: {
+    pages: BusinessAnalysisPage[]
+    total_insights: number
+  }
+  voice_patterns: VoicePatterns
+  copy_ready_quotes: CopyReadyQuotes
+  analysis_type: string
+  tier_filter?: string
 }
 
 const PERSONA_NAMES: Record<string, string> = {
@@ -131,6 +205,11 @@ function PersonaViewer() {
   const [activeTab, setActiveTab] = useState('profile')
   const [selectedTiers, setSelectedTiers] = useState<string[]>([])
   const [auditData, setAuditData] = useState<any[]>([])
+  const [advancedVoiceAnalysis, setAdvancedVoiceAnalysis] = useState<AdvancedVoiceAnalysis | null>(null)
+  const [voiceAnalysisLoading, setVoiceAnalysisLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTermIssues, setSearchTermIssues] = useState('')
+  const [selectedQuoteType, setSelectedQuoteType] = useState('positive')
 
   useEffect(() => {
     fetchPersonas()
@@ -140,8 +219,15 @@ function PersonaViewer() {
   useEffect(() => {
     if (selectedPersona) {
       fetchPersonaData(selectedPersona)
+      fetchAdvancedVoiceAnalysis()
     }
   }, [selectedPersona])
+
+  useEffect(() => {
+    if (selectedPersona) {
+      fetchAdvancedVoiceAnalysis()
+    }
+  }, [selectedTiers])
 
   const fetchPersonas = async () => {
     try {
@@ -241,6 +327,34 @@ function PersonaViewer() {
       setError('Failed to load persona data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchAdvancedVoiceAnalysis = async () => {
+    if (!selectedPersona) return
+    
+    setVoiceAnalysisLoading(true)
+    try {
+      const tierFilter = selectedTiers.length > 0 ? selectedTiers.join(',') : undefined
+      const params = new URLSearchParams({
+        analysis_type: 'comprehensive'
+      })
+      
+      if (tierFilter) {
+        params.append('tier_filter', tierFilter)
+      }
+      
+      const response = await fetch(`http://localhost:8000/api/persona/${selectedPersona}/voice-analysis?${params}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch voice analysis')
+      }
+      
+      const analysis = await response.json()
+      setAdvancedVoiceAnalysis(analysis)
+    } catch (error) {
+      console.error('Error fetching advanced voice analysis:', error)
+    } finally {
+      setVoiceAnalysisLoading(false)
     }
   }
 
@@ -639,70 +753,243 @@ function PersonaViewer() {
 
                 {activeTab === 'voice' && (
                   <div className="voice-tab">
-                    <h2>🗣️ Persona Voice Analysis</h2>
+                    <h2>🗣️ Advanced Persona Voice Analysis</h2>
                     
-                    <div className="voice-overview">
-                      <h3>📊 Voice Data Overview</h3>
-                      
-                      <div className="voice-metrics">
-                        {(() => {
-                          const voiceStats = getVoiceStats()
-                          return (
-                            <>
-                              <div className="voice-metric">
-                                <h4>Effective Examples</h4>
-                                <div className="metric-value">
-                                  {voiceStats.effective_copy_examples?.populated || 0}/
-                                  {voiceStats.effective_copy_examples?.total || 0}
+                    {voiceAnalysisLoading ? (
+                      <div className="loading-state">
+                        <p>🔄 Loading advanced voice analysis...</p>
+                      </div>
+                    ) : advancedVoiceAnalysis ? (
+                      <>
+                        {/* Voice Data Overview */}
+                        <div className="voice-overview">
+                          <h3>📊 Voice Data Overview</h3>
+                          
+                          <div className="voice-metrics">
+                            <div className="voice-metric">
+                              <h4>Effective Examples</h4>
+                              <div className="metric-value">
+                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.populated}/
+                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.total}
+                              </div>
+                              <div className="metric-percentage">
+                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.percentage.toFixed(1)}%
+                              </div>
+                              <div className="metric-label">Pages with effective copy examples</div>
+                            </div>
+                            
+                            <div className="voice-metric">
+                              <h4>Issues Identified</h4>
+                              <div className="metric-value">
+                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.populated}/
+                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.total}
+                              </div>
+                              <div className="metric-percentage">
+                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.percentage.toFixed(1)}%
+                              </div>
+                              <div className="metric-label">Pages with ineffective copy examples</div>
+                            </div>
+                            
+                            <div className="voice-metric">
+                              <h4>Business Impact</h4>
+                              <div className="metric-value">
+                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.populated}/
+                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.total}
+                              </div>
+                              <div className="metric-percentage">
+                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.percentage.toFixed(1)}%
+                              </div>
+                              <div className="metric-label">Pages with business impact analysis</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Voice Patterns & Themes */}
+                        <div className="voice-patterns">
+                          <h3>🎯 Voice Patterns & Themes</h3>
+                          
+                          <div className="patterns-grid">
+                            <div className="themes-analysis">
+                              <h4>🔍 Key Themes</h4>
+                              <div className="themes-list">
+                                {Object.entries(advancedVoiceAnalysis.voice_patterns.themes).map(([theme, count]) => (
+                                  <div key={theme} className="theme-item">
+                                    <span className="theme-name">{theme}</span>
+                                    <span className="theme-count">{count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="sentiment-analysis">
+                              <h4>💭 Sentiment Analysis</h4>
+                              <div className="sentiment-metrics">
+                                <div className="sentiment-item positive">
+                                  <span className="sentiment-label">Positive Indicators</span>
+                                  <span className="sentiment-count">{advancedVoiceAnalysis.voice_patterns.sentiment.positive}</span>
                                 </div>
-                                <div className="metric-percentage">
-                                  {(voiceStats.effective_copy_examples?.percentage || 0).toFixed(1)}%
+                                <div className="sentiment-item negative">
+                                  <span className="sentiment-label">Negative Indicators</span>
+                                  <span className="sentiment-count">{advancedVoiceAnalysis.voice_patterns.sentiment.negative}</span>
                                 </div>
-                                <div className="metric-label">Pages with effective copy examples</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Copy-Ready Quotes */}
+                        <div className="copy-ready-quotes">
+                          <h3>📝 Copy-Ready Persona Quotes</h3>
+                          
+                          <div className="quote-controls">
+                            <select 
+                              value={selectedQuoteType} 
+                              onChange={(e) => setSelectedQuoteType(e.target.value)}
+                              className="quote-type-selector"
+                            >
+                              <option value="positive">✅ Positive Quotes</option>
+                              <option value="negative">❌ Negative Quotes</option>
+                              <option value="strategic">🎯 Strategic Quotes</option>
+                            </select>
+                          </div>
+                          
+                          <div className="quotes-list">
+                            {advancedVoiceAnalysis.copy_ready_quotes[selectedQuoteType as keyof CopyReadyQuotes].map((quote, index) => (
+                              <div key={index} className={`quote-item ${selectedQuoteType}`}>
+                                <p>"{quote}"</p>
+                                <button 
+                                  onClick={() => navigator.clipboard.writeText(quote)}
+                                  className="copy-button"
+                                >
+                                  📋 Copy
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Advanced Voice Examples */}
+                        <div className="advanced-voice-examples">
+                          <h3>📝 Advanced Voice Examples</h3>
+                          
+                          <div className="voice-search">
+                            <input
+                              type="text"
+                              placeholder="Search effective examples..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="search-input"
+                            />
+                          </div>
+                          
+                          <div className="voice-examples-grid">
+                            <div className="voice-examples-column">
+                              <h4>✅ Effective Copy Examples ({advancedVoiceAnalysis.effective_analysis.total_examples})</h4>
+                              {advancedVoiceAnalysis.effective_analysis.pages
+                                .filter(page => 
+                                  searchTerm === '' || 
+                                  page.page_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                  page.examples.some(ex => 
+                                    ex.quote.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    ex.analysis.toLowerCase().includes(searchTerm.toLowerCase())
+                                  )
+                                )
+                                .map((page, pageIndex) => (
+                                <div key={pageIndex} className="voice-page-section">
+                                  <h5>{page.page_title}</h5>
+                                  <div className="page-meta">
+                                    <span className="tier-badge">{page.tier_name}</span>
+                                    <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                  </div>
+                                  {page.examples.map((example, exIndex) => (
+                                    <div key={exIndex} className={`voice-example ${example.type}`}>
+                                      {example.quote && (
+                                        <div className="example-quote">"{example.quote}"</div>
+                                      )}
+                                      <div className="example-analysis">{example.analysis}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            <div className="voice-examples-column">
+                              <h4>❌ Ineffective Copy Examples ({advancedVoiceAnalysis.ineffective_analysis.total_examples})</h4>
+                              
+                              <div className="voice-search">
+                                <input
+                                  type="text"
+                                  placeholder="Search ineffective examples..."
+                                  value={searchTermIssues}
+                                  onChange={(e) => setSearchTermIssues(e.target.value)}
+                                  className="search-input"
+                                />
                               </div>
                               
-                              <div className="voice-metric">
-                                <h4>Issues Identified</h4>
-                                <div className="metric-value">
-                                  {voiceStats.ineffective_copy_examples?.populated || 0}/
-                                  {voiceStats.ineffective_copy_examples?.total || 0}
+                              {advancedVoiceAnalysis.ineffective_analysis.pages
+                                .filter(page => 
+                                  searchTermIssues === '' || 
+                                  page.page_title.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
+                                  page.examples.some(ex => 
+                                    ex.quote.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
+                                    ex.analysis.toLowerCase().includes(searchTermIssues.toLowerCase())
+                                  )
+                                )
+                                .map((page, pageIndex) => (
+                                <div key={pageIndex} className="voice-page-section">
+                                  <h5>{page.page_title}</h5>
+                                  <div className="page-meta">
+                                    <span className="tier-badge">{page.tier_name}</span>
+                                    <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                  </div>
+                                  {page.examples.map((example, exIndex) => (
+                                    <div key={exIndex} className={`voice-example ${example.type}`}>
+                                      {example.quote && (
+                                        <div className="example-quote">"{example.quote}"</div>
+                                      )}
+                                      <div className="example-analysis">{example.analysis}</div>
+                                    </div>
+                                  ))}
                                 </div>
-                                <div className="metric-percentage">
-                                  {(voiceStats.ineffective_copy_examples?.percentage || 0).toFixed(1)}%
-                                </div>
-                                <div className="metric-label">Pages with ineffective copy examples</div>
-                              </div>
-                            </>
-                          )
-                        })()}
-                      </div>
-                    </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="voice-examples">
-                      <h3>📝 Voice Examples</h3>
-                      
-                      <div className="voice-examples-grid">
-                        <div className="voice-examples-column">
-                          <h4>✅ Effective Copy Examples</h4>
-                          {performance.filter(page => page.effective_copy_examples).map((page, index) => (
-                            <div key={index} className="voice-example effective">
-                              <h5>{page.title}</h5>
-                              <p>{page.effective_copy_examples}</p>
+                        {/* Business Impact Analysis */}
+                        <div className="business-impact-analysis">
+                          <h3>📊 Strategic Business Impact Analysis</h3>
+                          
+                          <div className="business-insights">
+                            <div className="insights-header">
+                              <h4>🎯 Strategic Insights ({advancedVoiceAnalysis.business_impact.total_insights})</h4>
                             </div>
-                          ))}
+                            
+                            {advancedVoiceAnalysis.business_impact.pages.map((page, pageIndex) => (
+                              <div key={pageIndex} className="business-page-section">
+                                <h5>{page.page_title}</h5>
+                                <div className="page-meta">
+                                  <span className="tier-badge">{page.tier_name}</span>
+                                  <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                </div>
+                                {page.insights.map((insight, insightIndex) => (
+                                  <div key={insightIndex} className="business-insight">
+                                    <div className="insight-content">{insight.content}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        
-                        <div className="voice-examples-column">
-                          <h4>❌ Ineffective Copy Examples</h4>
-                          {performance.filter(page => page.ineffective_copy_examples).map((page, index) => (
-                            <div key={index} className="voice-example ineffective">
-                              <h5>{page.title}</h5>
-                              <p>{page.ineffective_copy_examples}</p>
-                            </div>
-                          ))}
-                        </div>
+                      </>
+                    ) : (
+                      <div className="voice-fallback">
+                        <p>🔄 Click to load advanced voice analysis...</p>
+                        <button onClick={fetchAdvancedVoiceAnalysis} className="load-button">
+                          Load Advanced Analysis
+                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -723,6 +1010,8 @@ function PersonaViewer() {
                           })}
                           evidenceColumns={[
                             'evidence',
+                            'first_impression',
+                            'language_tone_feedback',
                             'effective_copy_examples',
                             'ineffective_copy_examples',
                             'trust_credibility_assessment',
@@ -745,6 +1034,16 @@ function PersonaViewer() {
                                 title: 'AI Analysis'
                               },
                               {
+                                type: 'first_impression',
+                                content: 'The site feels corporate and professional but does not immediately communicate cybersecurity leadership or specialized expertise. The layout is clear but lacks security-specific messaging that would immediately resonate with a CISO.',
+                                title: 'First Impression'
+                              },
+                              {
+                                type: 'language_tone_feedback',
+                                content: 'The tone is professional and corporate but somewhat generic. For cybersecurity executives, the language should be more precise, technical, and focused on risk management and compliance frameworks.',
+                                title: 'Language & Tone Analysis'
+                              },
+                              {
                                 type: 'effective_copy',
                                 content: 'Cybersecurity listed explicitly as a service offering alongside Consulting, Artificial Intelligence, and Technology Services signals recognition of cybersecurity as a core capability.',
                                 title: 'Effective Copy Examples'
@@ -758,6 +1057,16 @@ function PersonaViewer() {
                                 type: 'trust_assessment',
                                 content: 'The site includes corporate governance, financial reports, ethics and compliance, and data protection notices, which are positive trust signals. However, there are no explicit cybersecurity certifications visible.',
                                 title: 'Trust & Credibility Assessment'
+                              },
+                              {
+                                type: 'business_impact',
+                                content: 'The content addresses digital transformation broadly but lacks specific business impact metrics or KPIs that would help cybersecurity executives justify investment in security initiatives.',
+                                title: 'Business Impact Analysis'
+                              },
+                              {
+                                type: 'information_gaps',
+                                content: 'Missing: specific compliance frameworks (DORA, NIS2, GDPR), cybersecurity certifications, case studies with quantifiable security outcomes, and regulatory expertise demonstrations.',
+                                title: 'Information Gaps'
                               }
                             ]}
                             title="Sample Evidence Analysis"

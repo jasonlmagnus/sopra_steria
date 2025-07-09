@@ -266,6 +266,85 @@ app.get('/api/full-recommendations', async (_req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/strategic-assessment:
+ *   get:
+ *     summary: Strategic brand assessment metrics
+ *     parameters:
+ *       - in: query
+ *         name: tier
+ *         schema:
+ *           type: string
+ *         description: Filter by tier (e.g., "Tier 1 (Strategic)")
+ *     responses:
+ *       200:
+ *         description: Strategic assessment object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 distinctiveness:
+ *                   type: object
+ *                 resonance:
+ *                   type: object
+ *                 conversion:
+ *                   type: object
+ */
+app.get('/api/strategic-assessment', async (req, res) => {
+  try {
+    const tier = req.query.tier;
+    const url = tier ? `http://localhost:8000/strategic-assessment?tier=${encodeURIComponent(tier)}` : 'http://localhost:8000/strategic-assessment';
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch strategic assessment' });
+  }
+});
+
+/**
+ * @openapi
+ * /api/success-stories:
+ *   get:
+ *     summary: Top performing success stories
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Number of success stories to return
+ *       - in: query
+ *         name: min_score
+ *         schema:
+ *           type: number
+ *           default: 7.5
+ *         description: Minimum score for success stories
+ *     responses:
+ *       200:
+ *         description: Success stories object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success_stories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
+app.get('/api/success-stories', async (req, res) => {
+  try {
+    const limit = req.query.limit || 5;
+    const min_score = req.query.min_score || 7.5;
+    const response = await axios.get(`http://localhost:8000/success-stories?limit=${limit}&min_score=${min_score}`);
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch success stories' });
+  }
+});
+
 app.get('/api/methodology', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -303,17 +382,7 @@ app.get('/api/reports/:name', async (req, res) => {
   }
 })
 
-app.get('/api/personas', async (_req, res) => {
-  try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const dir = path.join(__dirname, '..', '..', 'audit_inputs', 'personas')
-    const files = await readdir(dir)
-    const personas = files.filter((f) => f.endsWith('.md')).map((f) => f.replace('.md', ''))
-    res.json({ personas })
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to list personas' })
-  }
-})
+
 
 app.get('/api/personas/:name', async (req, res) => {
   try {
@@ -403,24 +472,47 @@ app.get('/api/social-media', async (_req, res) => {
 app.get('/api/brand-hygiene', async (_req, res) => {
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const filePath = path.join(__dirname, '..', '..', 'audit_data', 'unified_audit_data.csv')
-    const results = {}
+    const filePath = path.join(__dirname, '..', '..', 'audit_inputs', 'visual_brand', 'brand_audit_scores.csv')
+    const results = []
+    
     fs.createReadStream(filePath)
       .pipe(csv())
       .on('data', (row) => {
-        const desc = row.descriptor
-        if (desc) {
-          results[desc] = (results[desc] || 0) + 1
-        }
+        // Convert CSV row to structured data
+        results.push({
+          url: row.URL,
+          page_type: row['Page Type'],
+          logo_compliance: parseFloat(row['Logo Compliance']) || 0,
+          color_palette: parseFloat(row['Color Palette']) || 0,
+          typography: parseFloat(row['Typography']) || 0,
+          layout_structure: parseFloat(row['Layout Structure']) || 0,
+          image_quality: parseFloat(row['Image Quality']) || 0,
+          brand_messaging: parseFloat(row['Brand Messaging']) || 0,
+          gating_penalties: parseFloat(row['Gating Penalties']) || 0,
+          final_score: parseFloat(row['Final Score']) || 0,
+          key_violations: row['Key Violations'] || '',
+          // Derived fields for analysis
+          domain: row.URL ? row.URL.split('/')[2] : '',
+          page_name: row.URL ? row.URL.split('/').pop() || 'Homepage' : '',
+          tier_number: row['Page Type']?.includes('Tier 1') ? '1' : 
+                      row['Page Type']?.includes('Tier 2') ? '2' : 
+                      row['Page Type']?.includes('Tier 3') ? '3' : '0',
+          tier_name: row['Page Type']?.includes(' - ') ? row['Page Type'].split(' - ')[1] : row['Page Type'] || 'Unknown',
+          region: row.URL?.includes('.nl') ? 'Netherlands' : 
+                 row.URL?.includes('.be') ? 'Belgium' : 
+                 row.URL?.includes('.com') ? 'Global' : 'Other'
+        })
       })
       .on('end', () => {
         res.json(results)
       })
-      .on('error', () => {
-        res.status(500).json({ error: 'Failed to parse CSV' })
+      .on('error', (err) => {
+        console.error('Error reading brand audit CSV:', err)
+        res.status(500).json({ error: 'Failed to parse brand audit data' })
       })
   } catch (err) {
-    res.status(500).json({ error: 'Failed to load brand hygiene data' })
+    console.error('Error loading brand audit data:', err)
+    res.status(500).json({ error: 'Failed to load brand audit data' })
   }
 })
 
@@ -719,16 +811,42 @@ app.get('/api/html-reports', async (_req, res) => {
 
 /**
  * @openapi
- * /api/html-reports/{path}:
+ * /api/html-reports/{folder}/{file}:
  *   get:
- *     summary: Get HTML report content
+ *     summary: Get HTML report content from folder
  *     parameters:
  *       - in: path
- *         name: path
+ *         name: folder
  *         required: true
  *         schema:
  *           type: string
- *         description: Relative path to HTML report
+ *         description: Report folder name
+ *       - in: path
+ *         name: file
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Report file name
+ *     responses:
+ *       200:
+ *         description: HTML report content
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       404:
+ *         description: Report not found
+ * 
+ * /api/html-reports/{file}:
+ *   get:
+ *     summary: Get HTML report content from root
+ *     parameters:
+ *       - in: path
+ *         name: file
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Report file name
  *     responses:
  *       200:
  *         description: HTML report content
@@ -739,11 +857,41 @@ app.get('/api/html-reports', async (_req, res) => {
  *       404:
  *         description: Report not found
  */
-app.get('/api/html-reports/:path(*)', async (req, res) => {
+// Fixed route to handle nested paths properly
+app.get('/api/html-reports/:folder/:file', async (req, res) => {
   try {
-    const { path: reportPath } = req.params
+    const { folder, file } = req.params
+    const reportPath = `${folder}/${file}`
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     const fullPath = path.join(__dirname, '..', '..', 'html_reports', reportPath)
+    
+    // Security check - ensure path is within html_reports directory
+    const resolvedPath = path.resolve(fullPath)
+    const htmlReportsDir = path.resolve(path.join(__dirname, '..', '..', 'html_reports'))
+    
+    if (!resolvedPath.startsWith(htmlReportsDir)) {
+      return res.status(403).json({ error: 'Access denied' })
+    }
+    
+    const content = await readFile(fullPath, 'utf8')
+    res.setHeader('Content-Type', 'text/html')
+    res.send(content)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      res.status(404).json({ error: 'Report not found' })
+    } else {
+      console.error('Error loading HTML report:', err)
+      res.status(500).json({ error: 'Failed to load HTML report' })
+    }
+  }
+})
+
+// Handle root level HTML files
+app.get('/api/html-reports/:file', async (req, res) => {
+  try {
+    const { file } = req.params
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const fullPath = path.join(__dirname, '..', '..', 'html_reports', file)
     
     // Security check - ensure path is within html_reports directory
     const resolvedPath = path.resolve(fullPath)
@@ -863,6 +1011,57 @@ async function createReportInfo(filePath, relativePath, baseDir) {
     return null
   }
 }
+
+/**
+ * @openapi
+ * /api/strategic-intelligence:
+ *   get:
+ *     summary: Business-focused strategic recommendations with ROI impact
+ *     parameters:
+ *       - in: query
+ *         name: tier
+ *         schema:
+ *           type: string
+ *         description: Filter by content tier (Tier 1, Tier 2, Tier 3)
+ *       - in: query
+ *         name: business_impact
+ *         schema:
+ *           type: string
+ *         description: Filter by business impact level (High, Medium, Low)
+ *       - in: query
+ *         name: timeline
+ *         schema:
+ *           type: string
+ *         description: Filter by implementation timeline (0-30, 30-90, 90+ days)
+ *     responses:
+ *       200:
+ *         description: Strategic intelligence with business context
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 executiveSummary:
+ *                   type: object
+ *                 strategicThemes:
+ *                   type: array
+ *                 businessImpact:
+ *                   type: object
+ *                 recommendations:
+ *                   type: array
+ */
+app.get('/api/strategic-intelligence', async (req, res) => {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString()
+    const url = `http://localhost:8000/strategic-intelligence${queryParams ? '?' + queryParams : ''}`
+    const response = await axios.get(url)
+    res.json(response.data)
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch strategic intelligence' })
+  }
+})
+
+
 
 const port = process.env.PORT || 3000;
 

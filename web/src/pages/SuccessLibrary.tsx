@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useFilters } from '../context/FilterContext';
 import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
-// import { DataTable } from '../components/DataTable';
+import { EvidenceDisplay } from '../components/EvidenceDisplay';
 
 interface SuccessStory {
   id: string;
@@ -20,6 +21,7 @@ interface SuccessStory {
   trustAssessment: string;
   businessImpact: string;
   evidence: string;
+  personaQuotes: string[];
 }
 
 interface PatternData {
@@ -35,12 +37,32 @@ interface EvidenceItem {
   score: number;
 }
 
+interface ReplicationTemplate {
+  tier: string;
+  avgScore: number;
+  keyElements: string[];
+}
+
+interface SuccessLibraryData {
+  successStories: SuccessStory[];
+  overview: {
+    totalPages: number;
+    successPages: number;
+    successRate: number;
+    avgScore: number;
+    excellent: number;
+    veryGood: number;
+    good: number;
+  };
+  patternData: PatternData[];
+  evidenceItems: EvidenceItem[];
+  replicationTemplates: ReplicationTemplate[];
+  personas: string[];
+  tiers: string[];
+}
+
 const SuccessLibrary: React.FC = () => {
   const filters = useFilters();
-  const [loading, setLoading] = useState(true);
-  const [successStories, setSuccessStories] = useState<SuccessStory[]>([]);
-  const [patternData, setPatternData] = useState<PatternData[]>([]);
-  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
   
   // Success Library specific filters
   const [successThreshold, setSuccessThreshold] = useState(7.5);
@@ -48,165 +70,49 @@ const SuccessLibrary: React.FC = () => {
   const [evidenceType, setEvidenceType] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchSuccessData();
-  }, [filters, successThreshold, maxStories]);
-
-  const fetchSuccessData = async () => {
-    try {
-      setLoading(true);
-      // TODO: Replace with actual API calls
-      const mockSuccessStories: SuccessStory[] = [
-        {
-          id: 'story-1',
-          title: 'Financial Services Excellence',
-          score: 9.2,
-          tier: 'Tier 1',
-          persona: 'Strategic Business Leader',
-          url: 'https://soprasteria.be/industries/financial-services',
-          percentile: 95,
-          sentiment: 'Positive',
-          engagement: 'High',
-          conversion: 'High',
-          effectiveExamples: 'As a financial services leader, I need comprehensive digital transformation solutions that understand regulatory complexity. This page demonstrates deep sector expertise through specific case studies and compliance frameworks.',
-          ineffectiveExamples: 'Some technical jargon could be simplified for C-suite consumption.',
-          trustAssessment: 'Strong credibility established through industry certifications, regulatory compliance mentions, and specific client success metrics.',
-          businessImpact: 'Clear ROI demonstrations with quantified outcomes: 40% operational efficiency gains, 25% cost reduction, 60% faster time-to-market.',
-          evidence: 'Page includes comprehensive sector expertise, regulatory compliance framework, and quantified business outcomes.'
-        },
-        {
-          id: 'story-2', 
-          title: 'Cloud Infrastructure Platform',
-          score: 8.8,
-          tier: 'Tier 1',
-          persona: 'Technology Innovation Leader',
-          url: 'https://soprasteria.be/cloud-infrastructure-platforms',
-          percentile: 88,
-          sentiment: 'Positive',
-          engagement: 'High',
-          conversion: 'Medium',
-          effectiveExamples: 'From my perspective as a technology leader, this platform approach addresses our hybrid cloud challenges with Microsoft Azure integration and enterprise-grade security.',
-          ineffectiveExamples: 'Could include more technical architecture diagrams and implementation timelines.',
-          trustAssessment: 'Microsoft partnership credentials and enterprise security certifications build strong technical credibility.',
-          businessImpact: 'Demonstrates scalability benefits, security improvements, and operational cost optimization through cloud transformation.',
-          evidence: 'Strong technical credibility with Microsoft partnership, security certifications, and architectural expertise.'
-        },
-        {
-          id: 'story-3',
-          title: 'Data Science & AI Solutions',
-          score: 8.5,
-          tier: 'Tier 1',
-          persona: 'Cybersecurity Decision Maker',
-          url: 'https://soprasteria.be/data-science-ai',
-          percentile: 82,
-          sentiment: 'Positive',
-          engagement: 'Medium',
-          conversion: 'High',
-          effectiveExamples: 'This resonates with me as a security professional - AI-powered threat detection and predictive analytics for cybersecurity applications.',
-          ineffectiveExamples: 'Security implications of AI implementations could be explored more thoroughly.',
-          trustAssessment: 'AI ethics framework and security-first approach to data science builds trust with security-conscious buyers.',
-          businessImpact: 'Quantified threat detection improvements: 75% faster incident response, 90% reduction in false positives.',
-          evidence: 'Comprehensive AI ethics framework, security-first methodology, and quantified cybersecurity outcomes.'
-        },
-        {
-          id: 'story-4',
-          title: 'Digital Transformation Consulting',
-          score: 8.3,
-          tier: 'Tier 2',
-          persona: 'Transformation Programme Leader',
-          url: 'https://soprasteria.be/digital-transformation-consulting',
-          percentile: 78,
-          sentiment: 'Positive',
-          engagement: 'Medium',
-          conversion: 'Medium',
-          effectiveExamples: 'As a transformation leader, I appreciate the structured approach to change management and stakeholder engagement throughout digital initiatives.',
-          ineffectiveExamples: 'More specific industry vertical examples would strengthen the positioning.',
-          trustAssessment: 'Change management methodology and stakeholder engagement framework demonstrate transformation expertise.',
-          businessImpact: 'Clear transformation outcomes: 50% process efficiency improvement, 30% employee adoption rate increase.',
-          evidence: 'Structured transformation methodology, change management expertise, and measurable business outcomes.'
-        },
-        {
-          id: 'story-5',
-          title: 'Corporate Responsibility',
-          score: 8.0,
-          tier: 'Tier 3',
-          persona: 'Strategic Business Leader',
-          url: 'https://soprasteria.com/corporate-responsibility',
-          percentile: 70,
-          sentiment: 'Positive',
-          engagement: 'Medium',
-          conversion: 'Low',
-          effectiveExamples: 'My organization values sustainability and social impact - this demonstrates genuine commitment to responsible business practices.',
-          ineffectiveExamples: 'Could connect sustainability initiatives more directly to business value and client outcomes.',
-          trustAssessment: 'Comprehensive sustainability reporting and social impact metrics build stakeholder confidence.',
-          businessImpact: 'ESG credentials support tender requirements and stakeholder expectations for responsible partnerships.',
-          evidence: 'Detailed sustainability reporting, social impact metrics, and responsible business practice documentation.'
-        }
-      ];
-
-      const mockPatternData: PatternData[] = [
-        { tier: 'Tier 1', avgScore: 8.8, count: 15 },
-        { tier: 'Tier 2', avgScore: 8.1, count: 8 },
-        { tier: 'Tier 3', avgScore: 7.9, count: 5 }
-      ];
-
-      const mockEvidenceItems: EvidenceItem[] = [
-        {
-          type: 'Copy Examples',
-          content: 'As a financial services leader, I need comprehensive digital transformation solutions that understand regulatory complexity.',
-          pageTitle: 'Financial Services Excellence',
-          score: 9.2
-        },
-        {
-          type: 'Performance Data',
-          content: '40% operational efficiency gains, 25% cost reduction, 60% faster time-to-market.',
-          pageTitle: 'Financial Services Excellence',
-          score: 9.2
-        },
-        {
-          type: 'User Feedback',
-          content: 'From my perspective as a technology leader, this platform approach addresses our hybrid cloud challenges.',
-          pageTitle: 'Cloud Infrastructure Platform',
-          score: 8.8
-        }
-      ];
-
-      setSuccessStories(mockSuccessStories);
-      setPatternData(mockPatternData);
-      setEvidenceItems(mockEvidenceItems);
-    } catch (error) {
-      console.error('Error fetching success data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredStories = successStories.filter(story => {
-    if (story.score < successThreshold) return false;
-    if (filters.persona && filters.persona !== 'All' && story.persona !== filters.persona) return false;
-    if (filters.tier && filters.tier !== 'All' && story.tier !== filters.tier) return false;
-    return true;
-  }).slice(0, maxStories);
-
-  const filteredEvidence = evidenceItems.filter(item => {
-    if (evidenceType !== 'All' && item.type !== evidenceType) return false;
-    if (searchTerm && !item.content.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    return true;
+  // Fetch success library data
+  const { data: successData, isLoading, error } = useQuery<SuccessLibraryData>({
+    queryKey: ['success-library', filters.persona, filters.tier, successThreshold, maxStories, evidenceType, searchTerm],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        successThreshold: successThreshold.toString(),
+        persona: filters.persona || 'All',
+        tier: filters.tier || 'All', 
+        maxStories: maxStories.toString(),
+        evidenceType: evidenceType,
+        searchTerm: searchTerm
+      });
+      
+      const response = await fetch(`/api/success-library?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch success library data');
+      }
+      
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const successMetrics = {
-    totalPages: successStories.length,
-    successPages: filteredStories.length,
-    successRate: (filteredStories.length / successStories.length) * 100,
-    avgScore: filteredStories.reduce((sum, story) => sum + story.score, 0) / filteredStories.length || 0,
-    excellent: filteredStories.filter(s => s.score >= 9.0).length,
-    veryGood: filteredStories.filter(s => s.score >= 8.0 && s.score < 9.0).length,
-    good: filteredStories.filter(s => s.score >= 7.5 && s.score < 8.0).length
+  const successStories = successData?.successStories || [];
+  const overview = successData?.overview || {
+    totalPages: 0,
+    successPages: 0,
+    successRate: 0,
+    avgScore: 0,
+    excellent: 0,
+    veryGood: 0,
+    good: 0
   };
+  const patternData = successData?.patternData || [];
+  const evidenceItems = successData?.evidenceItems || [];
+  const replicationTemplates = successData?.replicationTemplates || [];
+  const availablePersonas = successData?.personas || ['All'];
+  const availableTiers = successData?.tiers || ['All'];
 
   const scoreDistributionData = [
     {
-      x: filteredStories.map(s => s.score),
+      x: successStories.map(s => s.score),
       type: 'histogram',
       nbinsx: 20,
       marker: { color: '#10b981' }
@@ -267,10 +173,20 @@ const SuccessLibrary: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="page-container">
-        <div className="loading-spinner">Loading Success Library...</div>
+        <div className="loading-spinner">🔄 Loading Success Library...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-container">
+        <div className="error-message">
+          ❌ Error loading success library data: {error.message}
+        </div>
       </div>
     );
   }
@@ -305,11 +221,9 @@ const SuccessLibrary: React.FC = () => {
               value={filters.persona || 'All'} 
               onChange={(e) => filters.setPersona(e.target.value === 'All' ? '' : e.target.value)}
             >
-              <option value="All">All</option>
-              <option value="Strategic Business Leader">Strategic Business Leader</option>
-              <option value="Technology Innovation Leader">Technology Innovation Leader</option>
-              <option value="Cybersecurity Decision Maker">Cybersecurity Decision Maker</option>
-              <option value="Transformation Programme Leader">Transformation Programme Leader</option>
+              {availablePersonas.map(persona => (
+                <option key={persona} value={persona}>{persona}</option>
+              ))}
             </select>
           </div>
           
@@ -319,10 +233,9 @@ const SuccessLibrary: React.FC = () => {
               value={filters.tier || 'All'} 
               onChange={(e) => filters.setTier(e.target.value === 'All' ? '' : e.target.value)}
             >
-              <option value="All">All</option>
-              <option value="Tier 1">Tier 1</option>
-              <option value="Tier 2">Tier 2</option>
-              <option value="Tier 3">Tier 3</option>
+              {availableTiers.map(tier => (
+                <option key={tier} value={tier}>{tier}</option>
+              ))}
             </select>
           </div>
           
@@ -342,162 +255,216 @@ const SuccessLibrary: React.FC = () => {
       {/* Success Overview */}
       <div className="section">
         <h2>📊 Success Overview</h2>
-        <div className="metrics-grid">
-          <ScoreCard 
-            label="Total Pages" 
-            value={successMetrics.totalPages.toString()} 
-            variant="default"
-          />
-          <ScoreCard 
-            label="Success Pages" 
-            value={successMetrics.successPages.toString()} 
-            variant="success"
-          />
-          <ScoreCard 
-            label="Success Rate" 
-            value={`${successMetrics.successRate.toFixed(1)}%`} 
-            variant="success"
-          />
-          <ScoreCard 
-            label="Avg Success Score" 
-            value={`${successMetrics.avgScore.toFixed(1)}/10`} 
-            variant="success"
-          />
-        </div>
+        
+        {overview.successPages === 0 ? (
+          <div className="empty-state">
+            <p>⚠️ No success stories match the selected criteria.</p>
+            <p>Try adjusting the success threshold or filters.</p>
+          </div>
+        ) : (
+          <>
+            <div className="metrics-grid">
+              <ScoreCard 
+                label="Total Pages" 
+                value={overview.totalPages.toString()} 
+                variant="default"
+              />
+              <ScoreCard 
+                label="Success Pages" 
+                value={overview.successPages.toString()} 
+                variant="success"
+              />
+              <ScoreCard 
+                label="Success Rate" 
+                value={`${overview.successRate.toFixed(1)}%`} 
+                variant="success"
+              />
+              <ScoreCard 
+                label="Avg Success Score" 
+                value={`${overview.avgScore.toFixed(1)}/10`} 
+                variant="success"
+              />
+            </div>
 
-        <div className="success-distribution">
-          <div className="success-card success-excellent">
-            <div className="metric-value">🏆 {successMetrics.excellent}</div>
-            <div className="metric-label">Excellent (≥9.0)</div>
-          </div>
-          <div className="success-card success-good">
-            <div className="metric-value">⭐ {successMetrics.veryGood}</div>
-            <div className="metric-label">Very Good (8.0-9.0)</div>
-          </div>
-          <div className="success-card">
-            <div className="metric-value">✅ {successMetrics.good}</div>
-            <div className="metric-label">Good (7.5-8.0)</div>
-          </div>
-        </div>
+            <div className="success-distribution">
+              <div className="success-card success-excellent">
+                <div className="metric-value">🏆 {overview.excellent}</div>
+                <div className="metric-label">Excellent (≥9.0)</div>
+              </div>
+              <div className="success-card success-good">
+                <div className="metric-value">⭐ {overview.veryGood}</div>
+                <div className="metric-label">Very Good (8.0-9.0)</div>
+              </div>
+              <div className="success-card">
+                <div className="metric-value">✅ {overview.good}</div>
+                <div className="metric-label">Good (7.5-8.0)</div>
+              </div>
+            </div>
 
-        <div className="charts-grid">
-          <PlotlyChart data={scoreDistributionData} layout={scoreDistributionLayout} />
-          <PlotlyChart data={tierSuccessData} layout={tierSuccessLayout} />
-        </div>
+            {successStories.length > 0 && (
+              <div className="charts-grid">
+                <PlotlyChart data={scoreDistributionData} layout={scoreDistributionLayout} />
+                {patternData.length > 0 && (
+                  <PlotlyChart data={tierSuccessData} layout={tierSuccessLayout} />
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Detailed Success Stories */}
       <div className="section">
         <h2>🏆 Detailed Success Stories</h2>
-        <div className="success-stories">
-          {filteredStories.map((story, index) => {
-            const excellence = getExcellenceLevel(story.score);
-            return (
-              <div key={story.id} className="success-story-card">
-                <div className="story-header">
-                  <h3>#{index + 1} - {story.title}</h3>
-                  <div className={`excellence-badge ${excellence.class}`}>
-                    {excellence.level}
-                  </div>
-                </div>
-
-                <div className="story-metrics">
-                  <div className="metric">
-                    <span className="metric-label">Success Score</span>
-                    <span className="metric-value">{story.score.toFixed(1)}/10</span>
-                  </div>
-                  <div className="metric">
-                    <span className="metric-label">Content Tier</span>
-                    <span className="metric-value">{story.tier}</span>
-                  </div>
-                  <div className="metric">
-                    <span className="metric-label">Persona</span>
-                    <span className="metric-value">{story.persona}</span>
-                  </div>
-                  <div className="metric">
-                    <span className="metric-label">Percentile</span>
-                    <span className="metric-value">{story.percentile}th</span>
-                  </div>
-                </div>
-
-                <div className="story-evidence">
-                  <h4>📋 Success Evidence & Analysis</h4>
-                  
-                  <div className="experience-metrics">
-                    <div className="experience-metric">
-                      <span>{getSentimentColor(story.sentiment)} Sentiment: {story.sentiment}</span>
-                    </div>
-                    <div className="experience-metric">
-                      <span>{getEngagementColor(story.engagement)} Engagement: {story.engagement}</span>
-                    </div>
-                    <div className="experience-metric">
-                      <span>{getConversionColor(story.conversion)} Conversion: {story.conversion}</span>
+        
+        {successStories.length === 0 ? (
+          <div className="empty-state">
+            <p>🎉 No success stories found above {successThreshold.toFixed(1)} with current filters.</p>
+            <p>Try lowering the success threshold or adjusting your filters.</p>
+          </div>
+        ) : (
+          <div className="success-stories">
+            <div className="success-summary">
+              🎉 Found {successStories.length} success stories above {successThreshold.toFixed(1)}
+            </div>
+            
+            {successStories.map((story, index) => {
+              const excellence = getExcellenceLevel(story.score);
+              return (
+                <div key={story.id} className="success-story-card">
+                  <div className="story-header">
+                    <h3>#{index + 1} - {story.title}</h3>
+                    <div className={`excellence-badge ${excellence.class}`}>
+                      {excellence.level}
                     </div>
                   </div>
 
-                  <div className="evidence-grid">
-                    <div className="evidence-section positive">
-                      <h5>✅ What's Working Exceptionally Well:</h5>
-                      <div className="evidence-content">
-                        <p><em>"{story.effectiveExamples}"</em></p>
-                      </div>
+                  <div className="story-metrics">
+                    <div className="metric">
+                      <span className="metric-label">Success Score</span>
+                      <span className="metric-value">{story.score.toFixed(1)}/10</span>
                     </div>
+                    <div className="metric">
+                      <span className="metric-label">Content Tier</span>
+                      <span className="metric-value">{story.tier}</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Persona</span>
+                      <span className="metric-value">{story.persona}</span>
+                    </div>
+                    <div className="metric">
+                      <span className="metric-label">Percentile</span>
+                      <span className="metric-value">{story.percentile}th</span>
+                    </div>
+                  </div>
+
+                  <div className="story-evidence">
+                    <h4>📋 Success Evidence & Analysis</h4>
                     
-                    <div className="evidence-section warning">
-                      <h5>⚠️ Areas for Enhancement:</h5>
-                      <div className="evidence-content">
-                        <p><em>{story.ineffectiveExamples}</em></p>
+                    <div className="experience-metrics">
+                      <div className="experience-metric">
+                        <span>{getSentimentColor(story.sentiment)} Score: {story.score.toFixed(1)}/10</span>
+                      </div>
+                      <div className="experience-metric">
+                        <span>{getEngagementColor(story.engagement)} Tier: {story.tier}</span>
+                      </div>
+                      <div className="experience-metric">
+                        <span>{getConversionColor(story.conversion)} Percentile: {story.percentile}th</span>
                       </div>
                     </div>
-                  </div>
 
-                  {story.trustAssessment && (
-                    <div className="trust-assessment">
-                      <h5>🔒 Trust & Credibility Strengths:</h5>
-                      <p>{story.trustAssessment}</p>
+                    <div className="evidence-grid">
+                      <div className="evidence-section positive">
+                        <h5>✅ What's Working Exceptionally Well:</h5>
+                        <div className="evidence-content">
+                          {story.personaQuotes.length > 0 && (
+                            <div className="persona-quotes">
+                              <h6>💬 Persona Voice:</h6>
+                              {story.personaQuotes.map((quote, i) => (
+                                <div key={i} className="persona-quote">
+                                  <em>"{quote}"</em>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {story.effectiveExamples && (
+                            <div className="full-analysis">
+                              <h6>📋 Full Success Analysis:</h6>
+                              <p><em>{story.effectiveExamples}</em></p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="evidence-section warning">
+                        <h5>⚠️ Areas for Enhancement:</h5>
+                        <div className="evidence-content">
+                          <p><em>{story.ineffectiveExamples || 'Even successful pages can be further optimized'}</em></p>
+                        </div>
+                      </div>
                     </div>
-                  )}
 
-                  {story.businessImpact && (
-                    <div className="business-impact">
-                      <h5>💼 Business Impact & Value:</h5>
-                      <p>{story.businessImpact}</p>
+                    {story.trustAssessment && (
+                      <div className="trust-assessment">
+                        <h5>🔒 Trust & Credibility Strengths:</h5>
+                        <p>{story.trustAssessment}</p>
+                      </div>
+                    )}
+
+                    {story.businessImpact && (
+                      <div className="business-impact">
+                        <h5>💼 Business Impact & Value:</h5>
+                        <p>{story.businessImpact}</p>
+                      </div>
+                    )}
+
+                    {story.evidence && (
+                      <div className="general-evidence">
+                        <h5>🔍 Additional Success Factors:</h5>
+                        <p>{story.evidence}</p>
+                      </div>
+                    )}
+
+                    <div className="story-url">
+                      <strong>🔗 URL:</strong> <a href={story.url} target="_blank" rel="noopener noreferrer">{story.url}</a>
                     </div>
-                  )}
 
-                  <div className="story-url">
-                    <strong>🔗 URL:</strong> <a href={story.url} target="_blank" rel="noopener noreferrer">{story.url}</a>
-                  </div>
-
-                  <div className="action-buttons">
-                    <button className="action-button">📋 Create Template</button>
-                    <button className="action-button">🔍 Analyze Pattern</button>
-                    <button className="action-button">📊 Compare Similar</button>
+                    <div className="action-buttons">
+                      <button className="action-button">📋 Create Template</button>
+                      <button className="action-button">🔍 Analyze Pattern</button>
+                      <button className="action-button">📊 Compare Similar</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Success Pattern Analysis */}
       <div className="section">
         <h2>🔍 Success Pattern Analysis</h2>
         
-        <div className="pattern-analysis">
-          <h3>🏗️ Success Patterns by Content Tier</h3>
-          <div className="pattern-cards">
-            {patternData.map((pattern) => (
-              <div key={pattern.tier} className="pattern-card">
-                <h4>🏗️ {pattern.tier} Content Pattern</h4>
-                <p>Average Success Score: {pattern.avgScore.toFixed(1)}/10</p>
-                <p>Success Stories: {pattern.count} pages</p>
-                <span className="pattern-tag">Tier Pattern</span>
-              </div>
-            ))}
+        {patternData.length === 0 ? (
+          <div className="empty-state">
+            <p>📊 No pattern data available for the selected criteria.</p>
           </div>
-        </div>
+        ) : (
+          <div className="pattern-analysis">
+            <h3>🏗️ Success Patterns by Content Tier</h3>
+            <div className="pattern-cards">
+              {patternData.map((pattern) => (
+                <div key={pattern.tier} className="pattern-card">
+                  <h4>🏗️ {pattern.tier} Content Pattern</h4>
+                  <p>Average Success Score: {pattern.avgScore.toFixed(1)}/10</p>
+                  <p>Success Stories: {pattern.count} pages</p>
+                  <span className="pattern-tag">Tier Pattern</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Evidence Browser */}
@@ -513,6 +480,7 @@ const SuccessLibrary: React.FC = () => {
               <option value="Design Elements">Design Elements</option>
               <option value="User Feedback">User Feedback</option>
               <option value="Performance Data">Performance Data</option>
+              <option value="Trust Assessment">Trust Assessment</option>
             </select>
           </div>
           
@@ -529,8 +497,8 @@ const SuccessLibrary: React.FC = () => {
 
         <div className="evidence-results">
           <h3>📋 Evidence Results</h3>
-          {filteredEvidence.length > 0 ? (
-            filteredEvidence.map((item, index) => (
+          {evidenceItems.length > 0 ? (
+            evidenceItems.map((item, index) => (
               <div key={index} className="evidence-item">
                 <div className="evidence-header">
                   <h4>📋 {item.pageTitle} - Score: {item.score.toFixed(1)}</h4>
@@ -556,17 +524,16 @@ const SuccessLibrary: React.FC = () => {
         
         <div className="replication-templates">
           <h3>📋 Replication Templates</h3>
-          {patternData.map((pattern) => (
-            <div key={pattern.tier} className="pattern-card">
-              <h4>📋 {pattern.tier} Success Template</h4>
-              <p><strong>Average Success Score:</strong> {pattern.avgScore.toFixed(1)}/10</p>
+          {replicationTemplates.map((template) => (
+            <div key={template.tier} className="pattern-card">
+              <h4>📋 {template.tier} Success Template</h4>
+              <p><strong>Average Success Score:</strong> {template.avgScore.toFixed(1)}/10</p>
               
               <h5>Key Elements to Replicate:</h5>
               <ul>
-                <li>✅ Focus on high-performing criteria patterns</li>
-                <li>✅ Maintain consistent messaging tone</li>
-                <li>✅ Implement proven design elements</li>
-                <li>✅ Apply successful content structure</li>
+                {template.keyElements.map((element, index) => (
+                  <li key={index}>✅ {element}</li>
+                ))}
               </ul>
               
               <button className="apply-button">📋 Use This Template</button>

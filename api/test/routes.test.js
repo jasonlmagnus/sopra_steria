@@ -155,10 +155,15 @@ describe('GET /api/social-media', () => {
 });
 
 describe('GET /api/brand-hygiene', () => {
-  it('aggregates descriptor counts', async () => {
+  it('returns brand audit data array', async () => {
     const res = await request(app).get('/api/brand-hygiene');
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('WARN');
+    expect(Array.isArray(res.body)).toBe(true);
+    if (res.body.length > 0) {
+      expect(res.body[0]).toHaveProperty('url');
+      expect(res.body[0]).toHaveProperty('final_score');
+      expect(res.body[0]).toHaveProperty('logo_compliance');
+    }
   });
 });
 

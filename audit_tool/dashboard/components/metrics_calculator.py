@@ -5,7 +5,7 @@ Handles all derived metrics and KPI calculations
 
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 class BrandHealthMetricsCalculator:
     """Calculate brand health metrics and KPIs"""
     
-    def __init__(self, df: pd.DataFrame, recommendations_df: pd.DataFrame = None):
+    def __init__(self, df: pd.DataFrame, recommendations_df: Optional[pd.DataFrame] = None):
         self.df = df
         self.recommendations_df = recommendations_df
         self.validate_data()
     
-    def validate_data(self):
+    def validate_data(self) -> None:
         """Validate that required columns exist"""
         # Check for page_id
         if 'page_id' not in self.df.columns:
@@ -78,34 +78,52 @@ class BrandHealthMetricsCalculator:
     
     def calculate_sentiment_metrics(self) -> Dict:
         """Calculate sentiment-related metrics"""
-        # Use the correct column name from our data structure
-        sentiment_col = 'overall_sentiment' if 'overall_sentiment' in self.df.columns else 'sentiment'
+        # Remove overall_sentiment usage - this should only apply to offsite channels
+        # For onsite data, we'll use other evidence-based metrics
         
-        if sentiment_col not in self.df.columns:
+        # Check if we have valid score data to derive sentiment from
+        score_col = None
+        for col in ['final_score', 'raw_score', 'avg_score']:
+            if col in self.df.columns:
+                score_col = col
+                break
+        
+        if score_col is None:
             return {'positive': 0, 'neutral': 0, 'negative': 0, 'net_sentiment': 0}
         
-        sentiment_counts = self.df[sentiment_col].value_counts(normalize=True) * 100
+        # Derive sentiment from score ranges for onsite data
+        scores = self.df[score_col].dropna()
+        if len(scores) == 0:
+            return {'positive': 0, 'neutral': 0, 'negative': 0, 'net_sentiment': 0}
+        
+        # Convert scores to sentiment categories
+        positive_pct = (scores >= 7.0).sum() / len(scores) * 100
+        neutral_pct = ((scores >= 4.0) & (scores < 7.0)).sum() / len(scores) * 100
+        negative_pct = (scores < 4.0).sum() / len(scores) * 100
         
         return {
-            'positive': sentiment_counts.get('Positive', 0),
-            'neutral': sentiment_counts.get('Neutral', 0),
-            'negative': sentiment_counts.get('Negative', 0),
-            'net_sentiment': sentiment_counts.get('Positive', 0) - sentiment_counts.get('Negative', 0)
+            'positive': positive_pct,
+            'neutral': neutral_pct,
+            'negative': negative_pct,
+            'net_sentiment': positive_pct - negative_pct
         }
     
     def calculate_conversion_readiness(self) -> Dict:
         """Calculate conversion readiness metrics"""
-        # Define conversion-related columns and their priorities
-        conversion_cols = ['conversion_likelihood', 'engagement', 'trust_credibility_signals', 'calltoaction_effectiveness']
+        # Remove problematic fields: conversion_likelihood, engagement, etc.
+        # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
         
-        # Check what columns are actually available
-        available_cols = [col for col in conversion_cols if col in self.df.columns]
+        # Use evidence-based metrics for onsite conversion assessment
+        evidence_cols = ['trust_credibility_assessment', 'business_impact_analysis', 'effective_copy_examples']
         
-        # If no specific conversion columns, use score-based approach
+        # Check what columns are actually available from evidence
+        available_cols = [col for col in evidence_cols if col in self.df.columns]
+        
+        # If no evidence columns, use score-based approach
         if not available_cols:
-            # Use the main score column (either 'final_score', 'raw_score', or 'raw_score')
+            # Use the main score column
             score_col = None
-            for col in ['final_score', 'raw_score', 'raw_score']:
+            for col in ['final_score', 'raw_score', 'avg_score']:
                 if col in self.df.columns:
                     score_col = col
                     break
@@ -114,29 +132,23 @@ class BrandHealthMetricsCalculator:
                 return {'raw_score': 0, 'status': 'Unknown', 'color': 'gray'}
             
             # Calculate average score for conversion readiness
-            conversion_score = self.df[score_col].mean()
+            conversion_score = float(self.df[score_col].mean())
         else:
-            # Calculate average of available conversion-related metrics
-            # Ensure we only work with numeric columns
-            numeric_cols = []
+            # Use evidence-based assessment for conversion readiness
+            # This is more appropriate for onsite data
+            evidence_scores = []
             for col in available_cols:
-                if self.df[col].dtype in ['int64', 'float64'] or pd.api.types.is_numeric_dtype(self.df[col]):
-                    numeric_cols.append(col)
+                # Convert text evidence to numeric scores based on quality
+                col_data = self.df[col].dropna()
+                if len(col_data) > 0:
+                    # Score based on evidence quality (length and content)
+                    scores = col_data.apply(lambda x: min(len(str(x)) / 100, 10) if pd.notna(x) else 0)
+                    evidence_scores.append(float(scores.mean()))
             
-            if not numeric_cols:
-                # Fallback to score column
-                score_col = None
-                for col in ['final_score', 'raw_score', 'raw_score']:
-                    if col in self.df.columns:
-                        score_col = col
-                        break
-                
-                if score_col is None:
-                    return {'raw_score': 0, 'status': 'Unknown', 'color': 'gray'}
-                
-                conversion_score = self.df[score_col].mean()
+            if evidence_scores:
+                conversion_score = sum(evidence_scores) / len(evidence_scores)
             else:
-                conversion_score = self.df[numeric_cols].mean().mean()
+                conversion_score = 0.0
         
         if conversion_score >= 7.0:
             status, color = "High", "green"
@@ -272,10 +284,6 @@ class BrandHealthMetricsCalculator:
             'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip()])[:500],  # Combine evidence
             'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
             'descriptor': lambda x: x.mode().iloc[0] if not x.mode().empty else 'NEEDS IMPROVEMENT',  # Most common descriptor
-            # Experience metrics
-            'overall_sentiment': 'first',
-            'engagement_level': 'first', 
-            'conversion_likelihood': 'first',
             # Content examples for concrete evidence
             'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
             'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
@@ -332,10 +340,7 @@ class BrandHealthMetricsCalculator:
                 'evidence': evidence_summary,
                 'criterion': row.get('criterion_code', 'General'),
                 'descriptor': row.get('descriptor', 'NEEDS IMPROVEMENT'),
-                # Rich supporting data
-                'overall_sentiment': row.get('overall_sentiment', ''),
-                'engagement_level': row.get('engagement_level', ''),
-                'conversion_likelihood': row.get('conversion_likelihood', ''),
+                # Rich supporting data - evidence-based fields only
                 'business_impact_analysis': row.get('business_impact_analysis', ''),
                 'effective_copy_examples': row.get('effective_copy_examples', ''),
                 'ineffective_copy_examples': row.get('ineffective_copy_examples', ''),
@@ -392,9 +397,6 @@ class BrandHealthMetricsCalculator:
             'tier': 'first',
             'url': 'first',
             'url_slug': 'first',
-            'overall_sentiment': 'first',
-            'engagement_level': 'first',
-            'conversion_likelihood': 'first',
             'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e).strip()) > 10])[:500]  # Combine meaningful evidence
         }).reset_index()
         
@@ -420,61 +422,46 @@ class BrandHealthMetricsCalculator:
                 'evidence': row.get('evidence', '')  # Include aggregated evidence
             }
             
-            # Add sentiment if available (string-based)
-            if 'overall_sentiment' in row and pd.notna(row['overall_sentiment']):
-                story['sentiment'] = row['overall_sentiment']
-            
             result.append(story)
         
         return result
-    
-    def _extract_key_strengths(self, row) -> List[str]:
+
+    def _extract_key_strengths(self, row: Any) -> List[str]:
         """Extract key strengths from a high-performing page"""
         strengths = []
         
-        # Check various criteria for strengths - use correct column names
-        if row.get('overall_sentiment') == 'Positive' or row.get('sentiment') == 'Positive':
-            strengths.append("Positive user sentiment")
+        # Base strengths on evidence data and score, not on problematic fields
+        score = row.get('raw_score', 0) or row.get('avg_score', 0) or row.get('final_score', 0)
         
-        # Safely handle conversion_likelihood (string-based)
-        conversion_val = row.get('conversion_likelihood', '')
-        if isinstance(conversion_val, str) and conversion_val.lower() in ['high', 'excellent']:
-            strengths.append("High conversion potential")
+        if score >= 9.0:
+            strengths.append("Exceptional performance across all criteria")
+        elif score >= 8.0:
+            strengths.append("Strong performance with minor optimization opportunities")
+        elif score >= 7.5:
+            strengths.append("Good performance with room for improvement")
         
-        # Check engagement level (string-based)
-        engagement_val = row.get('engagement_level', '')
-        if isinstance(engagement_val, str) and engagement_val.lower() in ['high', 'excellent']:
-            strengths.append("High user engagement")
+        # Check for evidence-based strengths
+        evidence = row.get('evidence', '')
+        if evidence and len(str(evidence)) > 50:
+            strengths.append("Clear evidence of effective implementation")
         
-        # Check for score-based strengths - prioritize avg_score from unified data
-        score_val = row.get('avg_score', 0) or row.get('raw_score', 0) or row.get('final_score', 0)
-        if score_val >= 9.0:
-            strengths.append("Exceptional performance score")
-        elif score_val >= 8.5:
-            strengths.append("Strong performance score")
+        # If we have trust or business impact evidence, highlight those
+        if row.get('trust_credibility_assessment') and len(str(row.get('trust_credibility_assessment', ''))) > 20:
+            strengths.append("Strong trust and credibility indicators")
         
-        return strengths if strengths else ["High-performing page"]
+        if row.get('business_impact_analysis') and len(str(row.get('business_impact_analysis', ''))) > 20:
+            strengths.append("Clear business impact and value proposition")
+        
+        if row.get('effective_copy_examples') and len(str(row.get('effective_copy_examples', ''))) > 20:
+            strengths.append("Effective copy and messaging examples")
+        
+        return strengths[:3]  # Limit to top 3 strengths
     
-    def _extract_page_level_strengths(self, row) -> List[str]:
-        """Extract key strengths from a page-level aggregated row"""
+    def _extract_page_level_strengths(self, row: Any) -> List[str]:
+        """Extract key strengths from a page-level row"""
         strengths = []
         
-        # Check sentiment
-        sentiment = row.get('overall_sentiment', '')
-        if isinstance(sentiment, str) and sentiment.lower() in ['positive', 'excellent']:
-            strengths.append("Positive user sentiment")
-        
-        # Check engagement
-        engagement = row.get('engagement_level', '')
-        if isinstance(engagement, str) and engagement.lower() in ['high', 'excellent']:
-            strengths.append("High user engagement")
-        
-        # Check conversion
-        conversion = row.get('conversion_likelihood', '')
-        if isinstance(conversion, str) and conversion.lower() in ['high', 'excellent']:
-            strengths.append("High conversion potential")
-        
-        # Check score-based strengths
+        # Base strengths on evidence and score data, not on problematic fields
         score_val = row.get('raw_score', 0) or row.get('avg_score', 0)
         if score_val >= 9.0:
             strengths.append("Exceptional performance score")
@@ -571,9 +558,7 @@ class BrandHealthMetricsCalculator:
         
         # Add optional columns only if they exist and are numeric
         optional_cols = {
-            'sentiment_numeric': 'mean',
-            'conversion_likelihood': 'mean',
-            'overall_sentiment': 'mean'
+            'sentiment_numeric': 'mean'
         }
         
         for col, func in optional_cols.items():

@@ -102,9 +102,8 @@ class EmbeddingsGenerator:
         
         # Add scores for context
         final_score = document.get('hygiene_scorecard', {}).get('final_score', 0)
-        sentiment = document.get('experience_report', {}).get('overall_sentiment', '')
-        if final_score and sentiment:
-            text_components.append(f"ASSESSMENT: Score {final_score}/10, Sentiment {sentiment}")
+        if final_score:
+            text_components.append(f"ASSESSMENT: Score {final_score}/10")
         
         # Add main content
         combined_analysis = document.get('embeddings_content', {}).get('combined_analysis', '')

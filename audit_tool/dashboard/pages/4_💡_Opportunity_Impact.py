@@ -433,22 +433,25 @@ def display_opportunity_card(rank, opp):
         # Rich Evidence section - show comprehensive supporting data
         st.markdown("### 📋 Supporting Evidence & Analysis")
         
-        # Experience Metrics
+        # Evidence-Based Metrics (instead of problematic fields)
         col1, col2, col3 = st.columns(3)
         with col1:
-            sentiment = opp.get('overall_sentiment', 'Unknown')
-            sentiment_color = "🟢" if sentiment == "Positive" else "🟡" if sentiment == "Neutral" else "🔴"
-            st.markdown(f"**{sentiment_color} Sentiment:** {sentiment}")
+            # Score-based indicator instead of sentiment
+            score = opp.get('current_score', 0)
+            score_color = "🟢" if score >= 7 else "🟡" if score >= 4 else "🔴"
+            st.markdown(f"**{score_color} Score:** {score:.1f}/10")
         
         with col2:
-            engagement = opp.get('engagement_level', 'Unknown')
-            engagement_color = "🟢" if engagement == "High" else "🟡" if engagement == "Medium" else "🔴"
-            st.markdown(f"**{engagement_color} Engagement:** {engagement}")
+            # Effort level instead of engagement
+            effort = opp.get('effort_level', 'Unknown')
+            effort_color = "🟢" if effort == "Low" else "🟡" if effort == "Medium" else "🔴"
+            st.markdown(f"**{effort_color} Effort:** {effort}")
         
         with col3:
-            conversion = opp.get('conversion_likelihood', 'Unknown')
-            conversion_color = "🟢" if conversion == "High" else "🟡" if conversion == "Medium" else "🔴"
-            st.markdown(f"**{conversion_color} Conversion:** {conversion}")
+            # Impact based on scoring instead of conversion
+            impact = opp.get('potential_impact', 0)
+            impact_color = "🟢" if impact >= 3 else "🟡" if impact >= 1.5 else "🔴"
+            st.markdown(f"**{impact_color} Impact:** {impact:.1f}")
         
         # Content Examples - What's Working vs What's Not
         col1, col2 = st.columns(2)

@@ -31,6 +31,8 @@ interface Recommendation {
   Recommendation: string
   Priority: string
   Impact: string
+  Platform?: string
+  Timeline?: string
 }
 
 function SocialMediaAnalysis() {
@@ -60,41 +62,17 @@ function SocialMediaAnalysis() {
       }
       const result = await response.json()
       
-      // Transform the raw data into the expected format
-      const transformedData = (result.data || []).map((item: any) => ({
-        platform: item.Platform?.toLowerCase() || 'unknown',
-        platform_display: item.Platform || 'Unknown',
-        persona_clean: item.Persona || 'Unknown',
-        raw_score: parseFloat(item.Score || '0'),
-        engagement_numeric: parseFloat(item.Engagement || '0'),
-        sentiment_numeric: parseFloat(item.Sentiment || '0'),
-        critical_issue_flag: (item.Critical || '').toLowerCase() === 'yes',
-        success_flag: (item.Success || '').toLowerCase() === 'yes',
-        quick_win_flag: (item.QuickWin || '').toLowerCase() === 'yes',
-        url: item.URL || ''
-      }))
+      // Use the structured data directly from the new API
+      const socialMediaData = result.data || []
+      setData(socialMediaData)
       
-      setData(transformedData)
+      // Use insights and recommendations from the API
+      setInsights(result.insights || [])
+      setRecommendations(result.recommendations || [])
       
-      // Calculate insights from the real data
-      const calcInsights = calculateInsights(transformedData)
-      setInsights(calcInsights)
-
-      // Fetch strategic recommendations from the API
-      try {
-        const recRes = await fetch('http://localhost:3000/api/recommendations')
-        if (recRes.ok) {
-          const recData = await recRes.json()
-          setRecommendations(recData.recommendations || [])
-        }
-      } catch (recErr) {
-        console.error('Failed to load recommendations:', recErr)
-        setRecommendations([])
-      }
-      
-      // Initialize filters
-      const platforms = [...new Set(transformedData.map((d: any) => d.platform_display))] as string[]
-      const personas = [...new Set(transformedData.map((d: any) => d.persona_clean))] as string[]
+      // Initialize filters with available data
+      const platforms = result.platforms_analyzed || []
+      const personas = result.personas_analyzed || []
       setSelectedPlatforms(platforms)
       setSelectedPersonas(personas)
       setSelectedPlatformForDeepDive(platforms[0] || '')
@@ -302,6 +280,81 @@ function SocialMediaAnalysis() {
     })
     
     return personaData
+  }
+
+  const getPersonaPlatformHeatmapData = () => {
+    const filteredData = getFilteredData()
+    
+    // Create matrix data for heatmap
+    const platforms = [...new Set(filteredData.map(item => item.platform_display))]
+    const personas = [...new Set(filteredData.map(item => item.persona_clean))]
+    
+    const matrix = personas.map(persona => {
+      return platforms.map(platform => {
+        const entries = filteredData.filter(item => 
+          item.persona_clean === persona && item.platform_display === platform
+        )
+        return entries.length > 0 
+          ? entries.reduce((sum, item) => sum + item.raw_score, 0) / entries.length 
+          : 0
+      })
+    })
+    
+    return {
+      platforms,
+      personas,
+      matrix
+    }
+  }
+
+  const getPriorityMatrixData = () => {
+    // Transform recommendations into priority matrix data
+    const matrixData = recommendations.map(rec => {
+      // Map priority to effort (inverse relationship)
+      const effortMap: { [key: string]: number } = { 'High': 1, 'Medium': 2, 'Low': 3 }
+      
+      // Map expected impact to numeric value
+      const impactMap: { [key: string]: number } = { 'High': 3, 'Medium': 2, 'Low': 1 }
+      
+      // Map timeline to size
+      const timelineSize: { [key: string]: number } = {
+        '0-30 days': 20,
+        '1-3 months': 15,
+        '1-2 months': 15,
+        '3-6 months': 10
+      }
+      
+      // Map priority to color
+      const priorityColor: { [key: string]: number } = { 'High': 0, 'Medium': 0.5, 'Low': 1 }
+      
+      return {
+        effort: effortMap[rec.Priority] || 2,
+        impact: impactMap[rec.Impact] || 2,
+        size: timelineSize[rec.Timeline || '1-3 months'] || 15,
+        color: priorityColor[rec.Priority] || 0.5,
+        label: `${rec.Platform || 'Multi-Platform'} - ${rec.Category}`
+      }
+    })
+    
+    return {
+      effort: matrixData.map(d => d.effort),
+      impact: matrixData.map(d => d.impact),
+      size: matrixData.map(d => d.size),
+      colors: matrixData.map(d => d.color),
+      labels: matrixData.map(d => d.label)
+    }
+  }
+
+  const getQuickWinsRecommendations = () => {
+    // Filter recommendations for quick wins (low effort, high impact)
+    const matrixData = getPriorityMatrixData()
+    const quickWins = recommendations.filter((rec, idx) => {
+      const effort = matrixData.effort[idx]
+      const impact = matrixData.impact[idx]
+      return effort >= 2.5 && impact >= 2.5 // Low effort, high impact
+    })
+    
+    return quickWins.length > 0 ? quickWins : recommendations.slice(0, 3) // Fallback to first 3 recommendations
   }
 
   const getDetailedPlatformAnalysis = () => {
@@ -520,7 +573,7 @@ function SocialMediaAnalysis() {
           <div className="filter-group">
             <label>📊 View Mode</label>
             <div className="radio-group">
-              {['Overview', 'Detailed Analysis', 'Recommendations'].map(mode => (
+              {['Overview', 'Detailed Analysis', 'Evidence Analysis', 'Recommendations'].map(mode => (
                 <label key={mode} className="radio-label">
                   <input
                     type="radio"
@@ -647,28 +700,58 @@ function SocialMediaAnalysis() {
           <div className="insights-box">
             <h2>👥 Persona Analysis</h2>
             
-            <div className="chart-container">
-              <PlotlyChart
-                data={[{
-                  type: 'bar',
-                  x: personaPerformance.map(p => p.persona),
-                  y: personaPerformance.map(p => p.avgScore),
-                  marker: { 
-                    color: personaPerformance.map(p => p.avgScore),
+            <div className="chart-grid">
+              <div className="chart-container">
+                <h3>Persona-Platform Performance Heatmap</h3>
+                <PlotlyChart
+                  data={[{
+                    type: 'heatmap',
+                    x: getPersonaPlatformHeatmapData().platforms,
+                    y: getPersonaPlatformHeatmapData().personas,
+                    z: getPersonaPlatformHeatmapData().matrix,
                     colorscale: 'RdYlGn',
-                    cmin: 0,
-                    cmax: 10
-                  },
-                  text: personaPerformance.map(p => `${p.avgScore}/10`),
-                  textposition: 'outside'
-                }]}
-                layout={{
-                  title: 'Average Score by Persona',
-                  xaxis: { title: 'Persona' },
-                  yaxis: { title: 'Average Score', range: [0, 10] },
-                  height: 400
-                }}
-              />
+                    zmin: 0,
+                    zmax: 10,
+                    hoverongaps: false,
+                    showscale: true,
+                    colorbar: {
+                      title: 'Score',
+                      titleside: 'right'
+                    }
+                  }]}
+                  layout={{
+                    title: 'Persona-Platform Performance Matrix',
+                    xaxis: { title: 'Platform' },
+                    yaxis: { title: 'Persona' },
+                    height: 400
+                  }}
+                />
+              </div>
+              
+              <div className="chart-container">
+                <h3>Persona Performance Summary</h3>
+                <PlotlyChart
+                  data={[{
+                    type: 'bar',
+                    x: personaPerformance.map(p => p.persona),
+                    y: personaPerformance.map(p => p.avgScore),
+                    marker: { 
+                      color: personaPerformance.map(p => p.avgScore),
+                      colorscale: 'RdYlGn',
+                      cmin: 0,
+                      cmax: 10
+                    },
+                    text: personaPerformance.map(p => `${p.avgScore}/10`),
+                    textposition: 'outside'
+                  }]}
+                  layout={{
+                    title: 'Average Score by Persona',
+                    xaxis: { title: 'Persona' },
+                    yaxis: { title: 'Average Score', range: [0, 10] },
+                    height: 400
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -799,29 +882,298 @@ function SocialMediaAnalysis() {
         </div>
       )}
 
-      {viewMode === 'Recommendations' && (
+      {viewMode === 'Evidence Analysis' && (
         <div className="insights-box">
-          <h2>🎯 Strategic Recommendations</h2>
+          <h2>🔍 Evidence Analysis & Insights</h2>
           
-          <div className="recommendations-grid">
-            {recommendations.map((rec, idx) => (
-              <div key={idx} className={`recommendation-card ${rec.Priority?.toLowerCase()}`}>
-                <div className="recommendation-header">
-                  <h4>{rec.Category}</h4>
-                  <div className="recommendation-badges">
-                    <span className={`priority-badge ${rec.Priority?.toLowerCase()}`}>
-                      {rec.Priority}
-                    </span>
-                    <span className="impact-badge">
-                      {rec.Impact}
-                    </span>
+          <div className="evidence-sections">
+            <div className="evidence-section">
+              <h3>📊 Sentiment & Engagement Evidence</h3>
+              <div className="evidence-grid">
+                {getFilteredData().slice(0, 6).map((item, index) => (
+                  <div key={index} className="evidence-card">
+                    <div className="evidence-header">
+                      <h4>{item.platform_display}</h4>
+                      <div className="evidence-metrics">
+                        <div className="metric">
+                          <span className="metric-label">Sentiment:</span>
+                          <span className={`metric-value ${item.sentiment_numeric >= 6 ? 'positive' : item.sentiment_numeric >= 4 ? 'neutral' : 'negative'}`}>
+                            {item.sentiment_numeric}/10
+                          </span>
+                        </div>
+                        <div className="metric">
+                          <span className="metric-label">Engagement:</span>
+                          <span className={`metric-value ${item.engagement_numeric >= 6 ? 'high' : item.engagement_numeric >= 4 ? 'medium' : 'low'}`}>
+                            {item.engagement_numeric}/10
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="evidence-content">
+                      <div className="evidence-item">
+                        <strong>🎯 Audience:</strong>
+                        <p>{item.persona_clean}</p>
+                      </div>
+                      
+                      <div className="evidence-item">
+                        <strong>📈 Performance Evidence:</strong>
+                        <p>{item.evidence}</p>
+                      </div>
+                      
+                      <div className="evidence-item">
+                        <strong>✅ What's Working:</strong>
+                        <p className="effective-copy">{item.effective_copy_examples}</p>
+                      </div>
+                      
+                      <div className="evidence-item">
+                        <strong>⚠️ Areas for Improvement:</strong>
+                        <p className="ineffective-copy">{item.ineffective_copy_examples}</p>
+                      </div>
+                      
+                      <div className="evidence-item">
+                        <strong>🔍 Trust Assessment:</strong>
+                        <p>{item.trust_credibility_assessment}</p>
+                      </div>
+                      
+                      <div className="evidence-item">
+                        <strong>💼 Business Impact:</strong>
+                        <p>{item.business_impact_analysis}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="evidence-section">
+              <h3>🚀 Evidence-Based Recommendations</h3>
+              <div className="evidence-recommendations">
+                <div className="recommendation-category">
+                  <h4>📈 High-Performing Content Patterns</h4>
+                  <div className="evidence-insights">
+                    {getFilteredData()
+                      .filter(item => item.raw_score >= 7)
+                      .map((item, index) => (
+                        <div key={index} className="insight-item success">
+                          <strong>{item.platform_display}:</strong> {item.effective_copy_examples}
+                        </div>
+                      ))}
                   </div>
                 </div>
-                <p>{rec.Recommendation}</p>
+                
+                <div className="recommendation-category">
+                  <h4>⚡ Quick Win Opportunities</h4>
+                  <div className="evidence-insights">
+                    {getFilteredData()
+                      .filter(item => item.quick_win_flag)
+                      .map((item, index) => (
+                        <div key={index} className="insight-item warning">
+                          <strong>{item.platform_display}:</strong> {item.ineffective_copy_examples}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                
+                <div className="recommendation-category">
+                  <h4>🔍 Trust & Credibility Enhancements</h4>
+                  <div className="evidence-insights">
+                    {getFilteredData()
+                      .slice(0, 4)
+                      .map((item, index) => (
+                        <div key={index} className="insight-item info">
+                          <strong>{item.platform_display}:</strong> {item.trust_credibility_assessment}
+                        </div>
+                      ))}
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            <div className="evidence-section">
+              <h3>📊 Platform-Specific Evidence Summary</h3>
+              <div className="platform-evidence-summary">
+                {selectedPlatforms.map(platform => {
+                  const platformData = getFilteredData().filter(item => item.platform_display === platform)
+                  if (platformData.length === 0) return null
+                  
+                  const avgSentiment = platformData.reduce((sum, item) => sum + item.sentiment_numeric, 0) / platformData.length
+                  const avgEngagement = platformData.reduce((sum, item) => sum + item.engagement_numeric, 0) / platformData.length
+                  const avgScore = platformData.reduce((sum, item) => sum + item.raw_score, 0) / platformData.length
+                  
+                  return (
+                    <div key={platform} className="platform-summary-card">
+                      <h4>📱 {platform}</h4>
+                      <div className="platform-metrics">
+                        <div className="metric-row">
+                          <span>📊 Overall Score:</span>
+                          <span className={`score ${avgScore >= 7 ? 'high' : avgScore >= 4 ? 'medium' : 'low'}`}>
+                            {avgScore.toFixed(1)}/10
+                          </span>
+                        </div>
+                        <div className="metric-row">
+                          <span>❤️ Sentiment:</span>
+                          <span className={`score ${avgSentiment >= 6 ? 'positive' : avgSentiment >= 4 ? 'neutral' : 'negative'}`}>
+                            {avgSentiment.toFixed(1)}/10
+                          </span>
+                        </div>
+                        <div className="metric-row">
+                          <span>🔥 Engagement:</span>
+                          <span className={`score ${avgEngagement >= 6 ? 'high' : avgEngagement >= 4 ? 'medium' : 'low'}`}>
+                            {avgEngagement.toFixed(1)}/10
+                          </span>
+                        </div>
+                        <div className="metric-row">
+                          <span>📈 Data Points:</span>
+                          <span>{platformData.length} entries</span>
+                        </div>
+                      </div>
+                      
+                      <div className="platform-evidence-sample">
+                        <h5>Key Evidence:</h5>
+                        <p className="evidence-text">{platformData[0]?.evidence}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </div>
+      )}
+
+      {viewMode === 'Recommendations' && (
+        <>
+          <div className="insights-box">
+            <h2>🎯 Strategic Recommendations</h2>
+            
+            <div className="recommendations-grid">
+              {recommendations.map((rec, idx) => (
+                <div key={idx} className={`recommendation-card ${rec.Priority?.toLowerCase()}`}>
+                  <div className="recommendation-header">
+                    <h4>{rec.Category}</h4>
+                    <div className="recommendation-badges">
+                      <span className={`priority-badge ${rec.Priority?.toLowerCase()}`}>
+                        {rec.Priority}
+                      </span>
+                      <span className="impact-badge">
+                        {rec.Impact}
+                      </span>
+                    </div>
+                  </div>
+                  <p>{rec.Recommendation}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Action Priority Matrix */}
+          <div className="insights-box">
+            <h2>🎯 Action Priority Matrix</h2>
+            <p className="matrix-description">
+              Impact vs Effort analysis for strategic prioritization
+            </p>
+            
+            <div className="chart-container">
+              <PlotlyChart
+                data={[{
+                  type: 'scatter',
+                  x: getPriorityMatrixData().effort,
+                  y: getPriorityMatrixData().impact,
+                  mode: 'markers',
+                  marker: {
+                    size: getPriorityMatrixData().size,
+                    color: getPriorityMatrixData().colors,
+                    colorscale: [
+                      [0, '#EF4444'],    // High priority = red
+                      [0.5, '#F59E0B'],  // Medium priority = orange
+                      [1, '#10B981']     // Low priority = green
+                    ],
+                    showscale: true,
+                    colorbar: {
+                      title: 'Priority Level',
+                      titleside: 'right'
+                    }
+                  },
+                  text: getPriorityMatrixData().labels,
+                  textposition: 'top center',
+                  hovertemplate: '<b>%{text}</b><br>' +
+                                'Effort: %{x}<br>' +
+                                'Impact: %{y}<br>' +
+                                '<extra></extra>'
+                }]}
+                layout={{
+                  title: 'Action Priority Matrix: Impact vs Effort',
+                  xaxis: { 
+                    title: 'Implementation Effort (1=High Effort, 3=Low Effort)',
+                    range: [0.5, 3.5],
+                    dtick: 1
+                  },
+                  yaxis: { 
+                    title: 'Expected Impact (1=Low, 3=High)',
+                    range: [0.5, 3.5],
+                    dtick: 1
+                  },
+                  height: 500,
+                  annotations: [
+                    {
+                      x: 3,
+                      y: 3,
+                      text: 'Quick Wins<br>(Low Effort, High Impact)',
+                      showarrow: false,
+                      font: { size: 10, color: 'green' },
+                      bgcolor: 'rgba(16, 185, 129, 0.1)',
+                      bordercolor: 'green'
+                    },
+                    {
+                      x: 1,
+                      y: 3,
+                      text: 'Strategic Projects<br>(High Effort, High Impact)',
+                      showarrow: false,
+                      font: { size: 10, color: 'blue' },
+                      bgcolor: 'rgba(59, 130, 246, 0.1)',
+                      bordercolor: 'blue'
+                    },
+                    {
+                      x: 3,
+                      y: 1,
+                      text: 'Fill-ins<br>(Low Effort, Low Impact)',
+                      showarrow: false,
+                      font: { size: 10, color: 'gray' },
+                      bgcolor: 'rgba(156, 163, 175, 0.1)',
+                      bordercolor: 'gray'
+                    },
+                    {
+                      x: 1,
+                      y: 1,
+                      text: 'Questionable<br>(High Effort, Low Impact)',
+                      showarrow: false,
+                      font: { size: 10, color: 'red' },
+                      bgcolor: 'rgba(239, 68, 68, 0.1)',
+                      bordercolor: 'red'
+                    }
+                  ]
+                }}
+              />
+            </div>
+            
+            {/* Quick Wins Section */}
+            <div className="quick-wins-section">
+              <h3>⚡ Recommended Quick Wins</h3>
+              <div className="quick-wins-grid">
+                {getQuickWinsRecommendations().map((win, idx) => (
+                  <div key={idx} className="quick-win-card">
+                    <h4>🎯 {win.Platform || 'Multi-Platform'} - {win.Category}</h4>
+                    <p>{win.Recommendation}</p>
+                    <div className="quick-win-meta">
+                      <strong>Timeline:</strong> {win.Timeline || '1-3 months'} | <strong>Priority:</strong> {win.Priority}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

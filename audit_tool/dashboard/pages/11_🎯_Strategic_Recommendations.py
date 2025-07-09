@@ -349,17 +349,16 @@ class StrategicRecommendationEngine:
         return recommendations
     
     def extract_content_recommendations(self) -> List[Dict]:
-        """Extract recommendations based on content analysis (e.g., sentiment, engagement)"""
+        """Extract recommendations based on content analysis (e.g., low scores, evidence)"""
         # Define content-related columns that should exist
-        required_cols = ['sentiment_label', 'engagement_level', 'raw_score']
+        required_cols = ['raw_score']
         if not all(col in self.master_df.columns for col in required_cols):
             return []
             
-        # Focus on pages with negative sentiment or low engagement
+        # Focus on pages with low scores (instead of problematic sentiment/engagement fields)
         content_issues = (
             self.master_df[
-                (self.master_df['sentiment_label'] == 'Negative') |
-                (self.master_df['engagement_level'] == 'Low')
+                (self.master_df['raw_score'] < 5.0)
             ]
             .sort_values('raw_score', ascending=True)
             .head(5)
@@ -369,24 +368,25 @@ class StrategicRecommendationEngine:
         for _, row in content_issues.iterrows():
             page_title = self.get_friendly_page_title(str(row.get('url_slug', '')))
             score = float(row.get('raw_score', 0) or 0)
-            sentiment = row.get('sentiment_label', 'N/A')
-            engagement = row.get('engagement_level', 'N/A')
             
-                recommendations.append({
+            # Use evidence-based assessment instead of problematic fields
+            evidence = row.get('evidence', 'Low performance identified')
+            
+            recommendations.append({
                 'id': f"content_{row.get('page_id', 'unknown')}",
                 'title': f"Improve Content Performance on {page_title}",
-                'description': f"Low content performance on {page_title} (Score: {score:.1f}, Sentiment: {sentiment}, Engagement: {engagement}).",
+                'description': f"Low content performance on {page_title} (Score: {score:.1f}). {evidence[:100]}...",
                 'category': 'Content Improvement',
                 'impact_score': min(10.0, 10.0 - score),
-                    'urgency_score': 5,
-                    'timeline': '30-90 days',
+                'urgency_score': 5,
+                'timeline': '30-90 days',
                 'page_id': row.get('page_id'),
                 'persona': row.get('persona_id', 'All'),
                 'url': row.get('url', ''),
-                'evidence': f"Sentiment: {sentiment}, Engagement: {engagement}",
+                'evidence': evidence,
                 'criterion': 'content_quality',
                 'source': 'Unified Dataset - Content Analysis'
-                })
+            })
         
         return recommendations
     

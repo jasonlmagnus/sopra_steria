@@ -31,9 +31,12 @@ const CheckCircleIcon = ({ className }: { className: string }) => (
 );
 
 interface EvidenceItem {
-  type: 'evidence' | 'effective_copy' | 'ineffective_copy' | 'trust_assessment' | 'business_impact' | 'information_gaps';
+  type: 'evidence' | 'effective_copy' | 'ineffective_copy' | 'trust_assessment' | 'business_impact' | 'information_gaps' | 'first_impression' | 'language_tone_feedback';
   content: string;
   title?: string;
+  score?: number;
+  persona?: string;
+  url?: string;
 }
 
 interface EvidenceDisplayProps {
@@ -65,6 +68,10 @@ export const EvidenceDisplay: React.FC<EvidenceDisplayProps> = ({
         return <DocumentTextIcon className="w-4 h-4 text-purple-500" />;
       case 'information_gaps':
         return <ExclamationTriangleIcon className="w-4 h-4 text-orange-500" />;
+      case 'first_impression':
+        return <DocumentTextIcon className="w-4 h-4 text-cyan-500" />;
+      case 'language_tone_feedback':
+        return <DocumentTextIcon className="w-4 h-4 text-indigo-500" />;
       default:
         return <DocumentTextIcon className="w-4 h-4 text-gray-500" />;
     }
@@ -84,6 +91,10 @@ export const EvidenceDisplay: React.FC<EvidenceDisplayProps> = ({
         return 'Business Impact';
       case 'information_gaps':
         return 'Information Gaps';
+      case 'first_impression':
+        return 'First Impression';
+      case 'language_tone_feedback':
+        return 'Language & Tone';
       default:
         return 'Evidence';
     }
@@ -101,6 +112,10 @@ export const EvidenceDisplay: React.FC<EvidenceDisplayProps> = ({
         return 'border-purple-200 bg-purple-50';
       case 'information_gaps':
         return 'border-orange-200 bg-orange-50';
+      case 'first_impression':
+        return 'border-cyan-200 bg-cyan-50';
+      case 'language_tone_feedback':
+        return 'border-indigo-200 bg-indigo-50';
       default:
         return 'border-gray-200 bg-gray-50';
     }
@@ -207,15 +222,24 @@ interface EvidenceBrowserProps {
   data: any[];
   evidenceColumns: string[];
   onEvidenceSelect?: (evidence: EvidenceItem[]) => void;
+  groupByPersona?: boolean;
+  showSummaryStats?: boolean;
+  maxResults?: number;
 }
 
 export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
   data,
   evidenceColumns,
-  onEvidenceSelect
+  onEvidenceSelect,
+  groupByPersona = false,
+  showSummaryStats = true,
+  maxResults = 50
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedPersona, setSelectedPersona] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('score');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const extractEvidenceFromRow = (row: any): EvidenceItem[] => {
     const evidence: EvidenceItem[] = [];
@@ -229,11 +253,16 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
         else if (column.includes('trust')) type = 'trust_assessment';
         else if (column.includes('business_impact')) type = 'business_impact';
         else if (column.includes('information_gaps')) type = 'information_gaps';
+        else if (column.includes('first_impression')) type = 'first_impression';
+        else if (column.includes('language_tone_feedback')) type = 'language_tone_feedback';
         
         evidence.push({
           type,
           content: row[column].trim(),
-          title: column.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+          title: column.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          score: row.final_score || row.raw_score || 0,
+          persona: row.persona || row.persona_clean || 'Unknown',
+          url: row.url || row.page_url || ''
         });
       }
     });
@@ -246,7 +275,9 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
     
     if (searchQuery) {
       const hasMatch = evidence.some(item => 
-        item.content.toLowerCase().includes(searchQuery.toLowerCase())
+        item.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.persona?.toLowerCase().includes(searchQuery.toLowerCase())
       );
       if (!hasMatch) return false;
     }
@@ -256,12 +287,48 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
       if (!hasType) return false;
     }
     
+    if (selectedPersona !== 'all') {
+      const hasPersona = evidence.some(item => item.persona === selectedPersona);
+      if (!hasPersona) return false;
+    }
+    
     return evidence.length > 0;
-  });
+  }).sort((a, b) => {
+    let aValue, bValue;
+    
+    if (sortBy === 'score') {
+      aValue = a.final_score || a.raw_score || 0;
+      bValue = b.final_score || b.raw_score || 0;
+    } else if (sortBy === 'persona') {
+      aValue = a.persona || a.persona_clean || 'Unknown';
+      bValue = b.persona || b.persona_clean || 'Unknown';
+    } else if (sortBy === 'url') {
+      aValue = a.url || a.page_url || '';
+      bValue = b.url || b.page_url || '';
+    } else {
+      aValue = a.url_slug || a.page_id || '';
+      bValue = b.url_slug || b.page_id || '';
+    }
+    
+    if (sortOrder === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  }).slice(0, maxResults);
+
+  const personas = [...new Set(data.map(row => row.persona || row.persona_clean || 'Unknown'))].filter(Boolean);
+  const summaryStats = {
+    totalEntries: filteredData.length,
+    avgScore: filteredData.reduce((sum, row) => sum + (row.final_score || row.raw_score || 0), 0) / filteredData.length,
+    personaCount: personas.length,
+    evidenceTypeCount: [...new Set(filteredData.flatMap(row => extractEvidenceFromRow(row).map(e => e.type)))].length
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-4">
+      {/* Enhanced Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="flex-1">
           <EvidenceSearch onSearch={setSearchQuery} />
         </div>
@@ -272,13 +339,64 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
         >
           <option value="all">All Evidence Types</option>
           <option value="evidence">AI Analysis</option>
+          <option value="first_impression">First Impression</option>
+          <option value="language_tone_feedback">Language & Tone</option>
           <option value="effective_copy">Effective Examples</option>
           <option value="ineffective_copy">Areas for Improvement</option>
           <option value="trust_assessment">Trust & Credibility</option>
           <option value="business_impact">Business Impact</option>
           <option value="information_gaps">Information Gaps</option>
         </select>
+        <select
+          value={selectedPersona}
+          onChange={(e) => setSelectedPersona(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="all">All Personas</option>
+          {personas.map(persona => (
+            <option key={persona} value={persona}>{persona}</option>
+          ))}
+        </select>
+        <div className="flex space-x-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="score">Sort by Score</option>
+            <option value="persona">Sort by Persona</option>
+            <option value="url">Sort by URL</option>
+          </select>
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </button>
+        </div>
       </div>
+
+      {/* Summary Statistics */}
+      {showSummaryStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900">{summaryStats.totalEntries}</div>
+            <div className="text-sm text-gray-600">Total Entries</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900">{summaryStats.avgScore.toFixed(1)}</div>
+            <div className="text-sm text-gray-600">Average Score</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900">{summaryStats.personaCount}</div>
+            <div className="text-sm text-gray-600">Personas</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-semibold text-gray-900">{summaryStats.evidenceTypeCount}</div>
+            <div className="text-sm text-gray-600">Evidence Types</div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {filteredData.map((row, index) => {
@@ -293,9 +411,16 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
                   <h3 className="font-medium text-gray-900">
                     {pageTitle.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                   </h3>
-                  <span className="text-sm font-medium text-gray-600">
-                    Score: {score.toFixed(1)}/10
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-600">
+                      Score: {score.toFixed(1)}/10
+                    </span>
+                    {row.persona && (
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                        {row.persona}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {row.url && (
                   <a 
@@ -307,6 +432,7 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
                     {row.url}
                   </a>
                 )}
+
               </div>
               <div className="p-4">
                 <EvidenceDisplay 

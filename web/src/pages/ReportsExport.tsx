@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useFilters } from '../context/FilterContext';
 import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
@@ -20,12 +21,28 @@ interface ReportConfig {
 }
 
 interface HTMLReportOptions {
+  generationMode: string;
+  personas: string[];
   includeTierAnalysis: boolean;
   includePersonaVoice: boolean;
   includeRecommendations: boolean;
   includeVisualBrand: boolean;
   autoOpen: boolean;
   createZip: boolean;
+}
+
+interface ExportConfig {
+  format: string;
+  scope: string;
+  filters?: any;
+  columns?: string[];
+}
+
+interface BulkExportConfig {
+  includeMaster: boolean;
+  includeDatasets: boolean;
+  includeReports: boolean;
+  includeRaw: boolean;
 }
 
 const ReportsExport: React.FC = () => {
@@ -50,11 +67,13 @@ const ReportsExport: React.FC = () => {
     includeRecommendations: true,
     format: 'PDF'
   });
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportResult, setReportResult] = useState<any>(null);
   
   // HTML Reports state
-  const [generationMode, setGenerationMode] = useState('Single Persona');
-  const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
   const [htmlOptions, setHtmlOptions] = useState<HTMLReportOptions>({
+    generationMode: 'Single Persona',
+    personas: [],
     includeTierAnalysis: true,
     includePersonaVoice: true,
     includeRecommendations: true,
@@ -62,10 +81,21 @@ const ReportsExport: React.FC = () => {
     autoOpen: false,
     createZip: true
   });
+  const [generatingHtml, setGeneratingHtml] = useState(false);
+  const [htmlResult, setHtmlResult] = useState<any>(null);
   
   // Export Center state
-  const [exportFormat, setExportFormat] = useState('CSV');
-  const [exportScope, setExportScope] = useState('Filtered Data');
+  const [exportConfig, setExportConfig] = useState<ExportConfig>({
+    format: 'CSV',
+    scope: 'Filtered Data'
+  });
+  const [bulkExportConfig, setBulkExportConfig] = useState<BulkExportConfig>({
+    includeMaster: true,
+    includeDatasets: true,
+    includeReports: true,
+    includeRaw: false
+  });
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchReportData();
@@ -83,7 +113,8 @@ const ReportsExport: React.FC = () => {
 
       const dsRes = await fetch('http://localhost:3000/api/datasets');
       if (dsRes.ok) {
-        setDatasets(dsRes.json().datasets || []);
+        const dsData = await dsRes.json();
+        setDatasets(dsData.datasets || []);
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -146,22 +177,138 @@ const ReportsExport: React.FC = () => {
     height: 400
   };
 
-  const generateCustomReport = () => {
-    console.log('Generating custom report:', reportConfig);
-    // TODO: Implement actual report generation
-    alert(`Generating ${reportConfig.reportType} for ${reportConfig.personas.length || 'all'} personas`);
+  const generateCustomReport = async () => {
+    setGeneratingReport(true);
+    setReportResult(null);
+    
+    try {
+      const response = await fetch('http://localhost:3000/api/reports/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportConfig)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      setReportResult(result);
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setReportResult({ error: `Failed to generate report: ${error}` });
+    } finally {
+      setGeneratingReport(false);
+    }
   };
 
-  const generateHtmlReports = () => {
-    console.log('Generating HTML reports:', { generationMode, selectedPersonas, htmlOptions });
-    // TODO: Implement actual HTML report generation
-    alert(`Generating HTML reports in ${generationMode} mode`);
+  const generateHtmlReports = async () => {
+    setGeneratingHtml(true);
+    setHtmlResult(null);
+    
+    try {
+      const response = await fetch('http://localhost:3000/api/reports/html', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(htmlOptions)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      setHtmlResult(result);
+    } catch (error) {
+      console.error('Error generating HTML reports:', error);
+      setHtmlResult({ error: `Failed to generate HTML reports: ${error}` });
+    } finally {
+      setGeneratingHtml(false);
+    }
   };
 
-  const exportData = () => {
-    console.log('Exporting data:', { exportFormat, exportScope });
-    // TODO: Implement actual data export
-    alert(`Exporting ${exportScope} as ${exportFormat}`);
+  const exportData = async () => {
+    setExporting(true);
+    
+    try {
+      const exportRequest = {
+        ...exportConfig,
+        filters: {
+          persona: filters.persona,
+          tier: filters.tier,
+          scoreRange: filters.scoreRange
+        },
+        columns: selectedColumns
+      };
+      
+      const response = await fetch('http://localhost:3000/api/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exportRequest)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Handle file download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export_${new Date().toISOString().slice(0, 10)}.${exportConfig.format.toLowerCase()}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert(`Export failed: ${error}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const bulkExport = async () => {
+    setExporting(true);
+    
+    try {
+      const response = await fetch('http://localhost:3000/api/export/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bulkExportConfig)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Handle ZIP download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bulk_export_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+    } catch (error) {
+      console.error('Error bulk exporting:', error);
+      alert(`Bulk export failed: ${error}`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -529,9 +676,81 @@ const ReportsExport: React.FC = () => {
               </div>
             </div>
             
-            <button className="generate-button" onClick={generateCustomReport}>
-              📊 Generate Custom Report
+            <button 
+              className="generate-button" 
+              onClick={generateCustomReport}
+              disabled={generatingReport}
+            >
+              {generatingReport ? '🔄 Generating...' : '📊 Generate Custom Report'}
             </button>
+            
+            {/* Report Results */}
+            {reportResult && (
+              <div className="report-results">
+                <h4>📊 Report Results</h4>
+                {reportResult.error ? (
+                  <div className="error-message">
+                    <strong>Error:</strong> {reportResult.error}
+                  </div>
+                ) : (
+                  <div className="success-message">
+                    <h5>{reportResult.type}</h5>
+                    <p><strong>Generated:</strong> {new Date(reportResult.generated_date).toLocaleString()}</p>
+                    
+                    {reportResult.metrics && (
+                      <div className="report-metrics">
+                        <h6>Key Metrics:</h6>
+                        <ul>
+                          <li>Total Records: {reportResult.metrics.total_records?.toLocaleString()}</li>
+                          <li>Unique Pages: {reportResult.metrics.unique_pages?.toLocaleString()}</li>
+                          <li>Average Score: {reportResult.metrics.average_score}/10</li>
+                          <li>Critical Issues: {reportResult.metrics.critical_issues}</li>
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {reportResult.summary && (
+                      <div className="report-summary">
+                        <p>{reportResult.summary}</p>
+                      </div>
+                    )}
+                    
+                    {reportResult.top_issues && reportResult.top_issues.length > 0 && (
+                      <div className="top-issues">
+                        <h6>Top Issues:</h6>
+                        <ul>
+                          {reportResult.top_issues.map((issue: any, index: number) => (
+                            <li key={index}>{issue.criterion}: {issue.score}/10</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {reportResult.personas && (
+                      <div className="persona-results">
+                        <h6>Persona Performance:</h6>
+                        {reportResult.personas.map((persona: any, index: number) => (
+                          <div key={index} className="persona-item">
+                            <strong>{persona.persona_id}:</strong> {persona.average_score}/10 ({persona.page_count} pages)
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {reportResult.success_stories && (
+                      <div className="success-stories">
+                        <h6>Success Stories:</h6>
+                        {reportResult.success_stories.map((story: any, index: number) => (
+                          <div key={index} className="story-item">
+                            <strong>#{story.rank}:</strong> {story.url} - {story.score}/10
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -551,8 +770,8 @@ const ReportsExport: React.FC = () => {
                     <input 
                       type="radio" 
                       value="Single Persona" 
-                      checked={generationMode === 'Single Persona'}
-                      onChange={(e) => setGenerationMode(e.target.value)}
+                      checked={htmlOptions.generationMode === 'Single Persona'}
+                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
                     />
                     Single Persona
                   </label>
@@ -560,8 +779,8 @@ const ReportsExport: React.FC = () => {
                     <input 
                       type="radio" 
                       value="Multiple Personas" 
-                      checked={generationMode === 'Multiple Personas'}
-                      onChange={(e) => setGenerationMode(e.target.value)}
+                      checked={htmlOptions.generationMode === 'Multiple Personas'}
+                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
                     />
                     Multiple Personas
                   </label>
@@ -569,8 +788,8 @@ const ReportsExport: React.FC = () => {
                     <input 
                       type="radio" 
                       value="All Personas" 
-                      checked={generationMode === 'All Personas'}
-                      onChange={(e) => setGenerationMode(e.target.value)}
+                      checked={htmlOptions.generationMode === 'All Personas'}
+                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
                     />
                     All Personas
                   </label>
@@ -578,23 +797,24 @@ const ReportsExport: React.FC = () => {
                     <input 
                       type="radio" 
                       value="Consolidated Report" 
-                      checked={generationMode === 'Consolidated Report'}
-                      onChange={(e) => setGenerationMode(e.target.value)}
+                      checked={htmlOptions.generationMode === 'Consolidated Report'}
+                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
                     />
                     Consolidated Report
                   </label>
                 </div>
                 
-                {(generationMode === 'Single Persona' || generationMode === 'Multiple Personas') && (
+                {(htmlOptions.generationMode === 'Single Persona' || htmlOptions.generationMode === 'Multiple Personas') && (
                   <div className="persona-selection">
                     <select 
-                      multiple={generationMode === 'Multiple Personas'}
-                      value={selectedPersonas}
-                      onChange={(e) => setSelectedPersonas(
-                        generationMode === 'Single Persona' 
+                      multiple={htmlOptions.generationMode === 'Multiple Personas'}
+                      value={htmlOptions.personas}
+                      onChange={(e) => setHtmlOptions({
+                        ...htmlOptions,
+                        personas: htmlOptions.generationMode === 'Single Persona' 
                           ? [e.target.value]
                           : Array.from(e.target.selectedOptions, option => option.value)
-                      )}
+                      })}
                     >
                       <option value="Strategic Business Leader">Strategic Business Leader</option>
                       <option value="Technology Innovation Leader">Technology Innovation Leader</option>
@@ -669,7 +889,7 @@ const ReportsExport: React.FC = () => {
               <div className="preview-metrics">
                 <ScoreCard 
                   label="Reports to Generate" 
-                  value={generationMode === 'All Personas' ? '4' : selectedPersonas.length.toString()} 
+                  value={htmlOptions.generationMode === 'All Personas' ? '4' : htmlOptions.personas.length.toString()} 
                   variant="default"
                 />
                 <ScoreCard 
@@ -679,15 +899,65 @@ const ReportsExport: React.FC = () => {
                 />
                 <ScoreCard 
                   label="Estimated Time" 
-                  value={`${(generationMode === 'All Personas' ? 4 : selectedPersonas.length) * 2}s`} 
+                  value={`${(htmlOptions.generationMode === 'All Personas' ? 4 : htmlOptions.personas.length) * 2}s`} 
                   variant="default"
                 />
               </div>
             </div>
             
-            <button className="generate-button" onClick={generateHtmlReports}>
-              🎨 Generate HTML Reports
+            <button 
+              className="generate-button" 
+              onClick={generateHtmlReports}
+              disabled={generatingHtml}
+            >
+              {generatingHtml ? '🔄 Generating...' : '🎨 Generate HTML Reports'}
             </button>
+            
+            {/* HTML Report Results */}
+            {htmlResult && (
+              <div className="html-results">
+                <h4>📊 HTML Report Results</h4>
+                {htmlResult.error ? (
+                  <div className="error-message">
+                    <strong>Error:</strong> {htmlResult.error}
+                  </div>
+                ) : (
+                  <div className="success-message">
+                    <p><strong>Generated:</strong> {new Date(htmlResult.timestamp).toLocaleString()}</p>
+                    <p><strong>Mode:</strong> {htmlResult.generation_mode}</p>
+                    <p><strong>Success:</strong> {htmlResult.summary.successful}/{htmlResult.summary.total} reports</p>
+                    
+                    {htmlResult.generated_reports && (
+                      <div className="generated-reports">
+                        <h5>Generated Reports:</h5>
+                        {htmlResult.generated_reports.map((report: any, index: number) => (
+                          <div key={index} className="report-item">
+                            <div className="report-header">
+                              <strong>{report.persona}</strong>
+                              <span className={`status ${report.status}`}>{report.status}</span>
+                            </div>
+                            {report.status === 'success' && (
+                              <div className="report-actions">
+                                <button 
+                                  onClick={() => window.open(report.url, '_blank')}
+                                  className="open-button"
+                                >
+                                  🌐 Open Report
+                                </button>
+                                <small>{report.path}</small>
+                              </div>
+                            )}
+                            {report.error && (
+                              <div className="error-text">Error: {report.error}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -703,8 +973,8 @@ const ReportsExport: React.FC = () => {
               <div className="config-group">
                 <label>📄 Export Format</label>
                 <select 
-                  value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value)}
+                  value={exportConfig.format}
+                  onChange={(e) => setExportConfig({...exportConfig, format: e.target.value})}
                 >
                   <option value="CSV">CSV</option>
                   <option value="Excel">Excel</option>
@@ -716,8 +986,8 @@ const ReportsExport: React.FC = () => {
               <div className="config-group">
                 <label>🎯 Export Scope</label>
                 <select 
-                  value={exportScope}
-                  onChange={(e) => setExportScope(e.target.value)}
+                  value={exportConfig.scope}
+                  onChange={(e) => setExportConfig({...exportConfig, scope: e.target.value})}
                 >
                   <option value="Filtered Data">Filtered Data</option>
                   <option value="All Data">All Data</option>
@@ -730,22 +1000,20 @@ const ReportsExport: React.FC = () => {
             <div className="export-preview">
               <h4>📋 Export Preview</h4>
               <div className="preview-info">
-                <p><strong>Format:</strong> {exportFormat}</p>
-                <p><strong>Scope:</strong> {exportScope}</p>
-                <p><strong>Records:</strong> {exportScope === 'All Data' ? masterData.length : filteredData.length}</p>
-                <p><strong>Estimated Size:</strong> {((exportScope === 'All Data' ? masterData.length : filteredData.length) * 0.5).toFixed(1)} KB</p>
+                <p><strong>Format:</strong> {exportConfig.format}</p>
+                <p><strong>Scope:</strong> {exportConfig.scope}</p>
+                <p><strong>Records:</strong> {exportConfig.scope === 'All Data' ? masterData.length : filteredData.length}</p>
+                <p><strong>Estimated Size:</strong> {((exportConfig.scope === 'All Data' ? masterData.length : filteredData.length) * 0.5).toFixed(1)} KB</p>
               </div>
             </div>
             
             <div className="export-actions">
-              <button className="export-button" onClick={exportData}>
-                📦 Export Data
-              </button>
-              <button className="export-button secondary">
-                📋 Export Report
-              </button>
-              <button className="export-button secondary">
-                🎨 Export Visualizations
+              <button 
+                className="export-button" 
+                onClick={exportData}
+                disabled={exporting}
+              >
+                {exporting ? '🔄 Exporting...' : '📦 Export Data'}
               </button>
             </div>
           </div>
@@ -756,24 +1024,44 @@ const ReportsExport: React.FC = () => {
               <p>Export all datasets and reports in a single package</p>
               <div className="bulk-options">
                 <label>
-                  <input type="checkbox" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    checked={bulkExportConfig.includeMaster}
+                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeMaster: e.target.checked})}
+                  />
                   Include Master Dataset
                 </label>
                 <label>
-                  <input type="checkbox" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    checked={bulkExportConfig.includeDatasets}
+                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeDatasets: e.target.checked})}
+                  />
                   Include Individual Datasets
                 </label>
                 <label>
-                  <input type="checkbox" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    checked={bulkExportConfig.includeReports}
+                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeReports: e.target.checked})}
+                  />
                   Include Generated Reports
                 </label>
                 <label>
-                  <input type="checkbox" />
+                  <input 
+                    type="checkbox" 
+                    checked={bulkExportConfig.includeRaw}
+                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeRaw: e.target.checked})}
+                  />
                   Include Raw Data
                 </label>
               </div>
-              <button className="bulk-export-button">
-                📦 Create Complete Export Package
+              <button 
+                className="bulk-export-button"
+                onClick={bulkExport}
+                disabled={exporting}
+              >
+                {exporting ? '🔄 Creating Package...' : '📦 Create Complete Export Package'}
               </button>
             </div>
           </div>

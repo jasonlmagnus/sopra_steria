@@ -5,8 +5,8 @@ Vector Store Schema Configuration
 Defines the schema and configuration for various vector databases.
 """
 
-from typing import Dict, List, Any
-from dataclasses import dataclass
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass, field
 from enum import Enum
 
 class VectorStoreType(Enum):
@@ -28,10 +28,10 @@ class VectorStoreConfig:
     namespace: str = "production"
     
     # Metadata fields for filtering
-    metadata_fields: List[str] = None
+    metadata_fields: Optional[List[str]] = None
     
     # Text fields for search
-    text_fields: List[str] = None
+    text_fields: Optional[List[str]] = None
     
     def __post_init__(self):
         if self.metadata_fields is None:
@@ -139,21 +139,6 @@ WEAVIATE_CONFIG = {
             "description": "Trust gap measurement"
         },
         {
-            "name": "overall_sentiment",
-            "dataType": ["text"],
-            "description": "Overall sentiment from experience report"
-        },
-        {
-            "name": "engagement_level",
-            "dataType": ["text"], 
-            "description": "Engagement level assessment"
-        },
-        {
-            "name": "conversion_likelihood",
-            "dataType": ["text"],
-            "description": "Conversion likelihood assessment"
-        },
-        {
             "name": "combined_analysis",
             "dataType": ["text"],
             "description": "Combined text for semantic search"
@@ -193,6 +178,8 @@ WEAVIATE_CONFIG = {
             "dataType": ["date"],
             "description": "Timestamp when data was compiled"
         }
+        # Removed problematic fields: overall_sentiment, engagement_level, conversion_likelihood
+        # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
     ],
     "vectorizer": "text2vec-openai",
     "moduleConfig": {
@@ -220,9 +207,6 @@ QDRANT_CONFIG = {
         "final_score": "float",
         "brand_health_index": "float",
         "trust_gap": "float",
-        "overall_sentiment": "keyword",
-        "engagement_level": "keyword", 
-        "conversion_likelihood": "keyword",
         "key_themes": "keyword",
         "regulatory_frameworks": "keyword",
         "is_benelux": "bool",
@@ -230,6 +214,8 @@ QDRANT_CONFIG = {
         "has_security_content": "bool",
         "audited_ts": "datetime",
         "compiled_at": "datetime"
+        # Removed problematic fields: overall_sentiment, engagement_level, conversion_likelihood
+        # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
     }
 }
 
@@ -246,12 +232,11 @@ CHROMA_CONFIG = {
         "final_score",
         "brand_health_index",
         "trust_gap",
-        "overall_sentiment",
-        "engagement_level",
-        "conversion_likelihood",
         "is_benelux",
         "has_compliance_content",
         "has_security_content"
+        # Removed problematic fields: overall_sentiment, engagement_level, conversion_likelihood
+        # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
     ]
 }
 
@@ -300,17 +285,13 @@ QUERY_TEMPLATES = {
         "example": {"page_id": "fe8eb8c2"}
     },
     
-    "find_low_engagement": {
-        "description": "Find pages with low engagement across personas",
-        "filter_template": {
-            "engagement_level": {"$in": ["Low", "Very Low"]},
-            "final_score": {"$lt": 6.0}
-        },
-        "example": {
-            "engagement_level": {"$in": ["Low", "Very Low"]},
-            "final_score": {"$lt": 6.0}
-        }
+    "find_low_scoring_pages": {
+        "description": "Find pages with low audit scores",
+        "filter_template": {"final_score": {"$lt": 6.0}},
+        "example": {"final_score": {"$lt": 6.0}}
     }
+    # Removed find_low_engagement query template - uses problematic engagement_level field
+    # This field should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
 }
 
 # Semantic Search Templates

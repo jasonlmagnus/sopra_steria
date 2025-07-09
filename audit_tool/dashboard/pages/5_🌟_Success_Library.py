@@ -342,10 +342,6 @@ def display_success_stories_detailed(metrics_calc, master_df):
             'url': 'first',
             'url_slug': 'first',
             'persona_id': 'first',
-            # Experience metrics
-            'overall_sentiment': 'first',
-            'engagement_level': 'first', 
-            'conversion_likelihood': 'first',
             # Content examples for concrete evidence
             'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
             'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
@@ -354,6 +350,8 @@ def display_success_stories_detailed(metrics_calc, master_df):
             'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
             'trust_credibility_assessment': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
             'information_gaps': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200]
+            # Removed problematic fields: overall_sentiment, engagement_level, conversion_likelihood
+            # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
         }).reset_index()
         
         # Filter to keep only pages that still meet the success threshold after aggregation
@@ -470,22 +468,24 @@ def display_success_story_card(rank, story, master_df, tier_rank=None, tier_name
         # Rich Evidence section - show comprehensive supporting data (aligned with Opportunity page)
         st.markdown("### 📋 Success Evidence & Analysis")
         
-        # Experience Metrics
+        # Evidence-Based Metrics (instead of problematic fields)
         col1, col2, col3 = st.columns(3)
         with col1:
-            sentiment = story.get('overall_sentiment', 'Unknown')
-            sentiment_color = "🟢" if sentiment == "Positive" else "🟡" if sentiment == "Neutral" else "🔴"
-            st.markdown(f"**{sentiment_color} Sentiment:** {sentiment}")
+            # Score-based indicator instead of sentiment
+            st.markdown(f"**🎯 Score:** {score:.1f}/10")
         
         with col2:
-            engagement = story.get('engagement_level', 'Unknown')
-            engagement_color = "🟢" if engagement == "High" else "🟡" if engagement == "Medium" else "🔴"
-            st.markdown(f"**{engagement_color} Engagement:** {engagement}")
+            # Tier-based categorization instead of engagement
+            tier_display = tier.replace('_', ' ').title()
+            st.markdown(f"**🏗️ Tier:** {tier_display}")
         
         with col3:
-            conversion = story.get('conversion_likelihood', 'Unknown')
-            conversion_color = "🟢" if conversion == "High" else "🟡" if conversion == "Medium" else "🔴"
-            st.markdown(f"**{conversion_color} Conversion:** {conversion}")
+            # Percentile performance instead of conversion
+            if 'avg_score' in master_df.columns:
+                percentile = (master_df['avg_score'] < score).mean() * 100
+                st.markdown(f"**📊 Percentile:** {percentile:.0f}th")
+            else:
+                st.markdown(f"**📊 Percentile:** N/A")
         
         # Content Examples - What's Working vs What Could Improve
         col1, col2 = st.columns(2)

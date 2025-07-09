@@ -10,15 +10,24 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import hashlib
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class EnhancedBackfillPackager:
+    """Enhanced backfill processor for audit data with proper schema validation"""
     def __init__(self, persona_name: str):
         self.persona_name = persona_name
-        # Use absolute paths from project root
-        current_dir = Path(__file__).parent
-        project_root = current_dir.parent
-        self.input_dir = project_root / f"audit_outputs/{persona_name}"
-        self.output_dir = self.input_dir  # Keep outputs in same folder
+        self.input_dir = Path(f"audit_outputs/{persona_name}")
+        self.output_dir = Path(f"audit_outputs/{persona_name}")
+        
+        if not self.input_dir.exists():
+            raise FileNotFoundError(f"Input directory {self.input_dir} does not exist")
+        
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Weight mappings from audit_method.md
         self.tier_weights = {
@@ -216,7 +225,7 @@ class EnhancedBackfillPackager:
         
         return complexity_num <= 2 and impact_score >= 7.0
 
-    def create_pages_table(self, parsed_data: List[Dict], experience_data: List[Dict] = None) -> pd.DataFrame:
+    def create_pages_table(self, parsed_data: List[Dict], experience_data: Optional[List[Dict]] = None) -> pd.DataFrame:
         """Create enhanced pages.csv table with derived metrics"""
         pages = []
         
@@ -228,22 +237,9 @@ class EnhancedBackfillPackager:
             # Calculate derived metrics
             hygiene_score = metadata['final_score']
             
-            # Get sentiment and engagement from experience data if available
-            positive_sentiment_pct = 5.0  # Default neutral
-            engagement_rate = 5.0         # Default neutral
-            
-            if experience_data:
-                page_experience = next((exp for exp in experience_data if self.create_page_id(exp.get('url_slug', '')) == page_id), None)
-                if page_experience:
-                    # Convert sentiment to percentage
-                    sentiment_map = {'Positive': 8.0, 'Mixed': 5.0, 'Negative': 2.0, 'Neutral': 5.0}
-                    positive_sentiment_pct = sentiment_map.get(page_experience.get('overall_sentiment', 'Neutral'), 5.0)
-                    
-                    # Convert engagement to rate
-                    engagement_map = {'High': 8.0, 'Medium': 5.0, 'Low': 2.0}
-                    engagement_rate = engagement_map.get(page_experience.get('engagement_level', 'Medium'), 5.0)
-            
-            brand_health_index = self.calculate_brand_health_index(hygiene_score, positive_sentiment_pct, engagement_rate)
+            # Calculate brand health based on hygiene score only (remove problematic fields)
+            # These fields (sentiment, engagement, conversion) should only apply to offsite channels
+            brand_health_index = self.calculate_brand_health_index(hygiene_score, 5.0, 5.0)  # Use neutral defaults
             trust_gap = self.calculate_trust_gap(data['criteria_scores'])
             
             pages.append({
@@ -381,64 +377,15 @@ class EnhancedBackfillPackager:
                 'trust_credibility_assessment': sections.get('trust_credibility', ''),
                 'business_impact_analysis': sections.get('business_impact', ''),
                 'effective_copy_examples': ' | '.join([f"{ex.get('example_text', '')}: {ex.get('strategic_analysis', '')}" for ex in effective_examples]),
-                'ineffective_copy_examples': ' | '.join([f"{ex.get('example_text', '')}: {ex.get('strategic_analysis', '')}" for ex in ineffective_examples]),
-                'overall_sentiment': self.analyze_sentiment(sections.get('first_impression', '')),
-                'engagement_level': self.analyze_engagement(sections.get('business_impact', '')),
-                'conversion_likelihood': self.analyze_conversion(sections.get('business_impact', ''))
+                'ineffective_copy_examples': ' | '.join([f"{ex.get('example_text', '')}: {ex.get('strategic_analysis', '')}" for ex in ineffective_examples])
+                # Removed problematic fields: overall_sentiment, engagement_level, conversion_likelihood
+                # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
             })
         
         return pd.DataFrame(experience_rows)
     
-    def analyze_sentiment(self, first_impression: str) -> str:
-        """Analyze sentiment from first impression text"""
-        if not first_impression:
-            return 'Neutral'
-        
-        impression_lower = first_impression.lower()
-        positive_words = ['impressed', 'excellent', 'compelling', 'strong', 'effective', 'valuable', 'confident']
-        negative_words = ['disappointed', 'weak', 'unclear', 'confusing', 'missing', 'lacks', 'ineffective', 'concerned']
-        
-        positive_count = sum(1 for word in positive_words if word in impression_lower)
-        negative_count = sum(1 for word in negative_words if word in impression_lower)
-        
-        if positive_count > negative_count:
-            return 'Positive'
-        elif negative_count > positive_count:
-            return 'Negative'
-        else:
-            return 'Mixed'
-    
-    def analyze_engagement(self, business_impact: str) -> str:
-        """Analyze engagement level from business impact text"""
-        if not business_impact:
-            return 'Low'
-        
-        impact_lower = business_impact.lower()
-        high_engagement = ['would recommend', 'interested', 'compelling', 'valuable', 'next steps']
-        low_engagement = ['minimal', 'limited', 'unclear', 'wouldn\'t', 'not convinced']
-        
-        if any(phrase in impact_lower for phrase in high_engagement):
-            return 'High'
-        elif any(phrase in impact_lower for phrase in low_engagement):
-            return 'Low'
-        else:
-            return 'Medium'
-    
-    def analyze_conversion(self, business_impact: str) -> str:
-        """Analyze conversion likelihood from business impact text"""
-        if not business_impact:
-            return 'Low'
-        
-        impact_lower = business_impact.lower()
-        high_conversion = ['contact', 'next step', 'engage', 'partner', 'would recommend']
-        low_conversion = ['wouldn\'t', 'not convinced', 'lacks', 'unclear', 'minimal impact']
-        
-        if any(phrase in impact_lower for phrase in high_conversion):
-            return 'High'
-        elif any(phrase in impact_lower for phrase in low_conversion):
-            return 'Low'
-        else:
-            return 'Medium'
+    # Removed analyze_sentiment, analyze_engagement, and analyze_conversion methods
+    # These methods generated problematic fields that should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
 
     def create_recommendations_table(self, parsed_data: List[Dict]) -> pd.DataFrame:
         """Create enhanced recommendations.csv table with quick win flags"""

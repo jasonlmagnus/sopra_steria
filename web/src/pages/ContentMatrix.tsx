@@ -13,7 +13,7 @@ function ContentMatrix() {
     performanceLevel: 'All'
   })
 
-  const { data: contentData, isLoading } = useQuery({
+  const { data: contentData, isLoading, error } = useQuery({
     queryKey: ['content-matrix', filters],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -28,7 +28,44 @@ function ContentMatrix() {
     }
   })
 
-  if (isLoading) return <div className="main-header"><h1>📊 Content Matrix</h1><p>Loading content analysis...</p></div>
+  if (isLoading) return (
+    <div>
+      <div className="main-header">
+        <h1>📊 Content Matrix</h1>
+        <p>Loading content analysis...</p>
+      </div>
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div style={{ 
+          border: '2px solid #e2e8f0', 
+          borderRadius: '8px', 
+          padding: '2rem',
+          backgroundColor: '#f8fafc' 
+        }}>
+          <p>🔄 Updating filters...</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (error) return (
+    <div>
+      <div className="main-header">
+        <h1>📊 Content Matrix</h1>
+        <p>Error loading content analysis</p>
+      </div>
+      <div style={{ padding: '2rem' }}>
+        <div style={{ 
+          border: '2px solid #fecaca', 
+          borderRadius: '8px', 
+          padding: '2rem',
+          backgroundColor: '#fef2f2' 
+        }}>
+          <p>❌ Error: {error.message}</p>
+          <p>Please try adjusting your filters or refresh the page.</p>
+        </div>
+      </div>
+    </div>
+  )
 
   const data = contentData || {}
   const filteredContent = data.content || []
@@ -36,6 +73,47 @@ function ContentMatrix() {
   const heatmapData = data.heatmap || {}
   const criteriaData = data.criteria || []
   const pageData = data.pages || []
+
+  // Handle empty data case
+  if (data.error || (metrics.totalPages === 0 && filters.minScore > 0)) {
+    return (
+      <div>
+        <div className="main-header">
+          <h1>📊 Content Matrix</h1>
+          <p>Comprehensive content analysis with performance scoring and strategic insights</p>
+        </div>
+
+        {/* Show filters even when no data */}
+        <ContentFilters filters={filters} setFilters={setFilters} data={data} />
+
+        <div className="insights-box">
+          <h2>📊 No Data Matches Current Filters</h2>
+          <div style={{ 
+            background: '#fef3c7', 
+            borderLeft: '4px solid #f59e0b', 
+            padding: '15px', 
+            margin: '15px 0', 
+            borderRadius: '5px' 
+          }}>
+            <h4 style={{ margin: 0, color: '#333' }}>⚠️ Filter Results</h4>
+            <p style={{ margin: '8px 0', color: '#92400e', fontWeight: 'bold' }}>
+              No pages match your current filter criteria
+            </p>
+            <p style={{ margin: '5px 0' }}>
+              <strong>Try:</strong> Lowering the minimum score slider or selecting "All" for other filters
+            </p>
+          </div>
+          
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
+              Current filters: <strong>Persona:</strong> {filters.persona}, <strong>Tier:</strong> {filters.tier}, 
+              <strong>Min Score:</strong> {filters.minScore}, <strong>Performance:</strong> {filters.performanceLevel}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -61,6 +139,9 @@ function ContentMatrix() {
 
       {/* Page Drill Down */}
       <PageDrillDown pageData={pageData} />
+
+      {/* Persona-Specific Evidence Context */}
+      <PersonaEvidenceContext data={data} />
     </div>
   )
 }
@@ -531,6 +612,9 @@ function PageDrillDown({ pageData }: any) {
                   <th style={{ padding: '1rem', textAlign: 'left', border: '1px solid #D1D5DB' }}>Page</th>
                   <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Tier</th>
                   <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Score</th>
+                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Sentiment</th>
+                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Engagement</th>
+                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Conversion</th>
                   <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Personas</th>
                 </tr>
               </thead>
@@ -551,6 +635,15 @@ function PageDrillDown({ pageData }: any) {
                       }}>
                         {score.toFixed(1)}
                       </td>
+                      <td style={{ 
+                        padding: '1rem', 
+                        textAlign: 'center', 
+                        border: '1px solid #D1D5DB',
+                        color: (page.overall_sentiment >= 6) ? '#10b981' : (page.overall_sentiment >= 4) ? '#f59e0b' : '#ef4444'
+                      }}>
+                        {page.overall_sentiment ? page.overall_sentiment.toFixed(1) : 'N/A'}
+                      </td>
+
                       <td style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>{page.personas}</td>
                     </tr>
                   )
@@ -620,6 +713,7 @@ function PageDrillDown({ pageData }: any) {
                         <div className="metric-value">{page.personas}</div>
                         <div className="metric-label">Personas</div>
                       </div>
+
                       {page.url && (
                         <div className="metric-card">
                           <div className="metric-value">
@@ -647,6 +741,209 @@ function PageDrillDown({ pageData }: any) {
               })()}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PersonaEvidenceContext({ data }: any) {
+  const personas = data.personas || []
+  const contentData = data.content || []
+  
+  // Group content by persona for analysis
+  const personaContentMap = personas.reduce((acc: any, persona: string) => {
+    acc[persona] = contentData.filter((item: any) => item.personas && item.personas.includes(persona))
+    return acc
+  }, {})
+
+  const getPersonaReactionAnalysis = (persona: string, content: any[]) => {
+    const avgScore = content.reduce((sum: number, item: any) => sum + (item.avgScore || 0), 0) / content.length
+    
+    const effectivePages = content.filter((item: any) => item.effective_copy_examples)
+    const trustIssues = content.filter((item: any) => item.trust_credibility_assessment?.includes('concern'))
+    const informationGaps = content.filter((item: any) => item.information_gaps)
+    
+    return {
+      avgScore,
+      effectivePages,
+      trustIssues,
+      informationGaps,
+      contentCount: content.length
+    }
+  }
+
+  return (
+    <div className="insights-box">
+      <h2>👥 Persona-Specific Evidence Context</h2>
+      
+      <div style={{ 
+        background: '#f8f9fa', 
+        borderLeft: '4px solid #6366f1', 
+        padding: '15px', 
+        margin: '15px 0', 
+        borderRadius: '5px' 
+      }}>
+        <h4 style={{ margin: 0, color: '#333' }}>💡 Persona Content Analysis</h4>
+        <p style={{ margin: '8px 0' }}>
+          Understand how each persona reacts to your content based on evidence from user experience data.
+        </p>
+        <p style={{ margin: '5px 0' }}>
+          <strong>Focus:</strong> Identify content that resonates with specific personas and address persona-specific pain points.
+        </p>
+      </div>
+
+      {personas.length > 0 && (
+        <div className="persona-evidence-grid" style={{ display: 'grid', gap: '2rem' }}>
+          {personas.map((persona: string) => {
+            const personaContent = personaContentMap[persona] || []
+            const analysis = getPersonaReactionAnalysis(persona, personaContent)
+            
+            return (
+              <div key={persona} className="persona-evidence-card" style={{ 
+                border: '1px solid #e2e8f0', 
+                borderRadius: '12px', 
+                padding: '1.5rem',
+                backgroundColor: '#ffffff'
+              }}>
+                <div className="persona-header" style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: 0, color: '#1f2937', display: 'flex', alignItems: 'center' }}>
+                    👤 {persona}
+                    <span style={{ 
+                      marginLeft: '1rem', 
+                      fontSize: '0.875rem', 
+                      color: '#6b7280',
+                      backgroundColor: '#f3f4f6',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '9999px'
+                    }}>
+                      {analysis.contentCount} pages
+                    </span>
+                  </h3>
+                </div>
+
+                {/* Persona Performance Overview */}
+                <div className="persona-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div className="metric-card" style={{ textAlign: 'center' }}>
+                    <div className="metric-value" style={{ 
+                      color: analysis.avgScore >= 7 ? '#10b981' : analysis.avgScore >= 5 ? '#f59e0b' : '#ef4444' 
+                    }}>
+                      {analysis.avgScore.toFixed(1)}
+                    </div>
+                    <div className="metric-label">Avg Score</div>
+                  </div>
+                </div>
+
+                {/* Evidence-Based Insights */}
+                <div className="persona-insights" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                  
+                  {/* What Works for This Persona */}
+                  <div className="insight-section" style={{ 
+                    padding: '1rem', 
+                    border: '1px solid #d1f2eb', 
+                    borderRadius: '8px', 
+                    backgroundColor: '#f0fdfa' 
+                  }}>
+                    <h4 style={{ color: '#047857', margin: '0 0 0.75rem 0' }}>✅ What Works</h4>
+                    {analysis.effectivePages.length > 0 ? (
+                      <div>
+                        {analysis.effectivePages.slice(0, 3).map((page: any, idx: number) => (
+                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                              {page.title || 'Page'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
+                              "{page.effective_copy_examples?.substring(0, 100) || 'Strong content performance'}..."
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
+                        No specific effective examples found for this persona yet.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Pain Points & Trust Issues */}
+                  <div className="insight-section" style={{ 
+                    padding: '1rem', 
+                    border: '1px solid #fecaca', 
+                    borderRadius: '8px', 
+                    backgroundColor: '#fef2f2' 
+                  }}>
+                    <h4 style={{ color: '#dc2626', margin: '0 0 0.75rem 0' }}>⚠️ Pain Points</h4>
+                    {analysis.trustIssues.length > 0 || analysis.informationGaps.length > 0 ? (
+                      <div>
+                        {analysis.trustIssues.slice(0, 2).map((page: any, idx: number) => (
+                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                              Trust Issue: {page.title || 'Page'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {page.trust_credibility_assessment?.substring(0, 100) || 'Trust concerns identified'}...
+                            </div>
+                          </div>
+                        ))}
+                        {analysis.informationGaps.slice(0, 2).map((page: any, idx: number) => (
+                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                              Info Gap: {page.title || 'Page'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {page.information_gaps?.substring(0, 100) || 'Information gaps identified'}...
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
+                        No major pain points identified for this persona.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Persona-Specific Recommendations */}
+                <div className="persona-recommendations" style={{ 
+                  marginTop: '1.5rem', 
+                  padding: '1rem', 
+                  backgroundColor: '#f8fafc', 
+                  borderRadius: '8px' 
+                }}>
+                  <h4 style={{ margin: '0 0 1rem 0', color: '#374151' }}>🎯 Persona-Specific Recommendations</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                    <div>
+                      <strong style={{ color: '#059669' }}>Amplify:</strong>
+                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                        {analysis.effectivePages.length > 0 ? (
+                          <li>Apply successful copy patterns from high-performing pages</li>
+                        ) : (
+                          <li>Test different messaging approaches for this persona</li>
+                        )}
+                        <li>Focus on improving content engagement and user experience</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#dc2626' }}>Address:</strong>
+                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                        {analysis.trustIssues.length > 0 && <li>Resolve trust and credibility concerns</li>}
+                        {analysis.informationGaps.length > 0 && <li>Fill information gaps that block conversions</li>}
+                        <li>Optimize conversion paths for this persona</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {personas.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+          <p>No persona data available for analysis.</p>
+          <p>Please ensure your content data includes persona information.</p>
         </div>
       )}
     </div>

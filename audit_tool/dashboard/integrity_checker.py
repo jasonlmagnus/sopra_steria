@@ -417,10 +417,9 @@ class DashboardIntegrityChecker:
             'criterion': 'criterion_code',
             'criteria': 'criterion_code',
             'page': 'page_id',
-            'persona': 'persona_id',
-            'sentiment': 'overall_sentiment',
-            'engagement': 'engagement_level',
-            'conversion': 'conversion_likelihood'
+            'persona': 'persona_id'
+            # Removed problematic fields: sentiment, engagement, conversion
+            # These should only apply to offsite channels, not onsite data (Tier 1, 2, 3)
         }
         
         if column in mappings:

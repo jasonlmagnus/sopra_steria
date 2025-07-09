@@ -13,7 +13,7 @@ function OpportunityImpact() {
     maxOpportunities: 15
   })
 
-  const { data: opportunityData, isLoading } = useQuery({
+  const { data: opportunityData, isLoading, error } = useQuery({
     queryKey: ['opportunity-impact', controls],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -29,7 +29,44 @@ function OpportunityImpact() {
     }
   })
 
-  if (isLoading) return <div className="main-header"><h1>💡 Opportunity & Impact</h1><p>Loading impact analysis...</p></div>
+  if (isLoading) return (
+    <div>
+      <div className="main-header">
+        <h1>💡 Opportunity & Impact</h1>
+        <p>Loading impact analysis...</p>
+      </div>
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <div style={{ 
+          border: '2px solid #e2e8f0', 
+          borderRadius: '8px', 
+          padding: '2rem',
+          backgroundColor: '#f8fafc' 
+        }}>
+          <p>🔄 Updating filters...</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (error) return (
+    <div>
+      <div className="main-header">
+        <h1>💡 Opportunity & Impact</h1>
+        <p>Error loading impact analysis</p>
+      </div>
+      <div style={{ padding: '2rem' }}>
+        <div style={{ 
+          border: '2px solid #fecaca', 
+          borderRadius: '8px', 
+          padding: '2rem',
+          backgroundColor: '#fef2f2' 
+        }}>
+          <p>❌ Error: {error.message}</p>
+          <p>Please try adjusting your filters or refresh the page.</p>
+        </div>
+      </div>
+    </div>
+  )
 
   const data = opportunityData || {}
   const opportunities = data.opportunities || []
@@ -37,6 +74,48 @@ function OpportunityImpact() {
   const aiRecommendations = data.aiRecommendations || []
   const criteriaAnalysis = data.criteriaAnalysis || {}
   const roadmap = data.roadmap || {}
+
+  // Handle empty data case
+  if (data.error || (opportunities.length === 0 && controls.impactThreshold > 0)) {
+    return (
+      <div>
+        <div className="main-header">
+          <h1>💡 Opportunity & Impact</h1>
+          <p>Which gaps matter most and what should we do?</p>
+        </div>
+
+        {/* Show controls even when no data */}
+        <ImpactCalculationExplainer />
+        <OpportunityControls controls={controls} setControls={setControls} data={data} />
+
+        <div className="insights-box">
+          <h2>📊 No Opportunities Match Current Filters</h2>
+          <div style={{ 
+            background: '#fef3c7', 
+            borderLeft: '4px solid #f59e0b', 
+            padding: '15px', 
+            margin: '15px 0', 
+            borderRadius: '5px' 
+          }}>
+            <h4 style={{ margin: 0, color: '#333' }}>⚠️ Filter Results</h4>
+            <p style={{ margin: '8px 0', color: '#92400e', fontWeight: 'bold' }}>
+              No opportunities match your current filter criteria
+            </p>
+            <p style={{ margin: '5px 0' }}>
+              <strong>Try:</strong> Lowering the impact threshold slider or selecting "All" for other filters
+            </p>
+          </div>
+          
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
+              Current filters: <strong>Impact Threshold:</strong> {controls.impactThreshold}, <strong>Effort:</strong> {controls.effortLevel}, 
+              <strong>Priority:</strong> {controls.priorityLevel}, <strong>Tier:</strong> {controls.contentTier}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
