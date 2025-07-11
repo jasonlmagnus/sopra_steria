@@ -427,6 +427,171 @@ class BrandHealthMetricsCalculator:
         
         return result
 
+    def calculate_success_library(
+        self,
+        success_threshold: float = 7.5,
+        persona: str = "All",
+        tier: str = "All",
+        max_stories: int = 10,
+        evidence_type: str = "All",
+        search_term: str = "",
+    ) -> Dict[str, Any]:
+        """Comprehensive success library metrics"""
+
+        filtered_df = self.df.copy()
+        if persona != "All" and 'persona_id' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['persona_id'] == persona]
+        if tier != "All" and 'tier' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['tier'] == tier]
+
+        if 'avg_score' in filtered_df.columns:
+            success_df = filtered_df[filtered_df['avg_score'] >= success_threshold]
+        else:
+            success_df = pd.DataFrame()
+
+        if success_df.empty:
+            return {
+                "successStories": [],
+                "overview": {
+                    "totalPages": 0,
+                    "successPages": 0,
+                    "successRate": 0,
+                    "avgScore": 0,
+                    "excellent": 0,
+                    "veryGood": 0,
+                    "good": 0,
+                },
+                "patternData": [],
+                "evidenceItems": [],
+                "replicationTemplates": [],
+                "personas": [],
+                "tiers": [],
+            }
+
+        page_success = success_df.groupby('page_id').agg({
+            'avg_score': 'mean',
+            'tier': 'first',
+            'url': 'first',
+            'url_slug': 'first',
+            'persona_id': 'first',
+            'effective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            'ineffective_copy_examples': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 20])[:400],
+            'evidence': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip()])[:500],
+            'business_impact_analysis': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:300],
+            'trust_credibility_assessment': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
+            'information_gaps': lambda x: ' | '.join([str(e) for e in x.dropna() if str(e).strip() and len(str(e)) > 10])[:200],
+        }).reset_index()
+
+        page_success = page_success[page_success['avg_score'] >= success_threshold]
+        page_success = page_success.sort_values('avg_score', ascending=False).head(max_stories)
+
+        all_scores = self.df['avg_score'].dropna() if 'avg_score' in self.df.columns else pd.Series([])
+
+        success_stories: List[Dict[str, Any]] = []
+        for _, story in page_success.iterrows():
+            page_id = story.get('page_id', 'Unknown')
+            score = story.get('avg_score', 0)
+            url = story.get('url', '')
+            title = self._create_friendly_page_title(page_id, url)
+            percentile = (all_scores < score).mean() * 100 if len(all_scores) > 0 else 0
+            effective_examples = story.get('effective_copy_examples', '')
+            persona_quotes = self.extract_persona_quotes_success(effective_examples)
+            story_data = {
+                'pageId': page_id,
+                'pageTitle': title,
+                'url': url,
+                'score': round(score, 1),
+                'percentile': round(percentile, 1),
+                'tier': story.get('tier', 'Unknown'),
+                'personaId': story.get('persona_id', 'Unknown'),
+                'effectiveCopy': story.get('effective_copy_examples', ''),
+                'ineffectiveCopy': story.get('ineffective_copy_examples', ''),
+                'informationGaps': story.get('information_gaps', ''),
+                'trustAssessment': story.get('trust_credibility_assessment', ''),
+                'businessImpact': story.get('business_impact_analysis', ''),
+                'evidence': story.get('evidence', ''),
+                'personaQuotes': persona_quotes,
+            }
+            success_stories.append(story_data)
+
+        total_pages = len(filtered_df['page_id'].unique()) if 'page_id' in filtered_df.columns else len(filtered_df)
+        success_pages = len(page_success)
+        success_rate = (success_pages / total_pages * 100) if total_pages > 0 else 0
+        avg_success_score = page_success['avg_score'].mean() if success_pages > 0 else 0
+
+        excellent = len(page_success[page_success['avg_score'] >= 9.0])
+        very_good = len(page_success[(page_success['avg_score'] >= 8.0) & (page_success['avg_score'] < 9.0)])
+        good = len(page_success[(page_success['avg_score'] >= 7.5) & (page_success['avg_score'] < 8.0)])
+
+        pattern_data: List[Dict[str, Any]] = []
+        if 'tier' in success_df.columns:
+            tier_patterns = success_df.groupby('tier').agg({'avg_score': 'mean', 'page_id': 'nunique'}).reset_index()
+            for _, row in tier_patterns.iterrows():
+                pattern_data.append({
+                    'tier': row['tier'],
+                    'avgScore': round(row['avg_score'], 1),
+                    'count': int(row['page_id']),
+                })
+
+        evidence_items: List[Dict[str, Any]] = []
+        for _, story in page_success.iterrows():
+            page_title = self._create_friendly_page_title(story.get('page_id', 'Unknown'), story.get('url', ''))
+            score = story.get('avg_score', 0)
+            evidence_sources = {
+                'Copy Examples': story.get('effective_copy_examples', ''),
+                'Performance Data': story.get('business_impact_analysis', ''),
+                'User Feedback': story.get('evidence', ''),
+                'Trust Assessment': story.get('trust_credibility_assessment', ''),
+            }
+            for evidence_key, content in evidence_sources.items():
+                if content and len(str(content).strip()) > 20:
+                    content_str = str(content).strip()
+                    if evidence_type != "All" and evidence_key != evidence_type:
+                        continue
+                    if search_term and search_term.lower() not in content_str.lower():
+                        continue
+                    evidence_items.append({
+                        'type': evidence_key,
+                        'content': content_str[:300] + '...' if len(content_str) > 300 else content_str,
+                        'pageTitle': page_title,
+                        'score': round(score, 1),
+                    })
+
+        replication_templates = [
+            {
+                'tier': pattern['tier'],
+                'avgScore': pattern['avgScore'],
+                'keyElements': [
+                    'Focus on high-performing criteria patterns',
+                    'Maintain consistent messaging tone',
+                    'Implement proven design elements',
+                    'Apply successful content structure',
+                ],
+            }
+            for pattern in pattern_data
+        ]
+
+        personas = ['All'] + sorted(self.df['persona_id'].unique().tolist()) if 'persona_id' in self.df.columns else ['All']
+        tiers = ['All'] + sorted([t for t in self.df['tier'].unique() if pd.notna(t)]) if 'tier' in self.df.columns else ['All']
+
+        return {
+            "successStories": success_stories,
+            "overview": {
+                "totalPages": total_pages,
+                "successPages": success_pages,
+                "successRate": round(success_rate, 1),
+                "avgScore": round(avg_success_score, 1),
+                "excellent": excellent,
+                "veryGood": very_good,
+                "good": good,
+            },
+            "patternData": pattern_data,
+            "evidenceItems": evidence_items,
+            "replicationTemplates": replication_templates,
+            "personas": personas,
+            "tiers": tiers,
+        }
+
     def _extract_key_strengths(self, row: Any) -> List[str]:
         """Extract key strengths from a high-performing page"""
         strengths = []
@@ -536,6 +701,28 @@ class BrandHealthMetricsCalculator:
         # Fallback: clean up the slug
         clean_title = title.replace('-', ' ').replace('_', ' ').title()
         return clean_title[:60] + "..." if len(clean_title) > 60 else clean_title
+
+    @staticmethod
+    def extract_persona_quotes_success(text: str) -> List[str]:
+        """Extract persona voice quotes from success text"""
+        if not text or pd.isna(text):
+            return []
+
+        quotes: List[str] = []
+        text_str = str(text)
+
+        quote_patterns = [
+            r'"([^"]{20,200})"',
+            r"'([^']{20,200})'",
+            r'—([^—]{20,200})—',
+            r'–([^–]{20,200})–',
+        ]
+
+        for pattern in quote_patterns:
+            matches = re.findall(pattern, text_str)
+            quotes.extend(matches[:2])
+
+        return quotes[:5]
     
     def calculate_persona_comparison(self) -> pd.DataFrame:
         """Calculate metrics for persona comparison"""
