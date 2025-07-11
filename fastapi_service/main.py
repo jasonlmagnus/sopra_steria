@@ -498,9 +498,20 @@ def get_master_dataset():
         datasets, master_df = data_loader.load_all_data()
         if master_df.empty:
             raise HTTPException(status_code=404, detail="No master data available")
+
+        # Handle NaN values that cause JSON serialization errors
+        master_df = master_df.fillna('')  # Replace NaN with empty strings
+
         return master_df.to_dict(orient='records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading master data: {str(e)}")
+
+
+# Alias endpoint for React compatibility
+@app.get("/api/datasets/master")
+def get_master_dataset_api():
+    """Alias for /datasets/master to support legacy React paths"""
+    return get_master_dataset()
 
 @app.get("/api/audit-data")
 def get_audit_data():
