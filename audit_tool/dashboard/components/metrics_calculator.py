@@ -5,6 +5,7 @@ Handles all derived metrics and KPI calculations
 
 import pandas as pd
 import numpy as np
+import re
 from typing import Dict, List, Tuple, Optional, Any
 import logging
 
@@ -1241,4 +1242,707 @@ class BrandHealthMetricsCalculator:
             "tierAnalysis": tier_analysis,
             "competitiveContext": competitive_context,
             "implementationRoadmap": implementation_roadmap
-        } 
+        }
+
+    # ------------------------------------------------------------------
+    # Report Generation Methods (moved from fastapi_service.main)
+    # ------------------------------------------------------------------
+
+    def generate_executive_summary_report(self) -> Dict[str, Any]:
+        """Generate executive summary report"""
+        df = self.df
+        if df.empty:
+            return {"error": "No data available for executive summary"}
+
+        try:
+            total_records = len(df)
+            unique_pages = df['page_id'].nunique() if 'page_id' in df.columns else 0
+            avg_score = df['final_score'].mean() if 'final_score' in df.columns else 0
+
+            critical_issues = len(df[df['descriptor'] == 'CRITICAL']) if 'descriptor' in df.columns else 0
+            concerns = len(df[df['descriptor'] == 'CONCERN']) if 'descriptor' in df.columns else 0
+            warnings = len(df[df['descriptor'] == 'WARN']) if 'descriptor' in df.columns else 0
+            good_scores = len(df[df['descriptor'] == 'GOOD']) if 'descriptor' in df.columns else 0
+
+            top_issues: List[Dict[str, Any]] = []
+            if 'criterion_id' in df.columns and 'final_score' in df.columns:
+                low_scoring = df[df['final_score'] < 6].groupby('criterion_id')['final_score'].mean().sort_values().head(5)
+                for criterion, score in low_scoring.items():
+                    top_issues.append({
+                        'criterion': criterion.replace('_', ' ').title(),
+                        'score': round(score, 1)
+                    })
+
+            return {
+                'type': 'Executive Summary Report',
+                'generated_date': datetime.now().isoformat(),
+                'metrics': {
+                    'total_records': total_records,
+                    'unique_pages': unique_pages,
+                    'average_score': round(avg_score, 1),
+                    'critical_issues': critical_issues,
+                    'concerns': concerns,
+                    'warnings': warnings,
+                    'good_scores': good_scores
+                },
+                'top_issues': top_issues,
+                'summary': (
+                    f"Analyzed {total_records:,} records across {unique_pages:,} pages "
+                    f"with an average score of {avg_score:.1f}/10. Found {critical_issues} critical issues "
+                    f"and {concerns} concerns."
+                )
+            }
+        except Exception as e:  # pragma: no cover - safeguard
+            return {'error': f'Error generating executive summary: {str(e)}'}
+
+    def generate_persona_performance_report(self) -> Dict[str, Any]:
+        """Generate persona performance report"""
+        df = self.df
+        if df.empty or 'persona_id' not in df.columns:
+            return {'error': 'No persona data available'}
+
+        try:
+            persona_perf = df.groupby('persona_id').agg({
+                'avg_score': ['mean', 'count'],
+                'final_score': 'mean'
+            }).round(2)
+
+            persona_perf.columns = ['avg_score_mean', 'page_count', 'final_score_mean']
+            persona_perf = persona_perf.sort_values('avg_score_mean', ascending=False)
+
+            personas: List[Dict[str, Any]] = []
+            for persona_id, row in persona_perf.iterrows():
+                personas.append({
+                    'persona_id': persona_id,
+                    'average_score': row['avg_score_mean'],
+                    'page_count': row['page_count'],
+                    'final_score': row['final_score_mean']
+                })
+
+            best_persona = personas[0]['persona_id'] if personas else 'Unknown'
+            worst_persona = personas[-1]['persona_id'] if personas else 'Unknown'
+
+            return {
+                'type': 'Persona Performance Report',
+                'generated_date': datetime.now().isoformat(),
+                'personas': personas,
+                'insights': {
+                    'best_performing': best_persona,
+                    'needs_attention': worst_persona,
+                    'total_personas': len(personas)
+                }
+            }
+        except Exception as e:  # pragma: no cover - safeguard
+            return {'error': f'Error generating persona performance report: {str(e)}'}
+
+    def generate_content_tier_report(self) -> Dict[str, Any]:
+        """Generate content tier analysis report"""
+        df = self.df
+        if df.empty or 'tier' not in df.columns:
+            return {'error': 'No tier data available'}
+
+        try:
+            tier_perf = df.groupby('tier').agg({
+                'avg_score': ['mean', 'count', 'std'],
+                'final_score': 'mean'
+            }).round(2)
+            tier_perf.columns = ['avg_score_mean', 'page_count', 'score_variation', 'final_score_mean']
+            tier_perf = tier_perf.sort_values('avg_score_mean', ascending=False)
+
+            tiers: List[Dict[str, Any]] = []
+            for tier_name, row in tier_perf.iterrows():
+                tiers.append({
+                    'tier_name': tier_name,
+                    'average_score': row['avg_score_mean'],
+                    'page_count': row['page_count'],
+                    'score_variation': row['score_variation'],
+                    'final_score': row['final_score_mean']
+                })
+
+            return {
+                'type': 'Content Tier Analysis Report',
+                'generated_date': datetime.now().isoformat(),
+                'tiers': tiers,
+                'insights': {
+                    'total_tiers': len(tiers),
+                    'best_performing_tier': tiers[0]['tier_name'] if tiers else 'Unknown',
+                    'most_variable_tier': max(tiers, key=lambda x: x['score_variation'])['tier_name'] if tiers else 'Unknown'
+                }
+            }
+        except Exception as e:  # pragma: no cover - safeguard
+            return {'error': f'Error generating content tier report: {str(e)}'}
+
+    def generate_success_stories_report(self) -> Dict[str, Any]:
+        """Generate success stories report"""
+        df = self.df
+        if df.empty or 'final_score' not in df.columns:
+            return {'error': 'No score data available for success stories'}
+
+        try:
+            success_threshold = 7.5
+            success_stories = df[df['final_score'] >= success_threshold]
+
+            if success_stories.empty:
+                max_score = df['final_score'].max()
+                return {
+                    'type': 'Success Stories Report',
+                    'generated_date': datetime.now().isoformat(),
+                    'success_stories': [],
+                    'message': f'No pages found with score ≥ {success_threshold}. Highest score: {max_score:.1f}'
+                }
+
+            if 'page_id' in success_stories.columns and 'url' in success_stories.columns:
+                page_scores = success_stories.groupby(['page_id', 'url'])['final_score'].mean().sort_values(ascending=False).head(10)
+
+                stories = []
+                for i, ((page_id, url), score) in enumerate(page_scores.items(), 1):
+                    page_data = success_stories[success_stories['page_id'] == page_id].iloc[0]
+                    tier = page_data.get('tier_name', 'Unknown') if 'tier_name' in page_data else 'Unknown'
+                    stories.append({
+                        'rank': i,
+                        'page_id': page_id,
+                        'url': url[:100] + '...' if len(url) > 100 else url,
+                        'score': round(score, 1),
+                        'tier': tier
+                    })
+            else:
+                stories = []
+                for i, (_, story) in enumerate(success_stories.head(5).iterrows(), 1):
+                    stories.append({
+                        'rank': i,
+                        'page_id': story.get('page_id', 'Unknown'),
+                        'score': round(story['final_score'], 1),
+                        'tier': story.get('tier_name', 'Unknown')
+                    })
+
+            return {
+                'type': 'Success Stories Report',
+                'generated_date': datetime.now().isoformat(),
+                'success_stories': stories,
+                'summary': f'Found {len(success_stories)} success stories with score ≥ {success_threshold}',
+                'threshold': success_threshold
+            }
+        except Exception as e:  # pragma: no cover - safeguard
+            return {'error': f'Error generating success stories report: {str(e)}'}
+
+    # ------------------------------------------------------------------
+    # Persona Voice & Copy Analysis Methods
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _deduplicate_segments(text: str) -> str:
+        """Advanced content deduplication"""
+        if not text or pd.isna(text):
+            return ""
+
+        segments = [seg.strip() for seg in str(text).split(' | ') if seg.strip()]
+        unique_segments: List[str] = []
+        seen: set[str] = set()
+
+        for segment in segments:
+            simplified = re.sub(r'"[^"]*"', '[QUOTE]', segment.lower())
+            if simplified not in seen:
+                seen.add(simplified)
+                unique_segments.append(segment)
+
+        return ' | '.join(unique_segments)
+
+    @staticmethod
+    def _deduplicate_business_analysis(text: str) -> str:
+        """Less aggressive deduplication for business analysis"""
+        if not text or pd.isna(text):
+            return ""
+
+        segments = [seg.strip() for seg in str(text).split(' | ') if seg.strip()]
+        unique_segments: List[str] = []
+        seen: set[str] = set()
+
+        for segment in segments:
+            comparison_key = segment[:100].lower().strip()
+            if comparison_key not in seen and len(segment) > 30:
+                seen.add(comparison_key)
+                unique_segments.append(segment)
+
+        return ' | '.join(unique_segments)
+
+    @staticmethod
+    def _create_friendly_page_title(page_id: str, url: str) -> str:
+        """Create user-friendly page title"""
+        if not page_id:
+            return "Unknown Page"
+
+        title = page_id.replace('_', ' ').replace('-', ' ')
+        title = ' '.join(word.capitalize() for word in title.split())
+
+        if url:
+            lower_url = url.lower()
+            if 'newsroom' in lower_url:
+                title = f"Newsroom > {title}"
+            elif 'blog' in lower_url:
+                title = f"Blog > {title}"
+            elif 'about' in lower_url:
+                title = f"About > {title}"
+            elif 'services' in lower_url:
+                title = f"Services > {title}"
+            elif 'industries' in lower_url:
+                title = f"Industries > {title}"
+            elif 'company' in lower_url:
+                title = f"Company > {title}"
+
+        return title
+
+    @staticmethod
+    def calculate_voice_stats(persona_data: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate voice data completeness statistics"""
+        if persona_data.empty:
+            return {
+                "total_entries": 0,
+                "effective_copy_examples": {"populated": 0, "total": 0, "percentage": 0},
+                "ineffective_copy_examples": {"populated": 0, "total": 0, "percentage": 0},
+                "business_impact_analysis": {"populated": 0, "total": 0, "percentage": 0}
+            }
+
+        total_entries = len(persona_data)
+        effective_populated = persona_data['effective_copy_examples'].notna().sum() if 'effective_copy_examples' in persona_data.columns else 0
+        ineffective_populated = persona_data['ineffective_copy_examples'].notna().sum() if 'ineffective_copy_examples' in persona_data.columns else 0
+        business_populated = persona_data['business_impact_analysis'].notna().sum() if 'business_impact_analysis' in persona_data.columns else 0
+
+        return {
+            "total_entries": int(total_entries),
+            "effective_copy_examples": {
+                "populated": int(effective_populated),
+                "total": int(total_entries),
+                "percentage": float((effective_populated / total_entries) * 100) if total_entries > 0 else 0
+            },
+            "ineffective_copy_examples": {
+                "populated": int(ineffective_populated),
+                "total": int(total_entries),
+                "percentage": float((ineffective_populated / total_entries) * 100) if total_entries > 0 else 0
+            },
+            "business_impact_analysis": {
+                "populated": int(business_populated),
+                "total": int(total_entries),
+                "percentage": float((business_populated / total_entries) * 100) if total_entries > 0 else 0
+            }
+        }
+
+    @classmethod
+    def process_effective_copy_examples(cls, persona_data: pd.DataFrame) -> Dict[str, Any]:
+        """Process and analyze effective copy examples"""
+        if 'effective_copy_examples' not in persona_data.columns:
+            return {"pages": [], "total_examples": 0}
+
+        data_with_examples = persona_data[
+            persona_data['effective_copy_examples'].notna() &
+            (persona_data['effective_copy_examples'].str.len() > 10)
+        ].copy()
+
+        if data_with_examples.empty:
+            return {"pages": [], "total_examples": 0}
+
+        page_aggregated = data_with_examples.groupby(['url']).agg({
+            'effective_copy_examples': lambda x: ' | '.join(x.drop_duplicates().dropna().astype(str)),
+            'avg_score': 'mean',
+            'page_id': 'first',
+            'tier_name': 'first'
+        }).reset_index()
+
+        page_aggregated['effective_copy_examples'] = page_aggregated['effective_copy_examples'].apply(cls._deduplicate_segments)
+        page_aggregated = page_aggregated[page_aggregated['effective_copy_examples'].str.len() > 20]
+
+        processed_pages: List[Dict[str, Any]] = []
+        for _, row in page_aggregated.iterrows():
+            page_title = cls._create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))
+            examples = cls.process_voice_examples(row.get('effective_copy_examples', ''))
+
+            processed_pages.append({
+                "page_title": page_title,
+                "url": row.get('url', ''),
+                "tier_name": row.get('tier_name', 'Unknown'),
+                "avg_score": float(row.get('avg_score', 0)),
+                "examples": examples
+            })
+
+        return {
+            "pages": processed_pages,
+            "total_examples": len(processed_pages)
+        }
+
+    @classmethod
+    def process_ineffective_copy_examples(cls, persona_data: pd.DataFrame) -> Dict[str, Any]:
+        """Process and analyze ineffective copy examples"""
+        if 'ineffective_copy_examples' not in persona_data.columns:
+            return {"pages": [], "total_examples": 0}
+
+        data_with_issues = persona_data[
+            persona_data['ineffective_copy_examples'].notna() &
+            (persona_data['ineffective_copy_examples'].str.len() > 10)
+        ].copy()
+
+        if data_with_issues.empty:
+            return {"pages": [], "total_examples": 0}
+
+        page_aggregated = data_with_issues.groupby(['url']).agg({
+            'ineffective_copy_examples': lambda x: ' | '.join(x.drop_duplicates().dropna().astype(str)),
+            'avg_score': 'mean',
+            'page_id': 'first',
+            'tier_name': 'first'
+        }).reset_index()
+
+        page_aggregated['ineffective_copy_examples'] = page_aggregated['ineffective_copy_examples'].apply(cls._deduplicate_segments)
+        page_aggregated = page_aggregated[page_aggregated['ineffective_copy_examples'].str.len() > 20]
+
+        processed_pages: List[Dict[str, Any]] = []
+        for _, row in page_aggregated.iterrows():
+            page_title = cls._create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))
+            examples = cls.process_voice_examples(row.get('ineffective_copy_examples', ''))
+
+            processed_pages.append({
+                "page_title": page_title,
+                "url": row.get('url', ''),
+                "tier_name": row.get('tier_name', 'Unknown'),
+                "avg_score": float(row.get('avg_score', 0)),
+                "examples": examples
+            })
+
+        return {
+            "pages": processed_pages,
+            "total_examples": len(processed_pages)
+        }
+
+    @classmethod
+    def process_business_impact_analysis(cls, persona_data: pd.DataFrame) -> Dict[str, Any]:
+        """Process strategic business impact analysis"""
+        if 'business_impact_analysis' not in persona_data.columns:
+            return {"pages": [], "total_insights": 0}
+
+        data_with_analysis = persona_data[
+            persona_data['business_impact_analysis'].notna() &
+            (persona_data['business_impact_analysis'].astype(str).str.len() > 5)
+        ].copy()
+
+        if data_with_analysis.empty:
+            return {"pages": [], "total_insights": 0}
+
+        page_aggregated = data_with_analysis.groupby(['url']).agg({
+            'business_impact_analysis': lambda x: ' | '.join(x.dropna().astype(str)),
+            'avg_score': 'mean',
+            'page_id': 'first',
+            'tier_name': 'first'
+        }).reset_index()
+
+        page_aggregated['business_impact_analysis'] = page_aggregated['business_impact_analysis'].apply(cls._deduplicate_business_analysis)
+
+        page_aggregated = page_aggregated[
+            (page_aggregated['business_impact_analysis'].astype(str).str.len() > 5) &
+            (page_aggregated['business_impact_analysis'] != '') &
+            (page_aggregated['business_impact_analysis'] != 'nan')
+        ]
+
+        processed_pages: List[Dict[str, Any]] = []
+        for _, row in page_aggregated.iterrows():
+            page_title = cls._create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))
+            insights = cls.process_business_insights(row.get('business_impact_analysis', ''))
+
+            processed_pages.append({
+                "page_title": page_title,
+                "url": row.get('url', ''),
+                "tier_name": row.get('tier_name', 'Unknown'),
+                "avg_score": float(row.get('avg_score', 0)),
+                "insights": insights
+            })
+
+        return {
+            "pages": processed_pages,
+            "total_insights": len(processed_pages)
+        }
+
+    @staticmethod
+    def process_voice_examples(text: str) -> List[Dict[str, str]]:
+        """Process voice examples and extract quotes with analysis"""
+        if not text or pd.isna(text):
+            return []
+
+        examples: List[Dict[str, str]] = []
+        segments = [seg.strip() for seg in str(text).split(' | ') if seg.strip()]
+
+        for segment in segments:
+            quoted_copy = re.findall(r'"([^"]{10,})"', segment)
+            if quoted_copy:
+                for quote in quoted_copy:
+                    analysis_parts = segment.split(f'"{quote}"')
+                    analysis_text = ""
+                    if len(analysis_parts) > 1:
+                        analysis_text = analysis_parts[1].strip()
+                        if analysis_text.startswith(':'):
+                            analysis_text = analysis_text[1:].strip()
+
+                    examples.append({
+                        "type": "quoted_copy",
+                        "quote": quote,
+                        "analysis": analysis_text or "Analysis not available"
+                    })
+            else:
+                examples.append({
+                    "type": "persona_insight",
+                    "quote": "",
+                    "analysis": segment
+                })
+
+        return examples
+
+    @staticmethod
+    def process_business_insights(text: str) -> List[Dict[str, str]]:
+        """Process business impact insights"""
+        if not text or pd.isna(text):
+            return []
+
+        insights: List[Dict[str, str]] = []
+        segments = [seg.strip() for seg in str(text).split(' | ') if seg.strip()]
+
+        for segment in segments:
+            insights.append({
+                "type": "strategic_insight",
+                "content": segment
+            })
+
+        return insights
+
+    @staticmethod
+    def generate_copy_ready_quotes(persona_data: pd.DataFrame) -> Dict[str, List[str]]:
+        """Generate copy-ready persona quotes categorized by type"""
+        quotes: Dict[str, List[str]] = {'positive': [], 'negative': [], 'strategic': []}
+
+        # Extract from effective examples
+        if 'effective_copy_examples' in persona_data.columns:
+            for text in persona_data['effective_copy_examples'].dropna():
+                if text and not pd.isna(text):
+                    text_str = str(text)
+                    persona_statements = re.findall(r'As a[^.]*\.', text_str, re.IGNORECASE)
+                    quotes['positive'].extend(persona_statements)
+
+        if 'ineffective_copy_examples' in persona_data.columns:
+            for text in persona_data['ineffective_copy_examples'].dropna():
+                if text and not pd.isna(text):
+                    text_str = str(text)
+                    persona_statements = re.findall(r'As a[^.]*\.', text_str, re.IGNORECASE)
+                    quotes['negative'].extend(persona_statements)
+
+        if 'business_impact_analysis' in persona_data.columns:
+            for text in persona_data['business_impact_analysis'].dropna():
+                if text and not pd.isna(text):
+                    text_str = str(text)
+                    strategic_statements = re.findall(r'[^.]*recommend[^.]*\.', text_str, re.IGNORECASE)
+                    quotes['strategic'].extend(strategic_statements)
+
+        for category in quotes:
+            quotes[category] = list(set([q.strip() for q in quotes[category] if len(q.strip()) > 30]))[:5]
+
+        return quotes
+
+    # ------------------------------------------------------------------
+    # Social Media Calculation Methods
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def calculate_platform_metrics(social_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Calculate comprehensive platform metrics"""
+        platform_stats: List[Dict[str, Any]] = []
+
+        for platform in social_df['platform_display'].unique():
+            platform_data = social_df[social_df['platform_display'] == platform]
+            if len(platform_data) == 0:
+                continue
+
+            avg_score = platform_data['avg_score'].mean()
+            score_range = f"{platform_data['avg_score'].min():.1f} - {platform_data['avg_score'].max():.1f}"
+
+            if avg_score >= 7:
+                status = "✅ Strong"
+                status_color = "success"
+            elif avg_score >= 5:
+                status = "⚠️ Moderate"
+                status_color = "warning"
+            elif avg_score >= 3:
+                status = "🟠 At Risk"
+                status_color = "warning"
+            else:
+                status = "🔴 Critical"
+                status_color = "error"
+
+            high_performers = len(platform_data[platform_data['avg_score'] >= 7])
+            moderate_performers = len(platform_data[(platform_data['avg_score'] >= 5) & (platform_data['avg_score'] < 7)])
+            low_performers = len(platform_data[platform_data['avg_score'] < 5])
+
+            avg_engagement = platform_data['engagement_numeric'].mean()
+            avg_sentiment = platform_data['sentiment_numeric'].mean()
+
+            platform_stats.append({
+                'Platform': platform,
+                'Platform_Code': platform_data['platform'].iloc[0],
+                'Average_Score': float(avg_score),
+                'Score_Range': score_range,
+                'Status': status,
+                'Status_Color': status_color,
+                'Total_Entries': len(platform_data),
+                'High_Performers': int(high_performers),
+                'Moderate_Performers': int(moderate_performers),
+                'Low_Performers': int(low_performers),
+                'Avg_Engagement': float(avg_engagement),
+                'Avg_Sentiment': float(avg_sentiment),
+                'Critical_Issues': int(len(platform_data[platform_data['critical_issue_flag'] == True])),
+                'Success_Cases': int(len(platform_data[platform_data['success_flag'] == True])),
+                'Quick_Wins': int(len(platform_data[platform_data['quick_win_flag'] == True]))
+            })
+
+        return platform_stats
+
+    @staticmethod
+    def generate_social_media_insights(social_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Generate key insights from social media data"""
+        insights: List[Dict[str, Any]] = []
+
+        overall_avg = social_df['avg_score'].mean()
+        insights.append({
+            'Category': 'Overall Performance',
+            'Insight': f'Average social media score across all platforms and personas is {overall_avg:.1f}/10',
+            'Type': 'metric'
+        })
+
+        platform_avgs = social_df.groupby('platform_display')['avg_score'].mean().sort_values(ascending=False)
+        if len(platform_avgs) > 0:
+            best_platform = platform_avgs.index[0]
+            best_score = float(platform_avgs.iloc[0])
+            insights.append({
+                'Category': 'Top Performer',
+                'Insight': f'{best_platform} is the strongest platform with {best_score:.1f}/10 average score',
+                'Type': 'success'
+            })
+
+            worst_platform = platform_avgs.index[-1]
+            worst_score = float(platform_avgs.iloc[-1])
+            insights.append({
+                'Category': 'Needs Attention',
+                'Insight': f'{worst_platform} requires review with {worst_score:.1f}/10 average score',
+                'Type': 'warning'
+            })
+
+        critical_count = len(social_df[social_df['critical_issue_flag'] == True])
+        if critical_count > 0:
+            insights.append({
+                'Category': 'Critical Issues',
+                'Insight': f'{critical_count} entries flagged as critical issues requiring immediate action',
+                'Type': 'warning'
+            })
+
+        quick_wins = len(social_df[social_df['quick_win_flag'] == True])
+        if quick_wins > 0:
+            insights.append({
+                'Category': 'Quick Wins',
+                'Insight': f'{quick_wins} opportunities identified for quick improvement',
+                'Type': 'opportunity'
+            })
+
+        if len(social_df) > 1:
+            correlation = social_df['engagement_numeric'].corr(social_df['avg_score'])
+            if pd.notna(correlation):
+                strength = 'Strong' if abs(correlation) > 0.7 else 'Moderate' if abs(correlation) > 0.4 else 'Weak'
+                insights.append({
+                    'Category': 'Engagement Correlation',
+                    'Insight': f'Engagement and performance correlation: {correlation:.2f} ({strength})',
+                    'Type': 'metric'
+                })
+
+        return insights
+
+    @staticmethod
+    def generate_social_media_recommendations(social_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Generate actionable recommendations from social media data"""
+        recommendations: List[Dict[str, Any]] = []
+
+        for platform in social_df['platform_display'].unique():
+            platform_data = social_df[social_df['platform_display'] == platform]
+            avg_score = platform_data['avg_score'].mean()
+
+            if avg_score < 3:
+                priority = 'High'
+                recommendations.append({
+                    'Platform': platform,
+                    'Priority': priority,
+                    'Category': 'Critical Revival',
+                    'Recommendation': f'Immediate reactivation required for {platform}. Current score of {avg_score:.1f}/10 indicates platform abandonment.',
+                    'Impact': 'High',
+                    'Timeline': '0-30 days'
+                })
+            elif avg_score < 5:
+                priority = 'High'
+                recommendations.append({
+                    'Platform': platform,
+                    'Priority': priority,
+                    'Category': 'Strategic Improvement',
+                    'Recommendation': f'Comprehensive content strategy needed for {platform}. Score of {avg_score:.1f}/10 shows underperformance.',
+                    'Impact': 'Medium',
+                    'Timeline': '1-3 months'
+                })
+            elif avg_score < 7:
+                priority = 'Medium'
+                recommendations.append({
+                    'Platform': platform,
+                    'Priority': priority,
+                    'Category': 'Optimization',
+                    'Recommendation': f'Enhance content quality and persona targeting for {platform}. Current score: {avg_score:.1f}/10.',
+                    'Impact': 'Medium',
+                    'Timeline': '1-3 months'
+                })
+
+        persona_performance = social_df.groupby('persona_clean')['avg_score'].mean().sort_values()
+        if len(persona_performance) > 0:
+            worst_persona = persona_performance.index[0]
+            worst_persona_score = float(persona_performance.iloc[0])
+            recommendations.append({
+                'Platform': 'Cross-Platform',
+                'Priority': 'High',
+                'Category': 'Persona Strategy',
+                'Recommendation': f'Develop targeted content strategy for {worst_persona} (avg score: {worst_persona_score:.1f}/10)',
+                'Impact': 'High',
+                'Timeline': '1-2 months'
+            })
+
+        quick_wins = social_df[social_df['quick_win_flag'] == True]
+        if len(quick_wins) > 0:
+            recommendations.append({
+                'Platform': 'Cross-Platform',
+                'Priority': 'Medium',
+                'Category': 'Quick Wins',
+                'Recommendation': f'Focus on {len(quick_wins)} identified quick win opportunities for immediate improvement',
+                'Impact': 'Medium',
+                'Timeline': '0-30 days'
+            })
+
+        return recommendations
+
+    @staticmethod
+    def calculate_persona_platform_matrix(social_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Calculate persona-platform performance matrix for heatmap"""
+        try:
+            matrix = social_df.pivot_table(
+                values='avg_score',
+                index='persona_clean',
+                columns='platform_display',
+                aggfunc='mean'
+            ).fillna(0)
+
+            matrix_data: List[Dict[str, Any]] = []
+            for persona in matrix.index:
+                for platform in matrix.columns:
+                    score = matrix.loc[persona, platform]
+                    if score > 0:
+                        matrix_data.append({
+                            'persona': persona,
+                            'platform': platform,
+                            'score': float(score)
+                        })
+
+            return matrix_data
+        except Exception:
+            return []
