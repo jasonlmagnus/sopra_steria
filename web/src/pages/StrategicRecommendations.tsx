@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { EvidenceDisplay } from '../components/EvidenceDisplay'
 import { PlotlyChart } from '../components/PlotlyChart'
+import StandardCard from '../components/StandardCard'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -370,31 +371,35 @@ function StrategicRecommendations() {
 
                 <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{theme.description}</p>
 
-                <div className="theme-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#007bff' }}>
-                      {theme.currentScore.toFixed(1)}/10
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Current Score</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>
-                      {theme.targetScore.toFixed(1)}/10
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Target Score</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fd7e14' }}>
-                      {theme.affectedPages}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Pages Affected</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc3545' }}>
-                      {formatCurrency(theme.revenueImpact)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Revenue Impact</div>
-                  </div>
+                <div className="grid grid--auto-150 gap-md" style={{ marginBottom: '1rem' }}>
+                  <StandardCard
+                    title="Current Score"
+                    variant="metric"
+                    status={theme.currentScore >= 8 ? "excellent" : theme.currentScore >= 6 ? "good" : "warning"}
+                  >
+                    <div className="metric-value">{theme.currentScore.toFixed(1)}/10</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Target Score"
+                    variant="metric"
+                    status="excellent"
+                  >
+                    <div className="metric-value">{theme.targetScore.toFixed(1)}/10</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Pages Affected"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value">{theme.affectedPages}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Revenue Impact"
+                    variant="metric"
+                    status="critical"
+                  >
+                    <div className="metric-value">{formatCurrency(theme.revenueImpact)}</div>
+                  </StandardCard>
                 </div>
 
                 <div className="theme-insights" style={{ marginBottom: '1rem' }}>
@@ -456,31 +461,35 @@ function StrategicRecommendations() {
 
                 <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{rec.description}</p>
 
-                <div className="recommendation-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>
-                      {formatCurrency(rec.revenueImpact)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Revenue Impact</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#007bff' }}>
-                      +{rec.conversionUplift}%
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Conversion Uplift</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fd7e14' }}>
-                      {rec.currentScore.toFixed(1)}/10
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Current Score</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc3545' }}>
-                      {rec.implementationEffort}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Implementation Effort</div>
-                  </div>
+                <div className="grid grid--auto-150 gap-md" style={{ marginBottom: '1rem' }}>
+                  <StandardCard
+                    title="Revenue Impact"
+                    variant="metric"
+                    status="excellent"
+                  >
+                    <div className="metric-value">{formatCurrency(rec.revenueImpact)}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Conversion Uplift"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value">+{rec.conversionUplift}%</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Current Score"
+                    variant="metric"
+                    status={rec.currentScore >= 8 ? "excellent" : rec.currentScore >= 6 ? "good" : "warning"}
+                  >
+                    <div className="metric-value">{rec.currentScore.toFixed(1)}/10</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Implementation Effort"
+                    variant="metric"
+                    status={rec.implementationEffort === "Low" ? "excellent" : rec.implementationEffort === "Medium" ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{rec.implementationEffort}</div>
+                  </StandardCard>
                 </div>
 
                 <div className="recommendation-so-what" style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #dee2e6', marginBottom: '1rem' }}>
@@ -637,37 +646,42 @@ function StrategicRecommendations() {
                   </span>
                 </div>
 
-                <div className="tier-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#007bff' }}>
-                      {data.averageScore.toFixed(1)}/10
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Average Score</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6c757d' }}>
-                      {data.pages}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Total Pages</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc3545' }}>
-                      {data.criticalIssues}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Critical Issues</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>
-                      {data.quickWins}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Quick Wins</div>
-                  </div>
-                  <div className="metric">
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fd7e14' }}>
-                      {formatCurrency(data.revenueImpact)}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Revenue Impact</div>
-                  </div>
+                <div className="grid grid--auto-120 gap-md">
+                  <StandardCard
+                    title="Average Score"
+                    variant="metric"
+                    status={data.averageScore >= 8 ? "excellent" : data.averageScore >= 6 ? "good" : "warning"}
+                  >
+                    <div className="metric-value">{data.averageScore.toFixed(1)}/10</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Total Pages"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value">{data.pages}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Critical Issues"
+                    variant="metric"
+                    status={data.criticalIssues === 0 ? "excellent" : data.criticalIssues <= 2 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{data.criticalIssues}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Quick Wins"
+                    variant="metric"
+                    status="excellent"
+                  >
+                    <div className="metric-value">{data.quickWins}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Revenue Impact"
+                    variant="metric"
+                    status="warning"
+                  >
+                    <div className="metric-value">{formatCurrency(data.revenueImpact)}</div>
+                  </StandardCard>
                 </div>
               </div>
             ))}

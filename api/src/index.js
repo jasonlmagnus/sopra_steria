@@ -496,23 +496,161 @@ app.get('/api/persona-journeys/:name', async (req, res) => {
   try {
     const { name } = req.params
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const filePath = path.join(__dirname, '..', '..', 'audit_inputs', 'persona_journeys', `${name}.md`)
-    const markdown = await readFile(filePath, 'utf8')
-    const lines = markdown.split('\n').filter((l) => l.trim().startsWith('| **'))
-    const steps = lines.map((l) => {
-      const cells = l.split('|').slice(1, -1).map((c) => c.trim())
-      return {
-        step: cells[0],
-        evaluation: cells[1],
-        severity: cells[2],
-        quickFix: cells[3]
-      }
-    })
-    res.json({ steps })
+    
+    // Load the unified journey analysis file
+    const unifiedFilePath = path.join(__dirname, '..', '..', 'audit_inputs', 'persona_journeys', 'unified_journey_analysis.md')
+    const markdown = await readFile(unifiedFilePath, 'utf8')
+    
+    // Parse the unified journey data for this persona
+    const journeyData = parseUnifiedJourneyData(markdown, name)
+    
+    res.json(journeyData)
   } catch (err) {
+    console.error('Error loading persona journey:', err)
     res.status(404).json({ error: 'Persona journey not found' })
   }
 })
+
+// Helper function to parse unified journey data
+function parseUnifiedJourneyData(content, personaId) {
+  const personaMap = {
+    'P1': 'C-Suite',
+    'P2': 'Tech Innovation', 
+    'P3': 'Transformation',
+    'P4': 'Cybersecurity',
+    'P5': 'Technical'
+  }
+  
+  const personaName = personaMap[personaId] || personaId
+  
+  // Extract journey steps with actual data from the unified file
+  const steps = [
+    {
+      step_number: 1,
+      step_name: 'Step 1: Homepage (Awareness)',
+      persona_reaction: getPersonaReactionFromContent(content, 'Step 1', personaId),
+      gap_severity: getGapSeverityFromContent(content, 'Step 1', personaId),
+      quick_fixes: getQuickFixesFromContent(content, 'Step 1')
+    },
+    {
+      step_number: 2,
+      step_name: 'Step 2: Service Pages (Consideration)',
+      persona_reaction: getPersonaReactionFromContent(content, 'Step 2', personaId),
+      gap_severity: getGapSeverityFromContent(content, 'Step 2', personaId),
+      quick_fixes: getQuickFixesFromContent(content, 'Step 2')
+    },
+    {
+      step_number: 3,
+      step_name: 'Step 3: Proof Points (Validation)',
+      persona_reaction: getPersonaReactionFromContent(content, 'Step 3', personaId),
+      gap_severity: getGapSeverityFromContent(content, 'Step 3', personaId),
+      quick_fixes: getQuickFixesFromContent(content, 'Step 3')
+    },
+    {
+      step_number: 4,
+      step_name: 'Step 4: Thought Leadership (Education)',
+      persona_reaction: getPersonaReactionFromContent(content, 'Step 4', personaId),
+      gap_severity: getGapSeverityFromContent(content, 'Step 4', personaId),
+      quick_fixes: getQuickFixesFromContent(content, 'Step 4')
+    },
+    {
+      step_number: 5,
+      step_name: 'Step 5: Contact (Conversion)',
+      persona_reaction: getPersonaReactionFromContent(content, 'Step 5', personaId),
+      gap_severity: getGapSeverityFromContent(content, 'Step 5', personaId),
+      quick_fixes: getQuickFixesFromContent(content, 'Step 5')
+    }
+  ]
+  
+  return {
+    steps,
+    persona_id: personaId,
+    persona_name: personaName
+  }
+}
+
+// Helper function to extract persona reaction from content
+function getPersonaReactionFromContent(content, step, personaId) {
+  const personaNames = {
+    'P1': 'C-Suite',
+    'P2': 'Tech Innovation',
+    'P3': 'Transformation',
+    'P4': 'Cybersecurity',
+    'P5': 'Technical'
+  }
+  
+  const personaName = personaNames[personaId]
+  const stepSection = extractStepSection(content, step)
+  
+  if (stepSection) {
+    // Look for persona reactions section
+    const reactionMatch = stepSection.match(/\*\*Persona Reactions:\*\*(.*?)\*\*Gap Severity Analysis:\*\*/s)
+    if (reactionMatch) {
+      const reactionsText = reactionMatch[1]
+      // Find the specific persona reaction
+      const personaReactionMatch = reactionsText.match(new RegExp(`\\*\\*${personaId} \\(${personaName}\\)\\*\\*:([^\\n]*(?:\\n(?!\\*\\*)[^\\n]*)*)`, 'i'))
+      if (personaReactionMatch) {
+        return personaReactionMatch[1].trim()
+      }
+    }
+  }
+  
+  return 'No specific reaction data available'
+}
+
+// Helper function to extract gap severity from content
+function getGapSeverityFromContent(content, step, personaId) {
+  const stepSection = extractStepSection(content, step)
+  
+  if (stepSection) {
+    // Look for gap severity section
+    const severityMatch = stepSection.match(/\*\*Gap Severity Analysis:\*\*(.*?)\*\*Common Quick Fixes:\*\*/s)
+    if (severityMatch) {
+      const severityText = severityMatch[1]
+      // Find the specific persona severity
+      const personaSeverityMatch = severityText.match(new RegExp(`${personaId}:\\s*(\\d+)/5`, 'i'))
+      if (personaSeverityMatch) {
+        return parseInt(personaSeverityMatch[1])
+      }
+    }
+  }
+  
+  return 0
+}
+
+// Helper function to extract quick fixes from content
+function getQuickFixesFromContent(content, step) {
+  const stepSection = extractStepSection(content, step)
+  
+  if (stepSection) {
+    // Look for quick fixes section
+    const fixesMatch = stepSection.match(/\*\*Common Quick Fixes:\*\*(.*?)(?=\n### |$)/s)
+    if (fixesMatch) {
+      const fixesText = fixesMatch[1]
+      // Extract bullet points
+      const fixes = fixesText.split('\n')
+        .filter(line => line.trim().startsWith('-'))
+        .map(line => line.trim().substring(1).trim())
+        .filter(fix => fix.length > 0)
+      
+      return fixes
+    }
+  }
+  
+  return []
+}
+
+// Helper function to extract a specific step section from content
+function extractStepSection(content, step) {
+  const stepNumber = step.replace('Step ', '')
+  const stepPattern = new RegExp(`### Step ${stepNumber}:.*?(?=\n### |$)`, 's')
+  const match = content.match(stepPattern)
+  if (!match) {
+    console.log(`No match found for step pattern: ### Step ${stepNumber}:`)
+    console.log('Available step headers:', content.match(/### Step \d+:/g))
+  }
+  return match ? match[0] : null
+}
 
 app.get('/api/download/:name', async (req, res) => {
   try {
@@ -610,17 +748,34 @@ app.get('/api/persona-insights', async (_req, res) => {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     const filePath = path.join(__dirname, '..', '..', 'audit_data', 'unified_audit_data.csv')
     
+    // Create mapping from full persona names to short IDs
+    const personaNameToId = {
+      'The Benelux Strategic Business Leader (C-Suite Executive)': 'P1',
+      'The_BENELUX_Technology_Innovation_Leader': 'P2',
+      'The Benelux Transformation Programme Leader': 'P3',
+      'The Benelux Cybersecurity Decision Maker': 'P4',
+      'The Technical Influencer': 'P5'
+    }
+    
     const personaData = {}
     
     fs.createReadStream(filePath)
       .pipe(csv())
       .on('data', (row) => {
-        const personaId = row.persona_id
-        if (!personaId || personaId === 'persona_id') return // Skip header row
+        const fullPersonaName = row.persona_id
+        if (!fullPersonaName || fullPersonaName === 'persona_id') return // Skip header row
+        
+        // Map to short ID
+        const personaId = personaNameToId[fullPersonaName]
+        if (!personaId) {
+          console.warn(`Unknown persona name: ${fullPersonaName}`)
+          return
+        }
         
         if (!personaData[personaId]) {
           personaData[personaId] = {
             persona_id: personaId,
+            full_name: fullPersonaName,
             pages: [],
             metrics: {
               total_pages: 0,

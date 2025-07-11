@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlotlyChart } from '../components/PlotlyChart'
-import { EvidenceDisplay, EvidenceBrowser } from '../components/EvidenceDisplay'
-import '../styles/components/visual-brand-hygiene.css'
+import { EvidenceBrowser } from '../components/EvidenceDisplay'
+import StandardCard from '../components/StandardCard'
+import DataTable from '../components/DataTable'
+import ChartCard from '../components/ChartCard'
+import ExpandableCard from '../components/ExpandableCard'
+import { createColumnHelper } from '@tanstack/react-table'
 
 interface BrandData {
   url: string
@@ -66,6 +70,54 @@ function VisualBrandHygiene() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('criteria')
+  // Create table columns for DataTable
+  const columnHelper = createColumnHelper<BrandData>()
+  
+  const tableColumns = [
+    columnHelper.accessor('url', {
+      header: 'Page',
+      cell: (info) => info.getValue()?.replace('https://www.', '') || 'N/A'
+    }),
+    columnHelper.accessor('page_type', {
+      header: 'Type',
+      cell: (info) => info.getValue() || 'N/A'
+    }),
+    columnHelper.accessor('logo_compliance', {
+      header: 'Logo',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('color_palette', {
+      header: 'Color',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('typography', {
+      header: 'Typography',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('layout_structure', {
+      header: 'Layout',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('image_quality', {
+      header: 'Images',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('brand_messaging', {
+      header: 'Messaging',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('final_score', {
+      header: 'Final Score',
+      cell: (info) => info.getValue()?.toFixed(1) || '0.0'
+    }),
+    columnHelper.accessor('key_violations', {
+      header: 'Key Violations',
+      cell: (info) => {
+        const violations = info.getValue() || ''
+        return violations.length > 50 ? violations.substring(0, 50) + '...' : violations
+      }
+    })
+  ]
   const [auditData, setAuditData] = useState<any[]>([])
   const [selectedPersona, setSelectedPersona] = useState<string>('All')
 
@@ -76,8 +128,8 @@ function VisualBrandHygiene() {
 
   const fetchAuditData = async () => {
     try {
-      // Fetch audit data with evidence for brand analysis
-      const response = await fetch('http://localhost:8000/api/audit-data')
+      // Fetch audit data with evidence for brand analysis via Node.js API
+      const response = await fetch('http://localhost:3000/api/brand-hygiene')
       if (response.ok) {
         const data = await response.json()
         setAuditData(data)
@@ -225,10 +277,10 @@ function VisualBrandHygiene() {
 
   const generatePriorityData = (): PriorityItem[] => {
     return data.map(item => {
-      const score = item.final_score
-      const violations = item.key_violations
-      const pageUrl = item.url.replace('https://www.', '')
-      const pageType = item.page_type
+      const score = item.final_score || 0
+      const violations = item.key_violations || ''
+      const pageUrl = item.url?.replace('https://www.', '') || 'Unknown Page'
+      const pageType = item.page_type || ''
       
       // Calculate Business Impact (0-10 scale) - Enhanced scoring from Streamlit
       let businessImpact = 9.0
@@ -366,7 +418,10 @@ function VisualBrandHygiene() {
   if (loading) {
     return (
       <div className="page-container">
-        <div className="loading-spinner">Loading Visual Brand Hygiene...</div>
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <span>Loading Visual Brand Hygiene...</span>
+        </div>
       </div>
     )
   }
@@ -374,7 +429,7 @@ function VisualBrandHygiene() {
   if (error) {
     return (
       <div className="page-container">
-        <div className="error-message">{error}</div>
+        <div className="alert alert--error">{error}</div>
       </div>
     )
   }
@@ -384,47 +439,49 @@ function VisualBrandHygiene() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="main-header">
-        <h1>🎨 Visual Brand Hygiene</h1>
-        <p>Visual consistency analysis and brand standards compliance assessment</p>
+      <div className="page-header">
+        <h1 className="page-title">🎨 Visual Brand Hygiene</h1>
+        <p className="page-subtitle">Visual consistency analysis and brand standards compliance assessment</p>
       </div>
 
       {/* Overview Metrics */}
       <div className="section">
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <h3>📄 Total Pages</h3>
-            <div className="metric-value">{metrics.totalPages.toLocaleString()}</div>
-            <div className="metric-label">Pages analyzed</div>
-          </div>
+        <div className="grid grid--auto-200 mb-4">
+          <StandardCard
+            title="📄 Total Pages"
+            value={metrics.totalPages.toLocaleString()}
+            label="Pages analyzed"
+            variant="metric"
+          />
           
-          <div className="metric-card">
-            <h3>📊 Average Score</h3>
-            <div className="metric-value">{metrics.avgScore.toFixed(1)}/10</div>
-            <div className={`metric-label ${metrics.avgScore >= 8 ? 'success' : metrics.avgScore >= 6 ? 'warning' : 'error'}`}>
-              Overall brand health
-            </div>
-          </div>
+          <StandardCard
+            title="📊 Average Score"
+            value={`${metrics.avgScore.toFixed(1)}/10`}
+            label="Overall brand health"
+            status={metrics.avgScore >= 8 ? 'excellent' : metrics.avgScore >= 6 ? 'good' : metrics.avgScore >= 4 ? 'warning' : 'critical'}
+            variant="metric"
+          />
           
-          <div className="metric-card">
-            <h3>⭐ Top Performers</h3>
-            <div className="metric-value">{metrics.topPerformers}</div>
-            <div className="metric-label">Pages scoring ≥8.5</div>
-          </div>
+          <StandardCard
+            title="⭐ Top Performers"
+            value={metrics.topPerformers}
+            label="Pages scoring ≥8.5"
+            variant="metric"
+          />
           
-          <div className="metric-card">
-            <h3>🎯 Compliance Rate</h3>
-            <div className="metric-value">{metrics.complianceRate.toFixed(1)}%</div>
-            <div className={`metric-label ${metrics.complianceRate >= 80 ? 'success' : metrics.complianceRate >= 60 ? 'warning' : 'error'}`}>
-              Brand standards compliance
-            </div>
-          </div>
+          <StandardCard
+            title="🎯 Compliance Rate"
+            value={`${metrics.complianceRate.toFixed(1)}%`}
+            label="Brand standards compliance"
+            status={metrics.complianceRate >= 80 ? 'excellent' : metrics.complianceRate >= 60 ? 'good' : 'warning'}
+            variant="metric"
+          />
         </div>
       </div>
 
       {/* Brand Performance Heatmap */}
       <div className="section">
-        <h2>Brand Performance Heatmap</h2>
+        <h2 className="section__title">Brand Performance Heatmap</h2>
         <div className="chart-container">
           <PlotlyChart
             data={getHeatmapData()}
@@ -432,7 +489,10 @@ function VisualBrandHygiene() {
               title: 'Brand Score Distribution by Tier and Domain',
               xaxis: { title: 'Domain' },
               yaxis: { title: 'Tier' },
-              height: 300
+              height: 300,
+              font: { family: 'Inter, sans-serif', size: 12 },
+              paper_bgcolor: 'white',
+              plot_bgcolor: 'white'
             }}
           />
         </div>
@@ -486,7 +546,7 @@ function VisualBrandHygiene() {
                 <h2>Brand Criteria Analysis</h2>
                 
                 <div className="criteria-analysis">
-                  <div className="radar-chart">
+                  <ChartCard title="Brand Criteria Performance Radar">
                     <PlotlyChart
                       data={getRadarData()}
                       layout={{
@@ -497,11 +557,10 @@ function VisualBrandHygiene() {
                           }
                         },
                         showlegend: false,
-                        title: 'Brand Criteria Performance Radar',
                         height: 500
                       }}
                     />
-                  </div>
+                  </ChartCard>
                   
                   <div className="criteria-insights">
                     <h3>Criteria Insights</h3>
@@ -548,40 +607,7 @@ function VisualBrandHygiene() {
 
                 <div className="detailed-breakdown">
                   <h3>Detailed Performance Breakdown</h3>
-                  <div className="data-table">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Page</th>
-                          <th>Tier</th>
-                          <th>Logo</th>
-                          <th>Color</th>
-                          <th>Type</th>
-                          <th>Layout</th>
-                          <th>Images</th>
-                          <th>Message</th>
-                          <th>Score</th>
-                          <th>Issues</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.url.replace('https://www.', '')}</td>
-                            <td>{item.page_type}</td>
-                            <td>{item.logo_compliance.toFixed(1)}</td>
-                            <td>{item.color_palette.toFixed(1)}</td>
-                            <td>{item.typography.toFixed(1)}</td>
-                            <td>{item.layout_structure.toFixed(1)}</td>
-                            <td>{item.image_quality.toFixed(1)}</td>
-                            <td>{item.brand_messaging.toFixed(1)}</td>
-                            <td>{item.final_score.toFixed(1)}</td>
-                            <td>{item.key_violations.length > 50 ? item.key_violations.substring(0, 50) + '...' : item.key_violations}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <DataTable data={data} columns={tableColumns} />
                 </div>
               </div>
             )}
@@ -590,36 +616,38 @@ function VisualBrandHygiene() {
               <div className="tier-tab">
                 <h2>Tier Performance Analysis</h2>
                 
-                <div className="tier-analysis">
+                <ChartCard title="Average Brand Score by Content Tier">
                   <PlotlyChart
                     data={getTierAnalysisData()}
                     layout={{
-                      title: 'Average Brand Score by Content Tier',
                       xaxis: { title: 'Content Tier' },
                       yaxis: { title: 'Average Score' },
                       height: 400
                     }}
                   />
-                </div>
+                </ChartCard>
 
-                <div className="tier-insights">
-                  <h3>Tier Performance Insights</h3>
-                  <div className="tier-cards">
-                    {[...new Set(data.map(item => item.tier_name))].map(tier => {
-                      const tierData = data.filter(item => item.tier_name === tier)
-                      const avgScore = tierData.reduce((sum, item) => sum + item.final_score, 0) / tierData.length
-                      const pageCount = tierData.length
-                      
-                      return (
-                        <div key={tier} className={`tier-card ${avgScore >= 8.5 ? 'success' : avgScore >= 7.5 ? 'warning' : 'error'}`}>
-                          <h4>{tier}</h4>
-                          <div className="tier-score">{avgScore.toFixed(1)}/10</div>
-                          <div className="tier-count">({pageCount} pages)</div>
-                        </div>
-                      )
-                    })}
+                                  <div className="tier-insights">
+                    <h3>Tier Performance Insights</h3>
+                    <div className="grid grid--auto-200 gap-sm">
+                      {[...new Set(data.map(item => item.tier_name))].map(tier => {
+                        const tierData = data.filter(item => item.tier_name === tier)
+                        const avgScore = tierData.reduce((sum, item) => sum + item.final_score, 0) / tierData.length
+                        const pageCount = tierData.length
+                        
+                        return (
+                          <StandardCard
+                            key={tier}
+                            title={tier}
+                            value={`${avgScore.toFixed(1)}/10`}
+                            label={`(${pageCount} pages)`}
+                            status={avgScore >= 8.5 ? 'excellent' : avgScore >= 7.5 ? 'good' : avgScore >= 5 ? 'warning' : 'critical'}
+                            variant="metric"
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
               </div>
             )}
 
@@ -697,61 +725,75 @@ function VisualBrandHygiene() {
                   return (
                     <>
                       <div className="priority-overview">
-                        <div className="priority-metrics">
-                          <div className={`metric-card ${doFirstCount > 0 ? 'error' : 'success'}`}>
-                            <h4>🚀 Do First</h4>
+                        <div className="grid grid--cols-4 gap-md">
+                          <StandardCard
+                            title="🚀 Do First"
+                            variant="metric"
+                            status={doFirstCount > 0 ? "critical" : "excellent"}
+                          >
                             <div className="metric-value">{doFirstCount}</div>
-                          </div>
-                          <div className="metric-card info">
-                            <h4>⚡ Quick Wins</h4>
+                          </StandardCard>
+                          <StandardCard
+                            title="⚡ Quick Wins"
+                            variant="metric"
+                            status="good"
+                          >
                             <div className="metric-value">{quickWinsCount}</div>
-                          </div>
-                          <div className="metric-card warning">
-                            <h4>📅 Schedule</h4>
+                          </StandardCard>
+                          <StandardCard
+                            title="📅 Schedule"
+                            variant="metric"
+                            status="warning"
+                          >
                             <div className="metric-value">{scheduleCount}</div>
-                          </div>
-                          <div className={`metric-card ${avgRoi >= 1.5 ? 'success' : 'warning'}`}>
-                            <h4>📈 Avg ROI Score</h4>
+                          </StandardCard>
+                          <StandardCard
+                            title="📈 Avg ROI Score"
+                            variant="metric"
+                            status={avgRoi >= 1.5 ? "excellent" : "warning"}
+                          >
                             <div className="metric-value">{avgRoi.toFixed(1)}</div>
-                          </div>
+                          </StandardCard>
                         </div>
                       </div>
 
-                      <div className="priority-matrix">
-                        <h3>Strategic Priority Matrix - Impact vs. Effort</h3>
+                      <ChartCard title="Strategic Priority Matrix - Impact vs. Effort">
                         <PlotlyChart
                           data={getPriorityMatrixData()}
                           layout={{
-                            title: 'Strategic Priority Matrix - Impact vs. Effort',
                             xaxis: { 
                               title: 'Implementation Effort (0=Easy, 10=Complex)',
                               range: [0, 10],
-                              gridcolor: 'lightgray'
+                              gridcolor: 'lightgray',
+                              zeroline: false
                             },
                             yaxis: { 
                               title: 'Business Impact (0=Low, 10=High)',
                               range: [0, 10],
-                              gridcolor: 'lightgray'
+                              gridcolor: 'lightgray',
+                              zeroline: false
                             },
                             height: 600,
                             showlegend: true,
+                            font: { family: 'Inter, sans-serif', size: 12 },
+                            paper_bgcolor: 'white',
                             plot_bgcolor: 'white',
                             shapes: [
                               // Add quadrant background shapes (matches Streamlit version)
-                              { type: 'rect', x0: 0, y0: 7, x1: 5, y1: 10, fillcolor: 'rgba(34, 197, 94, 0.1)', line: { width: 0 } },  // Quick Win
+                              { type: 'rect', x0: 0, y0: 7, x1: 5, y1: 10, fillcolor: 'rgba(59, 130, 246, 0.1)', line: { width: 0 } },  // Quick Win
                               { type: 'rect', x0: 5, y0: 7, x1: 10, y1: 10, fillcolor: 'rgba(245, 158, 11, 0.1)', line: { width: 0 } },  // Schedule
                               { type: 'rect', x0: 0, y0: 0, x1: 5, y1: 7, fillcolor: 'rgba(239, 68, 68, 0.1)', line: { width: 0 } },  // Don't Do
                               { type: 'rect', x0: 5, y0: 0, x1: 10, y1: 7, fillcolor: 'rgba(34, 197, 94, 0.2)', line: { width: 0 } }   // Do First
                             ],
                             annotations: [
-                              { x: 2.5, y: 8.5, text: '⚡ QUICK WIN<br><i>Low Effort, High Impact</i>', showarrow: false, font: { size: 12, color: '#22C55E' } },
+                              { x: 2.5, y: 8.5, text: '⚡ QUICK WIN<br><i>Low Effort, High Impact</i>', showarrow: false, font: { size: 12, color: '#3B82F6' } },
                               { x: 7.5, y: 8.5, text: '📅 SCHEDULE<br><i>High Effort, High Impact</i>', showarrow: false, font: { size: 12, color: '#F59E0B' } },
                               { x: 2.5, y: 3.5, text: '❌ DON\'T DO<br><i>Low Effort, Low Impact</i>', showarrow: false, font: { size: 12, color: '#EF4444' } },
-                              { x: 7.5, y: 3.5, text: '🚀 DO FIRST<br><i>High Effort, High Impact</i>', showarrow: false, font: { size: 12, color: '#22C55E' } }
+                              { x: 7.5, y: 3.5, text: '🚀 DO FIRST<br><i>High Impact, High Effort</i>', showarrow: false, font: { size: 12, color: '#22C55E' } }
                             ]
                           }}
                         />
-                      </div>
+                      </ChartCard>
 
                       <div className="action-plans">
                         <h3>📋 Strategic Action Plans</h3>
@@ -759,94 +801,122 @@ function VisualBrandHygiene() {
                         {doFirstCount > 0 && (
                           <div className="action-section">
                             <h4>🚀 DO FIRST - Critical High-Impact Fixes</h4>
-                            {priorityData
-                              .filter(item => item.priority_quadrant === '🚀 DO FIRST')
-                              .sort((a, b) => b.roi_score - a.roi_score)
-                              .slice(0, 3)
-                              .map((item, index) => (
-                                <div key={index} className="action-item">
-                                  <h5>🔥 {item.page} - ROI Score: {item.roi_score.toFixed(1)}</h5>
-                                  <div className="action-details">
-                                    <div className="action-metrics">
-                                      <p><strong>📊 Current Score:</strong> {item.current_score.toFixed(1)}/10</p>
-                                      <p><strong>📈 Potential Improvement:</strong> +{item.potential_improvement.toFixed(1)} points</p>
-                                      <p><strong>⏰ Time Estimate:</strong> {item.time_estimate}</p>
-                                      <p><strong>💰 Cost Estimate:</strong> {item.cost_estimate}</p>
+                            <div className="grid gap-sm">
+                              {priorityData
+                                .filter(item => item.priority_quadrant === '🚀 DO FIRST')
+                                .sort((a, b) => b.roi_score - a.roi_score)
+                                .slice(0, 3)
+                                .map((item, index) => (
+                                  <ExpandableCard
+                                    key={index}
+                                    title={`🔥 ${item.page.substring(0, 40)}${item.page.length > 40 ? '...' : ''} - ROI: ${item.roi_score.toFixed(1)}`}
+                                  >
+                                    <div className="grid grid--cols-2 gap-md">
+                                      <StandardCard
+                                        title="📊 Performance Metrics"
+                                        variant="content"
+                                      >
+                                        <p><strong>Current Score:</strong> {item.current_score.toFixed(1)}/10</p>
+                                        <p><strong>Potential Improvement:</strong> +{item.potential_improvement.toFixed(1)} points</p>
+                                        <p><strong>Time Estimate:</strong> {item.time_estimate}</p>
+                                        <p><strong>Cost Estimate:</strong> {item.cost_estimate}</p>
+                                      </StandardCard>
+                                      <div className="action-recommendations">
+                                        <h6>🎯 Action Items</h6>
+                                        <ul>
+                                          {item.recommendations.slice(0, 3).map((rec, recIndex) => (
+                                            <li key={recIndex}>{rec}</li>
+                                          ))}
+                                        </ul>
+                                        <p><strong>Issues:</strong> {item.issues.substring(0, 100)}...</p>
+                                      </div>
                                     </div>
-                                    <div className="action-recommendations">
-                                      <p><strong>🎯 Action Items:</strong></p>
-                                      <ul>
-                                        {item.recommendations.slice(0, 3).map((rec, recIndex) => (
-                                          <li key={recIndex}>{rec}</li>
-                                        ))}
-                                      </ul>
-                                      <p><strong>🔍 Issues Found:</strong> {item.issues}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                                  </ExpandableCard>
+                                ))}
+                            </div>
                           </div>
                         )}
 
                         {quickWinsCount > 0 && (
                           <div className="action-section">
                             <h4>⚡ QUICK WINS - Low Effort, High Impact</h4>
-                            {priorityData
-                              .filter(item => item.priority_quadrant === '⚡ QUICK WIN')
-                              .sort((a, b) => b.roi_score - a.roi_score)
-                              .slice(0, 5)
-                              .map((item, index) => (
-                                <div key={index} className="action-item">
-                                  <h5>⚡ {item.page} - ROI Score: {item.roi_score.toFixed(1)}</h5>
-                                  <div className="action-details">
-                                    <div className="action-metrics">
-                                      <p><strong>📊 Current Score:</strong> {item.current_score.toFixed(1)}/10</p>
-                                      <p><strong>📈 Potential Improvement:</strong> +{item.potential_improvement.toFixed(1)} points</p>
-                                      <p><strong>⏰ Time Estimate:</strong> {item.time_estimate}</p>
+                            <div className="grid gap-sm">
+                              {priorityData
+                                .filter(item => item.priority_quadrant === '⚡ QUICK WIN')
+                                .sort((a, b) => b.roi_score - a.roi_score)
+                                .slice(0, 5)
+                                .map((item, index) => (
+                                  <ExpandableCard
+                                    key={index}
+                                    title={`⚡ ${item.page.substring(0, 40)}${item.page.length > 40 ? '...' : ''} - ROI: ${item.roi_score.toFixed(1)}`}
+                                  >
+                                    <div className="grid grid--cols-2 gap-md">
+                                      <StandardCard
+                                        title="📊 Quick Win Metrics"
+                                        variant="content"
+                                      >
+                                        <p><strong>Current Score:</strong> {item.current_score.toFixed(1)}/10</p>
+                                        <p><strong>Potential Improvement:</strong> +{item.potential_improvement.toFixed(1)} points</p>
+                                        <p><strong>Time Estimate:</strong> {item.time_estimate}</p>
+                                      </StandardCard>
+                                      <div className="action-recommendations">
+                                        <h6>⚡ Quick Actions</h6>
+                                        <ul>
+                                          {item.recommendations.slice(0, 2).map((rec, recIndex) => (
+                                            <li key={recIndex}>{rec}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
                                     </div>
-                                    <div className="action-recommendations">
-                                      <p><strong>🎯 Quick Actions:</strong></p>
-                                      <ul>
-                                        {item.recommendations.slice(0, 2).map((rec, recIndex) => (
-                                          <li key={recIndex}>{rec}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                                  </ExpandableCard>
+                                ))}
+                            </div>
                           </div>
                         )}
 
                         <div className="implementation-roadmap">
                           <h4>🗓️ 90-Day Implementation Roadmap</h4>
-                          <div className="roadmap-timeline">
-                            <div className="roadmap-month">
-                              <h5>📅 Month 1 (Days 1-30)</h5>
+                          <div className="grid grid--cols-3 gap-md">
+                            <StandardCard
+                              title="📅 Month 1 (Days 1-30)"
+                              variant="content"
+                              status="critical"
+                            >
                               <p><strong>Focus:</strong> Complete all {doFirstCount} critical fixes</p>
                               <p><strong>Goal:</strong> Address urgent brand compliance issues</p>
                               <p><strong>Budget:</strong> €{(doFirstCount * 7500).toLocaleString()}</p>
-                            </div>
-                            <div className="roadmap-month">
-                              <h5>⚡ Month 2 (Days 31-60)</h5>
+                            </StandardCard>
+                            
+                            <StandardCard
+                              title="⚡ Month 2 (Days 31-60)"
+                              variant="content"
+                              status="warning"
+                            >
                               <p><strong>Focus:</strong> Implement {Math.min(quickWinsCount, 8)} quick wins</p>
                               <p><strong>Goal:</strong> Maximize ROI with low-effort improvements</p>
                               <p><strong>Budget:</strong> €{(Math.min(quickWinsCount, 8) * 1000).toLocaleString()}</p>
-                            </div>
-                            <div className="roadmap-month">
-                              <h5>📈 Month 3 (Days 61-90)</h5>
+                            </StandardCard>
+                            
+                            <StandardCard
+                              title="📈 Month 3 (Days 61-90)"
+                              variant="content"
+                              status="good"
+                            >
                               <p><strong>Focus:</strong> Plan {Math.min(scheduleCount, 5)} scheduled improvements</p>
                               <p><strong>Goal:</strong> Long-term strategic enhancements</p>
                               <p><strong>Budget:</strong> €{(Math.min(scheduleCount, 5) * 3000).toLocaleString()}</p>
-                            </div>
+                            </StandardCard>
                           </div>
                           
-                          <div className="roi-projection">
-                            <h5>📊 Expected ROI</h5>
+                          <StandardCard
+                            title="📊 Expected ROI"
+                            variant="content"
+                            status="excellent"
+                          >
                             <p><strong>Total Potential Brand Score Improvement:</strong> +{priorityData.reduce((sum, item) => sum + item.potential_improvement, 0).toFixed(1)} points</p>
                             <p><strong>Estimated 90-Day Investment:</strong> €{(doFirstCount * 7500 + Math.min(quickWinsCount, 8) * 1000 + Math.min(scheduleCount, 5) * 3000).toLocaleString()}</p>
                             <p><strong>Expected Brand Health Increase:</strong> {(priorityData.reduce((sum, item) => sum + item.potential_improvement, 0) / priorityData.length * 100).toFixed(1)}% improvement</p>
-                          </div>
+                          </StandardCard>
                         </div>
                       </div>
                     </>
@@ -865,39 +935,73 @@ function VisualBrandHygiene() {
                   <div className="color-sections">
                     <div className="color-section">
                       <h4>Primary Color Palette</h4>
-                      <div className="color-grid">
+                      <div className="grid grid--auto-200 gap-md">
                         {PRIMARY_COLORS.map((color, index) => (
-                          <div key={index} className="color-card">
+                          <StandardCard 
+                            key={index}
+                            variant="content"
+                            className="color-card"
+                          >
                             <div 
                               className="color-swatch" 
-                              style={{ backgroundColor: color.hex }}
+                              style={{ 
+                                backgroundColor: color.hex,
+                                width: '100%',
+                                height: '60px',
+                                borderRadius: 'var(--border-radius)',
+                                marginBottom: 'var(--spacing-sm)'
+                              }}
                             ></div>
                             <div className="color-info">
-                              <h5 style={{ color: color.hex }}>{color.name}</h5>
-                              <code>{color.hex}</code>
-                              <p>{color.description}</p>
-                              {color.cmyk && <small>{color.cmyk}</small>}
+                              <h5 style={{ color: color.hex, margin: '0 0 var(--spacing-xs) 0' }}>{color.name}</h5>
+                              <code style={{ 
+                                background: 'var(--gray-100)', 
+                                padding: 'var(--spacing-xs)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                fontSize: 'var(--font-size-sm)',
+                                display: 'block',
+                                marginBottom: 'var(--spacing-xs)'
+                              }}>{color.hex}</code>
+                              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', margin: '0' }}>{color.description}</p>
+                              {color.cmyk && <small style={{ display: 'block', marginTop: 'var(--spacing-xs)', color: 'var(--text-secondary)' }}>{color.cmyk}</small>}
                             </div>
-                          </div>
+                          </StandardCard>
                         ))}
                       </div>
                     </div>
                     
                     <div className="color-section">
                       <h4>Secondary Color Palette</h4>
-                      <div className="secondary-colors">
+                      <div className="grid grid--auto-200 gap-md">
                         {SECONDARY_COLORS.map((color, index) => (
-                          <div key={index} className="secondary-color-card">
+                          <StandardCard 
+                            key={index}
+                            variant="content"
+                            className="color-card secondary"
+                          >
                             <div 
-                              className="secondary-color-swatch" 
-                              style={{ backgroundColor: color.hex }}
+                              className="color-swatch" 
+                              style={{ 
+                                backgroundColor: color.hex,
+                                width: '100%',
+                                height: '40px',
+                                borderRadius: 'var(--border-radius)',
+                                marginBottom: 'var(--spacing-sm)'
+                              }}
                             ></div>
-                            <div className="secondary-color-info">
-                              <strong style={{ color: color.hex }}>{color.name}</strong>
-                              <code>{color.hex}</code>
-                              <small>{color.description}</small>
+                            <div className="color-info">
+                              <strong style={{ color: color.hex, fontSize: 'var(--font-size-sm)' }}>{color.name}</strong>
+                              <code style={{ 
+                                background: 'var(--gray-100)', 
+                                padding: 'var(--spacing-xs)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                fontSize: 'var(--font-size-xs)',
+                                display: 'block',
+                                margin: 'var(--spacing-xs) 0'
+                              }}>{color.hex}</code>
+                              <small style={{ color: 'var(--text-secondary)' }}>{color.description}</small>
                             </div>
-                          </div>
+                          </StandardCard>
                         ))}
                       </div>
                     </div>
@@ -927,23 +1031,25 @@ function VisualBrandHygiene() {
                     
                     <div className="font-specifications">
                       <h4>Font Specifications:</h4>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Element</th>
-                            <th>Weight</th>
-                            <th>Size</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr><td>H1 Heading</td><td>SemiBold (600)</td><td>2.5rem</td></tr>
-                          <tr><td>H2 Heading</td><td>SemiBold (600)</td><td>2rem</td></tr>
-                          <tr><td>H3 Heading</td><td>Medium (500)</td><td>1.5rem</td></tr>
-                          <tr><td>Body Text</td><td>Regular (400)</td><td>1rem</td></tr>
-                          <tr><td>Caption</td><td>Regular (400)</td><td>0.875rem</td></tr>
-                          <tr><td>Buttons</td><td>SemiBold (600)</td><td>0.9rem</td></tr>
-                        </tbody>
-                      </table>
+                      <div className="grid grid--cols-3 gap-sm">
+                        {[
+                          { element: 'H1 Heading', weight: 'SemiBold (600)', size: '2.5rem' },
+                          { element: 'H2 Heading', weight: 'SemiBold (600)', size: '2rem' },
+                          { element: 'H3 Heading', weight: 'Medium (500)', size: '1.5rem' },
+                          { element: 'Body Text', weight: 'Regular (400)', size: '1rem' },
+                          { element: 'Caption', weight: 'Regular (400)', size: '0.875rem' },
+                          { element: 'Buttons', weight: 'SemiBold (600)', size: '0.9rem' }
+                        ].map((spec, index) => (
+                          <StandardCard 
+                            key={index}
+                            title={spec.element}
+                            variant="content"
+                          >
+                            <p><strong>Weight:</strong> {spec.weight}</p>
+                            <p><strong>Size:</strong> {spec.size}</p>
+                          </StandardCard>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1191,7 +1297,7 @@ function VisualBrandHygiene() {
                   <strong>Top Performer</strong>
                   <p>{(() => {
                     const topPage = data.reduce((max, item) => item.final_score > max.final_score ? item : max)
-                    return `${topPage.url.replace('https://www.', '')} (${topPage.final_score.toFixed(1)}/10)`
+                    return `${topPage.url?.replace('https://www.', '') || 'Unknown Page'} (${topPage.final_score?.toFixed(1) || '0.0'}/10)`
                   })()}</p>
                 </div>
               </div>
@@ -1202,7 +1308,7 @@ function VisualBrandHygiene() {
                   <strong>Needs Attention</strong>
                   <p>{(() => {
                     const bottomPage = data.reduce((min, item) => item.final_score < min.final_score ? item : min)
-                    return `${bottomPage.url.replace('https://www.', '')} (${bottomPage.final_score.toFixed(1)}/10)`
+                    return `${bottomPage.url?.replace('https://www.', '') || 'Unknown Page'} (${bottomPage.final_score?.toFixed(1) || '0.0'}/10)`
                   })()}</p>
                 </div>
               </div>

@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useFilters } from '../context/FilterContext';
-import { ScoreCard } from '../components/ScoreCard';
-import { PlotlyChart } from '../components/PlotlyChart';
-import DatasetList from './DatasetList';
 import DatasetDetail from './DatasetDetail';
+import StandardCard from '../components/StandardCard';
 import '../styles/pages/ReportsExport.css';
 
 interface DatasetInfo {
@@ -410,39 +407,43 @@ const ReportsExport: React.FC = () => {
               {/* Data Quality Analysis */}
               <div className="data-quality">
                 <h3>📈 Data Quality Analysis</h3>
-                <div className="quality-metrics">
-                  <div className="quality-metric">
-                    <div className={`quality-score ${dataQuality.completeness >= 90 ? 'excellent' : 
-                      dataQuality.completeness >= 70 ? 'good' : 
-                      dataQuality.completeness >= 50 ? 'warning' : 'critical'}`}>
-                      {dataQuality.completeness.toFixed(1)}%
-                    </div>
-                    <div className="quality-label">Completeness</div>
-                  </div>
-                  <div className="quality-metric">
-                    <div className={`quality-score ${dataQuality.consistency >= 90 ? 'excellent' : 
-                      dataQuality.consistency >= 70 ? 'good' : 
-                      dataQuality.consistency >= 50 ? 'warning' : 'critical'}`}>
-                      {dataQuality.consistency.toFixed(1)}%
-                    </div>
-                    <div className="quality-label">Consistency</div>
-                  </div>
-                  <div className="quality-metric">
-                    <div className={`quality-score ${dataQuality.accuracy >= 90 ? 'excellent' : 
-                      dataQuality.accuracy >= 70 ? 'good' : 
-                      dataQuality.accuracy >= 50 ? 'warning' : 'critical'}`}>
-                      {dataQuality.accuracy.toFixed(1)}%
-                    </div>
-                    <div className="quality-label">Accuracy</div>
-                  </div>
-                  <div className="quality-metric">
-                    <div className={`quality-score ${dataQuality.timeliness >= 90 ? 'excellent' : 
-                      dataQuality.timeliness >= 70 ? 'good' : 
-                      dataQuality.timeliness >= 50 ? 'warning' : 'critical'}`}>
-                      {dataQuality.timeliness.toFixed(1)}%
-                    </div>
-                    <div className="quality-label">Timeliness</div>
-                  </div>
+                <div className="grid grid--cols-4 gap-md">
+                  <StandardCard
+                    title="Completeness"
+                    variant="metric"
+                    status={dataQuality.completeness >= 90 ? "excellent" : 
+                      dataQuality.completeness >= 70 ? "good" : 
+                      dataQuality.completeness >= 50 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{dataQuality.completeness.toFixed(1)}%</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Consistency"
+                    variant="metric"
+                    status={dataQuality.consistency >= 90 ? "excellent" : 
+                      dataQuality.consistency >= 70 ? "good" : 
+                      dataQuality.consistency >= 50 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{dataQuality.consistency.toFixed(1)}%</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Accuracy"
+                    variant="metric"
+                    status={dataQuality.accuracy >= 90 ? "excellent" : 
+                      dataQuality.accuracy >= 70 ? "good" : 
+                      dataQuality.accuracy >= 50 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{dataQuality.accuracy.toFixed(1)}%</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Timeliness"
+                    variant="metric"
+                    status={dataQuality.timeliness >= 90 ? "excellent" : 
+                      dataQuality.timeliness >= 70 ? "good" : 
+                      dataQuality.timeliness >= 50 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{dataQuality.timeliness.toFixed(1)}%</div>
+                  </StandardCard>
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PlotlyChart } from '../components'
 import { EvidenceDisplay } from '../components/EvidenceDisplay'
+import StandardCard from '../components/StandardCard'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -126,7 +127,7 @@ function ContentMatrix() {
       <ContentFilters filters={filters} setFilters={setFilters} data={data} />
 
       {/* Performance Overview */}
-      <PerformanceOverview metrics={metrics} filteredContent={filteredContent} />
+      <PerformanceOverview metrics={metrics} />
 
       {/* Tier Performance Analysis */}
       <TierPerformanceAnalysis data={data} />
@@ -234,7 +235,7 @@ function ContentFilters({ filters, setFilters, data }: any) {
   )
 }
 
-function PerformanceOverview({ metrics, filteredContent }: any) {
+function PerformanceOverview({ metrics }: any) {
   const avgScore = metrics.avgScore || 0
   const totalPages = metrics.totalPages || 0
   const poorPerformers = metrics.poorPerformers || 0
@@ -823,15 +824,14 @@ function PersonaEvidenceContext({ data }: any) {
                 </div>
 
                 {/* Persona Performance Overview */}
-                <div className="persona-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div className="metric-card" style={{ textAlign: 'center' }}>
-                    <div className="metric-value" style={{ 
-                      color: analysis.avgScore >= 7 ? '#10b981' : analysis.avgScore >= 5 ? '#f59e0b' : '#ef4444' 
-                    }}>
-                      {analysis.avgScore.toFixed(1)}
-                    </div>
-                    <div className="metric-label">Avg Score</div>
-                  </div>
+                <div className="grid grid--auto-200 gap-md" style={{ marginBottom: '1.5rem' }}>
+                  <StandardCard
+                    title="Avg Score"
+                    variant="metric"
+                    status={analysis.avgScore >= 7 ? "excellent" : analysis.avgScore >= 5 ? "warning" : "critical"}
+                  >
+                    <div className="metric-value">{analysis.avgScore.toFixed(1)}</div>
+                  </StandardCard>
                 </div>
 
                 {/* Evidence-Based Insights */}

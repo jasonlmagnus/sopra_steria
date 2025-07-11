@@ -20,6 +20,7 @@ sys.path.insert(0, parent_dir)
 
 import yaml
 from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
@@ -29,6 +30,15 @@ from audit_tool.dashboard.components.metrics_calculator import (
 from audit_tool.html_report_generator import HTMLReportGenerator
 
 app = FastAPI(title="Sopra Steria Audit FastAPI")
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Global audit status tracking
 audit_sessions: Dict[str, Dict[str, Any]] = {}
@@ -885,6 +895,22 @@ def get_master_dataset():
         return master_df.to_dict(orient='records')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading master data: {str(e)}")
+
+@app.get("/api/audit-data")
+def get_audit_data():
+    """Return the unified audit data for React components"""
+    try:
+        data_loader = BrandHealthDataLoader()
+        datasets, master_df = data_loader.load_all_data()
+        if master_df.empty:
+            raise HTTPException(status_code=404, detail="No audit data available")
+        
+        # Handle NaN values that cause JSON serialization errors
+        master_df = master_df.fillna('')  # Replace NaN with empty strings
+        
+        return master_df.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading audit data: {str(e)}")
 
 @app.get("/datasets/metadata")
 def get_datasets_metadata():

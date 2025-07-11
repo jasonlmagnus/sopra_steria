@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { PlotlyChart } from '../components/PlotlyChart'
-import { EvidenceDisplay, EvidenceBrowser } from '../components/EvidenceDisplay'
+import { EvidenceBrowser } from '../components/EvidenceDisplay'
+import StandardCard from '../components/StandardCard'
 
 interface PersonaProfile {
   id: string
@@ -51,135 +52,93 @@ interface PerformanceData {
   url_slug?: string
 }
 
-interface VoiceStats {
-  total_entries: number
-  effective_copy_examples: {
-    populated: number
-    total: number
-    percentage: number
-  }
-  ineffective_copy_examples: {
-    populated: number
-    total: number
-    percentage: number
-  }
-  business_impact_analysis: {
-    populated: number
-    total: number
-    percentage: number
-  }
-}
 
-interface VoiceExample {
-  type: 'quoted_copy' | 'persona_insight'
-  quote: string
-  analysis: string
-}
-
-interface VoiceAnalysisPage {
-  page_title: string
-  url: string
-  tier_name: string
-  avg_score: number
-  examples: VoiceExample[]
-}
-
-interface BusinessInsight {
-  type: 'strategic_insight'
-  content: string
-}
-
-interface BusinessAnalysisPage {
-  page_title: string
-  url: string
-  tier_name: string
-  avg_score: number
-  insights: BusinessInsight[]
-}
-
-interface VoicePatterns {
-  themes: Record<string, number>
-  sentiment: {
-    positive: number
-    negative: number
-  }
-}
-
-interface CopyReadyQuotes {
-  positive: string[]
-  negative: string[]
-  strategic: string[]
-}
-
-interface AdvancedVoiceAnalysis {
-  persona_id: string
-  persona_name: string
-  voice_stats: VoiceStats
-  effective_analysis: {
-    pages: VoiceAnalysisPage[]
-    total_examples: number
-  }
-  ineffective_analysis: {
-    pages: VoiceAnalysisPage[]
-    total_examples: number
-  }
-  business_impact: {
-    pages: BusinessAnalysisPage[]
-    total_insights: number
-  }
-  voice_patterns: VoicePatterns
-  copy_ready_quotes: CopyReadyQuotes
-  analysis_type: string
-  tier_filter?: string
-}
 
 const PERSONA_NAMES: Record<string, string> = {
   'P1': 'The Benelux Strategic Business Leader (C-Suite Executive)',
-  'P2': 'The BENELUX Technology Innovation Leader',
+  'P2': 'The_BENELUX_Technology_Innovation_Leader',
   'P3': 'The Benelux Transformation Programme Leader',
   'P4': 'The Benelux Cybersecurity Decision Maker',
   'P5': 'The Technical Influencer'
 }
 
-// Utility function to parse markdown content into structured sections
+// Utility function to parse markdown content into structured sections (matches Streamlit logic)
 const parseMarkdownToSections = (content: string): ProfileSection[] => {
-  const lines = content.split('\n')
+  if (!content) return []
+  
   const sections: ProfileSection[] = []
-  let currentSection: ProfileSection | null = null
+  let currentSection: string | null = null
   let currentContent: string[] = []
-
+  
+  const lines = content.split('\n')
+  
   for (const line of lines) {
-    const trimmedLine = line.trim()
+    const lineStripped = line.trim()
     
-    // Check if this is a main section header (number followed by period)
-    const mainSectionMatch = trimmedLine.match(/^(\d+)\.\s+(.+)$/)
-    if (mainSectionMatch) {
-      // Save previous section if exists
-      if (currentSection) {
-        currentSection.content = currentContent.join('\n').trim()
-        sections.push(currentSection)
+    // Check if line is a section header (matches Streamlit logic)
+    if (lineStripped && (
+      lineStripped.match(/^[1-9]\.\s/) || // numbered sections
+      lineStripped.startsWith('#') || // markdown headers
+      (lineStripped.endsWith(':') && lineStripped.split(' ').length <= 5) // short lines ending with colon
+    )) {
+      // Save previous section
+      if (currentSection && currentContent.length > 0) {
+        sections.push({
+          title: currentSection,
+          content: currentContent.join('\n').trim(),
+          subsections: [],
+          isCollapsed: true
+        })
       }
       
       // Start new section
-      currentSection = {
-        title: mainSectionMatch[2],
-        content: '',
-        subsections: [],
-        isCollapsed: true
-      }
+      currentSection = lineStripped.replace(/^#+\s*/, '').replace(/:$/, '').trim()
       currentContent = []
-    } else if (currentSection) {
-      currentContent.push(line)
+    } else {
+      if (lineStripped) { // Only add non-empty lines
+        currentContent.push(line)
+      }
     }
   }
   
-  // Add the last section
-  if (currentSection) {
-    currentSection.content = currentContent.join('\n').trim()
-    sections.push(currentSection)
+  // Save last section
+  if (currentSection && currentContent.length > 0) {
+    sections.push({
+      title: currentSection,
+      content: currentContent.join('\n').trim(),
+      subsections: [],
+      isCollapsed: true
+    })
   }
   
   return sections
+}
+
+// Format profile content for better display (matches Streamlit logic)
+const formatProfileContent = (content: string): string => {
+  const lines = content.split('\n')
+  const formattedLines: string[] = []
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    if (!trimmedLine) continue
+    
+    // Format key-value pairs
+    if (trimmedLine.includes(':') && !trimmedLine.startsWith('http')) {
+      const parts = trimmedLine.split(':', 2)
+      if (parts.length === 2) {
+        const key = parts[0].trim()
+        const value = parts[1].trim()
+        formattedLines.push(`**${key}:** ${value}`)
+      } else {
+        formattedLines.push(trimmedLine)
+      }
+    } else {
+      formattedLines.push(trimmedLine)
+    }
+  }
+  
+  return formattedLines.join('\n\n')
 }
 
 // Utility function to extract persona name from content
@@ -205,8 +164,7 @@ function PersonaViewer() {
   const [activeTab, setActiveTab] = useState('profile')
   const [selectedTiers, setSelectedTiers] = useState<string[]>([])
   const [auditData, setAuditData] = useState<any[]>([])
-  const [advancedVoiceAnalysis, setAdvancedVoiceAnalysis] = useState<AdvancedVoiceAnalysis | null>(null)
-  const [voiceAnalysisLoading, setVoiceAnalysisLoading] = useState(false)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [searchTermIssues, setSearchTermIssues] = useState('')
   const [selectedQuoteType, setSelectedQuoteType] = useState('positive')
@@ -219,15 +177,8 @@ function PersonaViewer() {
   useEffect(() => {
     if (selectedPersona) {
       fetchPersonaData(selectedPersona)
-      fetchAdvancedVoiceAnalysis()
     }
   }, [selectedPersona])
-
-  useEffect(() => {
-    if (selectedPersona) {
-      fetchAdvancedVoiceAnalysis()
-    }
-  }, [selectedTiers])
 
   const fetchPersonas = async () => {
     try {
@@ -330,33 +281,7 @@ function PersonaViewer() {
     }
   }
 
-  const fetchAdvancedVoiceAnalysis = async () => {
-    if (!selectedPersona) return
-    
-    setVoiceAnalysisLoading(true)
-    try {
-      const tierFilter = selectedTiers.length > 0 ? selectedTiers.join(',') : undefined
-      const params = new URLSearchParams({
-        analysis_type: 'comprehensive'
-      })
-      
-      if (tierFilter) {
-        params.append('tier_filter', tierFilter)
-      }
-      
-      const response = await fetch(`http://localhost:8000/api/persona/${selectedPersona}/voice-analysis?${params}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch voice analysis')
-      }
-      
-      const analysis = await response.json()
-      setAdvancedVoiceAnalysis(analysis)
-    } catch (error) {
-      console.error('Error fetching advanced voice analysis:', error)
-    } finally {
-      setVoiceAnalysisLoading(false)
-    }
-  }
+
 
   const toggleSection = (sectionIndex: number) => {
     if (profile) {
@@ -393,6 +318,7 @@ function PersonaViewer() {
     const total = filteredData.length
     const effectivePopulated = filteredData.filter(item => item.effective_copy_examples && item.effective_copy_examples.trim().length > 0).length
     const ineffectivePopulated = filteredData.filter(item => item.ineffective_copy_examples && item.ineffective_copy_examples.trim().length > 0).length
+    const businessPopulated = filteredData.filter(item => item.business_impact_analysis && item.business_impact_analysis.trim().length > 0).length
 
     return {
       effective_copy_examples: {
@@ -404,7 +330,184 @@ function PersonaViewer() {
         populated: ineffectivePopulated,
         total: total,
         percentage: total > 0 ? (ineffectivePopulated / total) * 100 : 0
+      },
+      business_impact_analysis: {
+        populated: businessPopulated,
+        total: total,
+        percentage: total > 0 ? (businessPopulated / total) * 100 : 0
       }
+    }
+  }
+
+
+
+  // Helper function to create friendly page titles
+  const createFriendlyPageTitle = (_pageId: string, url: string): string => {
+    // Always prioritize URL over page_id since page_id is often a meaningless hash
+    if (url) {
+      // Extract readable title from URL
+      const cleanUrl = url.replace(/https?:\/\//, '').replace(/www\./, '')
+      
+      // Handle domain and path
+      if (cleanUrl.includes('/')) {
+        const domain = cleanUrl.split('/')[0]
+        const path = cleanUrl.split('/').slice(1).join('/')
+        
+        // Create meaningful title from path
+        if (path) {
+          // Clean up path for readability
+          const pathParts = path.split('/')
+          const meaningfulParts: string[] = []
+          
+          for (const part of pathParts) {
+            if (part && !['en', 'nl', 'be', 'com', 'www'].includes(part)) {
+              // Convert dashes/underscores to spaces and capitalize
+              const cleanPart = part.replace(/[-_]/g, ' ').replace(/\.(html|php|aspx?)$/, '')
+              meaningfulParts.push(cleanPart.replace(/\b\w/g, l => l.toUpperCase()))
+            }
+          }
+          
+          if (meaningfulParts.length > 0) {
+            return meaningfulParts.join(' > ')
+          } else {
+            // Fallback to domain
+            return domain.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          }
+        } else {
+          // Just domain
+          return domain.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        }
+      } else {
+        // Just domain
+        return cleanUrl.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      }
+    }
+    
+    // Fallback if no URL
+    return 'Website Page'
+  }
+
+  // Helper function to process voice examples into structured format
+  const processVoiceExamples = (text: string) => {
+    if (!text) return []
+    
+    const examples: { quote?: string; analysis: string; type: 'quoted_copy' | 'persona_insight' }[] = []
+    const segments = text.split(' | ').map(seg => seg.trim()).filter(seg => seg.length > 0)
+    
+    for (const segment of segments) {
+      // Check if this segment contains quoted copy
+      const quotedCopy = segment.match(/"([^"]{10,})"/g)
+      
+      if (quotedCopy) {
+        for (const quote of quotedCopy) {
+          const cleanQuote = quote.replace(/"/g, '')
+          // Extract analysis part (after the quote)
+          const analysisParts = segment.split(quote)
+          let analysis = ''
+          if (analysisParts.length > 1) {
+            analysis = analysisParts[1].trim()
+            if (analysis.startsWith(':')) {
+              analysis = analysis.substring(1).trim()
+            }
+          }
+          
+          examples.push({
+            quote: cleanQuote,
+            analysis: analysis || 'Analysis not available',
+            type: 'quoted_copy'
+          })
+        }
+      } else {
+        // Pure analysis - show as persona insight
+        examples.push({
+          analysis: segment,
+          type: 'persona_insight'
+        })
+      }
+    }
+    
+    return examples
+  }
+
+  // Helper function to extract voice themes
+  const getVoiceThemes = (): [string, number][] => {
+    const themes: Record<string, string[]> = {
+      'trust': ['trust', 'credibility', 'confidence', 'reliable'],
+      'efficiency': ['efficiency', 'streamline', 'optimize', 'productivity'],
+      'security': ['security', 'cybersecurity', 'risk', 'compliance'],
+      'innovation': ['innovation', 'AI', 'digital', 'transformation'],
+      'clarity': ['clear', 'clarity', 'understand', 'specific'],
+      'value': ['value', 'ROI', 'benefit', 'outcome', 'result']
+    }
+    
+    const themeCounts: Record<string, number> = {}
+    const allVoiceData: string[] = []
+    
+    // Collect all voice data
+    performance.forEach(page => {
+      if (page.effective_copy_examples) allVoiceData.push(page.effective_copy_examples)
+      if (page.ineffective_copy_examples) allVoiceData.push(page.ineffective_copy_examples)
+      if (page.business_impact_analysis) allVoiceData.push(page.business_impact_analysis)
+    })
+    
+    // Count theme occurrences
+    Object.entries(themes).forEach(([themeName, keywords]) => {
+      let count = 0
+      allVoiceData.forEach(text => {
+        const textLower = text.toLowerCase()
+        keywords.forEach(keyword => {
+          const regex = new RegExp(`\\b${keyword}\\b`, 'g')
+          const matches = textLower.match(regex)
+          if (matches) count += matches.length
+        })
+      })
+      if (count > 0) {
+        themeCounts[themeName] = count
+      }
+    })
+    
+    // Return sorted themes
+    return Object.entries(themeCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+  }
+
+  // Helper function to get voice sentiment
+  const getVoiceSentiment = () => {
+    const positiveIndicators = ['good', 'excellent', 'strong', 'effective', 'clear', 'helpful', 'valuable', 'relevant']
+    const negativeIndicators = ['poor', 'weak', 'unclear', 'confusing', 'generic', 'vague', 'missing', 'lacking']
+    
+    const allVoiceData: string[] = []
+    
+    // Collect all voice data
+    performance.forEach(page => {
+      if (page.effective_copy_examples) allVoiceData.push(page.effective_copy_examples)
+      if (page.ineffective_copy_examples) allVoiceData.push(page.ineffective_copy_examples)
+      if (page.business_impact_analysis) allVoiceData.push(page.business_impact_analysis)
+    })
+    
+    let positiveCount = 0
+    let negativeCount = 0
+    
+    allVoiceData.forEach(text => {
+      const textLower = text.toLowerCase()
+      
+      positiveIndicators.forEach(indicator => {
+        const regex = new RegExp(`\\b${indicator}\\b`, 'g')
+        const matches = textLower.match(regex)
+        if (matches) positiveCount += matches.length
+      })
+      
+      negativeIndicators.forEach(indicator => {
+        const regex = new RegExp(`\\b${indicator}\\b`, 'g')
+        const matches = textLower.match(regex)
+        if (matches) negativeCount += matches.length
+      })
+    })
+    
+    return {
+      positive: positiveCount,
+      negative: negativeCount
     }
   }
 
@@ -510,24 +613,33 @@ function PersonaViewer() {
                 <p><strong>ID:</strong> {selectedPersona}</p>
               </div>
               
-              <div className="overview-metrics">
-                <div className="metric-card">
-                  <h4>Overall Score</h4>
+              <div className="grid grid--cols-3 gap-md">
+                <StandardCard
+                  title="Overall Score"
+                  variant="metric"
+                  status={calculateOverallScore() >= 8 ? "excellent" : calculateOverallScore() >= 6 ? "good" : "critical"}
+                >
                   <div className="metric-value">{calculateOverallScore().toFixed(1)}/10</div>
                   <div className="metric-label">Average brand health score</div>
-                </div>
+                </StandardCard>
                 
-                <div className="metric-card">
-                  <h4>Pages Analyzed</h4>
+                <StandardCard
+                  title="Pages Analyzed"
+                  variant="metric"
+                  status="good"
+                >
                   <div className="metric-value">{performance.length}</div>
                   <div className="metric-label">Website pages analyzed</div>
-                </div>
+                </StandardCard>
                 
-                <div className="metric-card">
-                  <h4>Critical Issues</h4>
+                <StandardCard
+                  title="Critical Issues"
+                  variant="metric"
+                  status={getCriticalIssuesCount() === 0 ? "excellent" : getCriticalIssuesCount() <= 2 ? "warning" : "critical"}
+                >
                   <div className="metric-value">{getCriticalIssuesCount()}</div>
                   <div className="metric-label">Pages with scores &lt; 4.0</div>
-                </div>
+                </StandardCard>
               </div>
             </div>
           </div>
@@ -595,9 +707,14 @@ function PersonaViewer() {
                           </div>
                           {!section.isCollapsed && (
                             <div className="section-content">
-                              <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-                                {section.content}
-                              </pre>
+                              <div 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: formatProfileContent(section.content)
+                                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                    .replace(/\n\n/g, '<br/><br/>')
+                                    .replace(/\n/g, '<br/>')
+                                }} 
+                              />
                             </div>
                           )}
                         </div>
@@ -733,19 +850,80 @@ function PersonaViewer() {
                               <th>URL</th>
                               <th>Score</th>
                               <th>Tier</th>
+                              <th>Sentiment</th>
+                              <th>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {performance.map((page, index) => (
                               <tr key={index}>
-                                <td>{page.title}</td>
-                                <td>{page.url}</td>
-                                <td>{page.avg_score.toFixed(1)}/10</td>
-                                <td>{page.tier_name}</td>
+                                <td>{createFriendlyPageTitle(page.page_id, page.url)}</td>
+                                <td>
+                                  <a href={page.url} target="_blank" rel="noopener noreferrer">
+                                    {page.url.length > 50 ? `${page.url.substring(0, 50)}...` : page.url}
+                                  </a>
+                                </td>
+                                <td>
+                                  <span className={`score-badge ${
+                                    page.avg_score >= 8 ? 'excellent' :
+                                    page.avg_score >= 6 ? 'good' :
+                                    page.avg_score >= 4 ? 'fair' : 'poor'
+                                  }`}>
+                                    {page.avg_score.toFixed(1)}/10
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className="tier-badge">{page.tier_name}</span>
+                                </td>
+                                <td>{page.overall_sentiment || 'N/A'}</td>
+                                <td>
+                                  <div className="action-buttons">
+                                    {page.avg_score < 4 && (
+                                      <span className="badge badge--critical">Critical</span>
+                                    )}
+                                    {page.avg_score >= 8 && (
+                                      <span className="badge badge--excellent">Success</span>
+                                    )}
+                                  </div>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                      
+                      <div className="performance-summary">
+                        <h4>📊 Performance Summary</h4>
+                        <div className="grid grid--cols-4 gap-sm">
+                          <StandardCard
+                            title="Total Pages"
+                            variant="metric"
+                            status="good"
+                          >
+                            <div className="metric-value">{performance.length}</div>
+                          </StandardCard>
+                          <StandardCard
+                            title="Average Score"
+                            variant="metric"
+                            status={calculateOverallScore() >= 8 ? "excellent" : calculateOverallScore() >= 6 ? "good" : "critical"}
+                          >
+                            <div className="metric-value">{calculateOverallScore().toFixed(1)}/10</div>
+                          </StandardCard>
+                          <StandardCard
+                            title="Critical Issues"
+                            variant="metric"
+                            status={getCriticalIssuesCount() === 0 ? "excellent" : getCriticalIssuesCount() <= 2 ? "warning" : "critical"}
+                          >
+                            <div className="metric-value">{getCriticalIssuesCount()}</div>
+                          </StandardCard>
+                          <StandardCard
+                            title="Success Stories"
+                            variant="metric"
+                            status="excellent"
+                          >
+                            <div className="metric-value">{performance.filter(p => p.avg_score >= 8).length}</div>
+                          </StandardCard>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -755,64 +933,114 @@ function PersonaViewer() {
                   <div className="voice-tab">
                     <h2>🗣️ Advanced Persona Voice Analysis</h2>
                     
-                    {voiceAnalysisLoading ? (
-                      <div className="loading-state">
-                        <p>🔄 Loading advanced voice analysis...</p>
-                      </div>
-                    ) : advancedVoiceAnalysis ? (
+                    {performance.length > 0 ? (
                       <>
                         {/* Voice Data Overview */}
                         <div className="voice-overview">
                           <h3>📊 Voice Data Overview</h3>
                           
-                          <div className="voice-metrics">
-                            <div className="voice-metric">
-                              <h4>Effective Examples</h4>
+                          <div className="grid grid--cols-3 gap-md">
+                            <StandardCard
+                              title="Effective Examples"
+                              variant="metric"
+                              status="good"
+                            >
                               <div className="metric-value">
-                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.populated}/
-                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.total}
+                                {getVoiceStats().effective_copy_examples.populated}/
+                                {getVoiceStats().effective_copy_examples.total}
                               </div>
                               <div className="metric-percentage">
-                                {advancedVoiceAnalysis.voice_stats.effective_copy_examples.percentage.toFixed(1)}%
+                                {getVoiceStats().effective_copy_examples.percentage.toFixed(1)}%
                               </div>
                               <div className="metric-label">Pages with effective copy examples</div>
-                            </div>
+                            </StandardCard>
                             
-                            <div className="voice-metric">
-                              <h4>Issues Identified</h4>
+                            <StandardCard
+                              title="Issues Identified"
+                              variant="metric"
+                              status="warning"
+                            >
                               <div className="metric-value">
-                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.populated}/
-                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.total}
+                                {getVoiceStats().ineffective_copy_examples.populated}/
+                                {getVoiceStats().ineffective_copy_examples.total}
                               </div>
                               <div className="metric-percentage">
-                                {advancedVoiceAnalysis.voice_stats.ineffective_copy_examples.percentage.toFixed(1)}%
+                                {getVoiceStats().ineffective_copy_examples.percentage.toFixed(1)}%
                               </div>
                               <div className="metric-label">Pages with ineffective copy examples</div>
-                            </div>
+                            </StandardCard>
                             
-                            <div className="voice-metric">
-                              <h4>Business Impact</h4>
+                            <StandardCard
+                              title="Strategic Analysis"
+                              variant="metric"
+                              status="excellent"
+                            >
                               <div className="metric-value">
-                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.populated}/
-                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.total}
+                                {getVoiceStats().business_impact_analysis.populated}/
+                                {getVoiceStats().business_impact_analysis.total}
                               </div>
                               <div className="metric-percentage">
-                                {advancedVoiceAnalysis.voice_stats.business_impact_analysis.percentage.toFixed(1)}%
+                                {getVoiceStats().business_impact_analysis.percentage.toFixed(1)}%
                               </div>
                               <div className="metric-label">Pages with business impact analysis</div>
-                            </div>
+                            </StandardCard>
                           </div>
                         </div>
 
-                        {/* Voice Patterns & Themes */}
+                        {/* Voice Analysis Filters */}
+                        <div className="voice-filters">
+                          <h3>🎯 Voice Analysis Filters</h3>
+                          
+                          <div className="filter-row">
+                            <div className="filter-control">
+                              <label>🏷️ Filter by Content Tier:</label>
+                              <div className="tier-selection">
+                                {[...new Set(performance.map(p => p.tier_name))].map(tier => (
+                                  <label key={tier} className="tier-checkbox">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedTiers.includes(tier)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedTiers([...selectedTiers, tier])
+                                        } else {
+                                          setSelectedTiers(selectedTiers.filter(t => t !== tier))
+                                        }
+                                      }}
+                                    />
+                                    {tier}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="tier-distribution">
+                              <h4>Tier Distribution:</h4>
+                              {[...new Set(performance.map(p => p.tier_name))].map(tier => {
+                                const count = performance.filter(p => p.tier_name === tier).length
+                                return (
+                                  <div key={tier} className="tier-count">
+                                    <strong>{tier}:</strong> {count} entries
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          
+                          <div className="filter-info">
+                            📊 Analyzing {getFilteredPerformanceData().length} entries from {selectedTiers.length} tier(s)
+                          </div>
+                        </div>
+
+                        {/* Voice Patterns & Insights */}
                         <div className="voice-patterns">
-                          <h3>🎯 Voice Patterns & Themes</h3>
+                          <h3>🎯 Voice Patterns & Insights</h3>
                           
                           <div className="patterns-grid">
                             <div className="themes-analysis">
-                              <h4>🔍 Key Themes</h4>
+                              <h4>🏷️ Common Themes</h4>
                               <div className="themes-list">
-                                {Object.entries(advancedVoiceAnalysis.voice_patterns.themes).map(([theme, count]) => (
+                                {getVoiceThemes().map(([theme, count]) => (
                                   <div key={theme} className="theme-item">
                                     <span className="theme-name">{theme}</span>
                                     <span className="theme-count">{count}</span>
@@ -822,16 +1050,22 @@ function PersonaViewer() {
                             </div>
                             
                             <div className="sentiment-analysis">
-                              <h4>💭 Sentiment Analysis</h4>
-                              <div className="sentiment-metrics">
-                                <div className="sentiment-item positive">
-                                  <span className="sentiment-label">Positive Indicators</span>
-                                  <span className="sentiment-count">{advancedVoiceAnalysis.voice_patterns.sentiment.positive}</span>
-                                </div>
-                                <div className="sentiment-item negative">
-                                  <span className="sentiment-label">Negative Indicators</span>
-                                  <span className="sentiment-count">{advancedVoiceAnalysis.voice_patterns.sentiment.negative}</span>
-                                </div>
+                              <h4>📈 Voice Sentiment</h4>
+                              <div className="grid grid--cols-2 gap-md">
+                                <StandardCard
+                                  title="Positive Signals"
+                                  variant="metric"
+                                  status="excellent"
+                                >
+                                  <div className="metric-value">{getVoiceSentiment().positive}</div>
+                                </StandardCard>
+                                <StandardCard
+                                  title="Concern Signals"
+                                  variant="metric"
+                                  status="warning"
+                                >
+                                  <div className="metric-value">{getVoiceSentiment().negative}</div>
+                                </StandardCard>
                               </div>
                             </div>
                           </div>
@@ -839,7 +1073,8 @@ function PersonaViewer() {
 
                         {/* Copy-Ready Quotes */}
                         <div className="copy-ready-quotes">
-                          <h3>📝 Copy-Ready Persona Quotes</h3>
+                          <h3>📋 Copy-Ready Persona Quotes</h3>
+                          <p><em>Ready-to-use persona voice quotes for presentations and reports</em></p>
                           
                           <div className="quote-controls">
                             <select 
@@ -847,147 +1082,244 @@ function PersonaViewer() {
                               onChange={(e) => setSelectedQuoteType(e.target.value)}
                               className="quote-type-selector"
                             >
-                              <option value="positive">✅ Positive Quotes</option>
-                              <option value="negative">❌ Negative Quotes</option>
-                              <option value="strategic">🎯 Strategic Quotes</option>
+                              <option value="positive">✅ Positive Reactions</option>
+                              <option value="negative">❌ Critical Feedback</option>
+                              <option value="strategic">🎯 Strategic Insights</option>
                             </select>
                           </div>
                           
                           <div className="quotes-list">
-                            {advancedVoiceAnalysis.copy_ready_quotes[selectedQuoteType as keyof CopyReadyQuotes].map((quote, index) => (
-                              <div key={index} className={`quote-item ${selectedQuoteType}`}>
-                                <p>"{quote}"</p>
-                                <button 
-                                  onClick={() => navigator.clipboard.writeText(quote)}
-                                  className="copy-button"
-                                >
-                                  📋 Copy
-                                </button>
-                              </div>
-                            ))}
+                            {selectedQuoteType === 'positive' && 
+                              performance
+                                .filter(page => page.effective_copy_examples)
+                                .slice(0, 3)
+                                .map((page, index) => {
+                                  const examples = processVoiceExamples(page.effective_copy_examples || '')
+                                  const quote = examples.find(ex => ex.quote)?.quote || examples[0]?.analysis
+                                  
+                                  return quote ? (
+                                    <div key={index} className="quote-item positive">
+                                      <p><strong>Quote #{index + 1}:</strong></p>
+                                      <p>"{quote}"</p>
+                                      <button 
+                                        onClick={() => navigator.clipboard.writeText(quote)}
+                                        className="copy-button"
+                                      >
+                                        📋 Copy Quote
+                                      </button>
+                                    </div>
+                                  ) : null
+                                })
+                            }
+                            
+                            {selectedQuoteType === 'negative' && 
+                              performance
+                                .filter(page => page.ineffective_copy_examples)
+                                .slice(0, 3)
+                                .map((page, index) => {
+                                  const examples = processVoiceExamples(page.ineffective_copy_examples || '')
+                                  const quote = examples.find(ex => ex.quote)?.quote || examples[0]?.analysis
+                                  
+                                  return quote ? (
+                                    <div key={index} className="quote-item negative">
+                                      <p><strong>Quote #{index + 1}:</strong></p>
+                                      <p>"{quote}"</p>
+                                      <button 
+                                        onClick={() => navigator.clipboard.writeText(quote)}
+                                        className="copy-button"
+                                      >
+                                        📋 Copy Quote
+                                      </button>
+                                    </div>
+                                  ) : null
+                                })
+                            }
+                            
+                            {selectedQuoteType === 'strategic' && 
+                              performance
+                                .filter(page => page.business_impact_analysis)
+                                .slice(0, 3)
+                                .map((page, index) => {
+                                  const segments = page.business_impact_analysis?.split(' | ')
+                                    .map(seg => seg.trim())
+                                    .filter(seg => seg.length > 30) || []
+                                  const quote = segments[0]
+                                  
+                                  return quote ? (
+                                    <div key={index} className="quote-item strategic">
+                                      <p><strong>Quote #{index + 1}:</strong></p>
+                                      <p>"{quote}"</p>
+                                      <button 
+                                        onClick={() => navigator.clipboard.writeText(quote)}
+                                        className="copy-button"
+                                      >
+                                        📋 Copy Quote
+                                      </button>
+                                    </div>
+                                  ) : null
+                                })
+                            }
                           </div>
                         </div>
 
-                        {/* Advanced Voice Examples */}
-                        <div className="advanced-voice-examples">
-                          <h3>📝 Advanced Voice Examples</h3>
+                        {/* What's Working Well - Effective Copy Examples */}
+                        <div className="voice-analysis-section">
+                          <h3>✅ What's Working Well</h3>
+                          <p><em>Persona reactions to effective copy and messaging</em></p>
                           
                           <div className="voice-search">
                             <input
                               type="text"
-                              placeholder="Search effective examples..."
+                              placeholder="🔍 Search effective examples..."
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
                               className="search-input"
                             />
                           </div>
                           
-                          <div className="voice-examples-grid">
-                            <div className="voice-examples-column">
-                              <h4>✅ Effective Copy Examples ({advancedVoiceAnalysis.effective_analysis.total_examples})</h4>
-                              {advancedVoiceAnalysis.effective_analysis.pages
+                          {performance.length > 0 && (
+                            <div className="voice-examples-display">
+                              {performance
                                 .filter(page => 
-                                  searchTerm === '' || 
-                                  page.page_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  page.examples.some(ex => 
-                                    ex.quote.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    ex.analysis.toLowerCase().includes(searchTerm.toLowerCase())
-                                  )
+                                  page.effective_copy_examples && 
+                                  page.effective_copy_examples.trim().length > 10 &&
+                                  (searchTerm === '' || 
+                                   page.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                   page.effective_copy_examples.toLowerCase().includes(searchTerm.toLowerCase()))
                                 )
-                                .map((page, pageIndex) => (
-                                <div key={pageIndex} className="voice-page-section">
-                                  <h5>{page.page_title}</h5>
-                                  <div className="page-meta">
-                                    <span className="tier-badge">{page.tier_name}</span>
-                                    <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
-                                  </div>
-                                  {page.examples.map((example, exIndex) => (
-                                    <div key={exIndex} className={`voice-example ${example.type}`}>
-                                      {example.quote && (
-                                        <div className="example-quote">"{example.quote}"</div>
-                                      )}
-                                      <div className="example-analysis">{example.analysis}</div>
+                                .slice(0, 5)
+                                .map((page, pageIndex) => {
+                                  const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
+                                  const examples = processVoiceExamples(page.effective_copy_examples || '')
+                                  
+                                  return (
+                                    <div key={pageIndex} className="voice-page-section">
+                                      <h5>✅ {pageTitle} ({page.tier_name})</h5>
+                                      <div className="page-meta">
+                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                      </div>
+                                      
+                                      {examples.map((example, exIndex) => (
+                                        <div key={exIndex} className="voice-example effective">
+                                          {example.quote ? (
+                                            <div className="example-with-quote">
+                                              <div className="example-quote">📝 Copy Example: "{example.quote}"</div>
+                                              <div className="example-analysis">💬 Persona Analysis: {example.analysis}</div>
+                                            </div>
+                                          ) : (
+                                            <div className="example-insight">
+                                              <div className="example-analysis">💬 Persona Insight: {example.analysis}</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                </div>
-                              ))}
-                            </div>
-                            
-                            <div className="voice-examples-column">
-                              <h4>❌ Ineffective Copy Examples ({advancedVoiceAnalysis.ineffective_analysis.total_examples})</h4>
-                              
-                              <div className="voice-search">
-                                <input
-                                  type="text"
-                                  placeholder="Search ineffective examples..."
-                                  value={searchTermIssues}
-                                  onChange={(e) => setSearchTermIssues(e.target.value)}
-                                  className="search-input"
-                                />
-                              </div>
-                              
-                              {advancedVoiceAnalysis.ineffective_analysis.pages
-                                .filter(page => 
-                                  searchTermIssues === '' || 
-                                  page.page_title.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
-                                  page.examples.some(ex => 
-                                    ex.quote.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
-                                    ex.analysis.toLowerCase().includes(searchTermIssues.toLowerCase())
                                   )
-                                )
-                                .map((page, pageIndex) => (
-                                <div key={pageIndex} className="voice-page-section">
-                                  <h5>{page.page_title}</h5>
-                                  <div className="page-meta">
-                                    <span className="tier-badge">{page.tier_name}</span>
-                                    <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
-                                  </div>
-                                  {page.examples.map((example, exIndex) => (
-                                    <div key={exIndex} className={`voice-example ${example.type}`}>
-                                      {example.quote && (
-                                        <div className="example-quote">"{example.quote}"</div>
-                                      )}
-                                      <div className="example-analysis">{example.analysis}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
+                                })}
                             </div>
-                          </div>
+                          )}
                         </div>
 
-                        {/* Business Impact Analysis */}
-                        <div className="business-impact-analysis">
-                          <h3>📊 Strategic Business Impact Analysis</h3>
+                        {/* What's Not Working - Ineffective Copy Examples */}
+                        <div className="voice-analysis-section">
+                          <h3>❌ What's Not Working</h3>
+                          <p><em>Persona feedback on problematic copy and messaging</em></p>
                           
-                          <div className="business-insights">
-                            <div className="insights-header">
-                              <h4>🎯 Strategic Insights ({advancedVoiceAnalysis.business_impact.total_insights})</h4>
-                            </div>
-                            
-                            {advancedVoiceAnalysis.business_impact.pages.map((page, pageIndex) => (
-                              <div key={pageIndex} className="business-page-section">
-                                <h5>{page.page_title}</h5>
-                                <div className="page-meta">
-                                  <span className="tier-badge">{page.tier_name}</span>
-                                  <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
-                                </div>
-                                {page.insights.map((insight, insightIndex) => (
-                                  <div key={insightIndex} className="business-insight">
-                                    <div className="insight-content">{insight.content}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
+                          <div className="voice-search">
+                            <input
+                              type="text"
+                              placeholder="🔍 Search issues..."
+                              value={searchTermIssues}
+                              onChange={(e) => setSearchTermIssues(e.target.value)}
+                              className="search-input"
+                            />
                           </div>
+                          
+                          {performance.length > 0 && (
+                            <div className="voice-examples-display">
+                              {performance
+                                .filter(page => 
+                                  page.ineffective_copy_examples && 
+                                  page.ineffective_copy_examples.trim().length > 10 &&
+                                  (searchTermIssues === '' || 
+                                   page.title?.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
+                                   page.ineffective_copy_examples.toLowerCase().includes(searchTermIssues.toLowerCase()))
+                                )
+                                .slice(0, 5)
+                                .map((page, pageIndex) => {
+                                  const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
+                                  const examples = processVoiceExamples(page.ineffective_copy_examples || '')
+                                  
+                                  return (
+                                    <div key={pageIndex} className="voice-page-section">
+                                      <h5>❌ {pageTitle} ({page.tier_name})</h5>
+                                      <div className="page-meta">
+                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                      </div>
+                                      
+                                      {examples.map((example, exIndex) => (
+                                        <div key={exIndex} className="voice-example ineffective">
+                                          {example.quote ? (
+                                            <div className="example-with-quote">
+                                              <div className="example-quote">📝 Problematic Copy: "{example.quote}"</div>
+                                              <div className="example-analysis">💬 Persona Analysis: {example.analysis}</div>
+                                            </div>
+                                          ) : (
+                                            <div className="example-insight">
+                                              <div className="example-analysis">💬 Persona Concern: {example.analysis}</div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                })}
+                            </div>
+                          )}
                         </div>
+
+                        {/* Strategic Business Impact */}
+                        <div className="voice-analysis-section">
+                          <h3>💼 Strategic Business Impact</h3>
+                          <p><em>High-level persona analysis and recommendations</em></p>
+                          
+                          {performance.length > 0 && (
+                            <div className="business-impact-display">
+                              {performance
+                                .filter(page => 
+                                  page.business_impact_analysis && 
+                                  page.business_impact_analysis.trim().length > 5
+                                )
+                                .slice(0, 5)
+                                .map((page, pageIndex) => {
+                                  const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
+                                  const segments = page.business_impact_analysis?.split(' | ')
+                                    .map(seg => seg.trim())
+                                    .filter(seg => seg.length > 0) || []
+                                  
+                                  return (
+                                    <div key={pageIndex} className="business-page-section">
+                                      <h5>💼 {pageTitle} ({page.tier_name})</h5>
+                                      <div className="page-meta">
+                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                      </div>
+                                      
+                                      {segments.map((segment, segIndex) => (
+                                        <div key={segIndex} className="business-insight">
+                                          <div className="insight-content">💼 Strategic Insight: {segment}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )
+                                })}
+                            </div>
+                          )}
+                        </div>
+
                       </>
                     ) : (
                       <div className="voice-fallback">
-                        <p>🔄 Click to load advanced voice analysis...</p>
-                        <button onClick={fetchAdvancedVoiceAnalysis} className="load-button">
-                          Load Advanced Analysis
-                        </button>
+                        <p>📝 No voice analysis data available for this persona</p>
                       </div>
                     )}
                   </div>
@@ -1003,6 +1335,26 @@ function PersonaViewer() {
 
                     {auditData.length > 0 ? (
                       <div className="evidence-browser">
+                        <div className="evidence-overview">
+                          <h3>📊 Evidence Analysis Overview</h3>
+                          <p>Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
+                          
+                          <div className="evidence-stats">
+                            <div className="stat-item">
+                              <strong>Total Evidence Items:</strong> {auditData.filter(row => {
+                                const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
+                                return row.persona_id === personaName || row.persona_id === selectedPersona
+                              }).length}
+                            </div>
+                            <div className="stat-item">
+                              <strong>Pages Analyzed:</strong> {[...new Set(auditData.filter(row => {
+                                const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
+                                return row.persona_id === personaName || row.persona_id === selectedPersona
+                              }).map(row => row.page_id))].length}
+                            </div>
+                          </div>
+                        </div>
+                        
                         <EvidenceBrowser
                           data={auditData.filter(row => {
                             const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
@@ -1022,57 +1374,9 @@ function PersonaViewer() {
                       </div>
                     ) : (
                       <div className="no-evidence">
-                        <h3>📊 Sample Evidence Display</h3>
-                        <p>Audit data is being loaded. Here's how evidence will be displayed:</p>
-                        
-                        <div className="sample-evidence">
-                          <EvidenceDisplay
-                            evidence={[
-                              {
-                                type: 'evidence',
-                                content: 'The homepage clearly positions Sopra Steria as a major European tech player with expertise in consulting, digital services, AI, and cybersecurity. However, the messaging is somewhat generic and lacks explicit emphasis on cybersecurity leadership critical to this persona.',
-                                title: 'AI Analysis'
-                              },
-                              {
-                                type: 'first_impression',
-                                content: 'The site feels corporate and professional but does not immediately communicate cybersecurity leadership or specialized expertise. The layout is clear but lacks security-specific messaging that would immediately resonate with a CISO.',
-                                title: 'First Impression'
-                              },
-                              {
-                                type: 'language_tone_feedback',
-                                content: 'The tone is professional and corporate but somewhat generic. For cybersecurity executives, the language should be more precise, technical, and focused on risk management and compliance frameworks.',
-                                title: 'Language & Tone Analysis'
-                              },
-                              {
-                                type: 'effective_copy',
-                                content: 'Cybersecurity listed explicitly as a service offering alongside Consulting, Artificial Intelligence, and Technology Services signals recognition of cybersecurity as a core capability.',
-                                title: 'Effective Copy Examples'
-                              },
-                              {
-                                type: 'ineffective_copy',
-                                content: 'The world is how we shape it - This slogan is generic and abstract; it does not communicate any specific value or differentiator related to cybersecurity, compliance, or risk management.',
-                                title: 'Areas for Improvement'
-                              },
-                              {
-                                type: 'trust_assessment',
-                                content: 'The site includes corporate governance, financial reports, ethics and compliance, and data protection notices, which are positive trust signals. However, there are no explicit cybersecurity certifications visible.',
-                                title: 'Trust & Credibility Assessment'
-                              },
-                              {
-                                type: 'business_impact',
-                                content: 'The content addresses digital transformation broadly but lacks specific business impact metrics or KPIs that would help cybersecurity executives justify investment in security initiatives.',
-                                title: 'Business Impact Analysis'
-                              },
-                              {
-                                type: 'information_gaps',
-                                content: 'Missing: specific compliance frameworks (DORA, NIS2, GDPR), cybersecurity certifications, case studies with quantifiable security outcomes, and regulatory expertise demonstrations.',
-                                title: 'Information Gaps'
-                              }
-                            ]}
-                            title="Sample Evidence Analysis"
-                            defaultExpanded={true}
-                          />
-                        </div>
+                        <h3>📊 Evidence Analysis</h3>
+                        <p>No audit data available for <strong>{profile?.name}</strong></p>
+                        <p>Please ensure the audit has been run and data is available.</p>
                       </div>
                     )}
                   </div>

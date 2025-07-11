@@ -23,6 +23,7 @@
 /* Common specific widths found in inline styles */
 .grid--auto-200 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 .grid--auto-150 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.grid--auto-120 { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .grid--auto-300 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .grid--auto-400 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
 

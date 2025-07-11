@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useFilters } from '../context/FilterContext';
 import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
-import { EvidenceDisplay } from '../components/EvidenceDisplay';
+import StandardCard from '../components/StandardCard';
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -341,38 +341,62 @@ const SuccessLibrary: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="story-metrics">
-                    <div className="metric">
-                      <span className="metric-label">Success Score</span>
-                      <span className="metric-value">{story.score.toFixed(1)}/10</span>
-                    </div>
-                    <div className="metric">
-                      <span className="metric-label">Content Tier</span>
-                      <span className="metric-value">{story.tier}</span>
-                    </div>
-                    <div className="metric">
-                      <span className="metric-label">Persona</span>
-                      <span className="metric-value">{story.persona}</span>
-                    </div>
-                    <div className="metric">
-                      <span className="metric-label">Percentile</span>
-                      <span className="metric-value">{story.percentile}th</span>
-                    </div>
+                  <div className="grid grid--cols-4 gap-sm">
+                    <StandardCard
+                      title="Success Score"
+                      variant="metric"
+                      status={story.score >= 9 ? "excellent" : story.score >= 8 ? "good" : "warning"}
+                    >
+                      <div className="metric-value">{story.score.toFixed(1)}/10</div>
+                    </StandardCard>
+                    <StandardCard
+                      title="Content Tier"
+                      variant="metric"
+                      status="good"
+                    >
+                      <div className="metric-value">{story.tier}</div>
+                    </StandardCard>
+                    <StandardCard
+                      title="Persona"
+                      variant="metric"
+                      status="good"
+                    >
+                      <div className="metric-value">{story.persona}</div>
+                    </StandardCard>
+                    <StandardCard
+                      title="Percentile"
+                      variant="metric"
+                      status="excellent"
+                    >
+                      <div className="metric-value">{story.percentile}th</div>
+                    </StandardCard>
                   </div>
 
                   <div className="story-evidence">
                     <h4>📋 Success Evidence & Analysis</h4>
                     
-                    <div className="experience-metrics">
-                      <div className="experience-metric">
-                        <span>{getSentimentColor(story.sentiment)} Score: {story.score.toFixed(1)}/10</span>
-                      </div>
-                      <div className="experience-metric">
-                        <span>{getEngagementColor(story.engagement)} Tier: {story.tier}</span>
-                      </div>
-                      <div className="experience-metric">
-                        <span>{getConversionColor(story.conversion)} Percentile: {story.percentile}th</span>
-                      </div>
+                    <div className="grid grid--cols-3 gap-sm">
+                      <StandardCard
+                        title={`${getSentimentColor(story.sentiment)} Score`}
+                        variant="metric"
+                        status={story.score >= 9 ? "excellent" : story.score >= 8 ? "good" : "warning"}
+                      >
+                        <div className="metric-value">{story.score.toFixed(1)}/10</div>
+                      </StandardCard>
+                      <StandardCard
+                        title={`${getEngagementColor(story.engagement)} Tier`}
+                        variant="metric"
+                        status="good"
+                      >
+                        <div className="metric-value">{story.tier}</div>
+                      </StandardCard>
+                      <StandardCard
+                        title={`${getConversionColor(story.conversion)} Percentile`}
+                        variant="metric"
+                        status="excellent"
+                      >
+                        <div className="metric-value">{story.percentile}th</div>
+                      </StandardCard>
                     </div>
 
                     <div className="evidence-grid">

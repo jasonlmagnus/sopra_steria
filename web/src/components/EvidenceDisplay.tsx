@@ -230,8 +230,6 @@ interface EvidenceBrowserProps {
 export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
   data,
   evidenceColumns,
-  onEvidenceSelect,
-  groupByPersona = false,
   showSummaryStats = true,
   maxResults = 50
 }) => {
@@ -454,6 +452,4 @@ export const EvidenceBrowser: React.FC<EvidenceBrowserProps> = ({
       )}
     </div>
   );
-};
-
-export default EvidenceDisplay; 
+}; 
