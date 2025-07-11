@@ -28,7 +28,7 @@
   font-size: var(--font-size-sm);
   background: var(--background);
   cursor: pointer;
-  font-family: var(--font-family-base);
+  font-family: var(--font-primary);
 }
 
 .quote-type-selector:focus {
@@ -101,7 +101,7 @@
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: var(--font-family-base);
+  font-family: var(--font-primary);
   font-weight: var(--font-weight-medium);
 }
 

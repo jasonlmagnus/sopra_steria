@@ -745,115 +745,11 @@ app.get('/api/brand-hygiene', async (_req, res) => {
  */
 app.get('/api/persona-insights', async (_req, res) => {
   try {
-    const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const filePath = path.join(__dirname, '..', '..', 'audit_data', 'unified_audit_data.csv')
-    
-    // Create mapping from full persona names to short IDs
-    const personaNameToId = {
-      'The Benelux Strategic Business Leader (C-Suite Executive)': 'P1',
-      'The_BENELUX_Technology_Innovation_Leader': 'P2',
-      'The Benelux Transformation Programme Leader': 'P3',
-      'The Benelux Cybersecurity Decision Maker': 'P4',
-      'The Technical Influencer': 'P5'
-    }
-    
-    const personaData = {}
-    
-    fs.createReadStream(filePath)
-      .pipe(csv())
-      .on('data', (row) => {
-        const fullPersonaName = row.persona_id
-        if (!fullPersonaName || fullPersonaName === 'persona_id') return // Skip header row
-        
-        // Map to short ID
-        const personaId = personaNameToId[fullPersonaName]
-        if (!personaId) {
-          console.warn(`Unknown persona name: ${fullPersonaName}`)
-          return
-        }
-        
-        if (!personaData[personaId]) {
-          personaData[personaId] = {
-            persona_id: personaId,
-            full_name: fullPersonaName,
-            pages: [],
-            metrics: {
-              total_pages: 0,
-              avg_score: 0,
-              critical_issues: 0,
-              quick_wins: 0,
-              success_stories: 0
-            }
-          }
-        }
-        
-        // Add page data
-        const pageId = row.page_id
-        const existingPage = personaData[personaId].pages.find(p => p.page_id === pageId)
-        
-        if (!existingPage) {
-          personaData[personaId].pages.push({
-            page_id: pageId,
-            url: row.url,
-            url_slug: row.url_slug,
-            tier: row.tier,
-            tier_name: row.tier_name,
-            criteria: [],
-            avg_score: parseFloat(row.avg_score) || 0,
-            sentiment: row.overall_sentiment,
-            engagement: row.engagement_level,
-            conversion: row.conversion_likelihood
-          })
-          personaData[personaId].metrics.total_pages++
-        }
-        
-        // Add criterion data
-        const page = personaData[personaId].pages.find(p => p.page_id === pageId)
-        if (page) {
-          page.criteria.push({
-            criterion_id: row.criterion_id,
-            criterion_code: row.criterion_code,
-            raw_score: parseFloat(row.raw_score) || 0,
-            final_score: parseFloat(row.final_score) || 0,
-            descriptor: row.descriptor,
-            evidence: row.evidence,
-            effective_copy_examples: row.effective_copy_examples,
-            ineffective_copy_examples: row.ineffective_copy_examples,
-            quick_win_flag: row.quick_win_flag === 'True',
-            critical_issue_flag: row.critical_issue_flag === 'True',
-            success_flag: row.success_flag === 'True'
-          })
-        }
-        
-        // Update metrics
-        if (row.critical_issue_flag === 'True') {
-          personaData[personaId].metrics.critical_issues++
-        }
-        if (row.quick_win_flag === 'True') {
-          personaData[personaId].metrics.quick_wins++
-        }
-        if (row.success_flag === 'True') {
-          personaData[personaId].metrics.success_stories++
-        }
-      })
-      .on('end', () => {
-        // Calculate average scores
-        Object.values(personaData).forEach(persona => {
-          const totalScores = persona.pages.reduce((sum, page) => sum + page.avg_score, 0)
-          persona.metrics.avg_score = persona.metrics.total_pages > 0 
-            ? (totalScores / persona.metrics.total_pages).toFixed(1)
-            : 0
-        })
-        
-        res.json({ personas: Object.values(personaData) })
-      })
-      .on('error', (err) => {
-        console.error('Error reading CSV:', err)
-        res.status(500).json({ error: 'Failed to parse persona insights data' })
-      })
+    const response = await axios.get('http://localhost:8000/persona-insights')
+    res.json(response.data)
   } catch (err) {
-    console.error('Error loading persona insights:', err)
-    res.status(500).json({ error: 'Failed to load persona insights data' })
+    console.error('FastAPI persona-insights error:', err.message)
+    res.status(500).json({ error: 'Failed to fetch persona insights', details: err.message })
   }
 })
 

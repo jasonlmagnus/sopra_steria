@@ -4,10 +4,49 @@ import { PlotlyChart, StandardCard } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+interface PersonaData {
+  persona_id: string
+  avg_score: number
+  page_count: number
+  primary_tier: string
+  full_name?: string
+}
+
+interface PersonaPageData {
+  page_id: string
+  avg_score: number
+  tier: string
+  tier_name: string
+  url: string
+  url_slug: string
+  title: string
+  first_impression?: string
+  feedback?: string
+  effective_copy_examples?: string
+  ineffective_copy_examples?: string
+  trust_credibility_assessment?: string
+  business_impact_analysis?: string
+  information_gaps?: string
+  language_tone_feedback?: string
+}
+
+interface PersonaMetrics {
+  avg_score: number
+  page_count: number
+  primary_tier: string
+  critical_issues: number
+}
+
+interface PersonaPagesResponse {
+  persona: string
+  metrics: PersonaMetrics
+  pages: PersonaPageData[]
+}
+
 function PersonaInsights() {
   const [selectedPersona, setSelectedPersona] = useState('All')
 
-  const { data: personaData, isLoading } = useQuery({
+  const { data: personaData, isLoading, error } = useQuery({
     queryKey: ['persona-insights'],
     queryFn: async () => {
       const res = await fetch(`${apiBase}/api/persona-insights`)
@@ -16,7 +55,7 @@ function PersonaInsights() {
     }
   })
 
-  const { data: personaPages } = useQuery({
+  const { data: personaPages, isLoading: pagesLoading } = useQuery({
     queryKey: ['persona-pages', selectedPersona],
     queryFn: async () => {
       const res = await fetch(`${apiBase}/api/persona-pages?persona=${selectedPersona}`)
@@ -26,10 +65,29 @@ function PersonaInsights() {
     enabled: selectedPersona !== 'All'
   })
 
-  if (isLoading) return <div className="main-header"><h1>👥 Persona Insights</h1><p>Loading persona analysis...</p></div>
+  if (isLoading) return (
+    <div className="main-header">
+      <h1>👥 Persona Insights</h1>
+      <p>Loading persona analysis...</p>
+    </div>
+  )
 
-  const personas = personaData?.personas || []
-  const allPersonas = ['All', ...personas.map((p: any) => p.persona_id)]
+  if (error) return (
+    <div className="main-header">
+      <h1>👥 Persona Insights</h1>
+      <p>❌ Error loading persona data: {error.message}</p>
+    </div>
+  )
+
+  if (!personaData?.personas) return (
+    <div className="main-header">
+      <h1>👥 Persona Insights</h1>
+      <p>❌ No data available for Persona Insights analysis.</p>
+    </div>
+  )
+
+  const personas: PersonaData[] = personaData.personas || []
+  const allPersonas = ['All', ...personas.map((p: PersonaData) => p.persona_id)]
   const analysisMode = selectedPersona === 'All' ? 'comparison' : 'individual'
 
   return (
@@ -88,7 +146,8 @@ function PersonaInsights() {
       ) : (
         <IndividualPersonaAnalysis 
           persona={selectedPersona} 
-          personaPages={personaPages} 
+          personaPages={personaPages}
+          isLoading={pagesLoading}
         />
       )}
 
@@ -98,7 +157,10 @@ function PersonaInsights() {
   )
 }
 
-function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
+function PersonaComparisonAnalysis({ personas }: { personas: PersonaData[] }) {
+  // Sort personas by score (descending) to match Streamlit behavior
+  const sortedPersonas = [...personas].sort((a, b) => b.avg_score - a.avg_score)
+
   return (
     <div className="section">
       <h2>📊 Persona Performance Comparison</h2>
@@ -106,7 +168,7 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
       {/* Persona Performance Cards */}
       <h3>👥 Persona Performance Cards</h3>
       <div className="metrics-grid">
-        {personas.map((persona: any) => {
+        {sortedPersonas.map((persona: PersonaData) => {
           const score = persona.avg_score || 0
           const status = score >= 7 ? 'excellent' : score >= 5 ? 'good' : score >= 3 ? 'warning' : 'critical'
           const statusText = score >= 7 ? 'EXCELLENT' : score >= 5 ? 'GOOD' : score >= 3 ? 'FAIR' : 'POOR'
@@ -135,11 +197,11 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
         <PlotlyChart 
           data={[{
             type: 'bar',
-            x: personas.map((p: any) => p.avg_score || 0),
-            y: personas.map((p: any) => p.persona_id.replace('_', ' ')),
+            x: sortedPersonas.map((p: PersonaData) => p.avg_score || 0),
+            y: sortedPersonas.map((p: PersonaData) => p.persona_id.replace('_', ' ')),
             orientation: 'h',
             marker: { 
-              color: personas.map((p: any) => p.avg_score || 0),
+              color: sortedPersonas.map((p: PersonaData) => p.avg_score || 0),
               colorscale: 'RdYlGn',
               cmin: 0,
               cmax: 10
@@ -148,7 +210,7 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
           layout={{
             title: 'Overall Brand Health Score by Persona',
             xaxis: { title: 'Average Score' },
-            yaxis: { title: 'Persona' },
+            yaxis: { title: 'Persona', categoryorder: 'total ascending' },
             height: 400
           }}
         />
@@ -159,15 +221,18 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
           <PlotlyChart 
             data={[{
               type: 'bar',
-              x: personas.map((p: any) => p.page_count || 0),
-              y: personas.map((p: any) => p.persona_id.replace('_', ' ')),
+              x: sortedPersonas.map((p: PersonaData) => p.page_count || 0),
+              y: sortedPersonas.map((p: PersonaData) => p.persona_id.replace('_', ' ')),
               orientation: 'h',
-              marker: { color: '#3b82f6' }
+              marker: { 
+                color: sortedPersonas.map((p: PersonaData) => p.page_count || 0),
+                colorscale: 'Blues'
+              }
             }]}
             layout={{
               title: 'Pages Analyzed per Persona',
               xaxis: { title: 'Pages Analyzed' },
-              yaxis: { title: 'Persona' },
+              yaxis: { title: 'Persona', categoryorder: 'total ascending' },
               height: 400
             }}
           />
@@ -176,12 +241,12 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
           <PlotlyChart 
             data={[{
               type: 'pie',
-              values: personas.map((p: any) => p.avg_score || 0),
-              labels: personas.map((p: any) => p.persona_id.replace('_', ' ')),
+              values: sortedPersonas.map((p: PersonaData) => p.avg_score || 0),
+              labels: sortedPersonas.map((p: PersonaData) => p.persona_id.replace('_', ' ')),
               marker: { colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'] }
             }]}
             layout={{
-              title: 'Score Distribution by Persona',
+              title: 'Score Distribution Across Personas',
               height: 400
             }}
           />
@@ -189,29 +254,89 @@ function PersonaComparisonAnalysis({ personas }: { personas: any[] }) {
       </div>
 
       {/* Persona Ranking Insights */}
-      <div className="insights-box" style={{ marginTop: '2rem' }}>
-        <h3>🏆 Persona Performance Ranking</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          {personas
-            .sort((a: any, b: any) => (b.avg_score || 0) - (a.avg_score || 0))
-            .map((persona: any, index: number) => (
-              <div key={persona.persona_id} style={{ textAlign: 'center', padding: '1rem' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+      <PersonaRankingInsights personas={sortedPersonas} />
+    </div>
+  )
+}
+
+function PersonaRankingInsights({ personas }: { personas: PersonaData[] }) {
+  const topPersonas = personas.slice(0, 3)
+  const bottomPersonas = personas.slice(-2)
+
+  return (
+    <div className="insights-box" style={{ marginTop: '2rem' }}>
+      <h3>🏆 Persona Performance Ranking</h3>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div>
+          <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
+            <h4>🥇 Top Performing Personas</h4>
+            {topPersonas.map((persona, index) => {
+              const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"
+              return (
+                <div key={persona.persona_id} style={{ margin: '0.5rem 0' }}>
+                  <strong>{medal} {persona.persona_id.replace('_', ' ')}: {persona.avg_score.toFixed(1)}/10</strong><br/>
+                  <small>• {persona.page_count} pages analyzed</small>
                 </div>
-                <strong>{persona.persona_id.replace('_', ' ')}</strong><br/>
-                <small>{(persona.avg_score || 0).toFixed(1)}/10</small>
+              )
+            })}
+          </div>
+        </div>
+        
+        <div>
+          <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
+            <h4>📉 Areas for Improvement</h4>
+            {bottomPersonas.map((persona) => (
+              <div key={persona.persona_id} style={{ margin: '0.5rem 0' }}>
+                <strong>⚠️ {persona.persona_id.replace('_', ' ')}: {persona.avg_score.toFixed(1)}/10</strong><br/>
+                <small>• Focus on improving content quality and alignment</small>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Strategic Recommendations */}
+      <div>
+        <h4>🎯 Strategic Recommendations</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div>
+            <div className="insights-box" style={{ background: '#e6f7ff', borderLeft: '4px solid #91d5ff' }}>
+              <h5>🏆 Benchmark Persona</h5>
+              <strong>{personas[0]?.persona_id.replace('_', ' ')}</strong><br/>
+              <small><em>Use their experience patterns as templates</em></small>
+            </div>
+          </div>
+          <div>
+            <div className="insights-box" style={{ background: '#fffbe6', borderLeft: '4px solid #ffe58f' }}>
+              <h5>🎯 Priority Persona</h5>
+              <strong>{personas[personas.length - 1]?.persona_id.replace('_', ' ')}</strong><br/>
+              <small><em>Focus improvement efforts here first</em></small>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string, personaPages: any }) {
-  const pages = personaPages?.pages || []
-  const metrics = personaPages?.metrics || {}
+function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { persona: string, personaPages: any, isLoading: boolean }) {
+  if (isLoading) return (
+    <div className="insights-box">
+      <h3>🔍 Deep Dive: {persona.replace('_', ' ')}</h3>
+      <p>Loading detailed persona analysis...</p>
+    </div>
+  )
+
+  if (!personaPages?.pages) return (
+    <div className="insights-box">
+      <h3>🔍 Deep Dive: {persona.replace('_', ' ')}</h3>
+      <p>No data available for detailed analysis of {persona.replace('_', ' ')}.</p>
+    </div>
+  )
+
+  const pages: PersonaPageData[] = personaPages?.pages || []
+  const metrics: PersonaMetrics = personaPages?.metrics || {}
 
   return (
     <div>
@@ -251,7 +376,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
           <div>
             <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
               <h4>🏆 Top Performing Pages for {persona.replace('_', ' ')}</h4>
-              {pages.slice(0, 3).map((page: any, idx: number) => (
+              {pages.slice(0, 3).map((page: PersonaPageData, idx: number) => (
                 <div key={idx} style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', margin: '0.5rem 0' }}>
                   <strong>{page.title || page.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 50)}</strong><br/>
                   <small>{page.tier_name} • Score: {(page.avg_score || 0).toFixed(1)}/10</small>
@@ -262,7 +387,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
           <div>
             <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
               <h4>📉 Improvement Opportunities for {persona.replace('_', ' ')}</h4>
-              {pages.slice(-3).map((page: any, idx: number) => (
+              {pages.slice(-3).map((page: PersonaPageData, idx: number) => (
                 <div key={idx} style={{ background: '#fee2e2', padding: '1rem', borderRadius: '8px', margin: '0.5rem 0' }}>
                   <strong>{page.title || page.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 50)}</strong><br/>
                   <small>{page.tier_name} • Score: {(page.avg_score || 0).toFixed(1)}/10</small>
@@ -278,10 +403,10 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
             <PlotlyChart 
               data={[{
                 type: 'bar',
-                x: pages.slice(0, 10).map((p: any) => p.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 20) || 'Page'),
-                y: pages.slice(0, 10).map((p: any) => p.avg_score || 0),
+                x: pages.slice(0, 10).map((p: PersonaPageData) => p.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 20) || 'Page'),
+                y: pages.slice(0, 10).map((p: PersonaPageData) => p.avg_score || 0),
                 marker: { 
-                  color: pages.slice(0, 10).map((p: any) => p.avg_score || 0),
+                  color: pages.slice(0, 10).map((p: PersonaPageData) => p.avg_score || 0),
                   colorscale: 'RdYlGn',
                   cmin: 0,
                   cmax: 10
@@ -307,7 +432,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
           <h4>💭 First Impressions</h4>
           {pages.length > 0 ? (
             <div>
-              {pages.slice(0, 3).map((page: any, idx: number) => (
+              {pages.slice(0, 3).map((page: PersonaPageData, idx: number) => (
                 <div key={idx} style={{ 
                   background: '#f8fafc', 
                   padding: '1rem', 
@@ -334,13 +459,13 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
             <div>
               <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
                 <h5>✅ Effective Copy Examples</h5>
-                {pages.filter((p: any) => p.effective_copy_examples).slice(0, 3).map((page: any, idx: number) => (
-                  <div key={idx} style={{ marginBottom: '1rem' }}>
-                    <strong>{page.title || 'Page'}:</strong><br/>
-                    <em style={{ fontSize: '0.9em' }}>"{page.effective_copy_examples.substring(0, 150)}..."</em>
-                  </div>
-                ))}
-                {pages.filter((p: any) => p.effective_copy_examples).length === 0 && (
+                                  {pages.filter((p: PersonaPageData) => p.effective_copy_examples).slice(0, 3).map((page: PersonaPageData, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '1rem' }}>
+                      <strong>{page.title || 'Page'}:</strong><br/>
+                      <em style={{ fontSize: '0.9em' }}>"{page.effective_copy_examples?.substring(0, 150)}..."</em>
+                    </div>
+                  ))}
+                {pages.filter((p: PersonaPageData) => p.effective_copy_examples).length === 0 && (
                   <p style={{ color: '#666', fontStyle: 'italic' }}>No effective copy examples available.</p>
                 )}
               </div>
@@ -348,13 +473,13 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
             <div>
               <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
                 <h5>❌ Areas for Improvement</h5>
-                {pages.filter((p: any) => p.ineffective_copy_examples).slice(0, 3).map((page: any, idx: number) => (
-                  <div key={idx} style={{ marginBottom: '1rem' }}>
-                    <strong>{page.title || 'Page'}:</strong><br/>
-                    <em style={{ fontSize: '0.9em' }}>"{page.ineffective_copy_examples.substring(0, 150)}..."</em>
-                  </div>
-                ))}
-                {pages.filter((p: any) => p.ineffective_copy_examples).length === 0 && (
+                                  {pages.filter((p: PersonaPageData) => p.ineffective_copy_examples).slice(0, 3).map((page: PersonaPageData, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '1rem' }}>
+                      <strong>{page.title || 'Page'}:</strong><br/>
+                      <em style={{ fontSize: '0.9em' }}>"{page.ineffective_copy_examples?.substring(0, 150)}..."</em>
+                    </div>
+                  ))}
+                {pages.filter((p: PersonaPageData) => p.ineffective_copy_examples).length === 0 && (
                   <p style={{ color: '#666', fontStyle: 'italic' }}>No improvement areas identified.</p>
                 )}
               </div>
@@ -366,7 +491,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
         <div className="evidence-section" style={{ marginTop: '2rem' }}>
           <h4>🛡️ Trust & Credibility Assessment</h4>
           <div>
-            {pages.filter((p: any) => p.trust_credibility_assessment).slice(0, 3).map((page: any, idx: number) => (
+            {pages.filter((p: PersonaPageData) => p.trust_credibility_assessment).slice(0, 3).map((page: PersonaPageData, idx: number) => (
               <div key={idx} style={{ 
                 background: '#e3f2fd', 
                 padding: '1rem', 
@@ -375,10 +500,10 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
                 margin: '1rem 0'
               }}>
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                <em style={{ fontSize: '0.9em' }}>"{page.trust_credibility_assessment.substring(0, 200)}..."</em>
+                                  <em style={{ fontSize: '0.9em' }}>"{page.trust_credibility_assessment?.substring(0, 200)}..."</em>
               </div>
             ))}
-            {pages.filter((p: any) => p.trust_credibility_assessment).length === 0 && (
+            {pages.filter((p: PersonaPageData) => p.trust_credibility_assessment).length === 0 && (
               <p style={{ color: '#666', fontStyle: 'italic' }}>No trust assessment data available.</p>
             )}
           </div>
@@ -388,7 +513,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
         <div className="evidence-section" style={{ marginTop: '2rem' }}>
           <h4>💼 Business Impact Analysis</h4>
           <div>
-            {pages.filter((p: any) => p.business_impact_analysis).slice(0, 3).map((page: any, idx: number) => (
+            {pages.filter((p: PersonaPageData) => p.business_impact_analysis).slice(0, 3).map((page: PersonaPageData, idx: number) => (
               <div key={idx} style={{ 
                 background: '#f3e5f5', 
                 padding: '1rem', 
@@ -397,10 +522,10 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
                 margin: '1rem 0'
               }}>
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                <em style={{ fontSize: '0.9em' }}>"{page.business_impact_analysis.substring(0, 200)}..."</em>
+                                  <em style={{ fontSize: '0.9em' }}>"{page.business_impact_analysis?.substring(0, 200)}..."</em>
               </div>
             ))}
-            {pages.filter((p: any) => p.business_impact_analysis).length === 0 && (
+            {pages.filter((p: PersonaPageData) => p.business_impact_analysis).length === 0 && (
               <p style={{ color: '#666', fontStyle: 'italic' }}>No business impact analysis available.</p>
             )}
           </div>
@@ -410,7 +535,7 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
         <div className="evidence-section" style={{ marginTop: '2rem' }}>
           <h4>🔍 Information Gaps</h4>
           <div>
-            {pages.filter((p: any) => p.information_gaps).slice(0, 3).map((page: any, idx: number) => (
+            {pages.filter((p: PersonaPageData) => p.information_gaps).slice(0, 3).map((page: PersonaPageData, idx: number) => (
               <div key={idx} style={{ 
                 background: '#fff3e0', 
                 padding: '1rem', 
@@ -419,10 +544,10 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
                 margin: '1rem 0'
               }}>
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                <em style={{ fontSize: '0.9em' }}>"{page.information_gaps.substring(0, 200)}..."</em>
+                                  <em style={{ fontSize: '0.9em' }}>"{page.information_gaps?.substring(0, 200)}..."</em>
               </div>
             ))}
-            {pages.filter((p: any) => p.information_gaps).length === 0 && (
+            {pages.filter((p: PersonaPageData) => p.information_gaps).length === 0 && (
               <p style={{ color: '#666', fontStyle: 'italic' }}>No information gaps identified.</p>
             )}
           </div>
@@ -432,16 +557,26 @@ function IndividualPersonaAnalysis({ persona, personaPages }: { persona: string,
   )
 }
 
-function CrossPersonaInsights({ personas }: { personas: any[] }) {
+function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
   if (!personas.length) return null
 
-  const sortedPersonas = [...personas].sort((a: any, b: any) => (b.avg_score || 0) - (a.avg_score || 0))
+  const sortedPersonas = [...personas].sort((a: PersonaData, b: PersonaData) => (b.avg_score || 0) - (a.avg_score || 0))
   const bestPersona = sortedPersonas[0]
   const worstPersona = sortedPersonas[sortedPersonas.length - 1]
 
-  // Calculate consistency (mock data for now)
-  const mostConsistent = personas[0]
-  const leastConsistent = personas[personas.length - 1]
+  // Calculate consistency based on score variation (like Streamlit version)
+  const personaScores = personas.map(p => p.avg_score || 0)
+  const avgScore = personaScores.reduce((a, b) => a + b, 0) / personaScores.length
+  const scoreVariations = personas.map(p => {
+    const score = p.avg_score || 0
+    return {
+      persona_id: p.persona_id,
+      variation: Math.abs(score - avgScore)
+    }
+  })
+  
+  const mostConsistent = scoreVariations.reduce((a, b) => a.variation < b.variation ? a : b)
+  const leastConsistent = scoreVariations.reduce((a, b) => a.variation > b.variation ? a : b)
 
   return (
     <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #D1D5DB' }}>
@@ -452,12 +587,12 @@ function CrossPersonaInsights({ personas }: { personas: any[] }) {
           <div className="insights-box">
             <h3>📊 Persona Consistency Analysis</h3>
             <div className="insights-box" style={{ background: '#e8f5e8', marginBottom: '1rem' }}>
-              <strong>🎯 Most Consistent Experience:</strong> {mostConsistent?.persona_id || 'Unknown'}<br/>
-              <small>Score variation: ±{(Math.random() * 2).toFixed(1)}</small>
+              <strong>🎯 Most Consistent Experience:</strong> {mostConsistent.persona_id.replace('_', ' ')}<br/>
+              <small>Score variation: ±{mostConsistent.variation.toFixed(1)}</small>
             </div>
             <div className="insights-box" style={{ background: '#fff3cd', marginBottom: '1rem' }}>
-              <strong>📊 Most Variable Experience:</strong> {leastConsistent?.persona_id || 'Unknown'}<br/>
-              <small>Score variation: ±{(Math.random() * 3 + 1).toFixed(1)}</small>
+              <strong>📊 Most Variable Experience:</strong> {leastConsistent.persona_id.replace('_', ' ')}<br/>
+              <small>Score variation: ±{leastConsistent.variation.toFixed(1)}</small>
             </div>
           </div>
         </div>
@@ -466,10 +601,10 @@ function CrossPersonaInsights({ personas }: { personas: any[] }) {
           <div className="insights-box">
             <h3>🎯 Strategic Recommendations</h3>
             <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}>
-              <strong>🏆 Benchmark Persona:</strong> {bestPersona?.persona_id || 'Unknown'}<br/>
+              <strong>🏆 Benchmark Persona:</strong> {bestPersona?.persona_id.replace('_', ' ') || 'Unknown'}<br/>
               <em>Use their experience patterns as templates</em><br/><br/>
               
-              <strong>🎯 Priority Persona:</strong> {worstPersona?.persona_id || 'Unknown'}<br/>
+              <strong>🎯 Priority Persona:</strong> {worstPersona?.persona_id.replace('_', ' ') || 'Unknown'}<br/>
               <em>Focus improvement efforts here first</em>
             </div>
           </div>
@@ -543,7 +678,7 @@ function CrossPersonaInsights({ personas }: { personas: any[] }) {
       <div className="insights-box">
         <h3>📈 Overall Persona Performance Summary</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-          {personas.map((persona: any) => {
+          {sortedPersonas.map((persona: PersonaData) => {
             const score = persona.avg_score || 0
             const level = score >= 7 ? 'Excellent' : score >= 5 ? 'Good' : score >= 3 ? 'Fair' : 'Poor'
             const color = score >= 7 ? '#28a745' : score >= 5 ? '#ffc107' : score >= 3 ? '#fd7e14' : '#dc3545'
@@ -556,7 +691,7 @@ function CrossPersonaInsights({ personas }: { personas: any[] }) {
                 borderLeft: `4px solid ${color}` 
               }}>
                 <strong>{persona.persona_id.replace('_', ' ')}</strong><br/>
-                <small>Score: {score.toFixed(1)}/10 • Level: {level}</small>
+                <small>Score: {score.toFixed(1)}/10 • Level: {level} • {persona.page_count} pages</small>
               </div>
             )
           })}

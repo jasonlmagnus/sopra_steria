@@ -19,6 +19,35 @@
   --red-status: #ff3b30;
   --orange-status: #ff9500;
 
+  /* ===== SEMANTIC COLORS ===== */
+  --color-success: #10B981;
+  --color-success-dark: #059669;
+  --color-success-light: #22C55E;
+  --color-success-bg: #ECFDF5;
+  --color-success-text: #065f46;
+  --color-success-border: #10B981;
+  
+  --color-error: #EF4444;
+  --color-error-dark: #DC2626;
+  --color-error-darker: #991B1B;
+  --color-error-bg: #FEF2F2;
+  --color-error-text: #721C24;
+  --color-error-border: #FCA5A5;
+  
+  --color-warning: #F59E0B;
+  --color-warning-light: #FBBF24;
+  --color-warning-bg: #FEF3C7;
+  --color-warning-text: #92400E;
+  --color-warning-border: #FFEAA7;
+  
+  --color-info: #3B82F6;
+  --color-info-dark: #1E40AF;
+  --color-info-darker: #1E3A8A;
+  --color-info-light: #06B6D4;
+  --color-info-bg: #EFF6FF;
+  --color-info-text: #1565C0;
+  --color-info-border: #90CAF9;
+
   /* ===== NEUTRAL COLORS ===== */
   --gray-50: #F9FAFB;
   --gray-100: #F3F4F6;
@@ -30,6 +59,18 @@
   --gray-700: #374151;
   --gray-800: #1F2937;
   --gray-900: #111827;
+  
+  /* ===== SLATE COLORS (commonly used) ===== */
+  --slate-50: #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1E293B;
+  --slate-900: #0F172A;
 
   /* ===== SEMANTIC COLORS ===== */
   --text-primary: var(--gray-900);
@@ -40,8 +81,8 @@
 
   /* ===== TYPOGRAPHY ===== */
   --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary: "Inter", sans-serif;
   --font-serif: "Crimson Text", Georgia, serif;
+  --font-mono: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   
   /* Font Sizes */
   --font-size-xs: 0.75rem;     /* 12px */
