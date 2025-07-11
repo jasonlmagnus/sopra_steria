@@ -456,7 +456,11 @@ def get_success_library(
     if master_df.empty:
         return JSONResponse(status_code=404, content={"error": "No data available"})
 
-    recommendations_df = datasets.get("recommendations") or pd.DataFrame()
+    # Handle None recommendations - fix DataFrame boolean error
+    recommendations_df = datasets.get("recommendations")
+    if recommendations_df is None:
+        recommendations_df = pd.DataFrame()
+    
     metrics = BrandHealthMetricsCalculator(master_df, recommendations_df)
 
     return metrics.calculate_success_library(
@@ -512,6 +516,59 @@ def get_master_dataset():
 def get_master_dataset_api():
     """Alias for /datasets/master to support legacy React paths"""
     return get_master_dataset()
+
+# Additional API aliases for React compatibility
+@app.get("/api/summary")
+def get_executive_summary_api():
+    """Alias for /executive-summary to support React paths"""
+    return get_executive_summary()
+
+@app.get("/api/opportunities")
+def get_opportunities_api(limit: int = 20):
+    """Alias for /opportunities to support React paths"""
+    return get_opportunities(limit)
+
+@app.get("/api/strategic-assessment")
+def get_strategic_assessment_api(tier: Optional[str] = None):
+    """Alias for /strategic-assessment to support React paths"""
+    return get_strategic_assessment(tier)
+
+@app.get("/api/success-stories")
+def get_success_stories_api(limit: int = 5, min_score: float = 7.5):
+    """Alias for /success-stories to support React paths"""
+    return get_success_stories(limit, min_score)
+
+@app.get("/api/success-library")
+def get_success_library_api(
+    successThreshold: float = 7.5,
+    persona: str = "All",
+    tier: str = "All",
+    maxStories: int = 10,
+    evidenceType: str = "All",
+    searchTerm: str = ""
+):
+    """Alias for /success-library to support React paths"""
+    return get_success_library(successThreshold, persona, tier, maxStories, evidenceType, searchTerm)
+
+@app.get("/api/content-matrix")
+def get_content_matrix_api(
+    persona: str = "All",
+    tier: str = "All", 
+    minScore: float = 0.0,
+    performanceLevel: str = "All"
+):
+    """Alias for /content-matrix to support React paths"""
+    return get_content_matrix(persona, tier, minScore, performanceLevel)
+
+@app.get("/api/persona-insights")
+def get_persona_insights_api():
+    """Alias for /persona-insights to support React paths"""
+    return get_persona_insights()
+
+@app.get("/api/datasets/metadata")
+def get_datasets_metadata_api():
+    """Alias for /datasets/metadata to support React paths"""
+    return get_datasets_metadata()
 
 @app.get("/api/audit-data")
 def get_audit_data():
@@ -698,7 +755,7 @@ def get_persona_insights():
     # Calculate persona-level metrics
     persona_summary = master_df.groupby('persona_id').agg({
         'avg_score': 'mean',
-        'page_count': 'count',
+        'page_id': 'count',  # Count records (was 'page_count' which doesn't exist)
         'tier': lambda x: x.mode().iloc[0] if not x.empty else 'Unknown'
     }).round(2)
     
@@ -709,7 +766,7 @@ def get_persona_insights():
         personas.append({
             'persona_id': persona_id,
             'avg_score': data['avg_score'],
-            'page_count': int(data['page_count']),
+            'page_count': int(data['page_id']),  # Fixed column reference
             'primary_tier': data['tier']
         })
     
