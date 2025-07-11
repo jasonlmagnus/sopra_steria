@@ -149,12 +149,12 @@ function AuditReports() {
   }
 
   const findDefaultReport = (reports: HtmlReport[]): HtmlReport | null => {
-    // Priority 1: Consolidated report
-    let defaultReport = reports.find(r => r.file_name.toLowerCase().includes('consolidated'))
+    // Priority 1: Index report (main landing page)
+    let defaultReport = reports.find(r => r.file_name.toLowerCase().includes('index'))
     
-    // Priority 2: Index report
+    // Priority 2: Consolidated report
     if (!defaultReport) {
-      defaultReport = reports.find(r => r.file_name.toLowerCase().includes('index'))
+      defaultReport = reports.find(r => r.file_name.toLowerCase().includes('consolidated'))
     }
     
     // Priority 3: First executive report

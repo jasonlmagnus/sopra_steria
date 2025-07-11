@@ -21,7 +21,8 @@ sys.path.insert(0, parent_dir)
 import yaml
 from fastapi import FastAPI, HTTPException, Response, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from audit_tool.dashboard.components.data_loader import BrandHealthDataLoader
 from audit_tool.dashboard.components.metrics_calculator import (
@@ -494,6 +495,19 @@ def list_datasets():
     datasets, _ = data_loader.load_all_data()
     return {"datasets": list(datasets.keys())}
 
+def clean_nan_values(data):
+    """Recursively clean NaN values from data structures for JSON serialization"""
+    import math
+    
+    if isinstance(data, dict):
+        return {k: clean_nan_values(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [clean_nan_values(item) for item in data]
+    elif isinstance(data, float) and (math.isnan(data) or math.isinf(data)):
+        return None
+    else:
+        return data
+
 @app.get("/datasets/master")
 def get_master_dataset():
     """Get the master dataset for Reports Export page"""
@@ -505,8 +519,12 @@ def get_master_dataset():
 
         # Handle NaN values that cause JSON serialization errors
         master_df = master_df.fillna('')  # Replace NaN with empty strings
+        
+        # Convert to dict and clean any remaining NaN values
+        data_dict = master_df.to_dict(orient='records')
+        cleaned_data = clean_nan_values(data_dict)
 
-        return master_df.to_dict(orient='records')
+        return cleaned_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading master data: {str(e)}")
 
@@ -582,7 +600,11 @@ def get_audit_data():
         # Handle NaN values that cause JSON serialization errors
         master_df = master_df.fillna('')  # Replace NaN with empty strings
         
-        return master_df.to_dict(orient='records')
+        # Convert to dict and clean any remaining NaN values
+        data_dict = master_df.to_dict(orient='records')
+        cleaned_data = clean_nan_values(data_dict)
+        
+        return cleaned_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading audit data: {str(e)}")
 
@@ -603,7 +625,7 @@ def get_datasets_metadata():
                     'memoryMB': f"{df.memory_usage(deep=True).sum() / 1024 / 1024:.1f}"
                 })
         
-        return {"datasets": metadata}
+        return metadata  # Return array directly, not wrapped in object
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading dataset metadata: {str(e)}")
 
@@ -1859,6 +1881,126 @@ async def export_data_new(format: str, export_request: dict):
             return {"status": "success", "message": f"Export in {format} format completed", "records": len(filtered_data)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error exporting data: {str(e)}")
+
+# HTML Reports API endpoints
+@app.get("/api/html-reports")
+def get_html_reports():
+    """Get list of available HTML reports"""
+    try:
+        html_reports_dir = Path("html_reports")
+        if not html_reports_dir.exists():
+            return {"reports": []}
+        
+        reports = []
+        
+        # Scan for HTML files
+        for html_file in html_reports_dir.rglob("*.html"):
+            # Get relative path from html_reports directory
+            relative_path = html_file.relative_to(html_reports_dir)
+            
+            # Get file stats
+            file_stats = html_file.stat()
+            file_size = file_stats.st_size
+            modified_time = datetime.fromtimestamp(file_stats.st_mtime)
+            
+            # Determine report type and persona from path
+            if html_file.name == "index.html":
+                persona_name = "Index/Root"
+                report_type = "Strategic Analysis"
+                category = "Executive"
+            elif "consolidated" in html_file.name.lower():
+                persona_name = "Consolidated Brand Report"
+                report_type = "Consolidated Report"
+                category = "Executive"
+            elif html_file.parent.name.startswith("The_"):
+                persona_name = html_file.parent.name.replace("_", " ").replace("The BENELUX", "The BENELUX")
+                report_type = "Persona Report"
+                category = "Persona"
+            else:
+                persona_name = "Strategic Report"
+                report_type = "Strategic Analysis"
+                category = "Executive"
+            
+            reports.append({
+                "file_path": str(html_file),
+                "file_name": html_file.name,
+                "persona_name": persona_name,
+                "report_type": report_type,
+                "category": category,
+                "size": f"{file_size / 1024:.1f} KB",
+                "modified": modified_time.strftime("%Y-%m-%d %H:%M"),
+                "relative_path": str(relative_path)
+            })
+        
+        return {"reports": reports}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error scanning HTML reports: {str(e)}")
+
+@app.get("/api/html-reports/{file_path:path}")
+def get_html_report(file_path: str):
+    """Serve individual HTML report files"""
+    try:
+        html_reports_dir = Path("html_reports")
+        full_path = html_reports_dir / file_path
+        
+        # Security check - ensure we're not serving files outside html_reports directory
+        if not str(full_path.resolve()).startswith(str(html_reports_dir.resolve())):
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        if not full_path.exists():
+            raise HTTPException(status_code=404, detail="Report not found")
+        
+        if not full_path.is_file():
+            raise HTTPException(status_code=404, detail="Not a file")
+        
+        # Return the HTML file
+        return FileResponse(
+            path=str(full_path),
+            media_type="text/html",
+            filename=full_path.name
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error serving HTML report: {str(e)}")
+
+@app.post("/api/regenerate-reports")
+def regenerate_reports():
+    """Regenerate all HTML reports"""
+    try:
+        # This would trigger the HTML report generation process
+        # For now, return a success response
+        return {"message": "Reports regeneration initiated", "status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error regenerating reports: {str(e)}")
+
+@app.get("/api/download-all-reports")
+def download_all_reports():
+    """Download all HTML reports as a ZIP archive"""
+    try:
+        html_reports_dir = Path("html_reports")
+        if not html_reports_dir.exists():
+            raise HTTPException(status_code=404, detail="No reports directory found")
+        
+        # Create a ZIP file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for html_file in html_reports_dir.rglob("*.html"):
+                # Add file to zip with relative path
+                zip_file.write(html_file, html_file.relative_to(html_reports_dir))
+        
+        zip_buffer.seek(0)
+        
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename=sopra_brand_reports_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"}
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating reports archive: {str(e)}")
 
 # Start the server
 if __name__ == "__main__":
