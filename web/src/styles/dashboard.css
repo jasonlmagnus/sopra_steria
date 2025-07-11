@@ -1443,23 +1443,6 @@
   }
 } 
 
-/* Base styles */
-@import 'base/reset.css';
-@import 'base/variables.css';
-
-/* Layout styles */
-@import 'layout/grid.css';
-@import 'layout/sidebar.css';
-
-/* Component styles */
-@import 'components/badge.css';
-@import 'components/button.css';
-@import 'components/card.css';
-@import 'components/slider.css';
-
-/* Page styles */
-@import 'pages/RunAudit.css';
-
 /* Main dashboard styles */
 .dashboard {
   min-height: 100vh;

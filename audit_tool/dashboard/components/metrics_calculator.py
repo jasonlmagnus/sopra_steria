@@ -34,11 +34,11 @@ class BrandHealthMetricsCalculator:
         """Calculate overall brand health score"""
         # Use raw_score as the primary score column for unified data
         if 'raw_score' in self.df.columns:
-            return self.df['raw_score'].mean()
+            return float(self.df['raw_score'].mean())
         elif 'final_score' in self.df.columns:
-            return self.df['final_score'].mean()
-        elif 'raw_score' in self.df.columns:
-            return self.df['raw_score'].mean()
+            return float(self.df['final_score'].mean())
+        elif 'avg_score' in self.df.columns:
+            return float(self.df['avg_score'].mean())
         
         logger.warning("No score column found for brand health calculation")
         return 0.0
@@ -861,21 +861,384 @@ class BrandHealthMetricsCalculator:
         }
     
     def _text_to_score(self, text_series: pd.Series, positive_keywords: List[str]) -> float:
-        """Convert text feedback to numeric score based on positive keywords"""
+        """Convert text series to numerical score based on positive keywords"""
         if text_series.empty:
             return 0.0
         
-        # Count positive mentions across all text entries
-        total_positive = 0
-        total_entries = 0
+        # Convert to lowercase for case-insensitive matching
+        text_lower = text_series.str.lower()
         
-        for text in text_series.dropna():
-            if isinstance(text, str):
-                text_lower = text.lower()
-                positive_count = sum(1 for keyword in positive_keywords if keyword in text_lower)
-                # Score based on keyword density (0-10 scale)
-                entry_score = min(positive_count * 2, 10)  # Cap at 10
-                total_positive += entry_score
-                total_entries += 1
+        # Count positive keyword matches
+        positive_count = 0
+        for keyword in positive_keywords:
+            positive_count += text_lower.str.contains(keyword, na=False).sum()
         
-        return total_positive / total_entries if total_entries > 0 else 0.0 
+        # Calculate score (normalize by text length and keyword count)
+        total_texts = len(text_series)
+        if total_texts == 0:
+            return 0.0
+        
+        # Score between 0-10 based on keyword density
+        score = min(10, (positive_count / total_texts) * 10)
+        return float(score)
+
+    def calculate_strategic_themes(self) -> List[Dict]:
+        """Generate strategic themes from real research data patterns"""
+        themes = []
+        
+        # Brand & Messaging Strategy (based on real criterion patterns)
+        if 'criterion_id' in self.df.columns and 'raw_score' in self.df.columns:
+            branding_criteria = ['corporate_positioning_alignment', 'brand_differentiation', 'value_proposition_clarity']
+            branding_mask = self.df['criterion_id'].isin(branding_criteria)
+            branding_data = self.df[branding_mask]
+            
+            if len(branding_data) > 0:
+                avg_score = float(branding_data['raw_score'].mean()) if pd.notna(branding_data['raw_score'].mean()) else 0
+                # Extract real insights from business_impact_analysis field
+                branding_insights = []
+                if 'business_impact_analysis' in branding_data.columns:
+                    impact_text = ' '.join(branding_data['business_impact_analysis'].dropna().astype(str))
+                    if 'value proposition' in impact_text.lower():
+                        branding_insights.append('Value proposition clarity gaps identified in research')
+                    if 'brand' in impact_text.lower() and 'positioning' in impact_text.lower():
+                        branding_insights.append('Brand positioning inconsistencies found across touchpoints')
+                    if 'differentiation' in impact_text.lower():
+                        branding_insights.append('Competitive differentiation opportunities identified')
+                
+                if not branding_insights:
+                    branding_insights = ['Research shows brand messaging gaps across customer journey']
+                    
+                themes.append({
+                    'id': 'brand_messaging',
+                    'title': 'Brand & Messaging Strategy',
+                    'description': 'Strengthen brand positioning and value proposition clarity',
+                    'currentScore': round(avg_score, 1),
+                    'targetScore': round(min(10, avg_score + 2.5), 1),
+                    'businessImpact': 'High' if avg_score < 6 else 'Medium',
+                    'affectedPages': len(branding_data),
+                    'competitiveRisk': 'High' if avg_score < 6 else 'Medium' if avg_score < 7.5 else 'Low',
+                    'keyInsights': branding_insights[:3],
+                    'soWhat': f'Brand messaging gaps identified across {len(branding_data)} pages in research analysis.'
+                })
+        
+        # User Experience & Trust (based on real criterion patterns)  
+        if 'criterion_id' in self.df.columns and 'raw_score' in self.df.columns:
+            trust_criteria = ['trust_credibility_signals', 'calltoaction_effectiveness']
+            trust_mask = self.df['criterion_id'].isin(trust_criteria)
+            trust_data = self.df[trust_mask]
+            
+            if len(trust_data) > 0:
+                avg_score = float(trust_data['raw_score'].mean()) if pd.notna(trust_data['raw_score'].mean()) else 0
+                # Extract real insights from research
+                trust_insights = []
+                if 'business_impact_analysis' in trust_data.columns:
+                    impact_text = ' '.join(trust_data['business_impact_analysis'].dropna().astype(str))
+                    if 'trust' in impact_text.lower():
+                        trust_insights.append('Trust signal deficiencies identified in audit')
+                    if 'credibility' in impact_text.lower():
+                        trust_insights.append('Credibility markers need enhancement per research')
+                    if 'call' in impact_text.lower() and 'action' in impact_text.lower():
+                        trust_insights.append('Call-to-action effectiveness gaps found')
+                        
+                if not trust_insights:
+                    trust_insights = ['Research identifies trust and credibility optimization opportunities']
+                    
+                themes.append({
+                    'id': 'ux_trust',
+                    'title': 'User Experience & Trust',
+                    'description': 'Improve credibility and ease of use across all touchpoints',
+                    'currentScore': round(avg_score, 1),
+                    'targetScore': round(min(10, avg_score + 2), 1),
+                    'businessImpact': 'High' if avg_score < 5 else 'Medium',
+                    'affectedPages': len(trust_data),
+                    'competitiveRisk': 'High' if avg_score < 5 else 'Medium' if avg_score < 7 else 'Low',
+                    'keyInsights': trust_insights[:3],
+                    'soWhat': f'Trust and UX issues found on {len(trust_data)} pages through systematic research.'
+                })
+        
+        # Low Performance Pattern (based on real avg_score data)
+        if 'avg_score' in self.df.columns:
+            low_performing = self.df[self.df['avg_score'] < 6]
+            if len(low_performing) > 0:
+                avg_score = float(low_performing['avg_score'].mean()) if pd.notna(low_performing['avg_score'].mean()) else 0
+                # Use real performance insights
+                performance_insights = []
+                if 'ineffective_copy_examples' in low_performing.columns:
+                    ineffective_examples = low_performing['ineffective_copy_examples'].dropna()
+                    if len(ineffective_examples) > 0:
+                        performance_insights.append('Content performance gaps documented in research evidence')
+                        
+                if 'engagement_numeric' in low_performing.columns:
+                    low_engagement = low_performing[low_performing['engagement_numeric'] < 5]
+                    if len(low_engagement) > 0:
+                        performance_insights.append('Low engagement patterns identified across multiple pages')
+                        
+                if not performance_insights:
+                    performance_insights = ['Performance optimization opportunities identified in research']
+                    
+                themes.append({
+                    'id': 'content_performance',
+                    'title': 'Content Performance Optimization',
+                    'description': 'Improve content effectiveness based on research findings',
+                    'currentScore': round(avg_score, 1),
+                    'targetScore': round(min(10, avg_score + 3), 1),
+                    'businessImpact': 'Medium',
+                    'affectedPages': len(low_performing),
+                    'competitiveRisk': 'Medium',
+                    'keyInsights': performance_insights[:3],
+                    'soWhat': f'Research identifies performance improvement opportunities on {len(low_performing)} pages.'
+                })
+        
+        return themes
+
+    def calculate_business_recommendations(self, tier_filter: Optional[str] = None, 
+                                         business_impact_filter: Optional[str] = None, 
+                                         timeline_filter: Optional[str] = None) -> List[Dict]:
+        """Generate business recommendations from real research data"""
+        recommendations = []
+        
+        # Use real quick wins from research data
+        if 'quick_win_flag' in self.df.columns:
+            quick_wins = self.df[self.df['quick_win_flag'] == True]
+            for _, row in quick_wins.head(10).iterrows():
+                recommendations.append({
+                    'id': f"qw_{row.get('page_id', 'unknown')}",
+                    'title': f"Quick Win: {self._create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))}",
+                    'description': row.get('effective_copy_examples', row.get('evidence', 'Research-based optimization opportunity')),
+                    'businessImpact': 'Medium',
+                    'implementationEffort': 'Low',  
+                    'timeline': '0-30 days',
+                    'tier': row.get('tier_name', row.get('tier', 'Unknown')),
+                    'persona': row.get('persona_id', 'Multi-Persona'),
+                    'currentScore': float(row.get('avg_score', 0)) if pd.notna(row.get('avg_score', 0)) else 0,
+                    'targetScore': min(10, float(row.get('avg_score', 0)) + 2) if pd.notna(row.get('avg_score', 0)) else 8,
+                    'evidence': row.get('evidence', 'Research findings available'),
+                    'soWhat': row.get('business_impact_analysis', 'Improve brand performance and user engagement'),
+                    'implementationSteps': [
+                        'Apply effective copy examples from research',
+                        'Implement trust signals identified in analysis', 
+                        'Test and measure performance improvement'
+                    ],
+                    'success_metrics': ['Engagement Level', 'Conversion Likelihood', 'Brand Performance']
+                })
+        
+        # Use real critical issues from research data  
+        if 'critical_issue_flag' in self.df.columns:
+            critical_issues = self.df[self.df['critical_issue_flag'] == True]
+            for _, row in critical_issues.head(10).iterrows():
+                recommendations.append({
+                    'id': f"ci_{row.get('page_id', 'unknown')}",
+                    'title': f"Critical Issue: {self._create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))}",
+                    'description': row.get('ineffective_copy_examples', row.get('evidence', 'Critical performance gap identified')),
+                    'businessImpact': 'High',
+                    'implementationEffort': 'High',
+                    'timeline': '30-90 days',
+                    'tier': row.get('tier_name', row.get('tier', 'Unknown')),
+                    'persona': row.get('persona_id', 'Multi-Persona'),
+                    'currentScore': float(row.get('avg_score', 0)) if pd.notna(row.get('avg_score', 0)) else 0,
+                    'targetScore': min(10, float(row.get('avg_score', 0)) + 4) if pd.notna(row.get('avg_score', 0)) else 8,
+                    'evidence': row.get('evidence', 'Research findings available'),
+                    'soWhat': row.get('business_impact_analysis', 'Address critical performance barriers'),
+                    'implementationSteps': [
+                        'Address ineffective copy patterns',
+                        'Rebuild trust and credibility elements',
+                        'Enhance value proposition clarity'
+                    ],
+                    'success_metrics': ['Brand Perception', 'Trust Indicators', 'Performance Score']
+                })
+        
+        return recommendations
+
+    def calculate_competitive_context(self) -> Dict:
+        """Calculate competitive context and benchmarking"""
+        if self.df.empty:
+            return {'advantages': [], 'gaps': [], 'industryBenchmark': 7.2, 'overallPosition': 'At Market'}
+        
+        avg_score = self.df['avg_score'].mean() if 'avg_score' in self.df.columns else 0
+        industry_benchmark = 7.2  # Industry average
+        
+        advantages = []
+        gaps = []
+        
+        if avg_score > industry_benchmark + 0.5:
+            advantages.append('Above-market brand health performance')
+            position = 'Market Leader'
+        elif avg_score > industry_benchmark:
+            advantages.append('Competitive brand positioning')
+            position = 'Above Market'
+        elif avg_score > industry_benchmark - 0.5:
+            gaps.append('Minor performance gaps vs. industry leaders')
+            position = 'At Market'
+        else:
+            gaps.append('Significant competitive disadvantage')
+            gaps.append('Risk of market share erosion')
+            position = 'Below Market'
+        
+        # Identify specific competitive advantages
+        if 'success_flag' in self.df.columns:
+            success_count = len(self.df[self.df['success_flag'] == True])
+            if success_count > len(self.df) * 0.3:
+                advantages.append('Strong success story portfolio')
+        
+        # Identify specific gaps
+        if 'critical_issue_flag' in self.df.columns:
+            critical_count = len(self.df[self.df['critical_issue_flag'] == True])
+            if critical_count > len(self.df) * 0.2:
+                gaps.append('High number of critical brand issues')
+        
+        return {
+            'advantages': advantages,
+            'gaps': gaps,
+            'industryBenchmark': industry_benchmark,
+            'overallPosition': position,
+            'marketGap': round(avg_score - industry_benchmark, 1)
+        }
+
+    def calculate_strategic_tier_analysis(self) -> Dict:
+        """Calculate tier-level performance analysis"""
+        tier_analysis = {}
+        
+        if 'tier' in self.df.columns and 'avg_score' in self.df.columns:
+            tier_mapping = {
+                'tier_1': {'name': 'Strategic (Tier 1)', 'priority': 'Highest', 'impact': 'Board-level content, highest impact'},
+                'tier_2': {'name': 'Tactical (Tier 2)', 'priority': 'High', 'impact': 'Campaign-level, medium impact'},
+                'tier_3': {'name': 'Operational (Tier 3)', 'priority': 'Medium', 'impact': 'Conversion optimization, immediate fixes'}
+            }
+            
+            for tier_key, tier_info in tier_mapping.items():
+                tier_data = self.df[self.df['tier'] == tier_key]
+                
+                if len(tier_data) > 0:
+                    avg_score = tier_data['avg_score'].mean()
+                    critical_issues = len(tier_data[tier_data['critical_issue_flag'] == True]) if 'critical_issue_flag' in tier_data.columns else 0
+                    quick_wins = len(tier_data[tier_data['quick_win_flag'] == True]) if 'quick_win_flag' in tier_data.columns else 0
+                    
+                    tier_analysis[tier_key] = {
+                        'name': tier_info['name'],
+                        'avgScore': round(avg_score, 1),
+                        'pageCount': len(tier_data),
+                        'criticalIssues': critical_issues,
+                        'quickWins': quick_wins,
+                        'priority': tier_info['priority'],
+                        'businessContext': tier_info['impact']
+                    }
+        
+        return tier_analysis
+
+    def generate_implementation_roadmap(self, recommendations: List[Dict]) -> List[Dict]:
+        """Generate phased implementation roadmap"""
+        roadmap = []
+        
+        # Phase 1: 0-30 days (Quick Wins)
+        phase_1_recs = [r for r in recommendations if r.get('timeline') == '0-30 days']
+        if phase_1_recs:
+            roadmap.append({
+                'phase': '0-30 Days',
+                'title': 'Quick Wins & Critical Fixes',
+                'description': 'Immediate improvements based on research findings',
+                'recommendations': len(phase_1_recs),
+                'keyMilestones': [
+                    'Content optimization deployed',
+                    'Quick wins implemented',
+                    'Initial performance boost'
+                ],
+                'successMetrics': ['Engagement improvement', 'Performance score increase']
+            })
+        
+        # Phase 2: 30-90 days (Strategic Improvements)
+        phase_2_recs = [r for r in recommendations if r.get('timeline') == '30-90 days']
+        if phase_2_recs:
+            roadmap.append({
+                'phase': '30-90 Days',
+                'title': 'Strategic Improvements',
+                'description': 'Brand positioning and competitive advantage',
+                'recommendations': len(phase_2_recs),
+                'keyMilestones': [
+                    'Brand messaging alignment',
+                    'Tier 1 content enhanced',
+                    'Competitive positioning strengthened'
+                ],
+                'successMetrics': ['Brand performance improvement', 'Trust indicators increase']
+            })
+        
+        # Phase 3: 90+ days (Long-term Transformation)
+        phase_3_recs = [r for r in recommendations if r.get('timeline', '').startswith('90+')]
+        roadmap.append({
+            'phase': '90+ Days',
+            'title': 'Long-term Transformation',
+            'description': 'Comprehensive brand health optimization',
+            'recommendations': len(phase_3_recs) if phase_3_recs else len([r for r in recommendations if r.get('businessImpact') == 'High']),
+            'keyMilestones': [
+                'Full brand health optimization',
+                'Market leadership position',
+                'Sustainable competitive advantage'
+            ],
+            'successMetrics': ['Overall brand health score', 'Research-based performance gains']
+        })
+        
+        return roadmap
+
+    def _create_friendly_page_title(self, page_id: str, url: str) -> str:
+        """Create user-friendly page title from page_id and URL"""
+        if not page_id:
+            return "Unknown Page"
+        
+        # Remove common prefixes and clean up
+        title = page_id.replace('_', ' ').replace('-', ' ')
+        title = ' '.join(word.capitalize() for word in title.split())
+        
+        # Add URL context if available
+        if url and 'www.' in url:
+            domain_part = url.split('www.')[1].split('/')[0] if 'www.' in url else ''
+            if domain_part:
+                title = f"{title} ({domain_part})"
+        
+        return title
+
+    def calculate_strategic_intelligence(self, tier_filter: Optional[str] = None,
+                                       business_impact_filter: Optional[str] = None,
+                                       timeline_filter: Optional[str] = None) -> Dict:
+        """Calculate comprehensive strategic intelligence metrics"""
+        
+        # Calculate basic metrics
+        avg_score = self.df['avg_score'].mean() if 'avg_score' in self.df.columns else 0
+        if pd.isna(avg_score):
+            avg_score = 0
+        
+        critical_issues = len(self.df[self.df['critical_issue_flag'] == True]) if 'critical_issue_flag' in self.df.columns else 0
+        quick_wins = len(self.df[self.df['quick_win_flag'] == True]) if 'quick_win_flag' in self.df.columns else 0
+        success_stories = len(self.df[self.df['success_flag'] == True]) if 'success_flag' in self.df.columns else 0
+        
+        # Calculate research-based performance metrics
+        performance_gap = round(max(0, 7.5 - avg_score), 1) if not pd.isna(avg_score) else 0
+        optimization_potential = quick_wins  # Number of quick wins available
+        improvement_areas = critical_issues  # Number of critical issues to address
+        
+        # Generate strategic insights
+        strategic_themes = self.calculate_strategic_themes()
+        business_recommendations = self.calculate_business_recommendations(tier_filter, business_impact_filter, timeline_filter)
+        competitive_context = self.calculate_competitive_context()
+        tier_analysis = self.calculate_strategic_tier_analysis()
+        implementation_roadmap = self.generate_implementation_roadmap(business_recommendations)
+        
+        return {
+            "executiveSummary": {
+                "totalRecommendations": len(business_recommendations),
+                "highImpactOpportunities": len([r for r in business_recommendations if r.get('businessImpact') == 'High']),
+                "performanceGap": performance_gap,
+                "criticalIssues": critical_issues,
+                "quickWinOpportunities": quick_wins,
+                "overallScore": round(avg_score, 1)
+            },
+            "strategicThemes": strategic_themes,
+            "businessImpact": {
+                "optimizationPotential": optimization_potential,
+                "improvementAreas": improvement_areas,
+                "competitiveAdvantage": competitive_context.get('advantages', []),
+                "successStories": success_stories
+            },
+            "recommendations": business_recommendations,
+            "tierAnalysis": tier_analysis,
+            "competitiveContext": competitive_context,
+            "implementationRoadmap": implementation_roadmap
+        } 

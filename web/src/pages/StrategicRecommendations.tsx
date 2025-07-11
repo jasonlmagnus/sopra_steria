@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { EvidenceDisplay } from '../components/EvidenceDisplay'
 import { PlotlyChart } from '../components/PlotlyChart'
 import StandardCard from '../components/StandardCard'
+// Import unified dashboard styles
+import '../styles/dashboard.css'
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 interface StrategicIntelligence {
   executiveSummary: {
@@ -80,13 +82,32 @@ interface StrategicIntelligence {
   }>
 }
 
+// Add fallback data structure for basic recommendations
+interface BasicRecommendation {
+  id: string
+  title: string
+  description: string
+  category: string
+  impact_score: number
+  urgency_score: number
+  timeline: string
+  priority_score: number
+  page_id: string
+  persona: string
+  url: string
+  evidence: string
+  source: string
+}
+
 function StrategicRecommendations() {
   const [selectedTier, setSelectedTier] = useState('All')
   const [selectedBusinessImpact, setSelectedBusinessImpact] = useState('All')
   const [selectedTimeline, setSelectedTimeline] = useState('All')
   const [viewMode, setViewMode] = useState('executive')
+  const [fallbackMode, setFallbackMode] = useState(false)
 
-  const { data: strategicData, isLoading: strategicLoading } = useQuery({
+  // Primary data source - strategic intelligence
+  const { data: strategicData, isLoading: strategicLoading, error: strategicError } = useQuery({
     queryKey: ['strategic-intelligence', selectedTier, selectedBusinessImpact, selectedTimeline],
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -94,11 +115,34 @@ function StrategicRecommendations() {
       if (selectedBusinessImpact !== 'All') params.append('business_impact', selectedBusinessImpact)
       if (selectedTimeline !== 'All') params.append('timeline', selectedTimeline)
       
-      const res = await fetch(`${apiBase}/api/strategic-intelligence?${params.toString()}`)
+      const res = await fetch(`${apiBase}/strategic-intelligence?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to load strategic intelligence')
       return await res.json() as StrategicIntelligence
-    }
+    },
+    retry: 1, // Only retry once before falling back
+    retryDelay: 1000
   })
+
+  // Fallback data source - basic recommendations from unified dataset
+  const { data: fallbackData, isLoading: fallbackLoading } = useQuery({
+    queryKey: ['basic-recommendations', selectedTier, selectedTimeline],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (selectedTier !== 'All') params.append('tier', selectedTier)
+      if (selectedTimeline !== 'All') params.append('timeline', selectedTimeline)
+      
+      const res = await fetch(`${apiBase}/full-recommendations?${params.toString()}`)
+      if (!res.ok) throw new Error('Failed to load basic recommendations')
+      const data = await res.json()
+      return data.recommendations as BasicRecommendation[]
+    },
+    enabled: !!strategicError // Only run if strategic intelligence fails
+  })
+
+  // Determine which data to use
+  const isUsingFallback = !!strategicError && !fallbackLoading
+  const isLoading = strategicLoading || (strategicError && fallbackLoading)
+  const hasData = strategicData || fallbackData
 
   const formatCurrency = (amount: number): string => {
     if (amount >= 1000000) {
@@ -147,111 +191,157 @@ function StrategicRecommendations() {
     }))
   }
 
-  if (strategicLoading) {
+  if (isLoading) {
     return (
       <div className="page-container">
         <div className="main-header">
-          <h1>🎯 Strategic Intelligence</h1>
-          <p>Loading business-focused strategic analysis...</p>
+          <h1 className="page-title">🎯 Strategic Intelligence</h1>
+          <p className="page-subtitle">Loading strategic analysis...</p>
+        </div>
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Analyzing brand health data...</p>
         </div>
       </div>
     )
   }
 
-  if (!strategicData) {
+  if (!hasData) {
     return (
       <div className="page-container">
         <div className="main-header">
-          <h1>🎯 Strategic Intelligence</h1>
-          <p>No strategic data available</p>
+          <h1 className="page-title">🎯 Strategic Intelligence</h1>
+          <p className="page-subtitle">Strategic recommendations and action plans for brand improvement</p>
+        </div>
+        
+        <div className="alert alert--error">
+          <h2>⚠️ Error Loading Recommendations</h2>
+          <p>Failed to load strategic recommendations</p>
+          <p><strong>Troubleshooting:</strong></p>
+          <ul>
+            <li>Ensure FastAPI server is running on port 8000</li>
+            <li>Check that audit data has been processed</li>
+            <li>Verify network connectivity</li>
+          </ul>
+          <button 
+            className="btn btn--primary"
+            onClick={() => window.location.reload()}
+          >
+            🔄 Retry
+          </button>
         </div>
       </div>
     )
+  }
+
+  // Render fallback view if using basic recommendations
+  if (isUsingFallback && fallbackData) {
+    return (
+      <div className="page-container">
+        <div className="main-header">
+          <h1 className="page-title">🎯 Strategic Recommendations</h1>
+          <p className="page-subtitle">Basic recommendations from audit data (Limited Mode)</p>
+        </div>
+
+        <div className="alert alert--warning">
+          <p><strong>Limited Mode:</strong> Using basic recommendations data. For full strategic intelligence, ensure FastAPI server is running.</p>
+        </div>
+
+        <FallbackRecommendationsView 
+          recommendations={fallbackData}
+          selectedTier={selectedTier}
+          selectedTimeline={selectedTimeline}
+          setSelectedTier={setSelectedTier}
+          setSelectedTimeline={setSelectedTimeline}
+        />
+      </div>
+    )
+  }
+
+  // Type guard for strategicData
+  if (!strategicData) {
+    return null // This shouldn't happen due to earlier checks, but satisfies TypeScript
   }
 
   return (
     <div className="page-container">
-      {/* Header */}
+      {/* Header with proper styling */}
       <div className="main-header">
-        <h1>🎯 Strategic Intelligence</h1>
-        <p>Business-focused strategic recommendations with ROI impact and competitive context</p>
+        <h1 className="page-title">🎯 Strategic Intelligence</h1>
+        <p className="page-subtitle">Business-focused strategic recommendations with ROI impact and competitive context</p>
       </div>
 
       {/* Executive Summary - Always visible */}
-      <div className="insights-box" style={{ backgroundColor: '#f8f9fa', border: '2px solid #007bff' }}>
-        <h2>📊 Executive Summary</h2>
-        <div className="summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-          <div className="metric-card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-            <div className="metric-value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc3545' }}>
-              {formatCurrency(strategicData.executiveSummary.pipelineRisk)}
-            </div>
-            <div className="metric-label" style={{ color: '#6c757d' }}>Pipeline Risk</div>
-            <div className="metric-description" style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.5rem' }}>
-              Annual revenue at risk from brand health issues
-            </div>
-          </div>
+      <div className="insights-box">
+        <h2 className="insights-box__title">📊 Executive Summary</h2>
+        <div className="metrics-grid">
+          <StandardCard
+            title="Pipeline Risk"
+            variant="metric"
+            status="critical"
+          >
+            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.pipelineRisk)}</div>
+            <div className="metric-description">Annual revenue at risk from brand health issues</div>
+          </StandardCard>
 
-          <div className="metric-card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-            <div className="metric-value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#28a745' }}>
-              {formatCurrency(strategicData.executiveSummary.quickWinValue)}
-            </div>
-            <div className="metric-label" style={{ color: '#6c757d' }}>Quick Win Value</div>
-            <div className="metric-description" style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.5rem' }}>
-              Immediate revenue opportunity from low-effort fixes
-            </div>
-          </div>
+          <StandardCard
+            title="Quick Win Value"
+            variant="metric"
+            status="excellent"
+          >
+            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.quickWinValue)}</div>
+            <div className="metric-description">Immediate revenue opportunity from low-effort fixes</div>
+          </StandardCard>
 
-          <div className="metric-card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-            <div className="metric-value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#007bff' }}>
-              {formatCurrency(strategicData.executiveSummary.strategicInvestmentROI)}
-            </div>
-            <div className="metric-label" style={{ color: '#6c757d' }}>Strategic Investment ROI</div>
-            <div className="metric-description" style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.5rem' }}>
-              Expected 30% ROI on strategic brand investments
-            </div>
-          </div>
+          <StandardCard
+            title="Strategic Investment ROI"
+            variant="metric"
+            status="good"
+          >
+            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.strategicInvestmentROI)}</div>
+            <div className="metric-description">Expected 30% ROI on strategic brand investments</div>
+          </StandardCard>
 
-          <div className="metric-card" style={{ backgroundColor: '#fff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-            <div className="metric-value" style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fd7e14' }}>
-              {strategicData.executiveSummary.competitiveGaps}
-            </div>
-            <div className="metric-label" style={{ color: '#6c757d' }}>Competitive Gaps</div>
-            <div className="metric-description" style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.5rem' }}>
-              Critical issues creating competitive vulnerability
-            </div>
-          </div>
+          <StandardCard
+            title="Competitive Gaps"
+            variant="metric"
+            status="warning"
+          >
+            <div className="metric-value">{strategicData.executiveSummary.competitiveGaps}</div>
+            <div className="metric-description">Critical issues creating competitive vulnerability</div>
+          </StandardCard>
         </div>
 
         {/* Competitive Context */}
-        <div className="competitive-context" style={{ marginTop: '2rem', padding: '1.5rem', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+        <div className="insights-box" style={{ marginTop: '2rem' }}>
           <h3>🏆 Competitive Position</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div className="grid grid--2">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: strategicData.competitiveContext.overallPosition === 'Above Average' ? '#28a745' : '#dc3545' }}>
+                <span className="metric-value" style={{ 
+                  color: strategicData.competitiveContext.overallPosition === 'Above Average' ? 'var(--status-excellent)' : 'var(--status-critical)'
+                }}>
                   {strategicData.competitiveContext.currentScore.toFixed(1)}/10
                 </span>
-                <span style={{ color: '#6c757d' }}>vs {strategicData.competitiveContext.benchmarkScore}/10 industry average</span>
+                <span className="text-secondary">vs {strategicData.competitiveContext.benchmarkScore}/10 industry average</span>
               </div>
-              <div style={{ 
-                width: '100%', 
-                height: '8px', 
-                backgroundColor: '#e9ecef', 
-                borderRadius: '4px',
-                overflow: 'hidden'
-              }}>
-                <div style={{ 
-                  width: `${(strategicData.competitiveContext.currentScore / 10) * 100}%`,
-                  height: '100%',
-                  backgroundColor: strategicData.competitiveContext.overallPosition === 'Above Average' ? '#28a745' : '#dc3545'
-                }} />
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill"
+                  style={{ 
+                    width: `${(strategicData.competitiveContext.currentScore / 10) * 100}%`,
+                    backgroundColor: strategicData.competitiveContext.overallPosition === 'Above Average' ? 'var(--status-excellent)' : 'var(--status-critical)'
+                  }}
+                />
               </div>
             </div>
             <div>
-              <p style={{ fontWeight: 'bold', color: strategicData.competitiveContext.overallPosition === 'Above Average' ? '#28a745' : '#dc3545' }}>
+              <p className="font-semibold" style={{ 
+                color: strategicData.competitiveContext.overallPosition === 'Above Average' ? 'var(--status-excellent)' : 'var(--status-critical)'
+              }}>
                 {strategicData.competitiveContext.overallPosition}
               </p>
-              <p style={{ color: '#6c757d', fontSize: '0.875rem' }}>
+              <p className="text-secondary text-sm">
                 {strategicData.competitiveContext.marketOpportunity}
               </p>
             </div>
@@ -261,16 +351,14 @@ function StrategicRecommendations() {
 
       {/* Filters */}
       <div className="insights-box">
-        <h2>🎛️ Strategic Focus</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Content Tier
-            </label>
+        <h2 className="insights-box__title">🎛️ Strategic Focus</h2>
+        <div className="filter-controls">
+          <div className="filter-group">
+            <label className="filter-label">Content Tier</label>
             <select 
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+              className="filter-select"
             >
               <option value="All">All Tiers</option>
               <option value="Tier 1">Tier 1 (Strategic)</option>
@@ -279,14 +367,12 @@ function StrategicRecommendations() {
             </select>
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Business Impact
-            </label>
+          <div className="filter-group">
+            <label className="filter-label">Business Impact</label>
             <select 
               value={selectedBusinessImpact}
               onChange={(e) => setSelectedBusinessImpact(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+              className="filter-select"
             >
               <option value="All">All Impact Levels</option>
               <option value="High">High Impact</option>
@@ -295,14 +381,12 @@ function StrategicRecommendations() {
             </select>
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              Timeline
-            </label>
+          <div className="filter-group">
+            <label className="filter-label">Timeline</label>
             <select 
               value={selectedTimeline}
               onChange={(e) => setSelectedTimeline(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+              className="filter-select"
             >
               <option value="All">All Timelines</option>
               <option value="0-7 days">Immediate (0-7 days)</option>
@@ -312,14 +396,12 @@ function StrategicRecommendations() {
             </select>
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-              View Mode
-            </label>
+          <div className="filter-group">
+            <label className="filter-label">View Mode</label>
             <select 
               value={viewMode}
               onChange={(e) => setViewMode(e.target.value)}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+              className="filter-select"
             >
               <option value="executive">Executive Summary</option>
               <option value="themes">Strategic Themes</option>
@@ -689,6 +771,210 @@ function StrategicRecommendations() {
         </div>
       )}
     </div>
+  )
+}
+
+// Fallback component for basic recommendations
+function FallbackRecommendationsView({ 
+  recommendations, 
+  selectedTier, 
+  selectedTimeline, 
+  setSelectedTier, 
+  setSelectedTimeline 
+}: {
+  recommendations: BasicRecommendation[]
+  selectedTier: string
+  selectedTimeline: string
+  setSelectedTier: (tier: string) => void
+  setSelectedTimeline: (timeline: string) => void
+}) {
+  // Filter recommendations
+  const filteredRecs = recommendations.filter(rec => {
+    if (selectedTier !== 'All' && !rec.page_id.includes(selectedTier.toLowerCase())) return false
+    if (selectedTimeline !== 'All' && rec.timeline !== selectedTimeline) return false
+    return true
+  })
+
+  const getImpactColor = (score: number): string => {
+    if (score >= 8) return 'var(--status-critical)'
+    if (score >= 6) return 'var(--status-warning)'
+    return 'var(--status-excellent)'
+  }
+
+  const getPriorityIcon = (score: number): string => {
+    if (score >= 8) return '🔴'
+    if (score >= 6) return '🟡'
+    return '🟢'
+  }
+
+  return (
+    <>
+      {/* Basic Filters */}
+      <div className="insights-box">
+        <h2 className="insights-box__title">🎛️ Filters</h2>
+        <div className="filter-controls">
+          <div className="filter-group">
+            <label className="filter-label">Content Tier</label>
+            <select 
+              value={selectedTier}
+              onChange={(e) => setSelectedTier(e.target.value)}
+              className="filter-select"
+            >
+              <option value="All">All Tiers</option>
+              <option value="Tier 1">Tier 1</option>
+              <option value="Tier 2">Tier 2</option>
+              <option value="Tier 3">Tier 3</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Timeline</label>
+            <select 
+              value={selectedTimeline}
+              onChange={(e) => setSelectedTimeline(e.target.value)}
+              className="filter-select"
+            >
+              <option value="All">All Timelines</option>
+              <option value="0-7 days">Immediate (0-7 days)</option>
+              <option value="0-30 days">Short-term (0-30 days)</option>
+              <option value="30-90 days">Medium-term (30-90 days)</option>
+              <option value="90+ days">Long-term (90+ days)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Metrics */}
+      <div className="insights-box">
+        <h2 className="insights-box__title">📊 Recommendations Summary</h2>
+        <div className="metrics-grid">
+          <StandardCard
+            title="Total Recommendations"
+            variant="metric"
+            status="good"
+          >
+            <div className="metric-value">{filteredRecs.length}</div>
+          </StandardCard>
+
+          <StandardCard
+            title="High Priority"
+            variant="metric"
+            status="critical"
+          >
+            <div className="metric-value">{filteredRecs.filter(r => r.priority_score >= 8).length}</div>
+          </StandardCard>
+
+          <StandardCard
+            title="Quick Wins"
+            variant="metric"
+            status="excellent"
+          >
+            <div className="metric-value">{filteredRecs.filter(r => r.timeline === '0-30 days').length}</div>
+          </StandardCard>
+
+          <StandardCard
+            title="Average Impact"
+            variant="metric"
+            status="warning"
+          >
+            <div className="metric-value">{(filteredRecs.reduce((sum, r) => sum + r.impact_score, 0) / filteredRecs.length || 0).toFixed(1)}/10</div>
+          </StandardCard>
+        </div>
+      </div>
+
+      {/* Recommendations List */}
+      <div className="insights-box">
+        <h2 className="insights-box__title">📋 Recommendations ({filteredRecs.length})</h2>
+        <div className="section">
+          {filteredRecs.map((rec) => (
+            <div key={rec.id} className="card" style={{ marginBottom: '1.5rem' }}>
+              <div className="card-header">
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {getPriorityIcon(rec.priority_score)}
+                  {rec.title}
+                </h3>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <span 
+                    className="badge"
+                    style={{ 
+                      backgroundColor: getImpactColor(rec.impact_score),
+                      color: 'white'
+                    }}
+                  >
+                    Impact: {rec.impact_score}/10
+                  </span>
+                  <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
+                    {rec.timeline}
+                  </span>
+                  <span className="badge" style={{ backgroundColor: 'var(--primary-color)', color: 'white' }}>
+                    {rec.category}
+                  </span>
+                </div>
+              </div>
+              
+              <div style={{ padding: '1rem' }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>{rec.description}</p>
+                
+                <div className="metrics-grid" style={{ marginBottom: '1rem' }}>
+                  <StandardCard
+                    title="Priority Score"
+                    variant="metric"
+                    status={rec.priority_score >= 8 ? "critical" : rec.priority_score >= 6 ? "warning" : "good"}
+                  >
+                    <div className="metric-value">{rec.priority_score.toFixed(1)}/10</div>
+                  </StandardCard>
+                  
+                  <StandardCard
+                    title="Urgency"
+                    variant="metric"
+                    status="warning"
+                  >
+                    <div className="metric-value">{rec.urgency_score}/10</div>
+                  </StandardCard>
+                  
+                  <StandardCard
+                    title="Persona"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value text-sm">{rec.persona}</div>
+                  </StandardCard>
+                  
+                  <StandardCard
+                    title="Source"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value text-sm">{rec.source}</div>
+                  </StandardCard>
+                </div>
+
+                {rec.url && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <strong>🔗 Page URL:</strong>
+                    <br />
+                    <a href={rec.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)' }}>
+                      {rec.url}
+                    </a>
+                  </div>
+                )}
+
+                {rec.evidence && rec.evidence.length > 20 && (
+                  <div>
+                    <EvidenceDisplay
+                      evidence={[{ type: 'evidence' as const, content: rec.evidence }]}
+                      title="Supporting Evidence"
+                      collapsible={true}
+                      defaultExpanded={false}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   )
 }
 

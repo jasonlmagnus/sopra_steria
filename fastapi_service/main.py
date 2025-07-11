@@ -2263,315 +2263,30 @@ def generate_copy_ready_quotes(persona_data):
     return quotes
 
 def create_friendly_page_title(page_id, url):
-    """Create user-friendly page title from URL"""
-    import re
+    """Create user-friendly page title"""
+    if not page_id:
+        return "Unknown Page"
     
-    if pd.notna(url) and url:
-        clean_url = url.replace('https://', '').replace('http://', '').replace('www.', '')
-        
-        if '/' in clean_url:
-            domain = clean_url.split('/')[0]
-            path = '/'.join(clean_url.split('/')[1:])
-            
-            if path:
-                path_parts = path.split('/')
-                meaningful_parts = []
-                
-                for part in path_parts:
-                    if part and part not in ['en', 'nl', 'be', 'com', 'www']:
-                        clean_part = part.replace('-', ' ').replace('_', ' ')
-                        clean_part = re.sub(r'\.(html|php|aspx?)$', '', clean_part)
-                        meaningful_parts.append(clean_part.title())
-                
-                if meaningful_parts:
-                    return ' > '.join(meaningful_parts)
-                else:
-                    return domain.replace('.', ' ').replace('-', ' ').title()
-            else:
-                return domain.replace('.', ' ').replace('-', ' ').title()
-        else:
-            return clean_url.replace('.', ' ').replace('-', ' ').title()
+    # Basic cleaning
+    title = page_id.replace('_', ' ').replace('-', ' ')
+    title = ' '.join(word.capitalize() for word in title.split())
     
-    return 'Website Page'
-
-def generate_strategic_themes(audit_df):
-    """Generate strategic themes with business context"""
-    themes = []
+    # Add URL context if available
+    if url:
+        if 'newsroom' in url.lower():
+            title = f"Newsroom > {title}"
+        elif 'blog' in url.lower():
+            title = f"Blog > {title}"
+        elif 'about' in url.lower():
+            title = f"About > {title}"
+        elif 'services' in url.lower():
+            title = f"Services > {title}"
+        elif 'industries' in url.lower():
+            title = f"Industries > {title}"
+        elif 'company' in url.lower():
+            title = f"Company > {title}"
     
-    # Brand & Messaging Strategy
-    if 'criterion_id' in audit_df.columns and 'raw_score' in audit_df.columns:
-        branding_mask = audit_df['criterion_id'].str.contains('brand|message|value_prop', case=False, na=False)
-        branding_issues = audit_df[branding_mask]
-        
-        if len(branding_issues) > 0:
-            avg_score = branding_issues['raw_score'].mean()
-            themes.append({
-                'id': 'brand_messaging',
-                'title': 'Brand & Messaging Strategy',
-                'description': 'Strengthen brand positioning and value proposition clarity',
-                'currentScore': round(avg_score, 1),
-                'targetScore': 8.5,
-                'businessImpact': 'High',
-                'affectedPages': len(branding_issues),
-                'revenueImpact': len(branding_issues) * 200000,
-                'competitiveRisk': 'High' if avg_score < 6 else 'Medium' if avg_score < 7.5 else 'Low',
-                'keyInsights': [
-                    'Inconsistent value propositions across customer touchpoints',
-                    'Weak differentiation from competitors',
-                    'Missing emotional connection with target personas'
-                ],
-                'soWhat': f'Brand inconsistencies are costing an estimated ${round(len(branding_issues) * 200000 / 1000)}K annually in lost conversions and market share.'
-            })
-    
-    # User Experience & Trust
-    if 'criterion_id' in audit_df.columns and 'raw_score' in audit_df.columns:
-        ux_mask = audit_df['criterion_id'].str.contains('trust|credibility|navigation|ux', case=False, na=False)
-        ux_issues = audit_df[ux_mask]
-        
-        if len(ux_issues) > 0:
-            avg_score = ux_issues['raw_score'].mean()
-            themes.append({
-                'id': 'ux_trust',
-                'title': 'User Experience & Trust',
-                'description': 'Improve credibility and ease of use across all touchpoints',
-                'currentScore': round(avg_score, 1),
-                'targetScore': 8.0,
-                'businessImpact': 'High',
-                'affectedPages': len(ux_issues),
-                'revenueImpact': len(ux_issues) * 150000,
-                'competitiveRisk': 'High' if avg_score < 5 else 'Medium' if avg_score < 7 else 'Low',
-                'keyInsights': [
-                    'Trust signals are weak or missing on key pages',
-                    'Navigation complexity reduces user confidence',
-                    'Credibility markers need strengthening'
-                ],
-                'soWhat': f'UX issues are blocking an estimated {round(len(ux_issues) * 0.12 * 100)}% of qualified leads from converting.'
-            })
-    
-    # Content Performance
-    if 'avg_score' in audit_df.columns:
-        low_performing = audit_df[audit_df['avg_score'] < 6]
-        if len(low_performing) > 0:
-            avg_score = low_performing['avg_score'].mean()
-            themes.append({
-                'id': 'content_performance',
-                'title': 'Content Performance',
-                'description': 'Optimize content relevance and engagement across all channels',
-                'currentScore': round(avg_score, 1),
-                'targetScore': 7.5,
-                'businessImpact': 'Medium',
-                'affectedPages': len(low_performing),
-                'revenueImpact': len(low_performing) * 75000,
-                'competitiveRisk': 'Medium',
-                'keyInsights': [
-                    'Content lacks persona-specific messaging',
-                    'Key benefits not clearly communicated',
-                    'Call-to-action effectiveness needs improvement'
-                ],
-                'soWhat': f'Performance gaps are reducing engagement by an estimated {round(len(low_performing) * 0.08 * 100)}%.'
-            })
-    
-    return themes
-
-def generate_business_recommendations(audit_df, tier_filter, business_impact_filter, timeline_filter):
-    """Generate business-focused recommendations with ROI context"""
-    recommendations = []
-    
-    # Quick wins - low effort, high impact
-    if 'quick_win_flag' in audit_df.columns:
-        quick_wins = audit_df[audit_df['quick_win_flag'] == True]
-        for _, row in quick_wins.head(5).iterrows():
-            recommendations.append({
-                'id': f"qw_{row.get('page_id', 'unknown')}",
-                'title': f"Quick Win: {create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))}",
-                'description': row.get('effective_copy_examples', 'Optimize page content and messaging'),
-                'businessImpact': 'Medium',
-                'effort': 'Low',
-                'timeline': '0-30 days',
-                'revenueImpact': 50000,
-                'tier': row.get('tier', 'Unknown'),
-                'currentScore': row.get('avg_score', 0),
-                'targetScore': min(10, row.get('avg_score', 0) + 2),
-                'kpis': ['Conversion Rate', 'Time on Page'],
-                'rationale': 'Low-effort content improvements with immediate impact on user engagement'
-            })
-    
-    # Critical issues - high effort, high impact
-    if 'critical_issue_flag' in audit_df.columns:
-        critical_issues = audit_df[audit_df['critical_issue_flag'] == True]
-        for _, row in critical_issues.head(3).iterrows():
-            recommendations.append({
-                'id': f"ci_{row.get('page_id', 'unknown')}",
-                'title': f"Critical Fix: {create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))}",
-                'description': row.get('ineffective_copy_examples', 'Address critical brand and trust issues'),
-                'businessImpact': 'High',
-                'effort': 'High',
-                'timeline': '30-90 days',
-                'revenueImpact': 500000,
-                'tier': row.get('tier', 'Unknown'),
-                'currentScore': row.get('avg_score', 0),
-                'targetScore': min(10, row.get('avg_score', 0) + 4),
-                'kpis': ['Lead Generation', 'Brand Perception'],
-                'rationale': 'Critical issues blocking significant revenue potential'
-            })
-    
-    # Strategic improvements - tier 1 focus
-    if 'tier' in audit_df.columns:
-        tier_1_opportunities = audit_df[(audit_df['tier'] == 'tier_1') & (audit_df['avg_score'] < 7.5)]
-        for _, row in tier_1_opportunities.head(3).iterrows():
-            recommendations.append({
-                'id': f"t1_{row.get('page_id', 'unknown')}",
-                'title': f"Strategic: {create_friendly_page_title(row.get('page_id', ''), row.get('url', ''))}",
-                'description': 'Enhance strategic positioning and competitive differentiation',
-                'businessImpact': 'High',
-                'effort': 'Medium',
-                'timeline': '30-90 days',
-                'revenueImpact': 300000,
-                'tier': 'Tier 1 - Strategic',
-                'currentScore': row.get('avg_score', 0),
-                'targetScore': 8.5,
-                'kpis': ['Market Share', 'Deal Size'],
-                'rationale': 'Strategic content drives higher-value opportunities and market positioning'
-            })
-    
-    return recommendations
-
-def calculate_competitive_context(audit_df):
-    """Calculate competitive context and benchmarking"""
-    if audit_df.empty:
-        return {'advantages': [], 'gaps': [], 'industryBenchmark': 7.2, 'overallPosition': 'At Market'}
-    
-    avg_score = audit_df['avg_score'].mean() if 'avg_score' in audit_df.columns else 0
-    industry_benchmark = 7.2  # Industry average
-    
-    advantages = []
-    gaps = []
-    
-    if avg_score > industry_benchmark + 0.5:
-        advantages.append('Above-market brand health performance')
-        position = 'Market Leader'
-    elif avg_score > industry_benchmark:
-        advantages.append('Competitive brand positioning')
-        position = 'Above Market'
-    elif avg_score > industry_benchmark - 0.5:
-        gaps.append('Minor performance gaps vs. industry leaders')
-        position = 'At Market'
-    else:
-        gaps.append('Significant competitive disadvantage')
-        gaps.append('Risk of market share erosion')
-        position = 'Below Market'
-    
-    # Identify specific competitive advantages
-    if 'success_flag' in audit_df.columns:
-        success_count = len(audit_df[audit_df['success_flag'] == True])
-        if success_count > len(audit_df) * 0.3:
-            advantages.append('Strong success story portfolio')
-    
-    # Identify specific gaps
-    if 'critical_issue_flag' in audit_df.columns:
-        critical_count = len(audit_df[audit_df['critical_issue_flag'] == True])
-        if critical_count > len(audit_df) * 0.2:
-            gaps.append('High number of critical brand issues')
-    
-    return {
-        'advantages': advantages,
-        'gaps': gaps,
-        'industryBenchmark': industry_benchmark,
-        'overallPosition': position,
-        'marketGap': round(avg_score - industry_benchmark, 1)
-    }
-
-def calculate_tier_analysis(audit_df):
-    """Calculate tier-level performance analysis"""
-    tier_analysis = {}
-    
-    if 'tier' in audit_df.columns and 'avg_score' in audit_df.columns:
-        tier_mapping = {
-            'tier_1': {'name': 'Strategic (Tier 1)', 'priority': 'Highest', 'impact': 'Board-level content, highest revenue impact'},
-            'tier_2': {'name': 'Tactical (Tier 2)', 'priority': 'High', 'impact': 'Campaign-level, medium impact'},
-            'tier_3': {'name': 'Operational (Tier 3)', 'priority': 'Medium', 'impact': 'Conversion optimization, immediate fixes'}
-        }
-        
-        for tier_key, tier_info in tier_mapping.items():
-            tier_data = audit_df[audit_df['tier'] == tier_key]
-            
-            if len(tier_data) > 0:
-                avg_score = tier_data['avg_score'].mean()
-                critical_issues = len(tier_data[tier_data['critical_issue_flag'] == True]) if 'critical_issue_flag' in tier_data.columns else 0
-                quick_wins = len(tier_data[tier_data['quick_win_flag'] == True]) if 'quick_win_flag' in tier_data.columns else 0
-                
-                # Calculate revenue impact based on tier
-                revenue_multiplier = {'tier_1': 500000, 'tier_2': 250000, 'tier_3': 100000}
-                revenue_impact = critical_issues * revenue_multiplier[tier_key]
-                
-                tier_analysis[tier_key] = {
-                    'name': tier_info['name'],
-                    'avgScore': round(avg_score, 1),
-                    'pageCount': len(tier_data),
-                    'criticalIssues': critical_issues,
-                    'quickWins': quick_wins,
-                    'revenueImpact': revenue_impact,
-                    'priority': tier_info['priority'],
-                    'businessContext': tier_info['impact']
-                }
-    
-    return tier_analysis
-
-def generate_implementation_roadmap(recommendations):
-    """Generate phased implementation roadmap"""
-    roadmap = []
-    
-    # Phase 1: 0-30 days (Quick Wins)
-    phase_1_recs = [r for r in recommendations if r.get('timeline') == '0-30 days']
-    if phase_1_recs:
-        roadmap.append({
-            'phase': '0-30 Days',
-            'title': 'Quick Wins & Critical Fixes',
-            'description': 'Immediate improvements with high ROI',
-            'recommendations': len(phase_1_recs),
-            'expectedRevenue': sum(r.get('revenueImpact', 0) for r in phase_1_recs),
-            'keyMilestones': [
-                'Content optimization deployed',
-                'Quick wins implemented',
-                'Initial performance boost'
-            ],
-            'successMetrics': ['Conversion rate improvement', 'Time on page increase']
-        })
-    
-    # Phase 2: 30-90 days (Strategic Improvements)
-    phase_2_recs = [r for r in recommendations if r.get('timeline') == '30-90 days']
-    if phase_2_recs:
-        roadmap.append({
-            'phase': '30-90 Days',
-            'title': 'Strategic Improvements',
-            'description': 'Brand positioning and competitive advantage',
-            'recommendations': len(phase_2_recs),
-            'expectedRevenue': sum(r.get('revenueImpact', 0) for r in phase_2_recs),
-            'keyMilestones': [
-                'Brand messaging alignment',
-                'Tier 1 content enhanced',
-                'Competitive positioning strengthened'
-            ],
-            'successMetrics': ['Lead quality improvement', 'Deal size increase']
-        })
-    
-    # Phase 3: 90+ days (Long-term Transformation)
-    phase_3_recs = [r for r in recommendations if r.get('timeline', '').startswith('90+')]
-    roadmap.append({
-        'phase': '90+ Days',
-        'title': 'Long-term Transformation',
-        'description': 'Comprehensive brand health optimization',
-        'recommendations': len(phase_3_recs) if phase_3_recs else 2,
-        'expectedRevenue': 1000000,  # Estimated long-term impact
-        'keyMilestones': [
-            'Full brand health optimization',
-            'Market leadership position',
-            'Sustainable competitive advantage'
-        ],
-        'successMetrics': ['Market share growth', 'Brand equity improvement']
-    })
-    
-    return roadmap
+    return title
 
 @app.get("/strategic-intelligence")
 def get_strategic_intelligence(
@@ -2579,7 +2294,7 @@ def get_strategic_intelligence(
     business_impact: Optional[str] = None,
     timeline: Optional[str] = None
 ):
-    """Business-focused strategic recommendations with ROI impact"""
+    """Business-focused strategic recommendations using metrics calculator"""
     try:
         # Load master data
         data_loader = BrandHealthDataLoader()
@@ -2604,53 +2319,26 @@ def get_strategic_intelligence(
             elif "Tier 3" in tier:
                 filtered_df = filtered_df[filtered_df['tier'] == 'tier_3']
         
-        # Calculate business impact metrics
-        avg_score = filtered_df['avg_score'].mean() if 'avg_score' in filtered_df.columns else 0
-        critical_issues = len(filtered_df[filtered_df['critical_issue_flag'] == True]) if 'critical_issue_flag' in filtered_df.columns else 0
-        quick_wins = len(filtered_df[filtered_df['quick_win_flag'] == True]) if 'quick_win_flag' in filtered_df.columns else 0
-        success_stories = len(filtered_df[filtered_df['success_flag'] == True]) if 'success_flag' in filtered_df.columns else 0
+        # Use the metrics calculator for all strategic intelligence
+        metrics_calc = BrandHealthMetricsCalculator(filtered_df, recommendations_df)
         
-        # Calculate pipeline risk (business impact)
-        pipeline_risk = max(0, (10 - avg_score) * 250000)  # $250K per point below 10
-        conversion_uplift = quick_wins * 0.15  # 15% uplift per quick win
-        revenue_opportunity = critical_issues * 500000  # $500K per critical issue fixed
+        # Helper function to handle NaN values
+        def clean_nan_values(data):
+            """Recursively clean NaN values from nested dictionaries and lists"""
+            if isinstance(data, dict):
+                return {k: clean_nan_values(v) for k, v in data.items()}
+            elif isinstance(data, list):
+                return [clean_nan_values(item) for item in data]
+            elif isinstance(data, float) and (pd.isna(data) or data == float('inf') or data == float('-inf')):
+                return 0.0
+            else:
+                return data
+
+        # Get strategic intelligence from metrics calculator
+        strategic_intelligence = metrics_calc.calculate_strategic_intelligence(tier, business_impact, timeline)
         
-        # Generate strategic themes with business context
-        strategic_themes = generate_strategic_themes(filtered_df)
-        
-        # Generate business-focused recommendations
-        business_recommendations = generate_business_recommendations(filtered_df, tier, business_impact, timeline)
-        
-        # Calculate competitive context
-        competitive_context = calculate_competitive_context(filtered_df)
-        
-        # Calculate tier analysis
-        tier_analysis = calculate_tier_analysis(filtered_df)
-        
-        # Generate implementation roadmap
-        implementation_roadmap = generate_implementation_roadmap(business_recommendations)
-        
-        return {
-            "executiveSummary": {
-                "totalRecommendations": len(business_recommendations),
-                "highImpactOpportunities": len([r for r in business_recommendations if r.get('businessImpact') == 'High']),
-                "pipelineRisk": round(pipeline_risk),
-                "competitiveGaps": critical_issues,
-                "quickWinValue": round(quick_wins * 100000),  # $100K per quick win
-                "strategicInvestmentROI": round(revenue_opportunity * 0.3)  # 30% ROI on strategic investments
-            },
-            "strategicThemes": strategic_themes,
-            "businessImpact": {
-                "revenueOpportunity": round(revenue_opportunity),
-                "conversionUplift": round(conversion_uplift * 100),  # Percentage
-                "competitiveAdvantage": competitive_context.get('advantages', []),
-                "brandEquityRisk": round(critical_issues * 0.15 * 100)  # 15% brand equity risk per critical issue
-            },
-            "recommendations": business_recommendations,
-            "tierAnalysis": tier_analysis,
-            "competitiveContext": competitive_context,
-            "implementationRoadmap": implementation_roadmap
-        }
+        # Clean all NaN values from the response
+        return clean_nan_values(strategic_intelligence)
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"Strategic intelligence failed: {str(e)}"})
@@ -3105,6 +2793,11 @@ async def export_data_new(format: str, export_request: dict):
             return {"status": "success", "message": f"Export in {format} format completed", "records": len(filtered_data)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error exporting data: {str(e)}")
+
+# Start the server
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 
