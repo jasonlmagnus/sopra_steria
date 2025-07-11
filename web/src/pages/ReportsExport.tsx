@@ -3,6 +3,8 @@ import { useFilters } from '../context/FilterContext';
 import { ScoreCard } from '../components/ScoreCard';
 import { PlotlyChart } from '../components/PlotlyChart';
 import DatasetList from './DatasetList';
+import DatasetDetail from './DatasetDetail';
+import '../styles/pages/ReportsExport.css';
 
 interface DatasetInfo {
   name: string;
@@ -26,1071 +28,809 @@ interface HTMLReportOptions {
   includeTierAnalysis: boolean;
   includePersonaVoice: boolean;
   includeRecommendations: boolean;
-  includeVisualBrand: boolean;
-  autoOpen: boolean;
-  createZip: boolean;
-}
-
-interface ExportConfig {
-  format: string;
-  scope: string;
-  filters?: any;
-  columns?: string[];
-}
-
-interface BulkExportConfig {
-  includeMaster: boolean;
-  includeDatasets: boolean;
-  includeReports: boolean;
-  includeRaw: boolean;
+  includeEvidence: boolean;
 }
 
 const ReportsExport: React.FC = () => {
-  const filters = useFilters();
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('data-explorer');
+  const [loading, setLoading] = useState(false);
   const [masterData, setMasterData] = useState<any[]>([]);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [viewingDataset, setViewingDataset] = useState<string | null>(null);
   
-  // Data Explorer state
-  const [filteredData, setFilteredData] = useState<any[]>([]);
+  // Filter states
+  const [personaFilter, setPersonaFilter] = useState('All');
+  const [tierFilter, setTierFilter] = useState('All');
+  const [scoreRange, setScoreRange] = useState([0, 100]);
   const [displayMode, setDisplayMode] = useState('table');
-  const [maxRows, setMaxRows] = useState(100);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   
-  // Custom Reports state
+  // Report configuration
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
-    reportType: 'Executive Summary Report',
+    reportType: 'comprehensive',
     personas: [],
     tiers: [],
     includeAnalysis: true,
     includeRecommendations: true,
-    format: 'PDF'
+    format: 'pdf'
   });
-  const [generatingReport, setGeneratingReport] = useState(false);
-  const [reportResult, setReportResult] = useState<any>(null);
   
-  // HTML Reports state
+  // HTML report options
   const [htmlOptions, setHtmlOptions] = useState<HTMLReportOptions>({
-    generationMode: 'Single Persona',
+    generationMode: 'All Personas',
     personas: [],
     includeTierAnalysis: true,
     includePersonaVoice: true,
     includeRecommendations: true,
-    includeVisualBrand: true,
-    autoOpen: false,
-    createZip: true
+    includeEvidence: true
   });
-  const [generatingHtml, setGeneratingHtml] = useState(false);
-  const [htmlResult, setHtmlResult] = useState<any>(null);
   
-  // Export Center state
-  const [exportConfig, setExportConfig] = useState<ExportConfig>({
-    format: 'CSV',
-    scope: 'Filtered Data'
+  // Export states
+  const [exportFormat, setExportFormat] = useState('csv');
+  const [exportFilters, setExportFilters] = useState({
+    includeRawData: true,
+    includeSummaries: true,
+    includeAnalysis: false
   });
-  const [bulkExportConfig, setBulkExportConfig] = useState<BulkExportConfig>({
-    includeMaster: true,
-    includeDatasets: true,
-    includeReports: true,
-    includeRaw: false
-  });
+  
+  // Generation states
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [generatingHtml, setGeneratingHtml] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+  // Data loading
   useEffect(() => {
-    fetchReportData();
+    loadData();
   }, []);
 
-  const fetchReportData = async () => {
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      const res = await fetch('http://localhost:3000/api/datasets/master');
-      if (!res.ok) throw new Error('Failed to load data');
-      const data = await res.json();
-      setMasterData(data);
-      setFilteredData(data);
-      setSelectedColumns(Object.keys(data[0] || {}));
-
-      const dsRes = await fetch('http://localhost:3000/api/datasets');
-      if (dsRes.ok) {
-        const dsData = await dsRes.json();
-        // Convert string array to dataset objects with safe defaults
-        const datasetObjects = (dsData.datasets || []).map((name: string) => ({
-          name: name,
-          records: 0, // Default since API doesn't provide this info
-          columns: 0, // Default since API doesn't provide this info  
-          memoryMB: 'N/A' // Default since API doesn't provide this info
-        }));
-        setDatasets(datasetObjects);
+      // Load master dataset
+      const masterResponse = await fetch(`${apiBase}/api/datasets/master`);
+      if (masterResponse.ok) {
+        const masterData = await masterResponse.json();
+        setMasterData(masterData);
       }
-    } catch (error) {
-      console.error('Error fetching report data:', error);
+      
+      // Load datasets metadata
+      const datasetsResponse = await fetch(`${apiBase}/api/datasets/metadata`);
+      if (datasetsResponse.ok) {
+        const datasetsData = await datasetsResponse.json();
+        setDatasets(datasetsData);
+      }
+    } catch (err) {
+      setError('Failed to load data');
+      console.error('Error loading data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const applyDataFilters = () => {
-    const filtered = masterData.filter(item => {
-      if (filters.persona && filters.persona !== 'All' && item.persona_id !== filters.persona) return false;
-      if (filters.tier && filters.tier !== 'All' && item.tier !== filters.tier) return false;
-      const [minScore, maxScore] = filters.scoreRange;
-      if (item.avg_score < minScore || item.avg_score > maxScore) return false;
-      return true;
-    });
-    setFilteredData(filtered);
+  const refreshData = () => {
+    loadData();
   };
 
-  useEffect(() => {
-    applyDataFilters();
-  }, [filters, masterData]);
+  // Get available personas and tiers
+  const availablePersonas = [...new Set(masterData.map(item => item.persona_id))];
+  const availableTiers = [...new Set(masterData.map(item => item.tier))];
 
-  const dataOverviewMetrics = {
+  // Filter data based on current filters
+  const filteredData = masterData.filter(item => {
+    if (personaFilter !== 'All' && item.persona_id !== personaFilter) return false;
+    if (tierFilter !== 'All' && item.tier !== tierFilter) return false;
+    const score = parseFloat(item.final_score) || 0;
+    if (score < scoreRange[0] || score > scoreRange[1]) return false;
+    return true;
+  });
+
+  // Calculate overview metrics
+  const overviewMetrics = {
     totalRecords: masterData.length,
-    uniquePages: new Set(masterData.map(item => item.page_id)).size,
-    personas: new Set(masterData.map(item => item.persona_id)).size,
-    completeness: 95.2
+    uniquePages: new Set(masterData.map(item => item.url)).size,
+    uniquePersonas: availablePersonas.length,
+    dataCompleteness: masterData.length > 0 ? 
+      (masterData.filter(item => item.final_score !== null && item.final_score !== 'N/A').length / masterData.length * 100).toFixed(1) : '0'
   };
 
-  const datasetChartData = [
-    {
-      x: datasets.map(d => d.records || 0),
-      y: datasets.map(d => d.name),
-      type: 'bar',
-      orientation: 'h',
-      marker: { color: '#10b981' }
-    }
-  ];
-
-  const datasetChartLayout = {
-    title: 'Available Datasets',
-    xaxis: { title: 'Records (Not Available)' },
-    height: 400
+  // Data quality analysis
+  const dataQuality = {
+    completeness: parseFloat(overviewMetrics.dataCompleteness),
+    consistency: masterData.length > 0 ? 
+      (masterData.filter(item => item.tier && item.persona_id).length / masterData.length * 100) : 0,
+    accuracy: masterData.length > 0 ? 
+      (masterData.filter(item => {
+        const score = parseFloat(item.final_score);
+        return score >= 0 && score <= 10;
+      }).length / masterData.length * 100) : 0,
+    timeliness: 95 // Placeholder - would need actual timestamp analysis
   };
 
-  const distributionChartData = [
-    {
-      x: filteredData.map(item => item.avg_score),
-      type: 'histogram',
-      nbins: 20,
-      marker: { color: '#10b981' }
-    }
-  ];
-
-  const distributionChartLayout = {
-    title: 'Score Distribution',
-    xaxis: { title: 'Score' },
-    yaxis: { title: 'Count' },
-    height: 400
-  };
-
+  // Generate custom report
   const generateCustomReport = async () => {
     setGeneratingReport(true);
-    setReportResult(null);
-    
     try {
-      const response = await fetch('http://localhost:3000/api/reports/generate', {
+      const response = await fetch(`${apiBase}/api/reports/custom`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reportConfig)
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `custom_report_${new Date().toISOString().split('T')[0]}.${reportConfig.format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }
-      
-      const result = await response.json();
-      setReportResult(result);
-    } catch (error) {
-      console.error('Error generating report:', error);
-      setReportResult({ error: `Failed to generate report: ${error}` });
+    } catch (err) {
+      setError('Failed to generate report');
     } finally {
       setGeneratingReport(false);
     }
   };
 
+  // Generate HTML reports
   const generateHtmlReports = async () => {
     setGeneratingHtml(true);
-    setHtmlResult(null);
-    
     try {
-      const response = await fetch('http://localhost:3000/api/reports/html', {
+      const response = await fetch(`${apiBase}/api/reports/html`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(htmlOptions)
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        const result = await response.json();
+        // Handle successful generation
+        alert(`HTML reports generated successfully! ${result.reports?.length || 0} reports created.`);
       }
-      
-      const result = await response.json();
-      setHtmlResult(result);
-    } catch (error) {
-      console.error('Error generating HTML reports:', error);
-      setHtmlResult({ error: `Failed to generate HTML reports: ${error}` });
+    } catch (err) {
+      setError('Failed to generate HTML reports');
     } finally {
       setGeneratingHtml(false);
     }
   };
 
+  // Export data
   const exportData = async () => {
     setExporting(true);
-    
     try {
-      const exportRequest = {
-        ...exportConfig,
-        filters: {
-          persona: filters.persona,
-          tier: filters.tier,
-          scoreRange: filters.scoreRange
-        },
-        columns: selectedColumns
-      };
-      
-      const response = await fetch('http://localhost:3000/api/export', {
+      const response = await fetch(`${apiBase}/api/export/${exportFormat}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(exportRequest)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filters: { personaFilter, tierFilter, scoreRange },
+          options: exportFilters
+        })
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `export_${new Date().toISOString().split('T')[0]}.${exportFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }
-      
-      // Handle file download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `export_${new Date().toISOString().slice(0, 10)}.${exportConfig.format.toLowerCase()}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-    } catch (error) {
-      console.error('Error exporting data:', error);
-      alert(`Export failed: ${error}`);
+    } catch (err) {
+      setError('Failed to export data');
     } finally {
       setExporting(false);
     }
   };
-
-  const bulkExport = async () => {
-    setExporting(true);
-    
-    try {
-      const response = await fetch('http://localhost:3000/api/export/bulk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bulkExportConfig)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      // Handle ZIP download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `bulk_export_${new Date().toISOString().slice(0, 10)}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-    } catch (error) {
-      console.error('Error bulk exporting:', error);
-      alert(`Bulk export failed: ${error}`);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="page-container">
-        <div className="loading-spinner">Loading Reports & Export...</div>
-      </div>
-    );
-  }
 
   return (
-    <div className="page-container">
+    <div className="page-container reports-export-container">
       <div className="main-header">
-        <h1>📋 Reports Export</h1>
+        <h1>📋 Reports & Export</h1>
         <p>Generate and export comprehensive audit reports and data summaries</p>
+        <div className="header-actions">
+          <button 
+            className="refresh-button"
+            onClick={refreshData}
+            disabled={loading}
+          >
+            🔄 Refresh Data
+          </button>
+          <span className="last-updated">
+            Last updated: {new Date().toLocaleTimeString()}
+          </span>
+        </div>
       </div>
+
+      {error && (
+        <div className="error-state">
+          ⚠️ {error}
+        </div>
+      )}
 
       {/* Tab Navigation */}
-      <div className="tab-navigation">
-        <button 
-          className={`tab-button ${activeTab === 'data-explorer' ? 'active' : ''}`}
-          onClick={() => setActiveTab('data-explorer')}
-        >
-          📊 Data Explorer
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'custom-reports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('custom-reports')}
-        >
-          📈 Custom Reports
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'html-reports' ? 'active' : ''}`}
-          onClick={() => setActiveTab('html-reports')}
-        >
-          🎨 HTML Reports
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'export-center' ? 'active' : ''}`}
-          onClick={() => setActiveTab('export-center')}
-        >
-          📦 Export Center
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'dataset-browser' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dataset-browser')}
-        >
-          🗂️ Dataset Browser
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'data-explorer' && (
-        <div className="tab-content">
-          <h2>🔍 Data Explorer</h2>
-          
-          {/* Data Overview */}
-          <div className="section">
-            <h3>📊 Data Overview</h3>
-            <div className="metrics-grid">
-              <ScoreCard 
-                label="Total Records" 
-                value={dataOverviewMetrics.totalRecords.toLocaleString()} 
-                variant="default"
-              />
-              <ScoreCard 
-                label="Unique Pages" 
-                value={dataOverviewMetrics.uniquePages.toLocaleString()} 
-                variant="default"
-              />
-              <ScoreCard 
-                label="Personas" 
-                value={dataOverviewMetrics.personas.toString()} 
-                variant="default"
-              />
-              <ScoreCard 
-                label="Data Completeness" 
-                value={`${dataOverviewMetrics.completeness}%`} 
-                variant="success"
-              />
-            </div>
-
-            <div className="dataset-breakdown">
-              <h4>📋 Dataset Breakdown</h4>
-              <div className="dataset-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Dataset</th>
-                      <th>Records</th>
-                      <th>Columns</th>
-                      <th>Memory (MB)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {datasets.map((dataset, index) => (
-                      <tr key={index}>
-                        <td>{dataset.name || 'Unknown'}</td>
-                        <td>{(dataset.records || 0).toLocaleString()}</td>
-                        <td>{dataset.columns || 0}</td>
-                        <td>{dataset.memoryMB || 'N/A'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <PlotlyChart data={datasetChartData} layout={datasetChartLayout} />
-            </div>
-          </div>
-
-          {/* Data Filters */}
-          <div className="section">
-            <h3>🎛️ Data Filters</h3>
-            <div className="controls-grid">
-              <div className="control-group">
-                <label>👤 Persona</label>
-                <select 
-                  value={filters.persona || 'All'} 
-                  onChange={(e) => filters.setPersona(e.target.value === 'All' ? '' : e.target.value)}
-                >
-                  <option value="All">All</option>
-                  <option value="Strategic Business Leader">Strategic Business Leader</option>
-                  <option value="Technology Innovation Leader">Technology Innovation Leader</option>
-                  <option value="Cybersecurity Decision Maker">Cybersecurity Decision Maker</option>
-                  <option value="Transformation Programme Leader">Transformation Programme Leader</option>
-                </select>
-              </div>
-              
-              <div className="control-group">
-                <label>🏗️ Tier</label>
-                <select 
-                  value={filters.tier || 'All'} 
-                  onChange={(e) => filters.setTier(e.target.value === 'All' ? '' : e.target.value)}
-                >
-                  <option value="All">All</option>
-                  <option value="Tier 1">Tier 1</option>
-                  <option value="Tier 2">Tier 2</option>
-                  <option value="Tier 3">Tier 3</option>
-                </select>
-              </div>
-              
-              <div className="control-group">
-                <label>📊 Score Range</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  value={filters.scoreRange[0]}
-                  onChange={(e) => filters.setScoreRange([parseFloat(e.target.value), filters.scoreRange[1]])}
-                />
-                <span>{filters.scoreRange[0]} - {filters.scoreRange[1]}</span>
-              </div>
-              
-              <div className="control-group">
-                <label>📋 Display Mode</label>
-                <select value={displayMode} onChange={(e) => setDisplayMode(e.target.value)}>
-                  <option value="table">Table View</option>
-                  <option value="summary">Summary Statistics</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Filtered Data */}
-          <div className="section">
-            <h3>📊 Filtered Data</h3>
-            <p>Showing {filteredData.length.toLocaleString()} records after filtering</p>
-            
-            {displayMode === 'table' ? (
-              <div className="data-table-container">
-                <div className="table-controls">
-                  <label>Max Rows:</label>
-                  <input 
-                    type="number" 
-                    min="10" 
-                    max="1000" 
-                    value={maxRows}
-                    onChange={(e) => setMaxRows(parseInt(e.target.value))}
-                  />
-                </div>
-                <div className="data-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        {selectedColumns.map(col => (
-                          <th key={col}>{col.replace('_', ' ').toUpperCase()}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredData.slice(0, maxRows).map((row, index) => (
-                        <tr key={index}>
-                          {selectedColumns.map(col => (
-                            <td key={col}>
-                              {typeof row[col] === 'number' ? row[col].toFixed(2) : row[col]}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div className="summary-statistics">
-                <h4>📈 Summary Statistics</h4>
-                <PlotlyChart data={distributionChartData} layout={distributionChartLayout} />
-                
-                <div className="categorical-summary">
-                  <h5>📊 Categorical Data Summary</h5>
-                  <div className="category-counts">
-                    <div className="category-group">
-                      <strong>Personas:</strong>
-                      {Object.entries(
-                        filteredData.reduce((acc: Record<string, number>, item: any) => {
-                          acc[item.persona_id] = (acc[item.persona_id] || 0) + 1;
-                          return acc;
-                        }, {} as Record<string, number>)
-                      ).map(([persona, count]) => (
-                        <div key={persona}>{persona}: {count}</div>
-                      ))}
-                    </div>
-                    
-                    <div className="category-group">
-                      <strong>Tiers:</strong>
-                      {Object.entries(
-                        filteredData.reduce((acc: Record<string, number>, item: any) => {
-                          acc[item.tier] = (acc[item.tier] || 0) + 1;
-                          return acc;
-                        }, {} as Record<string, number>)
-                      ).map(([tier, count]) => (
-                        <div key={tier}>{tier}: {count}</div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Data Quality Insights */}
-          <div className="section">
-            <h3>🔍 Data Quality Insights</h3>
-            <div className="quality-metrics">
-              <div className="quality-card">
-                <h4>📊 Missing Data Analysis</h4>
-                <p>✅ No missing data found in current dataset</p>
-              </div>
-              <div className="quality-card">
-                <h4>📈 Data Distribution</h4>
-                <p>Score distribution appears normal with mean: {(filteredData.reduce((sum, item) => sum + item.avg_score, 0) / filteredData.length).toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'custom-reports' && (
-        <div className="tab-content">
-          <h2>📈 Custom Reports</h2>
-          
-          <div className="section">
-            <h3>📋 Report Configuration</h3>
-            
-            <div className="report-config">
-              <div className="config-group">
-                <label>📊 Report Type</label>
-                <select 
-                  value={reportConfig.reportType}
-                  onChange={(e) => setReportConfig({...reportConfig, reportType: e.target.value})}
-                >
-                  <option value="Executive Summary Report">Executive Summary Report</option>
-                  <option value="Persona Performance Report">Persona Performance Report</option>
-                  <option value="Content Tier Analysis Report">Content Tier Analysis Report</option>
-                  <option value="Criteria Deep Dive Report">Criteria Deep Dive Report</option>
-                  <option value="Success Stories Report">Success Stories Report</option>
-                  <option value="Improvement Opportunities Report">Improvement Opportunities Report</option>
-                </select>
-              </div>
-              
-              <div className="config-group">
-                <label>👤 Personas</label>
-                <select 
-                  multiple 
-                  value={reportConfig.personas}
-                  onChange={(e) => setReportConfig({
-                    ...reportConfig, 
-                    personas: Array.from(e.target.selectedOptions, option => option.value)
-                  })}
-                >
-                  <option value="Strategic Business Leader">Strategic Business Leader</option>
-                  <option value="Technology Innovation Leader">Technology Innovation Leader</option>
-                  <option value="Cybersecurity Decision Maker">Cybersecurity Decision Maker</option>
-                  <option value="Transformation Programme Leader">Transformation Programme Leader</option>
-                </select>
-              </div>
-              
-              <div className="config-group">
-                <label>🏗️ Content Tiers</label>
-                <select 
-                  multiple 
-                  value={reportConfig.tiers}
-                  onChange={(e) => setReportConfig({
-                    ...reportConfig, 
-                    tiers: Array.from(e.target.selectedOptions, option => option.value)
-                  })}
-                >
-                  <option value="Tier 1">Tier 1</option>
-                  <option value="Tier 2">Tier 2</option>
-                  <option value="Tier 3">Tier 3</option>
-                </select>
-              </div>
-              
-              <div className="config-options">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={reportConfig.includeAnalysis}
-                    onChange={(e) => setReportConfig({...reportConfig, includeAnalysis: e.target.checked})}
-                  />
-                  Include Analysis
-                </label>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={reportConfig.includeRecommendations}
-                    onChange={(e) => setReportConfig({...reportConfig, includeRecommendations: e.target.checked})}
-                  />
-                  Include Recommendations
-                </label>
-              </div>
-              
-              <div className="config-group">
-                <label>📄 Format</label>
-                <select 
-                  value={reportConfig.format}
-                  onChange={(e) => setReportConfig({...reportConfig, format: e.target.value})}
-                >
-                  <option value="PDF">PDF</option>
-                  <option value="HTML">HTML</option>
-                  <option value="Excel">Excel</option>
-                  <option value="PowerPoint">PowerPoint</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="report-preview">
-              <h4>📋 Report Preview</h4>
-              <div className="preview-metrics">
-                <ScoreCard 
-                  label="Report Type" 
-                  value={reportConfig.reportType} 
-                  variant="default"
-                />
-                <ScoreCard 
-                  label="Personas" 
-                  value={reportConfig.personas.length > 0 ? reportConfig.personas.length.toString() : 'All'} 
-                  variant="default"
-                />
-                <ScoreCard 
-                  label="Tiers" 
-                  value={reportConfig.tiers.length > 0 ? reportConfig.tiers.length.toString() : 'All'} 
-                  variant="default"
-                />
-                <ScoreCard 
-                  label="Format" 
-                  value={reportConfig.format} 
-                  variant="default"
-                />
-              </div>
-            </div>
-            
+      <div className="tabs">
+                  <div className="tab-buttons">
             <button 
-              className="generate-button" 
-              onClick={generateCustomReport}
-              disabled={generatingReport}
+              className={`tab-button ${activeTab === 'data-explorer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('data-explorer')}
             >
-              {generatingReport ? '🔄 Generating...' : '📊 Generate Custom Report'}
+              📊 Data Explorer
             </button>
-            
-            {/* Report Results */}
-            {reportResult && (
-              <div className="report-results">
-                <h4>📊 Report Results</h4>
-                {reportResult.error ? (
-                  <div className="error-message">
-                    <strong>Error:</strong> {reportResult.error}
-                  </div>
-                ) : (
-                  <div className="success-message">
-                    <h5>{reportResult.type}</h5>
-                    <p><strong>Generated:</strong> {new Date(reportResult.generated_date).toLocaleString()}</p>
-                    
-                    {reportResult.metrics && (
-                      <div className="report-metrics">
-                        <h6>Key Metrics:</h6>
-                        <ul>
-                          <li>Total Records: {reportResult.metrics.total_records?.toLocaleString()}</li>
-                          <li>Unique Pages: {reportResult.metrics.unique_pages?.toLocaleString()}</li>
-                          <li>Average Score: {reportResult.metrics.average_score}/10</li>
-                          <li>Critical Issues: {reportResult.metrics.critical_issues}</li>
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {reportResult.summary && (
-                      <div className="report-summary">
-                        <p>{reportResult.summary}</p>
-                      </div>
-                    )}
-                    
-                    {reportResult.top_issues && reportResult.top_issues.length > 0 && (
-                      <div className="top-issues">
-                        <h6>Top Issues:</h6>
-                        <ul>
-                          {reportResult.top_issues.map((issue: any, index: number) => (
-                            <li key={index}>{issue.criterion}: {issue.score}/10</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {reportResult.personas && (
-                      <div className="persona-results">
-                        <h6>Persona Performance:</h6>
-                        {reportResult.personas.map((persona: any, index: number) => (
-                          <div key={index} className="persona-item">
-                            <strong>{persona.persona_id}:</strong> {persona.average_score}/10 ({persona.page_count} pages)
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {reportResult.success_stories && (
-                      <div className="success-stories">
-                        <h6>Success Stories:</h6>
-                        {reportResult.success_stories.map((story: any, index: number) => (
-                          <div key={index} className="story-item">
-                            <strong>#{story.rank}:</strong> {story.url} - {story.score}/10
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+            <button 
+              className={`tab-button ${activeTab === 'custom-reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('custom-reports')}
+            >
+              📈 Custom Reports
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'html-reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('html-reports')}
+            >
+              🎨 HTML Reports
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'export-center' ? 'active' : ''}`}
+              onClick={() => setActiveTab('export-center')}
+            >
+              📦 Export Center
+            </button>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'html-reports' && (
         <div className="tab-content">
-          <h2>🎨 HTML Brand Experience Reports</h2>
-          
-          <div className="section">
-            <h3>🎯 Report Configuration</h3>
-            
-            <div className="html-config">
-              <div className="config-section">
-                <h4>👤 Persona Selection</h4>
-                <div className="generation-mode">
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="Single Persona" 
-                      checked={htmlOptions.generationMode === 'Single Persona'}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
-                    />
-                    Single Persona
-                  </label>
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="Multiple Personas" 
-                      checked={htmlOptions.generationMode === 'Multiple Personas'}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
-                    />
-                    Multiple Personas
-                  </label>
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="All Personas" 
-                      checked={htmlOptions.generationMode === 'All Personas'}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
-                    />
-                    All Personas
-                  </label>
-                  <label>
-                    <input 
-                      type="radio" 
-                      value="Consolidated Report" 
-                      checked={htmlOptions.generationMode === 'Consolidated Report'}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, generationMode: e.target.value})}
-                    />
-                    Consolidated Report
-                  </label>
+          {/* Data Explorer Tab */}
+          {activeTab === 'data-explorer' && (
+            <div>
+              <div className="section-header">
+                <h2>📊 Data Explorer & Browser</h2>
+                <p>Interactive analysis, filtering, and browsing of all audit datasets</p>
+              </div>
+              
+              {/* Dataset Selection */}
+              <div className="section">
+                <h3>🗂️ Dataset Selection</h3>
+                <div className="dataset-selector">
+                  <div 
+                    className={`dataset-option ${!viewingDataset ? 'selected' : ''}`}
+                    onClick={() => setViewingDataset(null)}
+                  >
+                    <div className="dataset-icon">📊</div>
+                    <div className="dataset-details">
+                      <div className="dataset-name">Master Dataset</div>
+                      <div className="dataset-meta">{masterData.length} records • {masterData.length > 0 ? Object.keys(masterData[0]).length : 0} columns</div>
+                    </div>
+                  </div>
+                  
+                  {datasets.map((dataset, index) => (
+                    <div 
+                      key={index}
+                      className={`dataset-option ${viewingDataset === dataset.name ? 'selected' : ''}`}
+                      onClick={() => setViewingDataset(dataset.name)}
+                    >
+                      <div className="dataset-icon">🗂️</div>
+                      <div className="dataset-details">
+                        <div className="dataset-name">{dataset.name}</div>
+                        <div className="dataset-meta">{dataset.records} records • {dataset.columns} columns</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Master Dataset Analysis */}
+              {!viewingDataset ? (
+                <>
+                  {/* Data Overview */}
+                  <div className="data-overview">
+                <div className="overview-metric">
+                  <div className="metric-value">{overviewMetrics.totalRecords}</div>
+                  <div className="metric-label">Total Records</div>
+                </div>
+                <div className="overview-metric">
+                  <div className="metric-value">{overviewMetrics.uniquePages}</div>
+                  <div className="metric-label">Unique Pages</div>
+                </div>
+                <div className="overview-metric">
+                  <div className="metric-value">{overviewMetrics.uniquePersonas}</div>
+                  <div className="metric-label">Personas</div>
+                </div>
+                <div className="overview-metric">
+                  <div className="metric-value">{overviewMetrics.dataCompleteness}%</div>
+                  <div className="metric-label">Data Completeness</div>
+                </div>
+              </div>
+
+              {/* Filter Controls */}
+              <div className="filter-controls">
+                <div className="filter-group">
+                  <label>👤 Persona</label>
+                  <select 
+                    value={personaFilter} 
+                    onChange={(e) => setPersonaFilter(e.target.value)}
+                  >
+                    <option value="All">All Personas</option>
+                    {availablePersonas.map(persona => (
+                      <option key={persona} value={persona}>{persona}</option>
+                    ))}
+                  </select>
                 </div>
                 
-                {(htmlOptions.generationMode === 'Single Persona' || htmlOptions.generationMode === 'Multiple Personas') && (
-                  <div className="persona-selection">
+                <div className="filter-group">
+                  <label>🏢 Tier</label>
+                  <select 
+                    value={tierFilter} 
+                    onChange={(e) => setTierFilter(e.target.value)}
+                  >
+                    <option value="All">All Tiers</option>
+                    {availableTiers.map(tier => (
+                      <option key={tier} value={tier}>{tier}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="filter-group">
+                  <label>📊 Score Range: {scoreRange[0]} - {scoreRange[1]}</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={scoreRange[0]}
+                    onChange={(e) => setScoreRange([parseInt(e.target.value), scoreRange[1]])}
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={scoreRange[1]}
+                    onChange={(e) => setScoreRange([scoreRange[0], parseInt(e.target.value)])}
+                  />
+                </div>
+                
+                <div className="filter-group">
+                  <label>👁️ Display Mode</label>
+                  <select 
+                    value={displayMode} 
+                    onChange={(e) => setDisplayMode(e.target.value)}
+                  >
+                    <option value="table">Table View</option>
+                    <option value="summary">Summary Statistics</option>
+                    <option value="chart">Chart View</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Data Quality Analysis */}
+              <div className="data-quality">
+                <h3>📈 Data Quality Analysis</h3>
+                <div className="quality-metrics">
+                  <div className="quality-metric">
+                    <div className={`quality-score ${dataQuality.completeness >= 90 ? 'excellent' : 
+                      dataQuality.completeness >= 70 ? 'good' : 
+                      dataQuality.completeness >= 50 ? 'warning' : 'critical'}`}>
+                      {dataQuality.completeness.toFixed(1)}%
+                    </div>
+                    <div className="quality-label">Completeness</div>
+                  </div>
+                  <div className="quality-metric">
+                    <div className={`quality-score ${dataQuality.consistency >= 90 ? 'excellent' : 
+                      dataQuality.consistency >= 70 ? 'good' : 
+                      dataQuality.consistency >= 50 ? 'warning' : 'critical'}`}>
+                      {dataQuality.consistency.toFixed(1)}%
+                    </div>
+                    <div className="quality-label">Consistency</div>
+                  </div>
+                  <div className="quality-metric">
+                    <div className={`quality-score ${dataQuality.accuracy >= 90 ? 'excellent' : 
+                      dataQuality.accuracy >= 70 ? 'good' : 
+                      dataQuality.accuracy >= 50 ? 'warning' : 'critical'}`}>
+                      {dataQuality.accuracy.toFixed(1)}%
+                    </div>
+                    <div className="quality-label">Accuracy</div>
+                  </div>
+                  <div className="quality-metric">
+                    <div className={`quality-score ${dataQuality.timeliness >= 90 ? 'excellent' : 
+                      dataQuality.timeliness >= 70 ? 'good' : 
+                      dataQuality.timeliness >= 50 ? 'warning' : 'critical'}`}>
+                      {dataQuality.timeliness.toFixed(1)}%
+                    </div>
+                    <div className="quality-label">Timeliness</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filtered Data Display */}
+              {displayMode === 'table' && (
+                <div className="section">
+                  <h3>📋 Filtered Data ({filteredData.length} records)</h3>
+                  <div className="data-table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>URL</th>
+                          <th>Persona</th>
+                          <th>Tier</th>
+                          <th>Score</th>
+                          <th>Criterion</th>
+                          <th>Status</th>
+                          <th>Flags</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredData.slice(0, 50).map((item, index) => (
+                          <tr key={index}>
+                            <td className="url-cell">
+                              <a href={item.url} target="_blank" rel="noopener noreferrer">
+                                {item.url}
+                              </a>
+                            </td>
+                            <td>{item.persona_id}</td>
+                            <td>{item.tier_name || item.tier}</td>
+                            <td>{item.final_score || 'N/A'}</td>
+                            <td>{item.criterion_code || 'N/A'}</td>
+                            <td>
+                              <span className={`descriptor ${item.descriptor?.toLowerCase()}`}>
+                                {item.descriptor || 'N/A'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="flags">
+                                {item.quick_win_flag === 'True' && <span className="flag quick-win">Quick Win</span>}
+                                {item.critical_issue_flag === 'True' && <span className="flag critical">Critical</span>}
+                                {item.success_flag === 'True' && <span className="flag success">Success</span>}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {filteredData.length > 50 && (
+                    <p className="text-center text-secondary">
+                      Showing first 50 of {filteredData.length} records
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {displayMode === 'summary' && (
+                <div className="section">
+                  <h3>📊 Summary Statistics</h3>
+                  <div className="insights-box">
+                    <div className="insights-box__title">Key Insights</div>
+                    <p><strong>Average Overall Score:</strong> {(filteredData.reduce((sum, item) => sum + (item.overall_score || 0), 0) / filteredData.length).toFixed(1)}</p>
+                    <p><strong>Best Performing Tier:</strong> {
+                      availableTiers.map(tier => ({
+                        tier,
+                        avg: filteredData.filter(item => item.tier === tier).reduce((sum, item) => sum + (item.overall_score || 0), 0) / filteredData.filter(item => item.tier === tier).length
+                      })).sort((a, b) => b.avg - a.avg)[0]?.tier || 'N/A'
+                    }</p>
+                    <p><strong>Total Pages Analyzed:</strong> {new Set(filteredData.map(item => item.url)).size}</p>
+                  </div>
+                </div>
+              )}
+                </>
+              ) : (
+                <div>
+                  <h3>Dataset: {viewingDataset}</h3>
+                  <DatasetDetail />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Custom Reports Tab */}
+          {activeTab === 'custom-reports' && (
+            <div>
+              <div className="section-header">
+                <h2>📈 Custom Reports</h2>
+                <p>Generate configurable business reports with detailed analysis and insights</p>
+              </div>
+              
+              <div className="report-config-grid">
+                <div className="config-section">
+                  <h4>📊 Report Settings</h4>
+                  <div className="config-group">
+                    <label>📊 Report Type</label>
                     <select 
-                      multiple={htmlOptions.generationMode === 'Multiple Personas'}
-                      value={htmlOptions.personas}
-                      onChange={(e) => setHtmlOptions({
-                        ...htmlOptions,
-                        personas: htmlOptions.generationMode === 'Single Persona' 
-                          ? [e.target.value]
-                          : Array.from(e.target.selectedOptions, option => option.value)
-                      })}
+                      value={reportConfig.reportType}
+                      onChange={(e) => setReportConfig({...reportConfig, reportType: e.target.value})}
                     >
-                      <option value="Strategic Business Leader">Strategic Business Leader</option>
-                      <option value="Technology Innovation Leader">Technology Innovation Leader</option>
-                      <option value="Cybersecurity Decision Maker">Cybersecurity Decision Maker</option>
-                      <option value="Transformation Programme Leader">Transformation Programme Leader</option>
+                      <option value="comprehensive">Comprehensive Analysis</option>
+                      <option value="executive">Executive Summary</option>
+                      <option value="technical">Technical Deep Dive</option>
+                      <option value="comparative">Comparative Analysis</option>
                     </select>
                   </div>
-                )}
+                  
+                  <div className="config-group">
+                    <label>📄 Output Format</label>
+                    <select 
+                      value={reportConfig.format}
+                      onChange={(e) => setReportConfig({...reportConfig, format: e.target.value})}
+                    >
+                      <option value="pdf">PDF Report</option>
+                      <option value="docx">Word Document</option>
+                      <option value="html">HTML Report</option>
+                      <option value="xlsx">Excel Workbook</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="config-section">
+                  <h4>🎯 Content Options</h4>
+                  <div className="checkbox-group">
+                    <input 
+                      type="checkbox" 
+                      id="includeAnalysis"
+                      checked={reportConfig.includeAnalysis}
+                      onChange={(e) => setReportConfig({...reportConfig, includeAnalysis: e.target.checked})}
+                    />
+                    <label htmlFor="includeAnalysis">Include Detailed Analysis</label>
+                  </div>
+                  
+                  <div className="checkbox-group">
+                    <input 
+                      type="checkbox" 
+                      id="includeRecommendations"
+                      checked={reportConfig.includeRecommendations}
+                      onChange={(e) => setReportConfig({...reportConfig, includeRecommendations: e.target.checked})}
+                    />
+                    <label htmlFor="includeRecommendations">Include Recommendations</label>
+                  </div>
+                </div>
+                
+                <div className="config-section">
+                  <h4>🎭 Persona Selection</h4>
+                  <div className="multi-select">
+                    {availablePersonas.map(persona => (
+                      <div key={persona} className="multi-select-option">
+                        <input
+                          type="checkbox"
+                          id={`persona-${persona}`}
+                          checked={reportConfig.personas.includes(persona)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setReportConfig({
+                                ...reportConfig,
+                                personas: [...reportConfig.personas, persona]
+                              });
+                            } else {
+                              setReportConfig({
+                                ...reportConfig,
+                                personas: reportConfig.personas.filter(p => p !== persona)
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`persona-${persona}`}>{persona}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="action-buttons">
+                <button 
+                  className="action-button primary" 
+                  onClick={generateCustomReport}
+                  disabled={generatingReport}
+                >
+                  {generatingReport ? '⏳ Generating...' : '📊 Generate Report'}
+                </button>
+                <button 
+                  className="action-button secondary"
+                  onClick={() => setReportConfig({
+                    reportType: 'comprehensive',
+                    personas: [],
+                    tiers: [],
+                    includeAnalysis: true,
+                    includeRecommendations: true,
+                    format: 'pdf'
+                  })}
+                >
+                  🔄 Reset Configuration
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* HTML Reports Tab */}
+          {activeTab === 'html-reports' && (
+            <div>
+              <div className="section-header">
+                <h2>🎨 HTML Reports</h2>
+                <p>Generate professional HTML reports with interactive visualizations</p>
+              </div>
+              
+              <div className="html-report-options">
+                <div 
+                  className={`report-option ${htmlOptions.generationMode === 'All Personas' ? 'selected' : ''}`}
+                  onClick={() => setHtmlOptions({...htmlOptions, generationMode: 'All Personas'})}
+                >
+                  <h4>🎭 All Personas</h4>
+                  <p>Generate reports for all available personas</p>
+                </div>
+                
+                <div 
+                  className={`report-option ${htmlOptions.generationMode === 'Selected Personas' ? 'selected' : ''}`}
+                  onClick={() => setHtmlOptions({...htmlOptions, generationMode: 'Selected Personas'})}
+                >
+                  <h4>🎯 Selected Personas</h4>
+                  <p>Generate reports for specific personas only</p>
+                </div>
+                
+                <div 
+                  className={`report-option ${htmlOptions.generationMode === 'Consolidated Report' ? 'selected' : ''}`}
+                  onClick={() => setHtmlOptions({...htmlOptions, generationMode: 'Consolidated Report'})}
+                >
+                  <h4>📋 Consolidated Report</h4>
+                  <p>Single comprehensive report across all personas</p>
+                </div>
+              </div>
+              
+              {htmlOptions.generationMode === 'Selected Personas' && (
+                <div className="config-section">
+                  <h4>🎭 Select Personas</h4>
+                  <div className="multi-select">
+                    {availablePersonas.map(persona => (
+                      <div key={persona} className="multi-select-option">
+                        <input
+                          type="checkbox"
+                          id={`html-persona-${persona}`}
+                          checked={htmlOptions.personas.includes(persona)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setHtmlOptions({
+                                ...htmlOptions,
+                                personas: [...htmlOptions.personas, persona]
+                              });
+                            } else {
+                              setHtmlOptions({
+                                ...htmlOptions,
+                                personas: htmlOptions.personas.filter(p => p !== persona)
+                              });
+                            }
+                          }}
+                        />
+                        <label htmlFor={`html-persona-${persona}`}>{persona}</label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {htmlOptions.personas.length > 0 && (
+                    <div className="selected-items">
+                      {htmlOptions.personas.map(persona => (
+                        <div key={persona} className="selected-item">
+                          {persona.replace(/^The\s+/, '').replace(/\s+\(.*\)$/, '').replace(/_/g, ' ')}
+                          <button 
+                            onClick={() => setHtmlOptions({
+                              ...htmlOptions,
+                              personas: htmlOptions.personas.filter(p => p !== persona)
+                            })}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="action-buttons">
+                <button 
+                  className="action-button primary" 
+                  onClick={generateHtmlReports}
+                  disabled={generatingHtml || (htmlOptions.generationMode === 'Selected Personas' && htmlOptions.personas.length === 0)}
+                >
+                  {generatingHtml ? '⏳ Generating...' : '🎨 Generate HTML Reports'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Export Center Tab */}
+          {activeTab === 'export-center' && (
+            <div>
+              <div className="section-header">
+                <h2>📦 Export Center</h2>
+                <p>Export data in various formats for external analysis</p>
+              </div>
+              
+              <div className="export-options">
+                <div 
+                  className={`export-option ${exportFormat === 'csv' ? 'selected' : ''}`}
+                  onClick={() => setExportFormat('csv')}
+                >
+                  <div className="export-icon">📊</div>
+                  <div className="export-name">CSV</div>
+                  <div className="export-description">Comma-separated values</div>
+                </div>
+                
+                <div 
+                  className={`export-option ${exportFormat === 'excel' ? 'selected' : ''}`}
+                  onClick={() => setExportFormat('excel')}
+                >
+                  <div className="export-icon">📈</div>
+                  <div className="export-name">Excel</div>
+                  <div className="export-description">Microsoft Excel format</div>
+                </div>
+                
+                <div 
+                  className={`export-option ${exportFormat === 'json' ? 'selected' : ''}`}
+                  onClick={() => setExportFormat('json')}
+                >
+                  <div className="export-icon">🔧</div>
+                  <div className="export-name">JSON</div>
+                  <div className="export-description">JavaScript Object Notation</div>
+                </div>
+                
+                <div 
+                  className={`export-option ${exportFormat === 'parquet' ? 'selected' : ''}`}
+                  onClick={() => setExportFormat('parquet')}
+                >
+                  <div className="export-icon">⚡</div>
+                  <div className="export-name">Parquet</div>
+                  <div className="export-description">Columnar storage format</div>
+                </div>
               </div>
               
               <div className="config-section">
-                <h4>⚙️ Report Options</h4>
-                <div className="report-options">
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.includeTierAnalysis}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, includeTierAnalysis: e.target.checked})}
-                    />
-                    Include Tier Analysis
-                  </label>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.includePersonaVoice}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, includePersonaVoice: e.target.checked})}
-                    />
-                    Include Persona Voice Insights
-                  </label>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.includeRecommendations}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, includeRecommendations: e.target.checked})}
-                    />
-                    Include Strategic Recommendations
-                  </label>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.includeVisualBrand}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, includeVisualBrand: e.target.checked})}
-                    />
-                    Include Visual Brand Assessment
-                  </label>
+                <h4>📋 Export Options</h4>
+                <div className="checkbox-group">
+                  <input 
+                    type="checkbox" 
+                    id="includeRawData"
+                    checked={exportFilters.includeRawData}
+                    onChange={(e) => setExportFilters({...exportFilters, includeRawData: e.target.checked})}
+                  />
+                  <label htmlFor="includeRawData">Include Raw Data</label>
                 </div>
                 
-                <div className="output-options">
-                  <h5>Output Options:</h5>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.autoOpen}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, autoOpen: e.target.checked})}
-                    />
-                    Auto-open reports in browser
-                  </label>
-                  <label>
-                    <input 
-                      type="checkbox" 
-                      checked={htmlOptions.createZip}
-                      onChange={(e) => setHtmlOptions({...htmlOptions, createZip: e.target.checked})}
-                    />
-                    Create ZIP package for multiple reports
-                  </label>
+                <div className="checkbox-group">
+                  <input 
+                    type="checkbox" 
+                    id="includeSummaries"
+                    checked={exportFilters.includeSummaries}
+                    onChange={(e) => setExportFilters({...exportFilters, includeSummaries: e.target.checked})}
+                  />
+                  <label htmlFor="includeSummaries">Include Summaries</label>
+                </div>
+                
+                <div className="checkbox-group">
+                  <input 
+                    type="checkbox" 
+                    id="includeAnalysis"
+                    checked={exportFilters.includeAnalysis}
+                    onChange={(e) => setExportFilters({...exportFilters, includeAnalysis: e.target.checked})}
+                  />
+                  <label htmlFor="includeAnalysis">Include Analysis</label>
                 </div>
               </div>
-            </div>
-            
-            <div className="generation-preview">
-              <h4>📋 Generation Preview</h4>
-              <div className="preview-metrics">
-                <ScoreCard 
-                  label="Reports to Generate" 
-                  value={htmlOptions.generationMode === 'All Personas' ? '4' : htmlOptions.personas.length.toString()} 
-                  variant="default"
-                />
-                <ScoreCard 
-                  label="Total Records" 
-                  value={filteredData.length.toString()} 
-                  variant="default"
-                />
-                <ScoreCard 
-                  label="Estimated Time" 
-                  value={`${(htmlOptions.generationMode === 'All Personas' ? 4 : htmlOptions.personas.length) * 2}s`} 
-                  variant="default"
-                />
-              </div>
-            </div>
-            
-            <button 
-              className="generate-button" 
-              onClick={generateHtmlReports}
-              disabled={generatingHtml}
-            >
-              {generatingHtml ? '🔄 Generating...' : '🎨 Generate HTML Reports'}
-            </button>
-            
-            {/* HTML Report Results */}
-            {htmlResult && (
-              <div className="html-results">
-                <h4>📊 HTML Report Results</h4>
-                {htmlResult.error ? (
-                  <div className="error-message">
-                    <strong>Error:</strong> {htmlResult.error}
-                  </div>
-                ) : (
-                  <div className="success-message">
-                    <p><strong>Generated:</strong> {new Date(htmlResult.timestamp).toLocaleString()}</p>
-                    <p><strong>Mode:</strong> {htmlResult.generation_mode}</p>
-                    <p><strong>Success:</strong> {htmlResult.summary.successful}/{htmlResult.summary.total} reports</p>
-                    
-                    {htmlResult.generated_reports && (
-                      <div className="generated-reports">
-                        <h5>Generated Reports:</h5>
-                        {htmlResult.generated_reports.map((report: any, index: number) => (
-                          <div key={index} className="report-item">
-                            <div className="report-header">
-                              <strong>{report.persona}</strong>
-                              <span className={`status ${report.status}`}>{report.status}</span>
-                            </div>
-                            {report.status === 'success' && (
-                              <div className="report-actions">
-                                <button 
-                                  onClick={() => window.open(report.url, '_blank')}
-                                  className="open-button"
-                                >
-                                  🌐 Open Report
-                                </button>
-                                <small>{report.path}</small>
-                              </div>
-                            )}
-                            {report.error && (
-                              <div className="error-text">Error: {report.error}</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'export-center' && (
-        <div className="tab-content">
-          <h2>📦 Export Center</h2>
-          
-          <div className="section">
-            <h3>📊 Export Options</h3>
-            
-            <div className="export-config">
-              <div className="config-group">
-                <label>📄 Export Format</label>
-                <select 
-                  value={exportConfig.format}
-                  onChange={(e) => setExportConfig({...exportConfig, format: e.target.value})}
-                >
-                  <option value="CSV">CSV</option>
-                  <option value="Excel">Excel</option>
-                  <option value="JSON">JSON</option>
-                  <option value="PDF">PDF</option>
-                </select>
-              </div>
               
-              <div className="config-group">
-                <label>🎯 Export Scope</label>
-                <select 
-                  value={exportConfig.scope}
-                  onChange={(e) => setExportConfig({...exportConfig, scope: e.target.value})}
+              <div className="action-buttons">
+                <button 
+                  className="action-button primary" 
+                  onClick={exportData}
+                  disabled={exporting}
                 >
-                  <option value="Filtered Data">Filtered Data</option>
-                  <option value="All Data">All Data</option>
-                  <option value="Selected Columns">Selected Columns</option>
-                  <option value="Summary Report">Summary Report</option>
-                </select>
+                  {exporting ? '⏳ Exporting...' : '📦 Export Data'}
+                </button>
               </div>
             </div>
-            
-            <div className="export-preview">
-              <h4>📋 Export Preview</h4>
-              <div className="preview-info">
-                <p><strong>Format:</strong> {exportConfig.format}</p>
-                <p><strong>Scope:</strong> {exportConfig.scope}</p>
-                <p><strong>Records:</strong> {exportConfig.scope === 'All Data' ? masterData.length : filteredData.length}</p>
-                <p><strong>Estimated Size:</strong> {((exportConfig.scope === 'All Data' ? masterData.length : filteredData.length) * 0.5).toFixed(1)} KB</p>
-              </div>
-            </div>
-            
-            <div className="export-actions">
-              <button 
-                className="export-button" 
-                onClick={exportData}
-                disabled={exporting}
-              >
-                {exporting ? '🔄 Exporting...' : '📦 Export Data'}
-              </button>
-            </div>
-          </div>
-          
-          <div className="section">
-            <h3>📚 Bulk Export</h3>
-            <div className="bulk-export">
-              <p>Export all datasets and reports in a single package</p>
-              <div className="bulk-options">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={bulkExportConfig.includeMaster}
-                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeMaster: e.target.checked})}
-                  />
-                  Include Master Dataset
-                </label>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={bulkExportConfig.includeDatasets}
-                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeDatasets: e.target.checked})}
-                  />
-                  Include Individual Datasets
-                </label>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={bulkExportConfig.includeReports}
-                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeReports: e.target.checked})}
-                  />
-                  Include Generated Reports
-                </label>
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={bulkExportConfig.includeRaw}
-                    onChange={(e) => setBulkExportConfig({...bulkExportConfig, includeRaw: e.target.checked})}
-                  />
-                  Include Raw Data
-                </label>
-              </div>
-              <button 
-                className="bulk-export-button"
-                onClick={bulkExport}
-                disabled={exporting}
-              >
-                {exporting ? '🔄 Creating Package...' : '📦 Create Complete Export Package'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {activeTab === 'dataset-browser' && (
-        <div className="tab-content">
-          <h2>🗂️ Dataset Browser</h2>
-          <p>Browse and explore available datasets with detailed views and analysis capabilities.</p>
-          
-          <div className="dataset-browser-container">
-            <DatasetList />
-          </div>
+
         </div>
-      )}
+      </div>
     </div>
   );
 };

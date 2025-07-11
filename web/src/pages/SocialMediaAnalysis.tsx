@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import '../styles/dashboard.css'
 
 interface SocialMediaData {
   platform: string
@@ -130,9 +131,9 @@ export default function SocialMediaAnalysis() {
 
   if (loading) {
     return (
-      <div className="social-media-analysis">
+      <div className="page-container">
         <div className="loading">
-          <div className="spinner"></div>
+          <div className="loading-spinner"></div>
           <p>Loading social media analysis...</p>
         </div>
       </div>
@@ -141,11 +142,11 @@ export default function SocialMediaAnalysis() {
 
   if (error) {
     return (
-      <div className="social-media-analysis">
-        <div className="error">
+      <div className="page-container">
+        <div className="alert alert--error">
           <h2>❌ Error Loading Data</h2>
           <p>{error}</p>
-          <button onClick={loadSocialMediaData} className="retry-button">
+          <button onClick={loadSocialMediaData} className="btn btn--primary">
             🔄 Retry
           </button>
         </div>
@@ -155,8 +156,8 @@ export default function SocialMediaAnalysis() {
 
   if (!data || data.error) {
     return (
-      <div className="social-media-analysis">
-        <div className="no-data">
+      <div className="page-container">
+        <div className="empty-state">
           <h2>📊 No Social Media Data</h2>
           <p>{data?.error || 'No social media data available for analysis.'}</p>
         </div>
@@ -176,36 +177,22 @@ export default function SocialMediaAnalysis() {
   const twitterCritical = data.data.some(item => item.platform === 'twitter' && item.raw_score < 2)
 
   return (
-    <div className="social-media-analysis">
+    <div className="page-container">
       {/* Header Section */}
-      <div className="header-card">
-        <h1 style={{ color: '#2C3E50', fontFamily: 'Crimson Text, serif', margin: 0 }}>
-          🔍 Social Media Analysis
-        </h1>
-        <p style={{ color: '#6B7280', margin: '0.5rem 0 0 0' }}>
-          Cross-platform brand presence and engagement insights
-        </p>
-        <p style={{ color: '#E85A4F', margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
-          📊 <strong>Live Data:</strong> Powered by unified audit data with master scoring
-        </p>
+      <div className="main-header">
+        <h1>🔍 Social Media Analysis</h1>
+        <p>Cross-platform brand presence and engagement insights</p>
       </div>
 
       {/* Executive Summary */}
-      <div className="executive-summary">
-        <h2>📊 Executive Summary</h2>
+      <div className="section">
+        <h2 className="section__title">📊 Executive Summary</h2>
         
         {/* Critical Alert Banner */}
         {twitterCritical && (
-          <div style={{
-            border: '1px solid #F59E0B',
-            borderRadius: '8px',
-            padding: '1rem',
-            marginBottom: '1rem',
-            background: '#FFFBEB',
-            borderLeft: '4px solid #F59E0B'
-          }}>
-            <h4 style={{ margin: 0, color: '#92400E' }}>⚠️ Attention Required</h4>
-            <p style={{ margin: '0.5rem 0 0 0', color: '#78350F' }}>
+          <div className="alert alert--warning mb-4">
+            <h4 className="mb-2">⚠️ Attention Required</h4>
+            <p className="mb-0">
               Twitter/X platform showing low performance scores - review and optimization recommended
             </p>
           </div>
@@ -223,38 +210,86 @@ export default function SocialMediaAnalysis() {
       </div>
 
       {/* Analysis Controls */}
-      <div className="analysis-controls">
-        <h2>🎯 Analysis Controls</h2>
-        <div className="controls-grid">
-          <div className="control-group">
-            <label>📱 Select Platforms</label>
-            <select 
-              multiple 
-              value={selectedPlatforms}
-              onChange={(e) => setSelectedPlatforms(Array.from(e.target.selectedOptions, option => option.value))}
-            >
+      <div className="section">
+        <h2 className="section__title">🎯 Analysis Controls</h2>
+        <div className="filter-controls">
+          <div className="filter-group">
+            <label className="filter-label">📱 Select Platforms</label>
+            <div className="multi-select">
               {(data.platforms_analyzed || []).map(platform => (
-                <option key={platform} value={platform}>{platform}</option>
+                <div key={platform} className="multi-select-option">
+                  <input
+                    type="checkbox"
+                    id={`platform-${platform}`}
+                    checked={selectedPlatforms.includes(platform)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedPlatforms([...selectedPlatforms, platform]);
+                      } else {
+                        setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform));
+                      }
+                    }}
+                  />
+                  <label htmlFor={`platform-${platform}`}>{platform}</label>
+                </div>
               ))}
-            </select>
+            </div>
+            {selectedPlatforms.length > 0 && (
+              <div className="selected-items">
+                {selectedPlatforms.map(platform => (
+                  <div key={platform} className="selected-item">
+                    {platform}
+                    <button 
+                      onClick={() => setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
-          <div className="control-group">
-            <label>👥 Select Personas</label>
-            <select 
-              multiple 
-              value={selectedPersonas}
-              onChange={(e) => setSelectedPersonas(Array.from(e.target.selectedOptions, option => option.value))}
-            >
+          <div className="filter-group">
+            <label className="filter-label">👥 Select Personas</label>
+            <div className="multi-select">
               {(data.personas_analyzed || []).map(persona => (
-                <option key={persona} value={persona}>{persona}</option>
+                <div key={persona} className="multi-select-option">
+                  <input
+                    type="checkbox"
+                    id={`persona-${persona}`}
+                    checked={selectedPersonas.includes(persona)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedPersonas([...selectedPersonas, persona]);
+                      } else {
+                        setSelectedPersonas(selectedPersonas.filter(p => p !== persona));
+                      }
+                    }}
+                  />
+                  <label htmlFor={`persona-${persona}`}>{persona}</label>
+                </div>
               ))}
-            </select>
+            </div>
+            {selectedPersonas.length > 0 && (
+              <div className="selected-items">
+                {selectedPersonas.map(persona => (
+                  <div key={persona} className="selected-item">
+                    {persona}
+                    <button 
+                      onClick={() => setSelectedPersonas(selectedPersonas.filter(p => p !== persona))}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
-          <div className="control-group">
-            <label>🌍 Analysis Scope</label>
-            <select value={analysisScope} onChange={(e) => setAnalysisScope(e.target.value)}>
+          <div className="filter-group">
+            <label className="filter-label">🌍 Analysis Scope</label>
+            <select className="filter-select" value={analysisScope} onChange={(e) => setAnalysisScope(e.target.value)}>
               <option>All Data</option>
               <option>High Performers Only</option>
               <option>Problem Areas</option>
@@ -262,9 +297,9 @@ export default function SocialMediaAnalysis() {
             </select>
           </div>
           
-          <div className="control-group">
-            <label>📊 View Mode</label>
-            <div className="radio-group">
+          <div className="filter-group">
+            <label className="filter-label">📊 View Mode</label>
+            <div className="checkbox-group">
               {['Overview', 'Detailed Analysis', 'Recommendations'].map(mode => (
                 <label key={mode}>
                   <input 
@@ -281,20 +316,25 @@ export default function SocialMediaAnalysis() {
           </div>
         </div>
         
-        <button 
-          onClick={handleFilterChange}
-          className="apply-filters-btn"
-          style={{
-            background: '#3B82F6',
-            color: 'white',
-            border: 'none',
-            padding: '0.5rem 1rem',
-            borderRadius: '4px',
-            marginTop: '1rem'
-          }}
-        >
-          🔄 Apply Filters
-        </button>
+        <div className="action-buttons">
+          <button 
+            onClick={handleFilterChange}
+            className="action-button primary"
+          >
+            🔄 Apply Filters
+          </button>
+          <button 
+            onClick={() => {
+              setSelectedPlatforms(data.platforms_analyzed || []);
+              setSelectedPersonas(data.personas_analyzed || []);
+              setAnalysisScope('All Data');
+              setViewMode('Overview');
+            }}
+            className="action-button secondary"
+          >
+            🔄 Reset Filters
+          </button>
+        </div>
       </div>
 
       {/* Main Content Based on View Mode */}
@@ -329,22 +369,22 @@ export default function SocialMediaAnalysis() {
 // Component functions
 function OverallHealthCard({ score, healthInfo }: { score: number, healthInfo: { status: string, color: string } }) {
   return (
-    <div className="metric-card" style={{ textAlign: 'center', padding: '1rem', border: '1px solid #E5E7EB', borderRadius: '8px', background: 'white' }}>
-      <h4 style={{ margin: 0, color: '#374151' }}>Overall Health</h4>
-      <div style={{ fontSize: '2rem', fontWeight: 'bold', color: healthInfo.color, margin: '0.5rem 0' }}>
+    <div className="metric-card">
+      <h4 className="metric-label">Overall Health</h4>
+      <div className="metric-value" style={{ color: healthInfo.color }}>
         {score.toFixed(1)}/10
       </div>
-      <div style={{ background: '#F3F4F6', borderRadius: '10px', height: '10px', margin: '0.5rem 0' }}>
+      <div className="bg-gray-100 rounded" style={{ height: '10px', margin: '0.5rem 0' }}>
         <div 
+          className="rounded"
           style={{ 
             background: healthInfo.color, 
             width: `${score * 10}%`, 
-            height: '100%', 
-            borderRadius: '10px' 
+            height: '100%'
           }}
         />
       </div>
-      <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>{healthInfo.status}</div>
+      <div className="text-sm text-secondary">{healthInfo.status}</div>
     </div>
   )
 }
@@ -356,9 +396,9 @@ function TopPlatformCard({ platformMetrics }: { platformMetrics: PlatformMetrics
   
   return (
     <div className="metric-card">
-      <h4>🏆 Top Platform</h4>
-      <div className="metric-value">{topPlatform.Platform}</div>
-      <div className="metric-delta positive">{topPlatform.Average_Score.toFixed(1)}/10</div>
+      <h4 className="metric-label">🏆 Top Platform</h4>
+      <div className="metric-value text-primary">{topPlatform.Platform}</div>
+      <div className="badge badge--excellent">{topPlatform.Average_Score.toFixed(1)}/10</div>
     </div>
   )
 }
@@ -370,9 +410,9 @@ function WeakestPlatformCard({ platformMetrics }: { platformMetrics: PlatformMet
   
   return (
     <div className="metric-card">
-      <h4>⚠️ Weakest Platform</h4>
-      <div className="metric-value">{weakestPlatform.Platform}</div>
-      <div className="metric-delta negative">{weakestPlatform.Average_Score.toFixed(1)}/10</div>
+      <h4 className="metric-label">⚠️ Weakest Platform</h4>
+      <div className="metric-value text-primary">{weakestPlatform.Platform}</div>
+      <div className="badge badge--critical">{weakestPlatform.Average_Score.toFixed(1)}/10</div>
     </div>
   )
 }
@@ -383,9 +423,9 @@ function PlatformCoverageCard({ platformMetrics }: { platformMetrics: PlatformMe
   
   return (
     <div className="metric-card">
-      <h4>📱 Platform Coverage</h4>
+      <h4 className="metric-label">📱 Platform Coverage</h4>
       <div className="metric-value">{platformMetrics.length}/{totalExpected}</div>
-      <div className="metric-delta">{coveragePct.toFixed(0)}% Active</div>
+      <div className="badge badge--primary">{coveragePct.toFixed(0)}% Active</div>
     </div>
   )
 }
@@ -395,9 +435,9 @@ function CriticalIssuesCard({ data }: { data: SocialMediaData[] }) {
   
   return (
     <div className="metric-card">
-      <h4>🚨 Critical Issues</h4>
+      <h4 className="metric-label">🚨 Critical Issues</h4>
       <div className="metric-value">{criticalCount}</div>
-      <div className="metric-delta">
+      <div className={`badge ${criticalCount > 0 ? 'badge--critical' : 'badge--excellent'}`}>
         {criticalCount > 0 ? "Require Immediate Action" : "None"}
       </div>
     </div>
@@ -409,28 +449,28 @@ function QuickWinsCard({ data }: { data: SocialMediaData[] }) {
   
   return (
     <div className="metric-card">
-      <h4>⚡ Quick Wins</h4>
+      <h4 className="metric-label">⚡ Quick Wins</h4>
       <div className="metric-value">{quickWins}</div>
-      <div className="metric-delta">Easy Improvements</div>
+      <div className="badge badge--excellent">Easy Improvements</div>
     </div>
   )
 }
 
 function PlatformHealthOverview({ platformMetrics }: { platformMetrics: PlatformMetrics[] }) {
   return (
-    <div className="platform-health-overview">
-      <h2>🏥 Platform Health Overview</h2>
-      <div className="platform-cards">
+    <div className="section">
+      <h2 className="section__title">🏥 Platform Health Overview</h2>
+      <div className="metrics-grid">
         {platformMetrics.map(platform => (
-          <div key={platform.Platform} className="platform-card">
-            <h3>{platform.Platform}</h3>
-            <div className="platform-score">{platform.Average_Score.toFixed(1)}/10</div>
-            <div className={`platform-status ${platform.Status_Color}`}>{platform.Status}</div>
-            <div className="platform-details">
-              <div>Total Entries: {platform.Total_Entries}</div>
-              <div>High Performers: {platform.High_Performers}</div>
-              <div>Critical Issues: {platform.Critical_Issues}</div>
-              <div>Quick Wins: {platform.Quick_Wins}</div>
+          <div key={platform.Platform} className="card card--metric">
+            <h3 className="card__title">{platform.Platform}</h3>
+            <div className="metric-value">{platform.Average_Score.toFixed(1)}/10</div>
+            <div className={`badge badge--${platform.Status_Color}`}>{platform.Status}</div>
+            <div className="card__content mt-3">
+              <div className="text-sm">Total Entries: {platform.Total_Entries}</div>
+              <div className="text-sm">High Performers: {platform.High_Performers}</div>
+              <div className="text-sm">Critical Issues: {platform.Critical_Issues}</div>
+              <div className="text-sm">Quick Wins: {platform.Quick_Wins}</div>
             </div>
           </div>
         ))}
@@ -444,13 +484,13 @@ function PlatformPerformanceAnalysis({ data, platformMetrics }: {
   platformMetrics: PlatformMetrics[] 
 }) {
   return (
-    <div className="platform-performance">
-      <h2>📊 Platform Performance Analysis</h2>
-      <div className="performance-summary">
-        <p>Analyzed {data.length} entries across {platformMetrics.length} platforms</p>
-        <div className="performance-breakdown">
+    <div className="section">
+      <h2 className="section__title">📊 Platform Performance Analysis</h2>
+      <div className="insights-box">
+        <p className="text-lg">Analyzed {data.length} entries across {platformMetrics.length} platforms</p>
+        <div className="mt-4">
           {platformMetrics.map(platform => (
-            <div key={platform.Platform} className="platform-summary">
+            <div key={platform.Platform} className="mb-2">
               <strong>{platform.Platform}:</strong> {platform.Average_Score.toFixed(1)}/10 
               ({platform.High_Performers} high performers, {platform.Critical_Issues} critical issues)
             </div>
@@ -475,25 +515,27 @@ function PersonaAnalysis({ data, personaPlatformMatrix }: {
   }, {} as Record<string, {total: number, count: number}>)
 
   return (
-    <div className="persona-analysis">
-      <h2>👥 Persona Analysis</h2>
-      <div className="persona-summary">
+    <div className="section">
+      <h2 className="section__title">👥 Persona Analysis</h2>
+      <div className="insights-box">
         {Object.entries(personaPerformance).map(([persona, stats]) => (
-          <div key={persona} className="persona-item">
+          <div key={persona} className="mb-3">
             <strong>{persona}:</strong> {(stats.total / stats.count).toFixed(1)}/10 
-            (based on {stats.count} entries)
+            <span className="text-sm text-secondary ml-2">
+              (based on {stats.count} entries)
+            </span>
           </div>
         ))}
       </div>
       
       {personaPlatformMatrix.length > 0 && (
-        <div className="persona-platform-matrix">
-          <h3>🎯 Persona-Platform Matrix</h3>
-          <div className="matrix-grid">
+        <div className="mt-5">
+          <h3 className="section__subtitle">🎯 Persona-Platform Matrix</h3>
+          <div className="metrics-grid">
             {personaPlatformMatrix.map((item, index) => (
-              <div key={index} className="matrix-cell">
-                <div className="matrix-label">{item.persona} × {item.platform}</div>
-                <div className="matrix-score">{item.score.toFixed(1)}/10</div>
+              <div key={index} className="card card--metric">
+                <div className="card__title text-sm">{item.persona} × {item.platform}</div>
+                <div className="metric-value">{item.score.toFixed(1)}/10</div>
               </div>
             ))}
           </div>
@@ -508,32 +550,45 @@ function InsightsAndRecommendations({ insights, recommendations }: {
   recommendations: Recommendation[]
 }) {
   return (
-    <div className="insights-recommendations">
-      <h2>💡 Insights & Recommendations</h2>
+    <div className="section">
+      <h2 className="section__title">💡 Insights & Recommendations</h2>
       
-      <div className="insights-section">
-        <h3>🔍 Key Insights</h3>
-        {insights.map((insight, index) => (
-          <div key={index} className={`insight-card ${insight.Type}`}>
-            <h4>{insight.Category}</h4>
-            <p>{insight.Insight}</p>
-          </div>
-        ))}
+      <div className="mb-5">
+        <h3 className="section__subtitle">🔍 Key Insights</h3>
+        <div className="metrics-grid">
+          {insights.map((insight, index) => (
+            <div key={index} className={`card card--content`}>
+              <h4 className="card__title">{insight.Category}</h4>
+              <p className="card__content">{insight.Insight}</p>
+              <div className={`badge badge--${insight.Type === 'positive' ? 'excellent' : 'warning'}`}>
+                {insight.Type}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       
-      <div className="recommendations-section">
-        <h3>🎯 Recommendations</h3>
-        {recommendations.map((rec, index) => (
-          <div key={index} className={`recommendation-card ${rec.Priority.toLowerCase()}`}>
-            <h4>{rec.Platform} - {rec.Category}</h4>
-            <p>{rec.Recommendation}</p>
-            <div className="rec-details">
-              <span>Priority: {rec.Priority}</span>
-              <span>Impact: {rec.Impact}</span>
-              <span>Timeline: {rec.Timeline}</span>
+      <div>
+        <h3 className="section__subtitle">🎯 Recommendations</h3>
+        <div className="metrics-grid">
+          {recommendations.map((rec, index) => (
+            <div key={index} className={`card card--content`}>
+              <h4 className="card__title">{rec.Platform} - {rec.Category}</h4>
+              <p className="card__content">{rec.Recommendation}</p>
+              <div className="mt-3">
+                <span className={`badge badge--priority-${rec.Priority.toLowerCase()}`}>
+                  {rec.Priority}
+                </span>
+                <span className="badge badge--default ml-2">
+                  {rec.Impact}
+                </span>
+                <span className="badge badge--default ml-2">
+                  {rec.Timeline}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -546,8 +601,8 @@ function DetailedAnalysisTabs({ data, platformMetrics, activeTab, setActiveTab }
   setActiveTab: (tab: string) => void
 }) {
   return (
-    <div className="detailed-analysis">
-      <h2>🔬 Detailed Analysis</h2>
+    <div className="section">
+      <h2 className="section__title">🔬 Detailed Analysis</h2>
       
       <div className="tabs">
         <div className="tab-buttons">
@@ -588,31 +643,108 @@ function DetailedAnalysisTabs({ data, platformMetrics, activeTab, setActiveTab }
 
 function PlatformDeepDive({ data, platformMetrics }: { data: SocialMediaData[], platformMetrics: PlatformMetrics[] }) {
   return (
-    <div className="platform-deep-dive">
-      <h3>🔍 Platform-Specific Analysis</h3>
+    <div className="evidence-sections">
+      <h3 className="section__subtitle">🔍 Platform-Specific Analysis</h3>
       {platformMetrics.map(platform => {
         const platformData = data.filter(item => item.platform_display === platform.Platform)
         return (
-          <div key={platform.Platform} className="platform-analysis-card">
-            <h4>{platform.Platform} Detailed Analysis</h4>
-            <div className="platform-stats">
-              <div>Average Score: {platform.Average_Score.toFixed(1)}/10</div>
-              <div>Total Entries: {platform.Total_Entries}</div>
-              <div>Score Range: {platform.Score_Range}</div>
-              <div>Status: {platform.Status}</div>
+          <div key={platform.Platform} className="evidence-section">
+            <h4>📱 {platform.Platform} Detailed Analysis</h4>
+            
+            {/* Platform Overview Stats */}
+            <div className="insights-box mb-4">
+              <div className="metrics-grid">
+                <div className="metric-card">
+                  <div className="metric-value">{platform.Average_Score.toFixed(1)}/10</div>
+                  <div className="metric-label">Average Score</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-value">{platform.Total_Entries}</div>
+                  <div className="metric-label">Total Entries</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-value">{platform.Score_Range}</div>
+                  <div className="metric-label">Score Range</div>
+                </div>
+                <div className="metric-card">
+                  <div className={`badge badge--${platform.Status_Color || 'default'}`}>
+                    {platform.Status}
+                  </div>
+                  <div className="metric-label">Status</div>
+                </div>
+              </div>
             </div>
-            <div className="platform-content">
-              <h5>Sample Content:</h5>
+
+            {/* Sample Content Analysis */}
+            <div className="evidence-grid">
+              <h5 className="mb-3">📋 Sample Content Analysis:</h5>
               {platformData.slice(0, 3).map((item, index) => (
-                <div key={index} className="content-sample">
-                  <div><strong>Score:</strong> {item.raw_score.toFixed(1)}/10</div>
-                  <div><strong>URL:</strong> {item.url}</div>
-                  {item.effective_copy_examples && (
-                    <div><strong>Effective Examples:</strong> {item.effective_copy_examples.substring(0, 200)}...</div>
-                  )}
+                <div key={index} className="evidence-card">
+                  <div className="evidence-header">
+                    <h4>{item.platform_display} Content #{index + 1}</h4>
+                    <div className="evidence-score">
+                      <span className="score-value">{item.raw_score.toFixed(1)}/10</span>
+                      <span className="score-label">Score</span>
+                    </div>
+                  </div>
+                  
+                  <div className="evidence-content">
+                    <div className="evidence-item">
+                      <strong>🔗 URL:</strong>
+                      <p>
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                          {item.url}
+                        </a>
+                      </p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>👤 Persona:</strong>
+                      <p>{item.persona_clean}</p>
+                    </div>
+                    
+                    {item.effective_copy_examples && (
+                      <div className="evidence-item">
+                        <strong>✅ Effective Examples:</strong>
+                        <p className="effective-copy">{item.effective_copy_examples.substring(0, 200)}...</p>
+                      </div>
+                    )}
+                    
+                    {item.ineffective_copy_examples && (
+                      <div className="evidence-item">
+                        <strong>⚠️ Areas for Improvement:</strong>
+                        <p className="ineffective-copy">{item.ineffective_copy_examples.substring(0, 200)}...</p>
+                      </div>
+                    )}
+                    
+                    {item.trust_credibility_assessment && (
+                      <div className="evidence-item">
+                        <strong>🛡️ Trust Assessment:</strong>
+                        <p>{item.trust_credibility_assessment.substring(0, 200)}...</p>
+                      </div>
+                    )}
+                    
+                    <div className="evidence-item">
+                      <strong>🏷️ Flags:</strong>
+                      <div className="mt-1">
+                        {item.quick_win_flag && <span className="badge badge--excellent mr-1">Quick Win</span>}
+                        {item.critical_issue_flag && <span className="badge badge--critical mr-1">Critical</span>}
+                        {item.success_flag && <span className="badge badge--excellent mr-1">Success</span>}
+                        {!item.quick_win_flag && !item.critical_issue_flag && !item.success_flag && (
+                          <span className="badge badge--default">Standard</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
+            
+            {platformData.length > 3 && (
+              <p className="text-center text-secondary mt-3">
+                Showing 3 of {platformData.length} {platform.Platform} entries
+              </p>
+            )}
           </div>
         )
       })}
@@ -622,24 +754,38 @@ function PlatformDeepDive({ data, platformMetrics }: { data: SocialMediaData[], 
 
 function ContentStrategyAnalysis({ data }: { data: SocialMediaData[] }) {
   return (
-    <div className="content-strategy">
-      <h3>📝 Content Strategy Analysis</h3>
-      <div className="strategy-insights">
+    <div className="evidence-sections">
+      <h3 className="section__subtitle">📝 Content Strategy Analysis</h3>
+      <div className="evidence-section">
         <h4>📈 Content Performance by Platform</h4>
-        {Object.entries(data.reduce((acc, item) => {
-          if (!acc[item.platform_display]) {
-            acc[item.platform_display] = []
-          }
-          acc[item.platform_display].push(item)
-          return acc
-        }, {} as Record<string, SocialMediaData[]>)).map(([platform, items]) => (
-          <div key={platform} className="platform-content-analysis">
-            <h5>{platform}</h5>
-            <div>Average Engagement: {(items.reduce((sum, item) => sum + item.engagement_numeric, 0) / items.length).toFixed(2)}</div>
-            <div>Average Sentiment: {(items.reduce((sum, item) => sum + item.sentiment_numeric, 0) / items.length).toFixed(2)}</div>
-            <div>Content Volume: {items.length} pieces analyzed</div>
-          </div>
-        ))}
+        <div className="metrics-grid">
+          {Object.entries(data.reduce((acc, item) => {
+            if (!acc[item.platform_display]) {
+              acc[item.platform_display] = []
+            }
+            acc[item.platform_display].push(item)
+            return acc
+          }, {} as Record<string, SocialMediaData[]>)).map(([platform, items]) => (
+            <div key={platform} className="card card--metric">
+              <h5 className="card__title">{platform}</h5>
+              <div className="card__content">
+                <div className="mb-2">
+                  <strong>Average Engagement:</strong> {(items.reduce((sum, item) => sum + item.engagement_numeric, 0) / items.length).toFixed(2)}
+                </div>
+                <div className="mb-2">
+                  <strong>Average Sentiment:</strong> {(items.reduce((sum, item) => sum + item.sentiment_numeric, 0) / items.length).toFixed(2)}
+                </div>
+                <div className="mb-2">
+                  <strong>Content Volume:</strong> {items.length} pieces analyzed
+                </div>
+                <div className="metric-value text-sm">
+                  {((items.reduce((sum, item) => sum + item.raw_score, 0) / items.length)).toFixed(1)}/10
+                </div>
+                <div className="metric-label">Avg Score</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -655,31 +801,35 @@ function PerformanceAnalytics({ data, platformMetrics }: { data: SocialMediaData
   }
 
   return (
-    <div className="performance-analytics">
-      <h3>🎯 Performance Analytics</h3>
-      <div className="analytics-overview">
-        <div className="analytics-metrics">
+    <div className="evidence-sections">
+      <h3 className="section__subtitle">🎯 Performance Analytics</h3>
+      
+      <div className="evidence-section">
+        <h4>📊 Overall Performance Metrics</h4>
+        <div className="metrics-grid">
           <div className="metric-card">
-            <h5>📊 Total Entries</h5>
             <div className="metric-value">{overallStats.totalEntries}</div>
+            <div className="metric-label">📊 Total Entries</div>
           </div>
           <div className="metric-card">
-            <h5>📈 Average Score</h5>
             <div className="metric-value">{overallStats.avgScore.toFixed(1)}/10</div>
+            <div className="metric-label">📈 Average Score</div>
           </div>
           <div className="metric-card">
-            <h5>🚨 Critical Issues</h5>
             <div className="metric-value">{overallStats.criticalIssues}</div>
+            <div className="metric-label">🚨 Critical Issues</div>
           </div>
           <div className="metric-card">
-            <h5>⚡ Quick Wins</h5>
             <div className="metric-value">{overallStats.quickWins}</div>
+            <div className="metric-label">⚡ Quick Wins</div>
           </div>
         </div>
-        
-        <div className="platform-analytics">
-          <h4>📊 Platform Performance Breakdown</h4>
-          <table className="analytics-table">
+      </div>
+      
+      <div className="evidence-section">
+        <h4>📊 Platform Performance Breakdown</h4>
+        <div className="chart-container">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Platform</th>
@@ -692,8 +842,13 @@ function PerformanceAnalytics({ data, platformMetrics }: { data: SocialMediaData
             <tbody>
               {platformMetrics.map(platform => (
                 <tr key={platform.Platform}>
-                  <td>{platform.Platform}</td>
-                  <td>{platform.Average_Score.toFixed(1)}</td>
+                  <td><strong>{platform.Platform}</strong></td>
+                  <td>
+                    <span className={`badge ${platform.Average_Score >= 7 ? 'badge--excellent' : 
+                      platform.Average_Score >= 5 ? 'badge--warning' : 'badge--critical'}`}>
+                      {platform.Average_Score.toFixed(1)}
+                    </span>
+                  </td>
                   <td>{platform.High_Performers}</td>
                   <td>{platform.Critical_Issues}</td>
                   <td>{platform.Quick_Wins}</td>
@@ -712,59 +867,130 @@ function QuickWinsAnalysis({ data }: { data: SocialMediaData[] }) {
   const criticalIssues = data.filter(item => item.critical_issue_flag)
 
   return (
-    <div className="quick-wins-analysis">
-      <h3>⚡ Quick Wins & Immediate Actions</h3>
+    <div className="evidence-sections">
+      <h3 className="section__subtitle">⚡ Quick Wins & Immediate Actions</h3>
       
       {quickWins.length > 0 && (
-        <div className="quick-wins-section">
+        <div className="evidence-section">
           <h4>🎯 Identified Quick Wins ({quickWins.length})</h4>
-          <div className="quick-wins-grid">
+          <div className="evidence-grid">
             {quickWins.slice(0, 5).map((item, index) => (
-              <div key={index} className="quick-win-card success">
-                <h5>{item.platform_display} → {item.persona_clean}</h5>
-                <p>Current Score: {item.raw_score.toFixed(1)}/10</p>
-                <div className="win-details">
-                  <strong>Opportunity:</strong> Optimization potential identified
-                </div>
-                {item.effective_copy_examples && (
-                  <div className="examples">
-                    <strong>Focus Areas:</strong> {item.effective_copy_examples.substring(0, 100)}...
+              <div key={index} className="evidence-card">
+                <div className="evidence-header">
+                  <h4>{item.platform_display} → {item.persona_clean}</h4>
+                  <div className="evidence-score">
+                    <span className="score-value">{item.raw_score.toFixed(1)}/10</span>
+                    <span className="score-label">Current Score</span>
                   </div>
-                )}
+                </div>
+                
+                <div className="evidence-content">
+                  <div className="evidence-item">
+                    <strong>🎯 Opportunity:</strong>
+                    <p>Optimization potential identified</p>
+                  </div>
+                  
+                  {item.effective_copy_examples && (
+                    <div className="evidence-item">
+                      <strong>📋 Focus Areas:</strong>
+                      <p className="effective-copy">{item.effective_copy_examples.substring(0, 150)}...</p>
+                    </div>
+                  )}
+                  
+                  <div className="evidence-item">
+                    <strong>🔗 URL:</strong>
+                    <p>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                        {item.url}
+                      </a>
+                    </p>
+                  </div>
+                  
+                  <div className="evidence-item">
+                    <div className="badge badge--excellent">Quick Win Opportunity</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+          
+          {quickWins.length > 5 && (
+            <p className="text-center text-secondary mt-3">
+              Showing 5 of {quickWins.length} quick win opportunities
+            </p>
+          )}
         </div>
       )}
 
       {criticalIssues.length > 0 && (
-        <div className="critical-actions-section">
+        <div className="evidence-section">
           <h4>🚨 Critical Actions Required ({criticalIssues.length})</h4>
-          <div className="critical-issues-grid">
+          <div className="evidence-grid">
             {criticalIssues.slice(0, 3).map((item, index) => (
-              <div key={index} className="critical-issue-card error">
-                <h5>{item.platform_display} → {item.persona_clean}</h5>
-                <p>Current Score: {item.raw_score.toFixed(1)}/10</p>
-                <div className="issue-details">
-                  <strong>Action Required:</strong> Immediate content review and optimization
-                </div>
-                {item.ineffective_copy_examples && (
-                  <div className="examples">
-                    <strong>Issues:</strong> {item.ineffective_copy_examples.substring(0, 100)}...
+              <div key={index} className="evidence-card">
+                <div className="evidence-header">
+                  <h4>{item.platform_display} → {item.persona_clean}</h4>
+                  <div className="evidence-score">
+                    <span className="score-value">{item.raw_score.toFixed(1)}/10</span>
+                    <span className="score-label">Current Score</span>
                   </div>
-                )}
+                </div>
+                
+                <div className="evidence-content">
+                  <div className="evidence-item">
+                    <strong>⚠️ Action Required:</strong>
+                    <p>Immediate content review and optimization</p>
+                  </div>
+                  
+                  {item.ineffective_copy_examples && (
+                    <div className="evidence-item">
+                      <strong>🔍 Issues Identified:</strong>
+                      <p className="ineffective-copy">{item.ineffective_copy_examples.substring(0, 150)}...</p>
+                    </div>
+                  )}
+                  
+                  <div className="evidence-item">
+                    <strong>🔗 URL:</strong>
+                    <p>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                        {item.url}
+                      </a>
+                    </p>
+                  </div>
+                  
+                  <div className="evidence-item">
+                    <div className="badge badge--critical">Critical Issue</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+          
+          {criticalIssues.length > 3 && (
+            <p className="text-center text-secondary mt-3">
+              Showing 3 of {criticalIssues.length} critical issues
+            </p>
+          )}
         </div>
       )}
 
-      <div className="action-summary">
+      <div className="evidence-section">
         <h4>📋 Action Summary</h4>
-        <div className="action-stats">
-          <div>Quick Wins Available: {quickWins.length}</div>
-          <div>Critical Issues: {criticalIssues.length}</div>
-          <div>Success Cases to Replicate: {data.filter(item => item.success_flag).length}</div>
+        <div className="insights-box">
+          <div className="metrics-grid">
+            <div className="metric-card">
+              <div className="metric-value">{quickWins.length}</div>
+              <div className="metric-label">Quick Wins Available</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-value">{criticalIssues.length}</div>
+              <div className="metric-label">Critical Issues</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-value">{data.filter(item => item.success_flag).length}</div>
+              <div className="metric-label">Success Cases to Replicate</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -777,52 +1003,106 @@ function ActionPriorityMatrix({ recommendations }: { recommendations: Recommenda
   const lowPriority = recommendations.filter(rec => rec.Priority === 'Low')
 
   return (
-    <div className="action-priority-matrix">
-      <h2>🎯 Action Priority Matrix</h2>
+    <div className="section">
+      <h2 className="section__title">🎯 Action Priority Matrix</h2>
       
-      <div className="priority-sections">
+      <div className="evidence-sections">
         {highPriority.length > 0 && (
-          <div className="priority-section high">
+          <div className="evidence-section">
             <h3>🔴 High Priority ({highPriority.length})</h3>
-            {highPriority.map((rec, index) => (
-              <div key={index} className="priority-item">
-                <h4>{rec.Platform} - {rec.Category}</h4>
-                <p>{rec.Recommendation}</p>
-                <div className="priority-meta">
-                  Impact: {rec.Impact} | Timeline: {rec.Timeline}
+            <div className="evidence-grid">
+              {highPriority.map((rec, index) => (
+                <div key={index} className="evidence-card">
+                  <div className="evidence-header">
+                    <h4>{rec.Platform} - {rec.Category}</h4>
+                    <div className="badge badge--priority-high">High Priority</div>
+                  </div>
+                  
+                  <div className="evidence-content">
+                    <div className="evidence-item">
+                      <strong>📋 Recommendation:</strong>
+                      <p>{rec.Recommendation}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>📊 Impact:</strong>
+                      <p>{rec.Impact}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>⏱️ Timeline:</strong>
+                      <p>{rec.Timeline}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {mediumPriority.length > 0 && (
-          <div className="priority-section medium">
+          <div className="evidence-section">
             <h3>🟡 Medium Priority ({mediumPriority.length})</h3>
-            {mediumPriority.map((rec, index) => (
-              <div key={index} className="priority-item">
-                <h4>{rec.Platform} - {rec.Category}</h4>
-                <p>{rec.Recommendation}</p>
-                <div className="priority-meta">
-                  Impact: {rec.Impact} | Timeline: {rec.Timeline}
+            <div className="evidence-grid">
+              {mediumPriority.map((rec, index) => (
+                <div key={index} className="evidence-card">
+                  <div className="evidence-header">
+                    <h4>{rec.Platform} - {rec.Category}</h4>
+                    <div className="badge badge--priority-medium">Medium Priority</div>
+                  </div>
+                  
+                  <div className="evidence-content">
+                    <div className="evidence-item">
+                      <strong>📋 Recommendation:</strong>
+                      <p>{rec.Recommendation}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>📊 Impact:</strong>
+                      <p>{rec.Impact}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>⏱️ Timeline:</strong>
+                      <p>{rec.Timeline}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {lowPriority.length > 0 && (
-          <div className="priority-section low">
+          <div className="evidence-section">
             <h3>🟢 Low Priority ({lowPriority.length})</h3>
-            {lowPriority.map((rec, index) => (
-              <div key={index} className="priority-item">
-                <h4>{rec.Platform} - {rec.Category}</h4>
-                <p>{rec.Recommendation}</p>
-                <div className="priority-meta">
-                  Impact: {rec.Impact} | Timeline: {rec.Timeline}
+            <div className="evidence-grid">
+              {lowPriority.map((rec, index) => (
+                <div key={index} className="evidence-card">
+                  <div className="evidence-header">
+                    <h4>{rec.Platform} - {rec.Category}</h4>
+                    <div className="badge badge--priority-low">Low Priority</div>
+                  </div>
+                  
+                  <div className="evidence-content">
+                    <div className="evidence-item">
+                      <strong>📋 Recommendation:</strong>
+                      <p>{rec.Recommendation}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>📊 Impact:</strong>
+                      <p>{rec.Impact}</p>
+                    </div>
+                    
+                    <div className="evidence-item">
+                      <strong>⏱️ Timeline:</strong>
+                      <p>{rec.Timeline}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

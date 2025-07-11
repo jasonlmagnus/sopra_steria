@@ -71,6 +71,90 @@ app.get('/api/datasets', async (_req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/datasets/master:
+ *   get:
+ *     summary: Get master dataset
+ *     responses:
+ *       200:
+ *         description: Master dataset records
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+app.get('/api/datasets/master', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/datasets/master');
+    res.json(response.data);
+  } catch (err) {
+    console.error('FastAPI master dataset error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch master dataset', details: err.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/datasets/metadata:
+ *   get:
+ *     summary: Get datasets metadata
+ *     responses:
+ *       200:
+ *         description: Datasets metadata with records, columns, memory info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 datasets:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       records:
+ *                         type: integer
+ *                       columns:
+ *                         type: integer
+ *                       memoryMB:
+ *                         type: string
+ */
+app.get('/api/datasets/metadata', async (_req, res) => {
+  try {
+    const response = await axios.get('http://localhost:8000/datasets/metadata');
+    res.json(response.data);
+  } catch (err) {
+    console.error('FastAPI datasets metadata error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch datasets metadata', details: err.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/datasets/{name}:
+ *   get:
+ *     summary: Get specific dataset
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Dataset name
+ *     responses:
+ *       200:
+ *         description: Dataset records
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
 app.get('/api/datasets/:name', async (req, res) => {
   try {
     const { name } = req.params;
@@ -1300,46 +1384,115 @@ app.get('/api/download-all-reports', async (req, res) => {
   }
 })
 
-app.post('/api/reports/generate', express.json(), async (req, res) => {
+/**
+ * @openapi
+ * /api/reports/custom:
+ *   post:
+ *     summary: Generate custom report
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reportType:
+ *                 type: string
+ *               personas:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               format:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Custom report generated successfully
+ */
+app.post('/api/reports/custom', async (req, res) => {
   try {
-    const response = await axios.post('http://localhost:8000/api/reports/generate', req.body)
-    res.json(response.data)
+    const response = await axios.post('http://localhost:8000/reports/custom', req.body);
+    res.json(response.data);
   } catch (err) {
-    console.error('FastAPI reports generate error:', err.message)
-    res.status(500).json({ error: 'Failed to generate reports', details: err.message })
+    res.status(500).json({ error: 'Failed to generate custom report' });
   }
-})
+});
 
-app.post('/api/reports/html', express.json(), async (req, res) => {
+/**
+ * @openapi
+ * /api/reports/html:
+ *   post:
+ *     summary: Generate HTML reports
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               generationMode:
+ *                 type: string
+ *               personas:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: HTML reports generated successfully
+ */
+app.post('/api/reports/html', async (req, res) => {
   try {
-    const response = await axios.post('http://localhost:8000/api/reports/html', req.body)
-    res.json(response.data)
+    const response = await axios.post('http://localhost:8000/reports/html', req.body);
+    res.json(response.data);
   } catch (err) {
-    console.error('FastAPI reports html error:', err.message)
-    res.status(500).json({ error: 'Failed to generate HTML reports', details: err.message })
+    res.status(500).json({ error: 'Failed to generate HTML reports' });
   }
-})
+});
 
-app.post('/api/export', express.json(), async (req, res) => {
+/**
+ * @openapi
+ * /api/export/{format}:
+ *   post:
+ *     summary: Export data in specified format
+ *     parameters:
+ *       - in: path
+ *         name: format
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [csv, json, excel, parquet]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filters:
+ *                 type: object
+ *               options:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Data exported successfully
+ */
+app.post('/api/export/:format', async (req, res) => {
   try {
-    const response = await axios.post('http://localhost:8000/api/export', req.body)
-    res.json(response.data)
+    const response = await axios.post(`http://localhost:8000/export/${req.params.format}`, req.body);
+    
+    // Handle file downloads
+    if (response.headers['content-disposition']) {
+      res.set({
+        'Content-Type': response.headers['content-type'],
+        'Content-Disposition': response.headers['content-disposition']
+      });
+      res.send(response.data);
+    } else {
+      res.json(response.data);
+    }
   } catch (err) {
-    console.error('FastAPI export error:', err.message)
-    res.status(500).json({ error: 'Failed to export', details: err.message })
+    res.status(500).json({ error: 'Failed to export data' });
   }
-})
-
-app.post('/api/export/bulk', express.json(), async (req, res) => {
-  try {
-    const response = await axios.post('http://localhost:8000/api/export/bulk', req.body)
-    res.json(response.data)
-  } catch (err) {
-    console.error('FastAPI export bulk error:', err.message)
-    res.status(500).json({ error: 'Failed to bulk export', details: err.message })
-  }
-})
-
+});
 
 
 const port = process.env.PORT || 3000;

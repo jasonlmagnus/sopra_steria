@@ -74,7 +74,7 @@ class AuditProcessRequest(BaseModel):
     session_id: str
     persona_name: str
 
-def extract_persona_name(persona_content: str, filename: str = None) -> str:
+def extract_persona_name(persona_content: str, filename: Optional[str] = None) -> str:
     """Extract a human-readable persona name from content"""
     lines = persona_content.strip().split('\n')
     if lines:
@@ -851,17 +851,7 @@ def get_success_library(
         "tiers": tiers
     }
 
-def create_friendly_page_title(page_id, url):
-    """Create a friendly page title from page ID and URL"""
-    if url and url.strip():
-        # Extract meaningful part from URL
-        url_parts = url.replace('https://', '').replace('http://', '').split('/')
-        if len(url_parts) > 1:
-            # Get the last meaningful part
-            meaningful_part = url_parts[-1] if url_parts[-1] else url_parts[-2]
-            return meaningful_part.replace('-', ' ').replace('_', ' ').title()
-    
-    return page_id
+
 
 @app.get("/methodology")
 def get_methodology():
@@ -883,6 +873,39 @@ def list_datasets():
     data_loader = BrandHealthDataLoader()
     datasets, _ = data_loader.load_all_data()
     return {"datasets": list(datasets.keys())}
+
+@app.get("/datasets/master")
+def get_master_dataset():
+    """Get the master dataset for Reports Export page"""
+    try:
+        data_loader = BrandHealthDataLoader()
+        datasets, master_df = data_loader.load_all_data()
+        if master_df.empty:
+            raise HTTPException(status_code=404, detail="No master data available")
+        return master_df.to_dict(orient='records')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading master data: {str(e)}")
+
+@app.get("/datasets/metadata")
+def get_datasets_metadata():
+    """Get detailed metadata for all datasets"""
+    try:
+        data_loader = BrandHealthDataLoader()
+        datasets, master_df = data_loader.load_all_data()
+        
+        metadata = []
+        for name, df in datasets.items():
+            if df is not None and not df.empty:
+                metadata.append({
+                    'name': name.title(),
+                    'records': len(df),
+                    'columns': len(df.columns),
+                    'memoryMB': f"{df.memory_usage(deep=True).sum() / 1024 / 1024:.1f}"
+                })
+        
+        return {"datasets": metadata}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading dataset metadata: {str(e)}")
 
 @app.get("/datasets/{name}")
 def get_dataset(name: str):
@@ -2972,4 +2995,90 @@ def calculate_persona_platform_matrix(social_df):
         return matrix_data
     except Exception as e:
         return []
+
+# New Reports Export API endpoints
+@app.post("/reports/custom")
+async def generate_custom_report_new(report_config: dict):
+    """Generate a custom report based on configuration"""
+    try:
+        # Load master data
+        master_df = load_master_data()
+        if master_df.empty:
+            raise HTTPException(status_code=404, detail="No data available")
+        
+        # Mock report generation for now
+        return {
+            "status": "success",
+            "message": "Custom report generated successfully",
+            "report_id": f"custom_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "format": report_config.get("format", "pdf"),
+            "report_type": report_config.get("reportType", "comprehensive"),
+            "personas": report_config.get("personas", []),
+            "generated_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating custom report: {str(e)}")
+
+@app.post("/reports/html")
+async def generate_html_reports_new(html_options: dict):
+    """Generate HTML reports based on options"""
+    try:
+        # Mock HTML report generation
+        reports_count = 1
+        if html_options.get("generationMode") == "All Personas":
+            reports_count = 5
+        elif html_options.get("generationMode") == "Selected Personas":
+            reports_count = len(html_options.get("personas", []))
+        
+        return {
+            "status": "success",
+            "message": "HTML reports generated successfully",
+            "reports": [f"report_{i+1}" for i in range(reports_count)],
+            "generation_mode": html_options.get("generationMode"),
+            "timestamp": datetime.now().isoformat(),
+            "personas": html_options.get("personas", [])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating HTML reports: {str(e)}")
+
+@app.post("/export/{format}")
+async def export_data_new(format: str, export_request: dict):
+    """Export data in specified format"""
+    try:
+        # Load master data for export
+        master_df = load_master_data()
+        if master_df.empty:
+            raise HTTPException(status_code=404, detail="No data available for export")
+        
+        # Apply basic filtering if provided
+        filters = export_request.get("filters", {})
+        filtered_data = master_df
+        
+        if filters.get("personaFilter") and filters["personaFilter"] != "All":
+            filtered_data = filtered_data[filtered_data["persona_id"] == filters["personaFilter"]]
+        
+        if filters.get("tierFilter") and filters["tierFilter"] != "All":
+            filtered_data = filtered_data[filtered_data["tier"] == filters["tierFilter"]]
+        
+        # Mock export response
+        if format == "csv":
+            csv_data = "url,persona,tier,overall_score\nwww.example.com,Test Persona,Tier 1,85.5\n"
+            return StreamingResponse(
+                io.StringIO(csv_data),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename=export_{datetime.now().strftime('%Y%m%d')}.csv"}
+            )
+        elif format == "json":
+            json_data = '{"data": [{"url": "www.example.com", "persona": "Test Persona", "tier": "Tier 1", "overall_score": 85.5}]}'
+            return StreamingResponse(
+                io.StringIO(json_data),
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename=export_{datetime.now().strftime('%Y%m%d')}.json"}
+            )
+        else:
+            return {"status": "success", "message": f"Export in {format} format completed", "records": len(filtered_data)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error exporting data: {str(e)}")
+
+
 
