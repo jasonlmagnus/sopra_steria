@@ -91,18 +91,39 @@ const ReportsExport: React.FC = () => {
       const masterResponse = await fetch(`${apiBase}/api/datasets/master`);
       if (masterResponse.ok) {
         const masterData = await masterResponse.json();
-        setMasterData(masterData);
+        // Ensure we have an array
+        if (Array.isArray(masterData)) {
+          setMasterData(masterData);
+        } else {
+          console.error('Master data is not an array:', masterData);
+          setMasterData([]);
+        }
+      } else {
+        console.error('Failed to load master data:', await masterResponse.text());
+        setMasterData([]);
       }
       
       // Load datasets metadata
       const datasetsResponse = await fetch(`${apiBase}/api/datasets/metadata`);
       if (datasetsResponse.ok) {
         const datasetsData = await datasetsResponse.json();
-        setDatasets(datasetsData);
+        // Ensure we have an array
+        if (Array.isArray(datasetsData)) {
+          setDatasets(datasetsData);
+        } else {
+          console.error('Datasets metadata is not an array:', datasetsData);
+          setDatasets([]);
+        }
+      } else {
+        console.error('Failed to load datasets metadata:', await datasetsResponse.text());
+        setDatasets([]);
       }
     } catch (err) {
       setError('Failed to load data');
       console.error('Error loading data:', err);
+      // Ensure we have arrays even on error
+      setMasterData([]);
+      setDatasets([]);
     } finally {
       setLoading(false);
     }

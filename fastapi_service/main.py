@@ -1,7 +1,8 @@
 import sys
 import os
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union, Tuple
 import pandas as pd
+import numpy as np
 import re
 import json
 import io
@@ -13,6 +14,7 @@ import asyncio
 from datetime import datetime
 from pathlib import Path
 import uuid
+import shutil
 
 # Add parent directory to Python path to import audit_tool
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,7 +37,7 @@ app = FastAPI(title="Sopra Steria Audit FastAPI")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,31 +149,33 @@ def run_audit_subprocess(session_id: str, persona_file_path: str, urls_file_path
         url_pattern = re.compile(r'Analyzing URL \d+/\d+')
         completion_keywords = ['completed', 'finished', 'done', 'success']
         
-        for line in iter(process.stdout.readline, ''):
-            if not line:
-                break
+        # Fix: Use proper typing for subprocess stdout
+        if process.stdout:
+            for line in iter(process.stdout.readline, ''):
+                if not line:
+                    break
+                    
+                line = line.rstrip()
+                log_lines.append(f"[{datetime.now().strftime('%H:%M:%S')}] {line}")
                 
-            line = line.rstrip()
-            log_lines.append(f"[{datetime.now().strftime('%H:%M:%S')}] {line}")
-            
-            # Update progress based on log content
-            if url_pattern.search(line):
-                # Extract progress from URL analysis
-                url_match = re.search(r'(\d+)/(\d+)', line)
-                if url_match:
-                    current, total = int(url_match.group(1)), int(url_match.group(2))
-                    progress = 20 + int((current / total) * 60)  # 20-80% for URL analysis
-                    audit_sessions[session_id]['progress'] = min(progress, 80)
-            
-            elif any(keyword in line.lower() for keyword in completion_keywords):
-                audit_sessions[session_id]['progress'] = 90
-            
-            # Keep last 100 log lines
-            if len(log_lines) > 100:
-                log_lines = log_lines[-100:]
-            
-            audit_sessions[session_id]['logs'] = log_lines
-            audit_sessions[session_id]['message'] = line
+                # Update progress based on log content
+                if url_pattern.search(line):
+                    # Extract progress from URL analysis
+                    url_match = re.search(r'(\d+)/(\d+)', line)
+                    if url_match:
+                        current, total = int(url_match.group(1)), int(url_match.group(2))
+                        progress = 20 + int((current / total) * 60)  # 20-80% for URL analysis
+                        audit_sessions[session_id]['progress'] = min(progress, 80)
+                
+                elif any(keyword in line.lower() for keyword in completion_keywords):
+                    audit_sessions[session_id]['progress'] = 90
+                
+                # Keep last 100 log lines
+                if len(log_lines) > 100:
+                    log_lines = log_lines[-100:]
+                
+                audit_sessions[session_id]['logs'] = log_lines
+                audit_sessions[session_id]['message'] = line
         
         # Wait for completion
         process.wait()
@@ -188,6 +192,8 @@ def run_audit_subprocess(session_id: str, persona_file_path: str, urls_file_path
     except Exception as e:
         audit_sessions[session_id]['status'] = 'failed'
         audit_sessions[session_id]['message'] = f'❌ Audit error: {str(e)}'
+        if 'logs' not in audit_sessions[session_id]:
+            audit_sessions[session_id]['logs'] = []
         audit_sessions[session_id]['logs'].append(f"[{datetime.now().strftime('%H:%M:%S')}] ERROR: {str(e)}")
 
 def process_audit_results_background(session_id: str, persona_name: str):
@@ -246,7 +252,7 @@ def process_audit_results_background(session_id: str, persona_name: str):
         audit_sessions[session_id]['processing_message'] = f'❌ Processing error: {str(e)}'
 
 
-def load_master_data():
+def load_master_data() -> pd.DataFrame:
     """Load master dataset"""
     try:
         data_loader = BrandHealthDataLoader()
@@ -264,10 +270,12 @@ def filter_data(df: pd.DataFrame, filters: Optional[Dict[str, Any]] = None) -> p
     filtered_df = df.copy()
     
     if 'persona' in filters and filters['persona'] and filters['persona'] != 'All':
-        filtered_df = filtered_df[filtered_df['persona_id'] == filters['persona']]
+        if 'persona_id' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['persona_id'] == filters['persona']]
     
     if 'tier' in filters and filters['tier'] and filters['tier'] != 'All':
-        filtered_df = filtered_df[filtered_df['tier'] == filters['tier']]
+        if 'tier' in filtered_df.columns:
+            filtered_df = filtered_df[filtered_df['tier'] == filters['tier']]
     
     if 'scoreRange' in filters:
         min_score, max_score = filters['scoreRange']
@@ -453,17 +461,17 @@ def get_success_library(
     """Return comprehensive success library data"""
     data_loader = BrandHealthDataLoader()
     datasets, master_df = data_loader.load_all_data()
-
+    
     if master_df.empty:
         return JSONResponse(status_code=404, content={"error": "No data available"})
-
+    
     # Handle None recommendations - fix DataFrame boolean error
     recommendations_df = datasets.get("recommendations")
     if recommendations_df is None:
         recommendations_df = pd.DataFrame()
     
     metrics = BrandHealthMetricsCalculator(master_df, recommendations_df)
-
+    
     return metrics.calculate_success_library(
         success_threshold=successThreshold,
         persona=persona,
@@ -781,7 +789,7 @@ def get_persona_insights():
         'tier': lambda x: x.mode().iloc[0] if not x.empty else 'Unknown'
     }).round(2)
     
-    persona_summary = persona_summary.sort_values('avg_score', ascending=False)
+    persona_summary = persona_summary.sort_values('avg_score', ascending=False)  # type: ignore
     
     personas = []
     for persona_id, data in persona_summary.iterrows():
@@ -818,11 +826,11 @@ def get_persona_pages(persona: str):
     
     # Calculate persona metrics
     avg_score = persona_df['avg_score'].mean() if 'avg_score' in persona_df.columns else 0
-    page_count = len(persona_df['page_id'].unique()) if 'page_id' in persona_df.columns else len(persona_df)
+    page_count = len(persona_df['page_id'].unique()) if 'page_id' in persona_df.columns else len(persona_df)  # type: ignore
     
     # Calculate tier distribution
-    tier_counts = persona_df['tier'].value_counts() if 'tier' in persona_df.columns else {}
-    primary_tier = tier_counts.index[0] if len(tier_counts) > 0 else "Unknown"
+    tier_counts = persona_df['tier'].value_counts() if 'tier' in persona_df.columns else {}  # type: ignore
+    primary_tier = tier_counts.index[0] if len(tier_counts) > 0 else "Unknown"  # type: ignore
     
     # Calculate critical issues
     critical_issues = len(persona_df[persona_df['avg_score'] < 4.0]) if 'avg_score' in persona_df.columns else 0
@@ -1555,13 +1563,13 @@ def get_persona_voice_analysis(
         
         # Calculate voice data completeness
         voice_stats = BrandHealthMetricsCalculator.calculate_voice_stats(persona_data)
-
+        
         # Process effective copy examples
         effective_analysis = BrandHealthMetricsCalculator.process_effective_copy_examples(persona_data)
-
+        
         # Process ineffective copy examples
         ineffective_analysis = BrandHealthMetricsCalculator.process_ineffective_copy_examples(persona_data)
-
+        
         # Process business impact analysis
         business_impact = BrandHealthMetricsCalculator.process_business_impact_analysis(persona_data)
         
@@ -1742,13 +1750,13 @@ def get_social_media_analysis(
         
         # Calculate platform metrics
         platform_metrics = BrandHealthMetricsCalculator.calculate_platform_metrics(social_df)
-
+        
         # Generate insights
         insights = BrandHealthMetricsCalculator.generate_social_media_insights(social_df)
-
+        
         # Generate recommendations
         recommendations = BrandHealthMetricsCalculator.generate_social_media_recommendations(social_df)
-
+        
         # Calculate persona-platform matrix for heatmap
         persona_platform_matrix = BrandHealthMetricsCalculator.calculate_persona_platform_matrix(social_df)
         

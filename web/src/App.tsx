@@ -11,7 +11,7 @@ import RunAudit from './pages/RunAudit'
 import SocialMediaAnalysis from './pages/SocialMediaAnalysis'
 import PersonaViewer from './pages/PersonaViewer'
 import VisualBrandHygiene from './pages/VisualBrandHygiene'
-import StrategicRecommendations from './pages/Recommendations'
+import StrategicRecommendations from './pages/StrategicRecommendations'
 import DatasetDetail from './pages/DatasetDetail'
 
 import AuditReports from './pages/AuditReports'

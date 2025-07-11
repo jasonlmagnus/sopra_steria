@@ -126,7 +126,7 @@ const RunAudit: React.FC = () => {
   // Poll for audit status
   const pollAuditStatus = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/audit/status/${sessionId}`);
+        const response = await fetch(`http://localhost:3000/api/audit/status/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -157,7 +157,7 @@ const RunAudit: React.FC = () => {
   // Poll for processing status
   const pollProcessingStatus = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/audit/processing-status/${sessionId}`);
+        const response = await fetch(`http://localhost:8000/api/audit/processing-status/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
         

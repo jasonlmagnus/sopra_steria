@@ -6,80 +6,74 @@ import StandardCard from '../components/StandardCard'
 // Import unified dashboard styles
 import '../styles/dashboard.css'
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 interface StrategicIntelligence {
   executiveSummary: {
-    totalRecommendations: number
-    highImpactOpportunities: number
-    pipelineRisk: number
-    competitiveGaps: number
-    quickWinValue: number
-    strategicInvestmentROI: number
-  }
+    totalRecommendations: number;
+    highImpactOpportunities: number;
+    quickWinOpportunities: number;
+    criticalIssues: number;
+    overallScore: number;
+  };
   strategicThemes: Array<{
-    id: string
-    title: string
-    description: string
-    currentScore: number
-    targetScore: number
-    businessImpact: 'High' | 'Medium' | 'Low'
-    affectedPages: number
-    revenueImpact: number
-    competitiveRisk: 'High' | 'Medium' | 'Low'
-    keyInsights: string[]
-    soWhat: string
-  }>
-  businessImpact: {
-    revenueOpportunity: number
-    conversionUplift: number
-    competitiveAdvantage: string[]
-    brandEquityRisk: number
-  }
+    id: string;
+    title: string;
+    description: string;
+    currentScore: number;
+    targetScore: number;
+    businessImpact: string;
+    affectedPages: number;
+    competitiveRisk: string;
+    keyInsights: string[];
+    soWhat: string;
+  }>;
   recommendations: Array<{
-    id: string
-    title: string
-    description: string
-    businessImpact: 'High' | 'Medium' | 'Low'
-    implementationEffort: 'High' | 'Medium' | 'Low'
-    timeline: string
-    revenueImpact: number
-    conversionUplift: number
-    competitiveAdvantage: string
-    tier: string
-    persona: string
-    currentScore: number
-    targetScore: number
-    evidence: string
-    soWhat: string
-    implementationSteps: string[]
-    success_metrics: string[]
-  }>
-  tierAnalysis: Record<string, {
-    pages: number
-    averageScore: number
-    businessPriority: 'Strategic' | 'Tactical' | 'Operational'
-    criticalIssues: number
-    quickWins: number
-    successStories: number
-    revenueImpact: number
-  }>
+    id: string;
+    title: string;
+    description: string;
+    businessImpact: string;
+    implementationEffort: string;
+    timeline: string;
+    tier: string;
+    persona: string;
+    currentScore: number;
+    targetScore: number;
+    evidence: string;
+    soWhat: string;
+    implementationSteps: string[];
+    success_metrics: string[];
+  }>;
   competitiveContext: {
-    overallPosition: 'Above Average' | 'Below Average'
-    benchmarkScore: number
-    currentScore: number
-    competitiveGap: number
-    advantages: string[]
-    vulnerabilities: string[]
-    marketOpportunity: string
-  }
+    currentScore: number;
+    benchmarkScore: number;
+    marketOpportunity: string;
+    vulnerabilities: string[];
+    overallPosition: string;
+  };
+  tierAnalysis: {
+    [key: string]: {
+      name: string;
+      avgScore: number;
+      pageCount: number;
+      criticalIssues: number;
+      quickWins: number;
+      priority: string;
+      businessContext: string;
+    };
+  };
   implementationRoadmap: Array<{
-    phase: string
-    focus: string
-    recommendations: string[]
-    expectedImpact: number
-    keyMilestones: string[]
-  }>
+    phase: string;
+    focus: string;
+    recommendations: string[];
+    expectedImpact: string;
+  }>;
+  businessImpact: {
+    optimizationPotential: number;
+    improvementAreas: number;
+    competitiveAdvantage: string[];
+    successStories: string[];
+  };
 }
 
 // Add fallback data structure for basic recommendations
@@ -87,7 +81,6 @@ interface BasicRecommendation {
   id: string
   title: string
   description: string
-  category: string
   impact_score: number
   urgency_score: number
   timeline: string
@@ -96,7 +89,6 @@ interface BasicRecommendation {
   persona: string
   url: string
   evidence: string
-  source: string
 }
 
 function StrategicRecommendations() {
@@ -104,7 +96,6 @@ function StrategicRecommendations() {
   const [selectedBusinessImpact, setSelectedBusinessImpact] = useState('All')
   const [selectedTimeline, setSelectedTimeline] = useState('All')
   const [viewMode, setViewMode] = useState('executive')
-  const [fallbackMode, setFallbackMode] = useState(false)
 
   // Primary data source - strategic intelligence
   const { data: strategicData, isLoading: strategicLoading, error: strategicError } = useQuery({
@@ -115,7 +106,7 @@ function StrategicRecommendations() {
       if (selectedBusinessImpact !== 'All') params.append('business_impact', selectedBusinessImpact)
       if (selectedTimeline !== 'All') params.append('timeline', selectedTimeline)
       
-      const res = await fetch(`${apiBase}/strategic-intelligence?${params.toString()}`)
+      const res = await fetch(`${apiBase}/api/strategic-intelligence?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to load strategic intelligence')
       return await res.json() as StrategicIntelligence
     },
@@ -131,7 +122,7 @@ function StrategicRecommendations() {
       if (selectedTier !== 'All') params.append('tier', selectedTier)
       if (selectedTimeline !== 'All') params.append('timeline', selectedTimeline)
       
-      const res = await fetch(`${apiBase}/full-recommendations?${params.toString()}`)
+      const res = await fetch(`${apiBase}/api/full-recommendations?${params.toString()}`)
       if (!res.ok) throw new Error('Failed to load basic recommendations')
       const data = await res.json()
       return data.recommendations as BasicRecommendation[]
@@ -144,30 +135,20 @@ function StrategicRecommendations() {
   const isLoading = strategicLoading || (strategicError && fallbackLoading)
   const hasData = strategicData || fallbackData
 
-  const formatCurrency = (amount: number): string => {
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}M`
-    } else if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(0)}K`
-    } else {
-      return `$${amount.toFixed(0)}`
-    }
-  }
-
-  const getImpactColor = (impact: 'High' | 'Medium' | 'Low'): string => {
-    switch (impact) {
-      case 'High': return '#dc3545'
-      case 'Medium': return '#fd7e14'
-      case 'Low': return '#28a745'
+  const getImpactColor = (impact: string): string => {
+    switch (impact.toLowerCase()) {
+      case 'high': return '#dc3545'
+      case 'medium': return '#fd7e14'
+      case 'low': return '#28a745'
       default: return '#6c757d'
     }
   }
 
-  const getRiskColor = (risk: 'High' | 'Medium' | 'Low'): string => {
-    switch (risk) {
-      case 'High': return '#dc3545'
-      case 'Medium': return '#ffc107'
-      case 'Low': return '#28a745'
+  const getRiskColor = (risk: string): string => {
+    switch (risk.toLowerCase()) {
+      case 'high': return '#dc3545'
+      case 'medium': return '#ffc107'
+      case 'low': return '#28a745'
       default: return '#6c757d'
     }
   }
@@ -182,7 +163,7 @@ function StrategicRecommendations() {
       mode: 'markers+text',
       textposition: 'middle center',
       marker: {
-        size: rec.revenueImpact / 50000, // Scale marker size by revenue impact
+        size: rec.currentScore * 3, // Scale marker size by current score
         color: rec.timeline.includes('0-7') ? '#dc3545' : 
                rec.timeline.includes('0-30') ? '#fd7e14' :
                rec.timeline.includes('30-90') ? '#ffc107' : '#28a745',
@@ -268,7 +249,7 @@ function StrategicRecommendations() {
       {/* Header with proper styling */}
       <div className="main-header">
         <h1 className="page-title">🎯 Strategic Intelligence</h1>
-        <p className="page-subtitle">Business-focused strategic recommendations with ROI impact and competitive context</p>
+        <p className="page-subtitle">Strategic recommendations with competitive context and implementation roadmap</p>
       </div>
 
       {/* Executive Summary - Always visible */}
@@ -276,39 +257,39 @@ function StrategicRecommendations() {
         <h2 className="insights-box__title">📊 Executive Summary</h2>
         <div className="metrics-grid">
           <StandardCard
-            title="Pipeline Risk"
-            variant="metric"
-            status="critical"
-          >
-            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.pipelineRisk)}</div>
-            <div className="metric-description">Annual revenue at risk from brand health issues</div>
-          </StandardCard>
-
-          <StandardCard
-            title="Quick Win Value"
-            variant="metric"
-            status="excellent"
-          >
-            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.quickWinValue)}</div>
-            <div className="metric-description">Immediate revenue opportunity from low-effort fixes</div>
-          </StandardCard>
-
-          <StandardCard
-            title="Strategic Investment ROI"
+            title="Total Recommendations"
             variant="metric"
             status="good"
           >
-            <div className="metric-value">{formatCurrency(strategicData.executiveSummary.strategicInvestmentROI)}</div>
-            <div className="metric-description">Expected 30% ROI on strategic brand investments</div>
+            <div className="metric-value">{strategicData.executiveSummary.totalRecommendations}</div>
+            <div className="metric-description">Strategic recommendations identified</div>
           </StandardCard>
 
           <StandardCard
-            title="Competitive Gaps"
+            title="High Impact Opportunities"
             variant="metric"
-            status="warning"
+            status="excellent"
           >
-            <div className="metric-value">{strategicData.executiveSummary.competitiveGaps}</div>
-            <div className="metric-description">Critical issues creating competitive vulnerability</div>
+            <div className="metric-value">{strategicData.executiveSummary.highImpactOpportunities}</div>
+            <div className="metric-description">High-impact improvement opportunities</div>
+          </StandardCard>
+
+          <StandardCard
+            title="Quick Win Opportunities"
+            variant="metric"
+            status="good"
+          >
+            <div className="metric-value">{strategicData.executiveSummary.quickWinOpportunities}</div>
+            <div className="metric-description">Quick wins for immediate impact</div>
+          </StandardCard>
+
+          <StandardCard
+            title="Critical Issues"
+            variant="metric"
+            status="critical"
+          >
+            <div className="metric-value">{strategicData.executiveSummary.criticalIssues}</div>
+            <div className="metric-description">Critical issues requiring immediate attention</div>
           </StandardCard>
         </div>
 
@@ -475,13 +456,6 @@ function StrategicRecommendations() {
                   >
                     <div className="metric-value">{theme.affectedPages}</div>
                   </StandardCard>
-                  <StandardCard
-                    title="Revenue Impact"
-                    variant="metric"
-                    status="critical"
-                  >
-                    <div className="metric-value">{formatCurrency(theme.revenueImpact)}</div>
-                  </StandardCard>
                 </div>
 
                 <div className="theme-insights" style={{ marginBottom: '1rem' }}>
@@ -545,20 +519,6 @@ function StrategicRecommendations() {
 
                 <div className="grid grid--auto-150 gap-md" style={{ marginBottom: '1rem' }}>
                   <StandardCard
-                    title="Revenue Impact"
-                    variant="metric"
-                    status="excellent"
-                  >
-                    <div className="metric-value">{formatCurrency(rec.revenueImpact)}</div>
-                  </StandardCard>
-                  <StandardCard
-                    title="Conversion Uplift"
-                    variant="metric"
-                    status="good"
-                  >
-                    <div className="metric-value">+{rec.conversionUplift}%</div>
-                  </StandardCard>
-                  <StandardCard
                     title="Current Score"
                     variant="metric"
                     status={rec.currentScore >= 8 ? "excellent" : rec.currentScore >= 6 ? "good" : "warning"}
@@ -566,11 +526,25 @@ function StrategicRecommendations() {
                     <div className="metric-value">{rec.currentScore.toFixed(1)}/10</div>
                   </StandardCard>
                   <StandardCard
+                    title="Target Score"
+                    variant="metric"
+                    status="excellent"
+                  >
+                    <div className="metric-value">{rec.targetScore.toFixed(1)}/10</div>
+                  </StandardCard>
+                  <StandardCard
                     title="Implementation Effort"
                     variant="metric"
                     status={rec.implementationEffort === "Low" ? "excellent" : rec.implementationEffort === "Medium" ? "warning" : "critical"}
                   >
                     <div className="metric-value">{rec.implementationEffort}</div>
+                  </StandardCard>
+                  <StandardCard
+                    title="Timeline"
+                    variant="metric"
+                    status="good"
+                  >
+                    <div className="metric-value">{rec.timeline}</div>
                   </StandardCard>
                 </div>
 
@@ -616,8 +590,8 @@ function StrategicRecommendations() {
               }}>
                 <div className="phase-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                   <h3 style={{ margin: 0 }}>{phase.phase}</h3>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#28a745' }}>
-                    {formatCurrency(phase.expectedImpact)}
+                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#28a745' }}>
+                    {phase.expectedImpact}
                   </div>
                 </div>
                 <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{phase.focus}</p>
@@ -631,13 +605,9 @@ function StrategicRecommendations() {
                   </ul>
                 </div>
 
-                <div className="phase-milestones">
-                  <h4>🎯 Key Milestones</h4>
-                  <ul style={{ paddingLeft: '1.5rem' }}>
-                    {phase.keyMilestones.map((milestone, milestoneIdx) => (
-                      <li key={milestoneIdx} style={{ marginBottom: '0.5rem' }}>{milestone}</li>
-                    ))}
-                  </ul>
+                <div className="phase-impact">
+                  <h4>🎯 Expected Impact</h4>
+                  <p style={{ fontWeight: '600', color: '#28a745' }}>{phase.expectedImpact}</p>
                 </div>
               </div>
             ))}
@@ -694,7 +664,7 @@ function StrategicRecommendations() {
           </div>
           <div className="matrix-legend" style={{ marginTop: '1rem' }}>
             <h4>Legend:</h4>
-            <p><strong>Size:</strong> Revenue impact (larger = higher revenue potential)</p>
+            <p><strong>Size:</strong> Current score (larger = higher current score)</p>
             <p><strong>Color:</strong> Timeline (Red = Immediate, Orange = Short-term, Yellow = Medium-term, Green = Long-term)</p>
           </div>
         </div>
@@ -710,8 +680,7 @@ function StrategicRecommendations() {
                 border: '1px solid #dee2e6', 
                 borderRadius: '8px', 
                 padding: '1.5rem',
-                backgroundColor: data.businessPriority === 'Strategic' ? '#f8f9fa' : 
-                                 data.businessPriority === 'Tactical' ? '#fff8e1' : '#f0fdf4'
+                backgroundColor: '#f8f9fa'
               }}>
                 <div className="tier-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                   <h3 style={{ margin: 0 }}>{tier}</h3>
@@ -720,11 +689,10 @@ function StrategicRecommendations() {
                     borderRadius: '4px', 
                     fontSize: '0.75rem',
                     fontWeight: '600',
-                    backgroundColor: data.businessPriority === 'Strategic' ? '#007bff' : 
-                                     data.businessPriority === 'Tactical' ? '#fd7e14' : '#28a745',
+                    backgroundColor: '#007bff',
                     color: 'white'
                   }}>
-                    {data.businessPriority}
+                    Tier Analysis
                   </span>
                 </div>
 
@@ -732,16 +700,16 @@ function StrategicRecommendations() {
                   <StandardCard
                     title="Average Score"
                     variant="metric"
-                    status={data.averageScore >= 8 ? "excellent" : data.averageScore >= 6 ? "good" : "warning"}
+                    status={data.avgScore >= 8 ? "excellent" : data.avgScore >= 6 ? "good" : "warning"}
                   >
-                    <div className="metric-value">{data.averageScore.toFixed(1)}/10</div>
+                    <div className="metric-value">{data.avgScore.toFixed(1)}/10</div>
                   </StandardCard>
                   <StandardCard
-                    title="Total Pages"
+                    title="Page Count"
                     variant="metric"
                     status="good"
                   >
-                    <div className="metric-value">{data.pages}</div>
+                    <div className="metric-value">{data.pageCount}</div>
                   </StandardCard>
                   <StandardCard
                     title="Critical Issues"
@@ -757,13 +725,15 @@ function StrategicRecommendations() {
                   >
                     <div className="metric-value">{data.quickWins}</div>
                   </StandardCard>
-                  <StandardCard
-                    title="Revenue Impact"
-                    variant="metric"
-                    status="warning"
-                  >
-                    <div className="metric-value">{formatCurrency(data.revenueImpact)}</div>
-                  </StandardCard>
+                </div>
+                
+                <div style={{ marginTop: '1rem' }}>
+                  <p style={{ color: '#4b5563' }}>
+                    <strong>Priority:</strong> {data.priority}
+                  </p>
+                  <p style={{ color: '#4b5563' }}>
+                    <strong>Business Context:</strong> {data.businessContext}
+                  </p>
                 </div>
               </div>
             ))}
@@ -906,9 +876,6 @@ function FallbackRecommendationsView({
                   <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
                     {rec.timeline}
                   </span>
-                  <span className="badge" style={{ backgroundColor: 'var(--primary-color)', color: 'white' }}>
-                    {rec.category}
-                  </span>
                 </div>
               </div>
               
@@ -941,11 +908,11 @@ function FallbackRecommendationsView({
                   </StandardCard>
                   
                   <StandardCard
-                    title="Source"
+                    title="Page ID"
                     variant="metric"
                     status="good"
                   >
-                    <div className="metric-value text-sm">{rec.source}</div>
+                    <div className="metric-value text-sm">{rec.page_id}</div>
                   </StandardCard>
                 </div>
 

@@ -299,11 +299,17 @@ class BrandHealthMetricsCalculator:
         result = []
         for _, row in top_opportunities.iterrows():
             # Create a friendly page title from URL slug
-            url_slug = row.get('url_slug', '')
+            url_slug = row.get('url_slug') or ''
+            if not isinstance(url_slug, str):
+                url_slug = str(url_slug) if url_slug is not None else ''
             page_title = self._create_friendly_title(url_slug)
             
             # Calculate effort level based on current score
             current_score = row.get(score_col, 0)
+            if current_score is None:
+                current_score = 0
+            current_score = float(current_score)
+            
             if current_score < 3.0:
                 effort_level = "High"
             elif current_score < 5.0:
@@ -334,7 +340,7 @@ class BrandHealthMetricsCalculator:
                 'page_title': page_title,
                 'url': row.get('url', ''),
                 'current_score': current_score,
-                'potential_impact': round(row.get('opportunity_impact', 0), 1),
+                'potential_impact': round(float(row.get('opportunity_impact') or 0), 1),
                 'effort_level': effort_level,
                 'tier': row.get('tier', 'Unknown'),
                 'recommendation': recommendation,
@@ -405,12 +411,15 @@ class BrandHealthMetricsCalculator:
         page_success = page_success[page_success[score_col] >= min_score]
         
         # Sort by score (highest first) and limit to top 5
-        top_success = page_success.nlargest(5, score_col)
+        column_name = str(score_col)  # Explicit type conversion for type checker
+        top_success = page_success.sort_values(by=column_name, ascending=False).head(5)
         
         result = []
         for _, row in top_success.iterrows():
             # Create a friendly page title from URL slug
-            url_slug = row.get('url_slug', '')
+            url_slug = row.get('url_slug') or ''
+            if not isinstance(url_slug, str):
+                url_slug = str(url_slug) if url_slug is not None else ''
             page_title = self._create_friendly_title(url_slug)
             
             story = {
@@ -1274,12 +1283,26 @@ class BrandHealthMetricsCalculator:
             if critical_count > len(self.df) * 0.2:
                 gaps.append('High number of critical brand issues')
         
+        # Map position to what React expects
+        if position in ['Market Leader', 'Above Market']:
+            overall_position = 'Above Average'
+        else:
+            overall_position = 'Below Average'
+        
+        # Generate market opportunity message
+        if avg_score > industry_benchmark:
+            market_opportunity = f"Strong market position with {round(avg_score - industry_benchmark, 1)} point advantage"
+        else:
+            market_opportunity = f"Opportunity to close {round(industry_benchmark - avg_score, 1)} point gap with market leaders"
+        
         return {
+            'overallPosition': overall_position,
+            'benchmarkScore': industry_benchmark,
+            'currentScore': round(avg_score, 1),
+            'competitiveGap': round(avg_score - industry_benchmark, 1),
             'advantages': advantages,
-            'gaps': gaps,
-            'industryBenchmark': industry_benchmark,
-            'overallPosition': position,
-            'marketGap': round(avg_score - industry_benchmark, 1)
+            'vulnerabilities': gaps,
+            'marketOpportunity': market_opportunity
         }
 
     def calculate_strategic_tier_analysis(self) -> Dict:
@@ -1322,15 +1345,14 @@ class BrandHealthMetricsCalculator:
         if phase_1_recs:
             roadmap.append({
                 'phase': '0-30 Days',
-                'title': 'Quick Wins & Critical Fixes',
-                'description': 'Immediate improvements based on research findings',
-                'recommendations': len(phase_1_recs),
+                'focus': 'Quick Wins & Critical Fixes',
+                'recommendations': [r.get('title', 'Improvement') for r in phase_1_recs[:5]],
+                'expectedImpact': 8.5,
                 'keyMilestones': [
                     'Content optimization deployed',
                     'Quick wins implemented',
                     'Initial performance boost'
-                ],
-                'successMetrics': ['Engagement improvement', 'Performance score increase']
+                ]
             })
         
         # Phase 2: 30-90 days (Strategic Improvements)
@@ -1338,30 +1360,29 @@ class BrandHealthMetricsCalculator:
         if phase_2_recs:
             roadmap.append({
                 'phase': '30-90 Days',
-                'title': 'Strategic Improvements',
-                'description': 'Brand positioning and competitive advantage',
-                'recommendations': len(phase_2_recs),
+                'focus': 'Strategic Improvements',
+                'recommendations': [r.get('title', 'Strategic improvement') for r in phase_2_recs[:5]],
+                'expectedImpact': 7.2,
                 'keyMilestones': [
                     'Brand messaging alignment',
                     'Tier 1 content enhanced',
                     'Competitive positioning strengthened'
-                ],
-                'successMetrics': ['Brand performance improvement', 'Trust indicators increase']
+                ]
             })
         
         # Phase 3: 90+ days (Long-term Transformation)
         phase_3_recs = [r for r in recommendations if r.get('timeline', '').startswith('90+')]
+        high_impact_recs = [r for r in recommendations if r.get('businessImpact') == 'High']
         roadmap.append({
             'phase': '90+ Days',
-            'title': 'Long-term Transformation',
-            'description': 'Comprehensive brand health optimization',
-            'recommendations': len(phase_3_recs) if phase_3_recs else len([r for r in recommendations if r.get('businessImpact') == 'High']),
+            'focus': 'Long-term Transformation',
+            'recommendations': [r.get('title', 'Strategic initiative') for r in (phase_3_recs or high_impact_recs)[:5]],
+            'expectedImpact': 6.8,
             'keyMilestones': [
                 'Full brand health optimization',
                 'Market leadership position',
                 'Sustainable competitive advantage'
-            ],
-            'successMetrics': ['Overall brand health score', 'Research-based performance gains']
+            ]
         })
         
         return roadmap
@@ -1413,17 +1434,16 @@ class BrandHealthMetricsCalculator:
             "executiveSummary": {
                 "totalRecommendations": len(business_recommendations),
                 "highImpactOpportunities": len([r for r in business_recommendations if r.get('businessImpact') == 'High']),
-                "performanceGap": performance_gap,
-                "criticalIssues": critical_issues,
                 "quickWinOpportunities": quick_wins,
-                "overallScore": round(avg_score, 1)
+                "criticalIssues": critical_issues,
+                "overallScore": round(avg_score, 2)
             },
             "strategicThemes": strategic_themes,
             "businessImpact": {
                 "optimizationPotential": optimization_potential,
                 "improvementAreas": improvement_areas,
                 "competitiveAdvantage": competitive_context.get('advantages', []),
-                "successStories": success_stories
+                "successStories": [f"Pages with success flag: {success_stories}", f"Average score: {avg_score:.1f}/10"]
             },
             "recommendations": business_recommendations,
             "tierAnalysis": tier_analysis,

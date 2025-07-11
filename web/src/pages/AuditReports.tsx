@@ -250,7 +250,7 @@ function AuditReports() {
     
     // Create download link for the selected report
     const link = document.createElement('a')
-    link.href = `http://localhost:3000/api/html-reports/${selectedReport.relative_path}`
+          link.href = `http://localhost:3000/api/html-reports/${selectedReport.relative_path}`
     link.download = selectedReport.file_name
     document.body.appendChild(link)
     link.click()
