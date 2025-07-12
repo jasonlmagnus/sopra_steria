@@ -74,7 +74,7 @@ function fixCSSFile(filePath) {
 function fixAllCSSFiles() {
   console.log(`${colors.bold}${colors.cyan}🔧 Fixing Broken CSS Files...${colors.reset}`);
   
-  const utilsDir = path.join(__dirname, 'web', 'src', 'styles', 'utilities');
+  const utilsDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles', 'utilities');
   
   if (!fs.existsSync(utilsDir)) {
     console.log(`${colors.red}❌ Utilities directory not found: ${utilsDir}${colors.reset}`);

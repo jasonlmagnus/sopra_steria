@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import './../styles/components/card.css'
 
 export interface ExpandableCardProps {
   title: string
@@ -8,16 +9,17 @@ export interface ExpandableCardProps {
 
 export function ExpandableCard({ title, children, defaultExpanded = false }: ExpandableCardProps) {
   const [open, setOpen] = useState(defaultExpanded)
+  
+  const cardClasses = `expandable-card${open ? ' expanded' : ''}`
+  
   return (
-    <div className={`expandable-card${open ? ' expanded' : ''}`}>\
-      <div className="expandable-card__header" onClick={() => setOpen(!open)} style={{cursor:'pointer'}}>
-        {open ? '▼' : '▶'} {title}
+    <div className={cardClasses}>
+      <div className="expandable-card__header" onClick={() => setOpen(!open)}>
+        <span className="expandable-card__header-icon">▶</span>
+        {title}
       </div>
-      <div
-        className="expandable-card__body"
-        style={{ maxHeight: open ? '1000px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}
-      >
-        {open && <div>{children}</div>}
+      <div className="expandable-card__body">
+        {children}
       </div>
     </div>
   )

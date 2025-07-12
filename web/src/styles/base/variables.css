@@ -48,6 +48,13 @@
   --color-info-text: #1565C0;
   --color-info-border: #90CAF9;
 
+  /* Impact & Risk Colors */
+  --color-impact-high: #dc3545;
+  --color-impact-medium: #fd7e14;
+  --color-impact-low: #28a745;
+  --color-risk-medium: #ffc107;
+  --color-impact-default: #6c757d;
+
   /* ===== NEUTRAL COLORS ===== */
   --gray-50: #F9FAFB;
   --gray-100: #F3F4F6;

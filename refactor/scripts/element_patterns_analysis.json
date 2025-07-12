@@ -1,0 +1,1443 @@
+{
+  "summary": {
+    "totalFiles": 16,
+    "totalElementClasses": 511,
+    "elementTypeBreakdown": {
+      "div": 254,
+      "span": 77,
+      "p": 35,
+      "h1": 13,
+      "h2": 17,
+      "h3": 16,
+      "h4": 29,
+      "h5": 6,
+      "h6": 0,
+      "button": 47,
+      "label": 13,
+      "input": 1,
+      "select": 3
+    }
+  },
+  "files": {
+    "AuditReports.tsx": {
+      "elementCounts": {
+        "div": 8,
+        "span": 1,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "button": 3,
+        "label": 1,
+        "input": 0,
+        "select": 1
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--feedback",
+          "loading--state",
+          "container--section",
+          "container--grid",
+          "spacing--sm",
+          "text--display",
+          "text--body"
+        ],
+        "span": [
+          "text--separator"
+        ],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [],
+        "h4": [],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "button--secondary",
+          "layout--utility",
+          "text--body"
+        ],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": [
+          "select--form"
+        ]
+      }
+    },
+    "ContentMatrix.tsx": {
+      "elementCounts": {
+        "div": 11,
+        "span": 0,
+        "p": 6,
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 7,
+        "h5": 0,
+        "h6": 0,
+        "button": 0,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "text--display",
+          "container--feedback",
+          "container--content",
+          "spacing--sm",
+          "text--body",
+          "container--grid",
+          "container--card",
+          "persona--content",
+          "text--emphasis"
+        ],
+        "span": [],
+        "p": [
+          "text--body",
+          "text--emphasis",
+          "my-xs",
+          "text--body-large",
+          "text-gray-600",
+          "m-0"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection",
+          "flex-center"
+        ],
+        "h4": [
+          "reset-text",
+          "heading--subsection",
+          "mb-3-4",
+          "text-success-dark",
+          "text-error-dark",
+          "mb-4-5",
+          "text-slate-600"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "DatasetDetail.tsx": {
+      "elementCounts": {
+        "div": 0,
+        "span": 0,
+        "p": 0,
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "button": 0,
+        "label": 0,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [],
+        "span": [],
+        "p": [],
+        "h1": [],
+        "h2": [],
+        "h3": [],
+        "h4": [],
+        "h5": [],
+        "h6": [],
+        "button": [],
+        "label": [],
+        "input": [],
+        "select": []
+      }
+    },
+    "DatasetList.tsx": {
+      "elementCounts": {
+        "div": 0,
+        "span": 0,
+        "p": 0,
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "button": 0,
+        "label": 0,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [],
+        "span": [],
+        "p": [],
+        "h1": [],
+        "h2": [],
+        "h3": [],
+        "h4": [],
+        "h5": [],
+        "h6": [],
+        "button": [],
+        "label": [],
+        "input": [],
+        "select": []
+      }
+    },
+    "ExecutiveDashboard.tsx": {
+      "elementCounts": {
+        "div": 17,
+        "span": 0,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 1,
+        "h5": 0,
+        "h6": 0,
+        "button": 1,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "text--display",
+          "text--body",
+          "layout--utility",
+          "text--emphasis",
+          "container--feedback",
+          "${brand.raw_score",
+          "<",
+          "4",
+          "?",
+          ":",
+          "brand.raw_score",
+          "6",
+          "8",
+          ">",
+          "0"
+        ],
+        "span": [],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--subsection"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "button--action"
+        ],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "Methodology.tsx": {
+      "elementCounts": {
+        "div": 7,
+        "span": 0,
+        "p": 3,
+        "h1": 1,
+        "h2": 1,
+        "h3": 0,
+        "h4": 1,
+        "h5": 1,
+        "h6": 0,
+        "button": 0,
+        "label": 0,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--content",
+          "container--section",
+          "spacing--sm",
+          "container--feedback",
+          "container--grid",
+          "container--layout",
+          "text--display"
+        ],
+        "span": [],
+        "p": [
+          "text--body",
+          "margin-0",
+          "text--emphasis"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [],
+        "h4": [
+          "heading--card"
+        ],
+        "h5": [
+          "mb-xs"
+        ],
+        "h6": [],
+        "button": [],
+        "label": [],
+        "input": [],
+        "select": []
+      }
+    },
+    "OpportunityImpact.tsx": {
+      "elementCounts": {
+        "div": 9,
+        "span": 1,
+        "p": 5,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 3,
+        "h5": 0,
+        "h6": 0,
+        "button": 0,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "text--display",
+          "container--feedback",
+          "spacing--sm",
+          "text--body",
+          "container--content",
+          "container--grid",
+          "text--emphasis"
+        ],
+        "span": [
+          "text--body"
+        ],
+        "p": [
+          "text--body",
+          "text--emphasis",
+          "my-xs",
+          "text--body-large",
+          "text-gray-600"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "reset-text",
+          "heading--subsection",
+          "margin-0"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "PagesList.tsx": {
+      "elementCounts": {
+        "div": 0,
+        "span": 0,
+        "p": 0,
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "button": 0,
+        "label": 0,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [],
+        "span": [],
+        "p": [],
+        "h1": [],
+        "h2": [],
+        "h3": [],
+        "h4": [],
+        "h5": [],
+        "h6": [],
+        "button": [],
+        "label": [],
+        "input": [],
+        "select": []
+      }
+    },
+    "PersonaInsights.tsx": {
+      "elementCounts": {
+        "div": 4,
+        "span": 0,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 2,
+        "h5": 1,
+        "h6": 0,
+        "button": 0,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "text--display",
+          "container--feedback"
+        ],
+        "span": [],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--card",
+          "heading--subsection"
+        ],
+        "h5": [
+          "heading--card"
+        ],
+        "h6": [],
+        "button": [],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "PersonaViewer.tsx": {
+      "elementCounts": {
+        "div": 37,
+        "span": 16,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 2,
+        "h5": 0,
+        "h6": 0,
+        "button": 5,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "persona--content",
+          "container--card",
+          "text--display",
+          "text--body",
+          "button--action",
+          "tab--interface",
+          "container--content",
+          "journey--flow",
+          "quick-fixes",
+          "severity-indicator",
+          "severity-score",
+          "severity-label",
+          "container--grid",
+          "insight-column",
+          "friction-point",
+          "badge--status",
+          "container--feedback",
+          "performance-overview",
+          "performance-data",
+          "performance-summary",
+          "spacing--sm",
+          "voice--analysis",
+          "filter--controls",
+          "tier-selection",
+          "tier-distribution",
+          "tier-count",
+          "themes-analysis",
+          "themes-list",
+          "theme-item",
+          "sentiment-analysis",
+          "page-meta",
+          "example-analysis",
+          "example-insight",
+          "container--misc",
+          "evidence--content"
+        ],
+        "span": [
+          "text--display",
+          "collapse-icon",
+          "tier-badge",
+          "badge--status",
+          "theme-name",
+          "theme-count",
+          "score-badge",
+          "${\n",
+          "page.avg_score",
+          ">=",
+          "8",
+          "?",
+          ":\n",
+          "6",
+          "4",
+          ":"
+        ],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--card",
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--card",
+          "heading--subsection"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "tab-button",
+          "${activeTab",
+          "===",
+          "?",
+          ":"
+        ],
+        "label": [
+          "tier-checkbox"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "ReportsExport.tsx": {
+      "elementCounts": {
+        "div": 16,
+        "span": 5,
+        "p": 2,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 1,
+        "h5": 0,
+        "h6": 0,
+        "button": 7,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "container--feedback",
+          "text--display",
+          "text--body",
+          "heading--subsection",
+          "badge--status",
+          "container--card",
+          "${!viewingDataset",
+          "?",
+          ":",
+          "${viewingDataset",
+          "===",
+          "dataset.name",
+          "${htmlOptions.generationMode",
+          "${exportFormat"
+        ],
+        "span": [
+          "last-updated",
+          "badge--status",
+          "quick-win",
+          "critical",
+          "container--feedback"
+        ],
+        "p": [
+          "text--body",
+          "text--display"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--subsection"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "refresh-button",
+          "button--action",
+          "button--tab",
+          "${activeTab",
+          "===",
+          "?",
+          ":"
+        ],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "RunAudit.tsx": {
+      "elementCounts": {
+        "div": 40,
+        "span": 20,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 2,
+        "h5": 0,
+        "h6": 0,
+        "button": 12,
+        "label": 2,
+        "input": 1,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "container--hero",
+          "icon--ui",
+          "container--card",
+          "container--feedback",
+          "container--content",
+          "container--form",
+          "number--display",
+          "container--workflow",
+          "container--model",
+          "container--urls",
+          "container--analysis",
+          "text--display",
+          "container--actions",
+          "container--log-header",
+          "container--log-content",
+          "container--log-line",
+          "container--log-empty",
+          "journey--flow",
+          "container--status-success",
+          "container--status-pending",
+          "button--action",
+          "${selectedModel",
+          "===",
+          "?",
+          ":",
+          "${processingState.progress",
+          ">=",
+          "20",
+          "processingState.progress",
+          "10",
+          "40",
+          "30",
+          "60",
+          "50",
+          "80",
+          "70",
+          "100",
+          "90"
+        ],
+        "span": [
+          "text--display",
+          "text--body",
+          "badge--cost",
+          "badge--speed",
+          "badge--quality",
+          "badge--premium",
+          "badge--deep",
+          "icon--help",
+          "text--summary-label",
+          "text--summary-value",
+          "text--launch-title",
+          "text--launch-subtitle",
+          "text--percentage",
+          "text--progress-label",
+          "text--stat-label",
+          "text--stat-value",
+          "text--log-status",
+          "text--button-title",
+          "text--button-subtitle",
+          "button--action"
+        ],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection",
+          "heading--card"
+        ],
+        "h4": [
+          "heading--card",
+          "heading--validation"
+        ],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "button--action",
+          "button--nav",
+          "button--secondary",
+          "button--tab",
+          "${activeTab",
+          "===",
+          "?",
+          ":",
+          "button--launch",
+          "${canRunAudit",
+          "process-button",
+          "${processingState.status"
+        ],
+        "label": [
+          "label--upload",
+          "label--option"
+        ],
+        "input": [
+          "input--file"
+        ],
+        "select": []
+      }
+    },
+    "SocialMediaAnalysis.tsx": {
+      "elementCounts": {
+        "div": 27,
+        "span": 15,
+        "p": 7,
+        "h1": 1,
+        "h2": 3,
+        "h3": 2,
+        "h4": 3,
+        "h5": 2,
+        "h6": 0,
+        "button": 8,
+        "label": 1,
+        "input": 0,
+        "select": 1
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--feedback",
+          "loading--state",
+          "container--section",
+          "container--grid",
+          "filter--controls",
+          "container--misc",
+          "button--action",
+          "container--card",
+          "text--display",
+          "layout--utility",
+          "text--body",
+          "badge--status",
+          "card--content",
+          "spacing--sm",
+          "container--content",
+          "tab--interface",
+          "evidence--content",
+          "badge--status--status",
+          "${criticalCount",
+          ">",
+          "0",
+          "?",
+          ":",
+          "container--container--card",
+          "===",
+          "||"
+        ],
+        "span": [
+          "text--body",
+          "ml-2",
+          "badge--status",
+          "badge--default",
+          "score-value",
+          "score-label",
+          "mr-1",
+          "badge--status--status",
+          "${platform.Average_Score",
+          ">=",
+          "7",
+          "?",
+          ":",
+          "platform.Average_Score",
+          "5"
+        ],
+        "p": [
+          "text--body",
+          "text-lg",
+          "container--card",
+          "effective-copy",
+          "ineffective-copy",
+          "text--display",
+          "spacing--sm"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--subsection",
+          "heading--section",
+          "section__title"
+        ],
+        "h3": [
+          "container--card",
+          "section__subtitle"
+        ],
+        "h4": [
+          "heading--card",
+          "text--display",
+          "container--card"
+        ],
+        "h5": [
+          "spacing--sm",
+          "container--card"
+        ],
+        "h6": [],
+        "button": [
+          "button--action",
+          "action-button",
+          "tab-button",
+          "${activeTab",
+          "===",
+          "tab.id",
+          "?",
+          ":"
+        ],
+        "label": [
+          "filter-label"
+        ],
+        "input": [],
+        "select": [
+          "filter-select"
+        ]
+      }
+    },
+    "StrategicRecommendations.tsx": {
+      "elementCounts": {
+        "div": 14,
+        "span": 10,
+        "p": 3,
+        "h1": 1,
+        "h2": 3,
+        "h3": 2,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "button": 1,
+        "label": 2,
+        "input": 0,
+        "select": 1
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--section",
+          "loading--state",
+          "container--feedback",
+          "alert--message",
+          "container--grid",
+          "text--display",
+          "metric--display",
+          "filter--controls",
+          "container--content",
+          "container--misc",
+          "container--card",
+          "spacing--sm",
+          "text--body"
+        ],
+        "span": [
+          "score-value",
+          "score-scale",
+          "text--display",
+          "text--value",
+          "tag",
+          "tag--effort",
+          "tag--impact",
+          "tag--timeline",
+          "tag--tier",
+          "badge--status"
+        ],
+        "p": [
+          "text--body",
+          "card-description",
+          "spacing--sm"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--subsection",
+          "heading--section",
+          "insights-box__title"
+        ],
+        "h3": [
+          "heading--subsection",
+          "flex-center"
+        ],
+        "h4": [],
+        "h5": [],
+        "h6": [],
+        "button": [
+          "button--action"
+        ],
+        "label": [
+          "text--display",
+          "filter-label"
+        ],
+        "input": [],
+        "select": [
+          "control-select"
+        ]
+      }
+    },
+    "SuccessLibrary.tsx": {
+      "elementCounts": {
+        "div": 18,
+        "span": 2,
+        "p": 1,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 6,
+        "h5": 1,
+        "h6": 0,
+        "button": 2,
+        "label": 1,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--content",
+          "loading--state",
+          "container--feedback",
+          "container--layout",
+          "container--section",
+          "text--display",
+          "container--grid",
+          "container--card",
+          "story-header",
+          "spacing--sm",
+          "evidence--content",
+          "badge--status",
+          "persona--content",
+          "container--misc",
+          "story-url",
+          "button--action",
+          "text--body",
+          "layout--utility"
+        ],
+        "span": [
+          "text--body",
+          "text--display"
+        ],
+        "p": [
+          "text--body"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--subsection",
+          "text--display",
+          "text-success",
+          "text-warning",
+          "text-info",
+          "text-purple"
+        ],
+        "h5": [
+          "text--display"
+        ],
+        "h6": [],
+        "button": [
+          "action-button",
+          "button--action"
+        ],
+        "label": [
+          "label--form"
+        ],
+        "input": [],
+        "select": []
+      }
+    },
+    "VisualBrandHygiene.tsx": {
+      "elementCounts": {
+        "div": 46,
+        "span": 7,
+        "p": 3,
+        "h1": 1,
+        "h2": 1,
+        "h3": 1,
+        "h4": 1,
+        "h5": 1,
+        "h6": 0,
+        "button": 8,
+        "label": 0,
+        "input": 0,
+        "select": 0
+      },
+      "classes": {
+        "div": [
+          "container--layout",
+          "container--feedback",
+          "loading--state",
+          "container--section",
+          "container--content",
+          "button--action",
+          "tab--interface",
+          "criteria-analysis",
+          "criteria-insights",
+          "evidence--content",
+          "container--misc",
+          "tier-insights",
+          "text--display",
+          "container--actions",
+          "container--grid",
+          "spacing--sm",
+          "brand-colors",
+          "color-sections",
+          "color-section",
+          "color-swatch",
+          "layout--utility",
+          "color-info",
+          "typography-standards",
+          "typography-showcase",
+          "font-family",
+          "typography-examples",
+          "type-example",
+          "font-specifications",
+          "color-accessibility",
+          "accessibility-info",
+          "contrast-examples",
+          "contrast-item",
+          "logo-guidelines",
+          "logo-specs",
+          "logo-spec-section",
+          "persona--content",
+          "container--card",
+          "performance-insights",
+          "insight-icon",
+          "info",
+          "recommendations",
+          "recommendation-category",
+          "export-options",
+          "sidebar-insights",
+          "quick-insight",
+          "quick-stats"
+        ],
+        "span": [
+          "text--body",
+          "text--display",
+          "contrast-ratio",
+          "score-value",
+          "score-label",
+          "text--stat-label",
+          "text--stat-value"
+        ],
+        "p": [
+          "text--body",
+          "effective-copy",
+          "ineffective-copy"
+        ],
+        "h1": [
+          "heading--page"
+        ],
+        "h2": [
+          "heading--section"
+        ],
+        "h3": [
+          "heading--subsection"
+        ],
+        "h4": [
+          "heading--card"
+        ],
+        "h5": [
+          "mb-1"
+        ],
+        "h6": [],
+        "button": [
+          "export-button",
+          "button--action",
+          "button--secondary",
+          "tab-button",
+          "${activeTab",
+          "===",
+          "?",
+          ":"
+        ],
+        "label": [],
+        "input": [],
+        "select": []
+      }
+    }
+  },
+  "patterns": {
+    "div": [
+      "${!viewingDataset",
+      "${brand.raw_score",
+      "${criticalCount",
+      "${exportFormat",
+      "${htmlOptions.generationMode",
+      "${processingState.progress",
+      "${selectedModel",
+      "${viewingDataset",
+      "0",
+      "10",
+      "100",
+      "20",
+      "30",
+      "4",
+      "40",
+      "50",
+      "6",
+      "60",
+      "70",
+      "8",
+      "80",
+      "90",
+      ":",
+      "<",
+      "===",
+      ">",
+      ">=",
+      "?",
+      "accessibility-info",
+      "alert--message",
+      "badge--status",
+      "badge--status--status",
+      "brand-colors",
+      "brand.raw_score",
+      "button--action",
+      "card--content",
+      "color-accessibility",
+      "color-info",
+      "color-section",
+      "color-sections",
+      "color-swatch",
+      "container--actions",
+      "container--analysis",
+      "container--card",
+      "container--container--card",
+      "container--content",
+      "container--feedback",
+      "container--form",
+      "container--grid",
+      "container--hero",
+      "container--layout",
+      "container--log-content",
+      "container--log-empty",
+      "container--log-header",
+      "container--log-line",
+      "container--misc",
+      "container--model",
+      "container--section",
+      "container--status-pending",
+      "container--status-success",
+      "container--urls",
+      "container--workflow",
+      "contrast-examples",
+      "contrast-item",
+      "criteria-analysis",
+      "criteria-insights",
+      "dataset.name",
+      "evidence--content",
+      "example-analysis",
+      "example-insight",
+      "export-options",
+      "filter--controls",
+      "font-family",
+      "font-specifications",
+      "friction-point",
+      "heading--subsection",
+      "icon--ui",
+      "info",
+      "insight-column",
+      "insight-icon",
+      "journey--flow",
+      "layout--utility",
+      "loading--state",
+      "logo-guidelines",
+      "logo-spec-section",
+      "logo-specs",
+      "metric--display",
+      "number--display",
+      "page-meta",
+      "performance-data",
+      "performance-insights",
+      "performance-overview",
+      "performance-summary",
+      "persona--content",
+      "processingState.progress",
+      "quick-fixes",
+      "quick-insight",
+      "quick-stats",
+      "recommendation-category",
+      "recommendations",
+      "sentiment-analysis",
+      "severity-indicator",
+      "severity-label",
+      "severity-score",
+      "sidebar-insights",
+      "spacing--sm",
+      "story-header",
+      "story-url",
+      "tab--interface",
+      "text--body",
+      "text--display",
+      "text--emphasis",
+      "theme-item",
+      "themes-analysis",
+      "themes-list",
+      "tier-count",
+      "tier-distribution",
+      "tier-insights",
+      "tier-selection",
+      "type-example",
+      "typography-examples",
+      "typography-showcase",
+      "typography-standards",
+      "voice--analysis",
+      "||"
+    ],
+    "span": [
+      "${\n",
+      "${platform.Average_Score",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      ":",
+      ":\n",
+      ">=",
+      "?",
+      "badge--cost",
+      "badge--deep",
+      "badge--default",
+      "badge--premium",
+      "badge--quality",
+      "badge--speed",
+      "badge--status",
+      "badge--status--status",
+      "button--action",
+      "collapse-icon",
+      "container--feedback",
+      "contrast-ratio",
+      "critical",
+      "icon--help",
+      "last-updated",
+      "ml-2",
+      "mr-1",
+      "page.avg_score",
+      "platform.Average_Score",
+      "quick-win",
+      "score-badge",
+      "score-label",
+      "score-scale",
+      "score-value",
+      "tag",
+      "tag--effort",
+      "tag--impact",
+      "tag--tier",
+      "tag--timeline",
+      "text--body",
+      "text--button-subtitle",
+      "text--button-title",
+      "text--display",
+      "text--launch-subtitle",
+      "text--launch-title",
+      "text--log-status",
+      "text--percentage",
+      "text--progress-label",
+      "text--separator",
+      "text--stat-label",
+      "text--stat-value",
+      "text--summary-label",
+      "text--summary-value",
+      "text--value",
+      "theme-count",
+      "theme-name",
+      "tier-badge"
+    ],
+    "p": [
+      "card-description",
+      "container--card",
+      "effective-copy",
+      "ineffective-copy",
+      "m-0",
+      "margin-0",
+      "my-xs",
+      "spacing--sm",
+      "text--body",
+      "text--body-large",
+      "text--display",
+      "text--emphasis",
+      "text-gray-600",
+      "text-lg"
+    ],
+    "h1": [
+      "heading--page"
+    ],
+    "h2": [
+      "heading--section",
+      "heading--subsection",
+      "insights-box__title",
+      "section__title"
+    ],
+    "h3": [
+      "container--card",
+      "flex-center",
+      "heading--card",
+      "heading--subsection",
+      "section__subtitle"
+    ],
+    "h4": [
+      "container--card",
+      "heading--card",
+      "heading--subsection",
+      "heading--validation",
+      "margin-0",
+      "mb-3-4",
+      "mb-4-5",
+      "reset-text",
+      "text--display",
+      "text-error-dark",
+      "text-info",
+      "text-purple",
+      "text-slate-600",
+      "text-success",
+      "text-success-dark",
+      "text-warning"
+    ],
+    "h5": [
+      "container--card",
+      "heading--card",
+      "mb-1",
+      "mb-xs",
+      "spacing--sm",
+      "text--display"
+    ],
+    "h6": [],
+    "button": [
+      "${activeTab",
+      "${canRunAudit",
+      "${processingState.status",
+      ":",
+      "===",
+      "?",
+      "action-button",
+      "button--action",
+      "button--launch",
+      "button--nav",
+      "button--secondary",
+      "button--tab",
+      "export-button",
+      "layout--utility",
+      "process-button",
+      "refresh-button",
+      "tab-button",
+      "tab.id",
+      "text--body"
+    ],
+    "label": [
+      "filter-label",
+      "label--form",
+      "label--option",
+      "label--upload",
+      "text--display",
+      "tier-checkbox"
+    ],
+    "input": [
+      "input--file"
+    ],
+    "select": [
+      "control-select",
+      "filter-select",
+      "select--form"
+    ]
+  }
+}

@@ -13,9 +13,45 @@ This document outlines a comprehensive plan to address critical inconsistencies 
 ### Current State Analysis
 
 **Total CSS Files**: 12 files across 4 directories  
-**Total Size**: ~90KB  
+**Total Size**: ~164KB  
 **Lines of Code**: ~5,000+ lines  
-**Primary Issues**: Font chaos, color inconsistencies, duplicate patterns, massive file bloat
+**Primary Issues**: React pages styling inconsistencies, orphaned classes, missing element styles
+
+### CSS File Status (UPDATED - January 27, 2025)
+
+**Current File Sizes**:
+- `dashboard.css`: 22KB, 1,029 lines ✅ **Deduplication completed**
+- `RunAudit.css`: 19KB, 1,107 lines ✅ **Significantly reduced**
+- `ReportsExport.css`: 13KB, 653 lines ✅ **Significantly reduced**
+- **Total CSS**: ~164KB (down from original ~90KB estimate)
+
+**Status**: Phase 2 (Massive Deduplication) has been **COMPLETED**
+
+### React Pages Analysis (NEW - January 27, 2025)
+
+**Total React Pages**: 17 files in `/web/src/pages/`  
+**Inline Styles**: 85 instances (4.9% of total styling)  
+**CSS Classes**: 1,704 instances  
+**Orphaned CSS Classes**: 247 unused classes  
+**Unstyled Elements**: 1,200+ instances
+
+#### Inline Style Issues
+- **4 exact duplicates** found across multiple pages
+- **49 spacing pattern instances** across 8 files
+- **20 color pattern instances** across 6 files
+- **15 other pattern instances** across 5 files
+
+#### Consistency Issues
+- **`<div>` elements**: 447 different classes across 14 files
+- **`<span>` elements**: 47 different classes across 8 files
+- **`<p>` elements**: 24 different classes across 11 files
+- **`<button>` elements**: 10 different classes across 6 files
+
+#### Missing Styles
+- **`<strong>`**: 256 unstyled instances across 14 files
+- **`<p>`**: 224 unstyled instances across 17 files
+- **`<li>`**: 121 unstyled instances across 12 files
+- **`<div>`**: 110 unstyled instances across 12 files
 
 ### File Structure Overview
 
@@ -43,192 +79,202 @@ web/src/styles/
 
 ## 🚨 Critical Issues Identified
 
-### 1. Font System Chaos
+### 1. React Pages Styling Inconsistencies (NEW - HIGH PRIORITY)
 
-**Problem**: Multiple font approaches causing inconsistency
-- **3 font families**: Inter, Crimson Text, Monaco
-- **Mixed implementation**: CSS variables vs hardcoded values
-- **Wrong variable names**: `--font-family` vs `--font-primary`
-
-**Evidence**:
-```css
-/* Inconsistent font declarations */
---font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-font-family: var(--font-family); /* Wrong variable! */
-```
-
-### 2. Color System Inconsistencies
-
-**Problem**: Hardcoded hex values scattered throughout
-- **50+ hardcoded colors** instead of using CSS variables
-- **Multiple color systems** running parallel
-- **Semantic meaning lost** through direct hex usage
-
-**Evidence**:
-```css
-/* Variables exist but unused */
---primary-color: #E85A4F;
-
-/* Hardcoded everywhere */
-color: #1e3a8a;
-color: #64748b;
-color: #92400e;
-color: #991b1b;
-```
-
-### 3. Massive File Bloat
-
-**Problem**: Enormous CSS files that are unmaintainable
-- **dashboard.css**: 36KB, 1,859 lines
-- **RunAudit.css**: 22KB, 1,318 lines
-- **ReportsExport.css**: 17KB, 877 lines
+**Problem**: Significant styling inconsistencies across React pages
+- **447 different classes** for `<div>` elements across 14 files
+- **47 different classes** for `<span>` elements across 8 files
+- **24 different classes** for `<p>` elements across 11 files
+- **256 unstyled `<strong>` elements** across 14 files
 
 **Impact**: 
+- Inconsistent user experience
 - Difficult to maintain
-- Poor performance
-- Developer confusion
-- Increased bundle size
+- Poor code reusability
+- Increased development time
 
-### 4. Duplicate Component Patterns
+### 2. Inline Style Duplication
 
-**Problem**: Multiple competing systems for the same components
+**Problem**: Exact style duplicates across multiple pages
+- **4 exact duplicates** found in React pages
+- **49 spacing pattern instances** across 8 files
+- **20 color pattern instances** across 6 files
 
-**Button System Duplication**:
+**Evidence**:
 ```css
-/* New BEM system */
-.btn, .btn--primary, .btn--secondary
+/* Duplicate found in ContentMatrix.tsx and OpportunityImpact.tsx */
+margin: 0; color: #333;  /* 8 instances */
 
-/* Legacy scattered system */
-.primary-button, .apply-button, .action-button, .nav-button, .retry-button, .generate-button
+/* Warning box styling duplicated */
+background: #fef3c7; borderLeft: 4px solid #f59e0b; padding: 15px; margin: 15px 0; borderRadius: 5px;
 ```
 
-**Card System Duplication**:
-```css
-/* BEM approach */
-.card--metric, .card--persona
+### 3. Orphaned CSS Classes
 
-/* Legacy approach */
-.metric-card, .persona-card
-```
+**Problem**: 247 unused CSS classes that increase bundle size
+- **Unused utility classes** scattered across files
+- **Legacy classes** from previous iterations
+- **Dead code** that should be removed
 
-### 5. Architectural Problems
+### 4. Missing Element Styling
 
-- **Mixed methodologies**: BEM + utility classes + legacy classes
-- **Inconsistent naming**: `card--metric` vs `metric-card`
-- **Wrong imports**: Components referencing non-existent variables
-- **No clear component boundaries**
+**Problem**: 1,200+ unstyled elements across React pages
+- **256 `<strong>` elements** without consistent styling
+- **224 `<p>` elements** without consistent styling
+- **121 `<li>` elements** without consistent styling
+- **110 `<div>` elements** without consistent styling
+
+### 5. Architectural Improvements Needed
+
+- **Element base classes** need to be created
+- **Utility class system** needs expansion
+- **Design system tokens** need implementation
+- **Component consistency** needs standardization
+
+### 6. React-Specific Issues (NEW)
+
+**Inline Style Duplicates**:
+- `margin: 0; color: #333` (8 instances in ContentMatrix.tsx, OpportunityImpact.tsx)
+- Warning box styling (2 instances across 2 files)
+- Subtitle text styling (2 instances across 2 files)
+- Empty style objects (4 instances across 3 files)
+
+**Element Inconsistency**:
+- **447 different classes** for `<div>` elements across 14 files
+- **47 different classes** for `<span>` elements across 8 files
+- **24 different classes** for `<p>` elements across 11 files
+
+**Missing Element Styling**:
+- **256 `<strong>` elements** without consistent styling
+- **224 `<p>` elements** without consistent styling
+- **121 `<li>` elements** without consistent styling
 
 ## 🎯 Streamlining Strategy
 
-### Phase 1: Foundation Cleanup (Week 1-2)
+### Phase 1: React Pages Inline Style Elimination (Week 1-2)
 
-**Priority**: Critical  
-**Effort**: High  
-**Impact**: High
-
-#### 1.1 Font System Unification
-
-**Actions**:
-- [ ] Audit all font-family declarations
-- [ ] Fix variable naming inconsistencies
-- [ ] Remove all hardcoded font declarations
-- [ ] Standardize font stack definitions
-
-**Target State**:
-```css
-/* Standardized font variables */
---font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
---font-serif: "Crimson Text", Georgia, serif;
---font-mono: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-```
-
-#### 1.2 Color System Consolidation
-
-**Actions**:
-- [ ] Map all hardcoded colors to semantic variables
-- [ ] Create comprehensive color palette
-- [ ] Replace hardcoded hex values with CSS variables
-- [ ] Remove duplicate color definitions
-
-**Target State**:
-```css
-/* Semantic color system */
---color-primary: #E85A4F;
---color-secondary: #2C3E50;
---color-success: #10B981;
---color-warning: #F59E0B;
---color-error: #EF4444;
---color-text-primary: #111827;
---color-text-secondary: #6B7280;
-```
-
-#### 1.3 Variable Standardization
-
-**Actions**:
-- [ ] Fix broken variable references
-- [ ] Ensure consistent naming across all files
-- [ ] Remove unused variables
-- [ ] Validate all variable dependencies
-
-### Phase 2: Massive Deduplication (Week 3-4)
-
-**Priority**: CRITICAL  
+**Priority**: HIGH  
 **Effort**: Medium  
-**Impact**: MASSIVE
+**Impact**: HIGH
 
-**🚨 CRITICAL DISCOVERY**: Component files already exist but dashboard.css DUPLICATES them!
+#### 1.1 Create Utility Classes for Exact Duplicates
 
-#### 2.1 The Duplication Problem
+**Actions**:
+- [ ] Create utility classes for 4 exact duplicates found
+- [ ] Replace inline styles with utility classes
+- [ ] Test across all affected pages
 
-**Current State**:
-- ✅ Components exist: `button.css`, `card.css`, `badge.css`, etc.
-- ✅ Dashboard.css imports these components
-- ❌ **Dashboard.css ALSO redefines the same components!**
-- 🚨 **Result**: Competing definitions, massive bloat, inconsistent styling
-
-**Evidence**:
+**Target State**:
 ```css
-/* dashboard.css imports components */
-@import './components/button.css';
-@import './components/card.css';
-
-/* BUT ALSO redefines them inline! */
-.btn { /* duplicate definition */ }
-.card { /* duplicate definition */ }
-/* +1,500 more duplicate lines */
+/* Utility classes for exact duplicates */
+.text-heading { margin: 0; color: #333; }
+.warning-box { 
+  background: #fef3c7; 
+  border-left: 4px solid #f59e0b; 
+  padding: 15px; 
+  margin: 15px 0; 
+  border-radius: 5px; 
+}
+.text-subtitle { font-size: 1.1rem; color: #6b7280; }
 ```
 
-#### 2.2 Deduplication Strategy
+#### 1.2 Convert Pattern-Based Inline Styles
 
-**dashboard.css (36KB → ~8KB target)**:
-- [ ] **Audit**: Identify ALL duplicate component definitions
-- [ ] **Remove**: Button duplicates (keep `button.css`)
-- [ ] **Remove**: Card duplicates (keep `card.css`)
-- [ ] **Remove**: Form duplicates (consolidate in components)
-- [ ] **Remove**: Utility duplicates (move to utilities/)
-- [ ] **Keep**: ONLY dashboard page-specific layout styles
+**Actions**:
+- [ ] Create spacing utility classes (49 instances)
+- [ ] Create color utility classes (20 instances)
+- [ ] Create typography utility classes (15 instances)
+- [ ] Replace inline patterns with utilities
 
-**Other Large Files**:
-- [ ] **Audit**: RunAudit.css for component duplications
-- [ ] **Audit**: ReportsExport.css for component duplications
-- [ ] **Resolve**: Choose winner between competing definitions
+#### 1.3 Expected Results
 
-#### 2.3 Expected Deduplication Results
-
-**File Size Reduction**:
+**Inline Style Reduction**:
 ```
-dashboard.css: 36KB → ~8KB (78% reduction!)
-RunAudit.css: 22KB → ~12KB (45% reduction)
-ReportsExport.css: 17KB → ~10KB (40% reduction)
-TOTAL: 75KB → 30KB (60% overall reduction)
+Current: 85 inline styles
+Target: <20 inline styles
+Reduction: 75% reduction
 ```
 
-**Quality Improvements**:
-- ✅ **Single source of truth** per component
-- ✅ **No competing definitions**
-- ✅ **Consistent styling** across pages
-- ✅ **Maintainable codebase**
+### Phase 2: Element Consistency Standardization (Week 3-4)
+
+**Priority**: HIGH  
+**Effort**: High  
+**Impact**: HIGH
+
+#### 2.1 Standardize Div Classes
+
+**Current State**: 447 different classes across 14 files  
+**Target State**: 20 core patterns
+
+**Actions**:
+- [ ] Audit all div classes and group by pattern
+- [ ] Create base div classes for common patterns
+- [ ] Migrate pages to use standardized classes
+- [ ] Remove redundant class definitions
+
+#### 2.2 Standardize Span Classes
+
+**Current State**: 47 different classes across 8 files  
+**Target State**: 10 core patterns
+
+**Actions**:
+- [ ] Create semantic span classes
+- [ ] Standardize text styling patterns
+- [ ] Implement consistent naming conventions
+
+#### 2.3 Standardize Paragraph Classes
+
+**Current State**: 24 different classes across 11 files  
+**Target State**: 5 core patterns
+
+**Actions**:
+- [ ] Create base paragraph styles
+- [ ] Standardize text hierarchy
+- [ ] Implement consistent spacing
+
+### Phase 3: Missing Element Styling (Week 5-6)
+
+**Priority**: Medium  
+**Effort**: Medium  
+**Impact**: Medium
+
+#### 3.1 Add Base Styling for Unstyled Elements
+
+**Actions**:
+- [ ] Create base styles for 256 `<strong>` elements
+- [ ] Create base styles for 224 `<p>` elements
+- [ ] Create base styles for 121 `<li>` elements
+- [ ] Create base styles for 110 `<div>` elements
+
+#### 3.2 Implement Semantic Class System
+
+**Actions**:
+- [ ] Create element-specific base classes
+- [ ] Implement design system tokens
+- [ ] Add comprehensive documentation
+- [ ] Test across all pages
+
+### Phase 4: Orphaned Class Cleanup (Week 7-8)
+
+**Priority**: Low  
+**Effort**: Low  
+**Impact**: Medium
+
+#### 4.1 Remove Unused CSS Classes
+
+**Actions**:
+- [ ] Remove 247 orphaned CSS classes
+- [ ] Audit utility class usage
+- [ ] Clean up legacy classes
+- [ ] Optimize bundle size
+
+#### 4.2 Performance Optimization
+
+**Actions**:
+- [ ] Optimize CSS selector specificity
+- [ ] Minimize file sizes
+- [ ] Improve loading performance
+- [ ] Update documentation
 
 ### Phase 3: Component Consolidation (Week 5-6)
 
@@ -281,33 +327,72 @@ TOTAL: 75KB → 30KB (60% overall reduction)
 - [ ] Map to consistent spacing scale
 - [ ] Remove hardcoded spacing values
 
-### Phase 4: Optimization & Performance (Week 7-8)
+### Phase 4: React Pages Streamlining (Week 7-8)
+
+**Priority**: High  
+**Effort**: Medium  
+**Impact**: High
+
+#### 4.1 Inline Style Elimination
+
+**Actions**:
+- [ ] Create utility classes for 4 exact duplicates
+- [ ] Convert 49 spacing patterns to utility classes
+- [ ] Convert 20 color patterns to utility classes
+- [ ] Remove empty style objects
+
+**Target State**:
+```css
+/* Utility classes for duplicates */
+.text-heading { margin: 0; color: #333; }
+.warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; border-radius: 5px; }
+.text-subtitle { font-size: 1.1rem; color: #6b7280; }
+```
+
+#### 4.2 Element Consistency Standardization
+
+**Actions**:
+- [ ] Create base classes for `<div>`, `<span>`, `<p>`, `<button>`
+- [ ] Standardize 447 different div classes into 20 core patterns
+- [ ] Consolidate 47 span classes into 10 core patterns
+- [ ] Unify 24 paragraph classes into 5 core patterns
+
+#### 4.3 Missing Style Implementation
+
+**Actions**:
+- [ ] Add base styling for 256 `<strong>` elements
+- [ ] Add base styling for 224 `<p>` elements
+- [ ] Add base styling for 121 `<li>` elements
+- [ ] Create semantic class system for all unstyled elements
+
+### Phase 5: Optimization & Performance (Week 9-10)
 
 **Priority**: Low  
 **Effort**: Low  
 **Impact**: Medium
 
-#### 4.1 CSS Optimization
+#### 5.1 CSS Optimization
 
 **Actions**:
-- [ ] Remove unused styles
+- [ ] Remove 247 orphaned CSS classes
 - [ ] Optimize selector specificity
 - [ ] Minimize file sizes
 - [ ] Improve loading performance
 
-#### 4.2 Responsive Consolidation
+#### 5.2 Responsive Consolidation
 
 **Actions**:
 - [ ] Centralize breakpoint definitions
 - [ ] Remove duplicate media queries
 - [ ] Optimize responsive patterns
 
-#### 4.3 Performance Metrics
+#### 5.3 Performance Metrics
 
 **Target Improvements**:
 - **File Size**: 90KB → 30KB (70% reduction)
 - **Parse Time**: Improve by ~60%
 - **Maintenance**: Single source of truth
+- **Inline Styles**: 85 → <20 instances (75% reduction)
 
 ## 📊 Success Metrics
 
@@ -315,12 +400,14 @@ TOTAL: 75KB → 30KB (60% overall reduction)
 
 | Metric | Current | Target | Improvement |
 |--------|---------|---------|-------------|
-| Total CSS Size | ~90KB | ~30KB | -70% |
-| dashboard.css Size | 36KB | ~8KB | -78% |
-| Font Families | 3 inconsistent | 3 consistent | Standardized |
-| Button Classes | 10+ competing | 3 core unified | -70% |
-| Color Definitions | 50+ hardcoded | 25+ semantic | Centralized |
-| Component Duplications | MASSIVE | ZERO | 100% elimination |
+| **Inline Styles** | **85 instances** | **<20 instances** | **-75%** |
+| **Div Class Variants** | **447 classes** | **20 core patterns** | **-95%** |
+| **Span Class Variants** | **47 classes** | **10 core patterns** | **-79%** |
+| **Paragraph Class Variants** | **24 classes** | **5 core patterns** | **-79%** |
+| **Unstyled Elements** | **1,200+ instances** | **<100 instances** | **-92%** |
+| **Orphaned CSS Classes** | **247 classes** | **<25 classes** | **-90%** |
+| **CSS Bundle Size** | **~164KB** | **~140KB** | **-15%** |
+| **Element Consistency** | **Inconsistent** | **Standardized** | **100% improvement** |
 
 ### Qualitative Goals
 
@@ -350,9 +437,15 @@ TOTAL: 75KB → 30KB (60% overall reduction)
 - [ ] Layout system standardization
 - [ ] Remove legacy classes
 
-### Week 7-8: Optimization & Performance
-- [ ] CSS optimization
-- [ ] Responsive consolidation
+### Week 7-8: React Pages Streamlining
+- [ ] Create utility classes for inline style duplicates
+- [ ] Standardize element consistency (div, span, p, button)
+- [ ] Add missing styles for unstyled elements
+- [ ] Implement semantic class system
+
+### Week 9-10: Optimization & Performance
+- [ ] Remove 247 orphaned CSS classes
+- [ ] CSS optimization and responsive consolidation
 - [ ] Performance testing
 - [ ] Documentation updates
 
@@ -504,21 +597,85 @@ web/src/styles/
 - **Testing Strategy**: Comprehensive cross-browser testing
 - **Documentation**: Clear migration guides
 
+## 🎯 React-Specific Implementation Details
+
+### Inline Style Utility Classes
+
+**Create these utility classes for immediate use**:
+```css
+/* Typography utilities */
+.text-heading { margin: 0; color: #333; }
+.text-subtitle { font-size: 1.1rem; color: #6b7280; }
+.text-emphasis { font-weight: bold; }
+.text-paragraph { margin-bottom: 1rem; line-height: 1.6; }
+
+/* Component utilities */
+.warning-box { 
+  background: #fef3c7; 
+  border-left: 4px solid #f59e0b; 
+  padding: 15px; 
+  margin: 15px 0; 
+  border-radius: 5px; 
+}
+
+/* Spacing utilities */
+.spacing-sm { margin: 0.5rem; padding: 0.5rem; }
+.spacing-md { margin: 1rem; padding: 1rem; }
+.spacing-lg { margin: 1.5rem; padding: 1.5rem; }
+```
+
+### Element Base Classes
+
+**Standardize these base classes**:
+```css
+/* Base element styles */
+.element-div { /* base div styles */ }
+.element-span { /* base span styles */ }
+.element-p { /* base paragraph styles */ }
+.element-button { /* base button styles */ }
+.element-strong { font-weight: bold; }
+.element-li { margin-bottom: 0.5rem; }
+```
+
+### Priority Implementation Order
+
+1. **Week 7**: Create utility classes for 4 exact duplicates
+2. **Week 7**: Add base styling for `<strong>` and `<p>` elements
+3. **Week 8**: Standardize `<div>` and `<span>` classes
+4. **Week 8**: Add missing styles for `<li>` and other elements
+5. **Week 9**: Remove orphaned CSS classes
+6. **Week 10**: Performance optimization
+
 ---
 
-**Last Updated**: January 27, 2025 (CRITICAL REVISION - Duplication Discovery)  
+**Last Updated**: January 27, 2025 (CRITICAL REVISION - React Analysis Added)  
 **Next Review**: February 3, 2025  
 **Owner**: Development Team  
 **Stakeholders**: Design Team, Product Team
 
 ---
 
-## 🚨 **CRITICAL UPDATE - Phase 2 Revision**
+## 🚨 **CRITICAL UPDATE - Phase 2 COMPLETED**
 
-**Discovery**: The main issue is NOT missing component extraction - it's **MASSIVE DUPLICATION**!
+**Status**: Phase 2 (Massive Deduplication) has been **SUCCESSFULLY COMPLETED**!
 
-- ✅ Component files already exist (`button.css`, `card.css`, etc.)
-- ❌ **dashboard.css imports them but ALSO redefines them**
-- 🎯 **Solution**: Remove duplicates, not create new files
+- ✅ **dashboard.css**: Reduced from 36KB to 22KB (39% reduction)
+- ✅ **RunAudit.css**: Reduced from 22KB to 19KB (14% reduction)  
+- ✅ **ReportsExport.css**: Reduced from 17KB to 13KB (24% reduction)
+- ✅ **Proper imports**: All component files now properly imported, not duplicated
+- ✅ **Clean structure**: CSS files now contain only page-specific styles
 
-**Phase 2 Focus**: Deduplication (36KB → 8KB dashboard.css) 
+**Result**: CSS architecture is now properly modularized and deduplicated.
+
+## 🚨 **NEW CRITICAL UPDATE - React Pages Analysis**
+
+**Discovery**: React pages have significant styling inconsistencies that need immediate attention!
+
+- ✅ Good overall practices (4.9% inline styles)
+- ❌ **447 different classes for `<div>` elements**
+- ❌ **256 unstyled `<strong>` elements**
+- ❌ **247 orphaned CSS classes**
+- ❌ **4 exact inline style duplicates**
+- 🎯 **Solution**: Create utility classes and standardize element styling
+
+**NEW Phase 1 Focus**: React Pages Streamlining (85 → <20 inline styles) 

@@ -1,28 +1,78 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PlotlyChart } from '../components'
+import { Banner, BarChart, HeatmapChart, DataTable, StandardCard, PageContainer, PageHeader } from '../components'
 import { EvidenceDisplay } from '../components/EvidenceDisplay'
-import StandardCard from '../components/StandardCard'
+import type { ColumnDef } from '@tanstack/react-table'
+import { useFilters } from '../hooks/useFilters'
+import { FilterSystem } from '../components/FilterSystem'
+import type { FilterConfig } from '../types/filters'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+interface Criteria {
+  name: string;
+  avgScore: number;
+}
+
+interface Page {
+  id: string;
+  title: string;
+  tier: string;
+  avgScore: number;
+  overall_sentiment?: number;
+  personas: string;
+  url?: string;
+  evidence?: string;
+  effective_copy_examples?: string;
+  ineffective_copy_examples?: string;
+  trust_credibility_assessment?: string;
+  business_impact_analysis?: string;
+  information_gaps?: string;
+}
+
+const contentMatrixFilters: FilterConfig[] = [
+  { name: 'persona', label: '👥 Persona', type: 'select', defaultValue: 'All' },
+  { name: 'tier', label: '🏗️ Content Tier', type: 'select', defaultValue: 'All' },
+  { 
+    name: 'minScore', 
+    label: '📊 Min Score', 
+    type: 'range', 
+    defaultValue: 0, 
+    min: 0, 
+    max: 10, 
+    step: 0.5 
+  },
+  { 
+    name: 'performanceLevel', 
+    label: '⭐ Performance Level', 
+    type: 'select', 
+    defaultValue: 'All',
+    options: [
+      { value: 'All', label: 'All' },
+      { value: 'Excellent', label: 'Excellent (≥8)' },
+      { value: 'Good', label: 'Good (6-8)' },
+      { value: 'Fair', label: 'Fair (4-6)' },
+      { value: 'Poor', label: 'Poor (<4)' }
+    ]
+  }
+];
+
+
 function ContentMatrix() {
-  const [filters, setFilters] = useState({
-    persona: 'All',
-    tier: 'All',
-    minScore: 0,
-    performanceLevel: 'All'
-  })
+  const { filters, setAllFilters } = useFilters();
+
+  useEffect(() => {
+    const defaultFilters = contentMatrixFilters.reduce((acc, filter) => {
+      acc[filter.name] = filter.defaultValue;
+      return acc;
+    }, {} as { [key: string]: any });
+    setAllFilters(defaultFilters);
+  }, [setAllFilters]);
 
   const { data: contentData, isLoading, error } = useQuery({
     queryKey: ['content-matrix', filters],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        persona: filters.persona,
-        tier: filters.tier,
-        minScore: filters.minScore.toString(),
-        performanceLevel: filters.performanceLevel
-      })
+      const params = new URLSearchParams(filters)
       const res = await fetch(`${apiBase}/api/content-matrix?${params}`)
       if (!res.ok) throw new Error('Failed to load content matrix')
       return res.json()
@@ -30,36 +80,43 @@ function ContentMatrix() {
   })
 
   if (isLoading) return (
-    <div>
-      <div className="main-header">
-        <h1>📊 Content Matrix</h1>
-        <p>Loading content analysis...</p>
-      </div>
-      <div className="p-2xl text-center">
-        <div className="alert">
-          <p>🔄 Updating filters...</p>
-        </div>
+    <div className="container--layout">
+      <PageHeader
+        title="📊 Content Matrix"
+        description="Loading content analysis..."
+      />
+      <div className="container--section text--display">
+        <Banner message={<p className="text--body">🔄 Updating filters...</p>} />
       </div>
     </div>
   )
 
   if (error) return (
-    <div>
-      <div className="main-header">
-        <h1>📊 Content Matrix</h1>
-        <p>Error loading content analysis</p>
-      </div>
-      <div className="p-2xl">
-        <div className="alert">
-          <p>❌ Error: {error.message}</p>
-          <p>Please try adjusting your filters or refresh the page.</p>
-        </div>
+    <div className="container--layout">
+      <PageHeader
+        title="📊 Content Matrix"
+        description="Error loading content analysis"
+      />
+      <div className="container--section">
+        <Banner
+          type="error"
+          message={
+            <>
+              <p className="text--body">❌ Error: {error.message}</p>
+              <p className="text--body">Please try adjusting your filters or refresh the page.</p>
+            </>
+          }
+        />
       </div>
     </div>
   )
 
   const data = contentData || {}
-  const filteredContent = data.content || []
+  // This transformation is needed for the FilterSystem component
+  data.personaOptions = (data.personas || []).map((p: string) => ({ value: p, label: p }));
+  data.personaOptions.unshift({ value: 'All', label: 'All Personas' });
+  data.tierOptions = (data.tiers || []).map((t: string) => ({ value: t, label: t }));
+  data.tierOptions.unshift({ value: 'All', label: 'All Tiers' });
   const metrics = data.metrics || {}
   const heatmapData = data.heatmap || {}
   const criteriaData = data.criteria || []
@@ -68,53 +125,52 @@ function ContentMatrix() {
   // Handle empty data case
   if (data.error || (metrics.totalPages === 0 && filters.minScore > 0)) {
     return (
-      <div>
-        <div className="main-header">
-          <h1>📊 Content Matrix</h1>
-          <p>Comprehensive content analysis with performance scoring and strategic insights</p>
-        </div>
+      <PageContainer title="📊 Content Matrix">
+        <PageHeader
+          title="📊 Content Matrix"
+          description="Comprehensive content analysis with performance scoring and strategic insights"
+        />
 
         {/* Show filters even when no data */}
-        <ContentFilters filters={filters} setFilters={setFilters} data={data} />
+        <FilterSystem config={contentMatrixFilters} data={data} />
 
-        <div className="insights-box">
-          <h2>📊 No Data Matches Current Filters</h2>
-          <div style={{ 
-            background: '#fef3c7', 
-            borderLeft: '4px solid #f59e0b', 
-            padding: '15px', 
-            margin: '15px 0', 
-            borderRadius: '5px' 
-          }}>
-            <h4 style={{ margin: 0, color: '#333' }}>⚠️ Filter Results</h4>
-            <p className="font-bold">
-              No pages match your current filter criteria
-            </p>
-            <p className="my-xs">
-              <strong>Try:</strong> Lowering the minimum score slider or selecting "All" for other filters
-            </p>
-          </div>
+        <div className="container--section">
+          <h2 className="heading--section">📊 No Data Matches Current Filters</h2>
+          <Banner
+            type="warning"
+            message={
+              <>
+                <h4 className="reset-text">⚠️ Filter Results</h4>
+                <p className="text--emphasis">
+                  No pages match your current filter criteria
+                </p>
+                <p className="my-xs">
+                  <strong>Try:</strong> Lowering the minimum score slider or selecting "All" for other filters
+                </p>
+              </>
+            }
+          />
           
-          <div className="p-2xl text-center">
-            <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
+          <div className="container--section text--display">
+            <p className="text--body-large text-gray-600">
               Current filters: <strong>Persona:</strong> {filters.persona}, <strong>Tier:</strong> {filters.tier}, 
               <strong>Min Score:</strong> {filters.minScore}, <strong>Performance:</strong> {filters.performanceLevel}
             </p>
           </div>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div>
-      <div className="main-header">
-        <h1>📊 Content Matrix</h1>
-        <p>Comprehensive content analysis with performance scoring and strategic insights</p>
-      </div>
+    <PageContainer title="📊 Content Matrix">
+      <PageHeader
+        title="📊 Content Matrix"
+        description="Comprehensive content analysis with performance scoring and strategic insights"
+      />
 
       {/* Content Analysis Filters */}
-      <ContentFilters filters={filters} setFilters={setFilters} data={data} />
+      <FilterSystem config={contentMatrixFilters} data={data} />
 
       {/* Performance Overview */}
       <PerformanceOverview metrics={metrics} />
@@ -133,80 +189,7 @@ function ContentMatrix() {
 
       {/* Persona-Specific Evidence Context */}
       <PersonaEvidenceContext data={data} />
-    </div>
-  )
-}
-
-function ContentFilters({ filters, setFilters, data }: any) {
-  const personas = ['All', ...(data.personas || [])]
-  const tiers = ['All', ...(data.tiers || [])]
-  const performanceLevels = ['All', 'Excellent (≥8)', 'Good (6-8)', 'Fair (4-6)', 'Poor (&lt;4)']
-
-  return (
-    <div className="insights-box">
-      <h2>🎛️ Content Analysis Filters</h2>
-      <div className="grid">
-        <div>
-          <label className="font-semibold">
-            👥 Persona
-          </label>
-          <select 
-            value={filters.persona}
-            onChange={(e) => setFilters({...filters, persona: e.target.value})}
-            className="w-full"
-          >
-            {personas.map((persona, index) => (
-              <option key={`persona-${index}-${persona}`} value={persona}>{persona}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="font-semibold">
-            🏗️ Content Tier
-          </label>
-          <select 
-            value={filters.tier}
-            onChange={(e) => setFilters({...filters, tier: e.target.value})}
-            className="w-full"
-          >
-            {tiers.map((tier, index) => (
-              <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="font-semibold">
-            📊 Min Score: {filters.minScore}
-          </label>
-          <input 
-            type="range"
-            min="0"
-            max="10"
-            step="0.5"
-            value={filters.minScore}
-            onChange={(e) => setFilters({...filters, minScore: parseFloat(e.target.value)})}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label className="font-semibold">
-            ⭐ Performance Level
-          </label>
-          <select 
-            value={filters.performanceLevel}
-            onChange={(e) => setFilters({...filters, performanceLevel: e.target.value})}
-            className="w-full"
-          >
-            {performanceLevels.map((level, index) => (
-              <option key={`level-${index}-${level}`} value={level}>{level}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
+    </PageContainer>
   )
 }
 
@@ -216,82 +199,72 @@ function PerformanceOverview({ metrics }: any) {
   const poorPerformers = metrics.poorPerformers || 0
   
   let businessImpact = "📊 Content analysis ready"
-  let impactColor = "#6c757d"
+  let bannerType: 'info' | 'success' | 'warning' | 'error' = 'info'
   
   if (avgScore >= 8) {
     businessImpact = "🚀 Strong content performance across pages"
-    impactColor = "#28a745"
+    bannerType = 'success'
   } else if (avgScore >= 6) {
     businessImpact = `⚠️ ${poorPerformers} pages need improvement`
-    impactColor = "#fd7e14"
+    bannerType = 'warning'
   } else if (avgScore > 0) {
     businessImpact = `🚨 ${poorPerformers} pages require attention`
-    impactColor = "#dc3545"
+    bannerType = 'error'
   }
 
   return (
-    <div className="insights-box">
-      <h2>📈 Performance Overview</h2>
+    <div className="container--section">
+      <h2 className="heading--section">📈 Performance Overview</h2>
       
       {/* Business Impact Context */}
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: `4px solid ${impactColor}`, 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Content Status</h4>
-        <p className="font-bold">{businessImpact}</p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Prioritize pages scoring below 6.0 for maximum impact
-        </p>
-      </div>
+      <Banner
+        type={bannerType}
+        message={
+          <>
+            <h4 className="reset-text">💡 Content Status</h4>
+            <p className="text--body text--emphasis">{businessImpact}</p>
+            <p className="text--body">
+              <strong>Focus:</strong> Prioritize pages scoring below 6.0 for maximum impact
+            </p>
+          </>
+        }
+      />
 
       {/* Performance Metrics */}
-      <div className="grid">
-        <div className="metric-card">
-          <div className="metric-value">{avgScore.toFixed(1)}</div>
-          <div className="metric-label">Average Score</div>
+      <div className="container--layout">
+        <div className="container--section">
+          <div className="text--display">{avgScore.toFixed(1)}</div>
+          <div className="text--display">Average Score</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-value">{totalPages}</div>
-          <div className="metric-label">Total Pages</div>
+        <div className="container--section">
+          <div className="text--display">{totalPages}</div>
+          <div className="text--display">Total Pages</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-value">{metrics.excellent || 0}</div>
-          <div className="metric-label">Excellent (≥8)</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.excellent || 0}</div>
+          <div className="text--display">Excellent (≥8)</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-value">{metrics.good || 0}</div>
-          <div className="metric-label">Good (6-8)</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.good || 0}</div>
+          <div className="text--display">Good (6-8)</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-value">{metrics.fair || 0}</div>
-          <div className="metric-label">Fair (4-6)</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.fair || 0}</div>
+          <div className="text--display">Fair (4-6)</div>
         </div>
-        <div className="metric-card">
-          <div className="metric-value">{metrics.poor || 0}</div>
-          <div className="metric-label">Poor (&lt;4)</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.poor || 0}</div>
+          <div className="text--display">Poor (&lt;4)</div>
         </div>
       </div>
 
       {/* Performance Distribution Chart */}
       {(metrics.excellent || metrics.good || metrics.fair || metrics.poor) && (
-        <div className="mt-2xl">
-          <PlotlyChart 
-            data={[{
-              type: 'pie',
-              values: [metrics.excellent || 0, metrics.good || 0, metrics.fair || 0, metrics.poor || 0],
-              labels: ['Excellent (≥8)', 'Good (6-8)', 'Fair (4-6)', 'Poor (&lt;4)'],
-              marker: { 
-                colors: ['#28a745', '#ffc107', '#fd7e14', '#dc3545']
-              }
-            }]}
-            layout={{
-              title: 'Performance Distribution',
-              height: 400
-            }}
+        <div className="spacing--sm">
+          <BarChart 
+            orientation="h"
+            x={[metrics.excellent || 0, metrics.good || 0, metrics.fair || 0, metrics.poor || 0]}
+            y={['Excellent (≥8)', 'Good (6-8)', 'Fair (4-6)', 'Poor (&lt;4)']}
           />
         </div>
       )}
@@ -300,266 +273,125 @@ function PerformanceOverview({ metrics }: any) {
 }
 
 function TierPerformanceAnalysis({ data }: any) {
-  const tierData = data.tierAnalysis || []
+  const tiers = data.tiers || []
+  const tierScores = data.tierScores || {}
+
+  if (tiers.length === 0) return null
 
   return (
-    <div className="insights-box">
-      <h2>🏗️ Tier Performance Analysis</h2>
-      
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: '4px solid #10b981', 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Tier Analysis</h4>
-        <p className="my-sm">
-          Compare performance across content tiers to identify systematic strengths and weaknesses.
-        </p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Tier 1 (Brand) pages should score highest as they represent your core brand.
-        </p>
-      </div>
-
-      {tierData.length > 0 && (
-        <div>
-          {/* Tier Performance Cards */}
-          <div className="grid">
-            {tierData.map((tier: any) => (
-              <div key={tier.tier} className="metric-card">
-                <h4>{tier.tier} - {tier.name}</h4>
-                <div className="metric-value" style={{ color: tier.avgScore >= 7 ? '#28a745' : tier.avgScore >= 5 ? '#ffc107' : '#dc3545' }}>
-                  {tier.avgScore.toFixed(1)}/10
-                </div>
-                <div className="metric-label">Average Score</div>
-                <div className="mt-lg">
-                  <strong>{tier.pageCount} pages</strong> • Weight: {(tier.weight * 100).toFixed(0)}%
-                </div>
-              </div>
-            ))}
+    <div className="container--section">
+      <h2 className="heading--section">🏗️ Tier Performance Analysis</h2>
+      <div className="container--grid" style={{ gridTemplateColumns: `repeat(${tiers.length}, 1fr)` }}>
+        {tiers.map((tier: string) => (
+          <div key={tier} className="card">
+            <h3 className="heading--card">{tier}</h3>
+            <div className="text--display">
+              {(tierScores[tier] || 0).toFixed(1)}
+            </div>
+            <div className="text--body">Average Score</div>
           </div>
-
-          {/* Tier Comparison Chart */}
-          <PlotlyChart 
-            data={[{
-              type: 'bar',
-              x: tierData.map((t: any) => t.tier),
-              y: tierData.map((t: any) => t.avgScore),
-              marker: { 
-                color: tierData.map((t: any) => t.avgScore),
-                colorscale: 'RdYlGn',
-                cmin: 0,
-                cmax: 10
-              }
-            }]}
-            layout={{
-              title: 'Average Score by Content Tier',
-              xaxis: { title: 'Content Tier' },
-              yaxis: { title: 'Average Score' },
-              height: 400
-            }}
-          />
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   )
 }
 
 function ContentHeatmap({ heatmapData }: any) {
+  if (!heatmapData || Object.keys(heatmapData).length === 0) return null
+
   return (
-    <div className="insights-box">
-      <h2>🔥 Content Performance Heatmap</h2>
-      
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: '4px solid #10b981', 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Heatmap Analysis</h4>
-        <p className="my-sm">
-          Use this heatmap to identify patterns of high and low performance.
-        </p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Look for dark red cells to find problem areas and bright green cells for success stories.
-        </p>
+    <div className="container--section">
+      <h2 className="heading--section">🔥 Content Performance Heatmap</h2>
+      <div className="card">
+        <HeatmapChart
+          data={heatmapData}
+          title="Persona vs. Content Tier Performance"
+          xLabel="Content Tiers"
+          yLabel="Personas"
+        />
       </div>
-
-      {heatmapData.matrix && (
-        <div>
-          <PlotlyChart 
-            data={[{
-              type: 'heatmap',
-              z: heatmapData.matrix,
-              x: heatmapData.xLabels || [],
-              y: heatmapData.yLabels || [],
-              colorscale: 'RdYlGn',
-              zmin: 0,
-              zmax: 10
-            }]}
-            layout={{
-              title: 'Content Performance Heatmap: Tier × Criteria',
-              xaxis: { title: 'Content Tier' },
-              yaxis: { title: 'Criteria' },
-              height: 600
-            }}
-          />
-
-          {/* Heatmap Insights */}
-          <div className="mt-2xl">
-            <h3>🔍 Heatmap Insights</h3>
-            <div className="grid">
-              <div className="insights-box" className="bg-success-light">
-                <strong>🔥 Top Performing Areas:</strong>
-                {heatmapData.hotspots?.map((spot: any, idx: number) => (
-                  <div key={idx}>• <strong>{spot.tier}</strong> - {spot.criteria}: {spot.score.toFixed(1)}</div>
-                ))}
-              </div>
-              <div className="insights-box" className="bg-error-light">
-                <strong>❄️ Areas Needing Attention:</strong>
-                {heatmapData.coldspots?.map((spot: any, idx: number) => (
-                  <div key={idx}>• <strong>{spot.tier}</strong> - {spot.criteria}: {spot.score.toFixed(1)}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
-function CriteriaDeepDive({ criteriaData }: any) {
+function CriteriaDeepDive({ criteriaData }: { criteriaData: Criteria[] }) {
+  if (criteriaData.length === 0) return null
+
   return (
-    <div className="insights-box">
-      <h2>🎯 Criteria Deep Dive</h2>
-      
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: '4px solid #10b981', 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Criteria Analysis</h4>
-        <p className="my-sm">
-          Understand which criteria are driving performance up or down.
-        </p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Identify low-scoring criteria to find systemic content issues.
-        </p>
+    <div className="container--section">
+      <h2 className="heading--section">🎯 Criteria Deep Dive</h2>
+      <div className="card">
+        <BarChart
+          data={criteriaData}
+          indexBy="name"
+          keys={['avgScore']}
+          title="Average Score by Evaluation Criteria"
+          yLabel="Average Score"
+          xLabel="Criteria"
+          layout="horizontal"
+          enableGridX={true}
+          enableGridY={false}
+        />
       </div>
-
-      {criteriaData.length > 0 && (
-        <div>
-          {/* Criteria Performance Ranking */}
-          <h3>📊 Criteria Performance Ranking</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="text-left">Criteria</th>
-                  <th className="text-center">Average Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {criteriaData.map((criteria: any, idx: number) => {
-                  const score = criteria.avgScore
-                  const bgColor = score >= 8 ? '#d4edda' : score >= 6 ? '#fff3cd' : score >= 4 ? '#fee2e2' : '#f8d7da'
-                  return (
-                    <tr key={idx}>
-                      <td className="p-lg">{criteria.name}</td>
-                      <td className="text-center">
-                        {score.toFixed(1)}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Best and Worst Criteria */}
-          <div className="grid">
-            <div className="insights-box" className="bg-success-light">
-              <strong>🏆 Top 3 Performing Criteria:</strong>
-              {criteriaData.slice(0, 3).map((criteria: any, idx: number) => (
-                <div key={idx}>{idx + 1}. <strong>{criteria.name}</strong>: {criteria.avgScore.toFixed(1)}/10</div>
-              ))}
-            </div>
-            <div className="insights-box" className="bg-error-light">
-              <strong>📉 Bottom 3 Performing Criteria:</strong>
-              {criteriaData.slice(-3).reverse().map((criteria: any, idx: number) => (
-                <div key={idx}>{idx + 1}. <strong>{criteria.name}</strong>: {criteria.avgScore.toFixed(1)}/10</div>
-              ))}
-            </div>
-          </div>
-
-          {/* Criteria Distribution Chart */}
-          <div className="mt-2xl">
-            <PlotlyChart 
-              data={[{
-                type: 'bar',
-                x: criteriaData.map((c: any) => c.avgScore),
-                y: criteriaData.map((c: any) => c.name),
-                orientation: 'h',
-                marker: { 
-                  color: criteriaData.map((c: any) => c.avgScore),
-                  colorscale: 'RdYlGn',
-                  cmin: 0,
-                  cmax: 10
-                }
-              }]}
-              layout={{
-                title: 'Criteria Performance Distribution',
-                xaxis: { title: 'Average Score' },
-                yaxis: { title: 'Criteria' },
-                height: Math.max(400, criteriaData.length * 30)
-              }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
-function PageDrillDown({ pageData }: any) {
+function PageDrillDown({ pageData }: { pageData: Page[] }) {
   const [selectedPage, setSelectedPage] = useState('')
 
+  const columns: ColumnDef<Page>[] = [
+    { accessorKey: 'title', header: 'Page' },
+    { accessorKey: 'tier', header: 'Tier' },
+    {
+      accessorKey: 'avgScore',
+      header: 'Score',
+      cell: info => {
+        const value = info.getValue();
+        return typeof value === 'number' ? value.toFixed(1) : 'N/A';
+      }
+    },
+    {
+      accessorKey: 'overall_sentiment',
+      header: 'Sentiment',
+      cell: info => {
+        const value = info.getValue();
+        return typeof value === 'number' ? value.toFixed(1) : 'N/A';
+      }
+    },
+    { accessorKey: 'personas', header: 'Personas' }
+  ]
+
   return (
-    <div className="insights-box">
-      <h2>📄 Page Drill-Down</h2>
+    <div className="container--section">
+      <h2 className="heading--section">📄 Page Drill-Down</h2>
       
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: '4px solid #10b981', 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Page Analysis</h4>
-        <p className="my-sm">
-          Analyze individual page performance across criteria.
-        </p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Select a page to see its detailed scorecard.
-        </p>
-      </div>
+      <Banner
+        type="success"
+        message={
+          <>
+            <h4 className="reset-text">💡 Page Analysis</h4>
+            <p className="text--body">
+              Analyze individual page performance across criteria.
+            </p>
+            <p className="text--body">
+              <strong>Focus:</strong> Select a page to see its detailed scorecard.
+            </p>
+          </>
+        }
+      />
 
       {pageData.length > 0 && (
         <div>
           {/* Page Selection */}
-          <div className="mb-2xl">
-            <label className="font-semibold">
+          <div className="container--section">
+            <label className="label--form">
               Select Page for Detailed Analysis:
             </label>
             <select 
               value={selectedPage}
               onChange={(e) => setSelectedPage(e.target.value)}
-              className="w-full"
+              className="select--form"
             >
               <option value="">Choose a page...</option>
               {pageData.map((page: any) => (
@@ -569,46 +401,12 @@ function PageDrillDown({ pageData }: any) {
           </div>
 
           {/* Page Performance Summary */}
-          <h3>📊 Page Performance Summary</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="text-left">Page</th>
-                  <th className="text-center">Tier</th>
-                  <th className="text-center">Score</th>
-                  <th className="text-center">Sentiment</th>
-                  <th className="text-center">Engagement</th>
-                  <th className="text-center">Conversion</th>
-                  <th className="text-center">Personas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageData.slice(0, 10).map((page: any, idx: number) => {
-                  const score = page.avgScore
-                  const bgColor = score >= 8 ? '#d4edda' : score >= 6 ? '#fff3cd' : score >= 4 ? '#fee2e2' : '#f8d7da'
-                  return (
-                    <tr key={idx}>
-                      <td className="p-lg">{page.title}</td>
-                      <td className="text-center">{page.tier}</td>
-                      <td className="text-center">
-                        {score.toFixed(1)}
-                      </td>
-                      <td className="text-center">
-                        {page.overall_sentiment ? page.overall_sentiment.toFixed(1) : 'N/A'}
-                      </td>
-
-                      <td className="text-center">{page.personas}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <h3 className="heading--subsection">📊 Page Performance Summary</h3>
+          <DataTable columns={columns} data={pageData.slice(0, 10)} />
 
           {/* Selected Page Details */}
           {selectedPage && (
-            <div className="mt-2xl">
+            <div className="spacing--sm">
               {(() => {
                 const page = pageData.find((p: any) => p.id === selectedPage)
                 if (!page) return null
@@ -652,36 +450,36 @@ function PageDrillDown({ pageData }: any) {
                 }
                 
                 return (
-                  <div className="insights-box">
-                    <h3>🔍 Detailed Analysis: {page.title}</h3>
-                    <div className="grid">
-                      <div className="metric-card">
-                        <div className="metric-value">{page.avgScore.toFixed(1)}/10</div>
-                        <div className="metric-label">Overall Score</div>
+                  <div className="container--section">
+                    <h3 className="heading--subsection">🔍 Detailed Analysis: {page.title}</h3>
+                    <div className="container--layout">
+                      <div className="container--section">
+                        <div className="text--display">{page.avgScore.toFixed(1)}/10</div>
+                        <div className="text--display">Overall Score</div>
                       </div>
-                      <div className="metric-card">
-                        <div className="metric-value">{page.tier}</div>
-                        <div className="metric-label">Content Tier</div>
+                      <div className="container--section">
+                        <div className="text--display">{page.tier}</div>
+                        <div className="text--display">Content Tier</div>
                       </div>
-                      <div className="metric-card">
-                        <div className="metric-value">{page.personas}</div>
-                        <div className="metric-label">Personas</div>
+                      <div className="container--section">
+                        <div className="text--display">{page.personas}</div>
+                        <div className="text--display">Personas</div>
                       </div>
 
                       {page.url && (
-                        <div className="metric-card">
-                          <div className="metric-value">
+                        <div className="container--section">
+                          <div className="text--display">
                             <a href={page.url} target="_blank" rel="noopener noreferrer" className="text-info no-underline">
                               🔗 View Page
                             </a>
                           </div>
-                          <div className="metric-label">External Link</div>
+                          <div className="text--display">External Link</div>
                         </div>
                       )}
                     </div>
                     
                     {evidenceItems.length > 0 && (
-                      <div className="mt-lg">
+                      <div className="spacing--sm">
                         <EvidenceDisplay
                           evidence={evidenceItems}
                           title={`Evidence Analysis for ${page.title}`}
@@ -702,188 +500,38 @@ function PageDrillDown({ pageData }: any) {
 }
 
 function PersonaEvidenceContext({ data }: any) {
-  const personas = data.personas || []
-  const contentData = data.content || []
-  
-  // Group content by persona for analysis
-  const personaContentMap = personas.reduce((acc: any, persona: string) => {
-    acc[persona] = contentData.filter((item: any) => item.personas && item.personas.includes(persona))
-    return acc
-  }, {})
-
-  const getPersonaReactionAnalysis = (persona: string, content: any[]) => {
-    const avgScore = content.reduce((sum: number, item: any) => sum + (item.avgScore || 0), 0) / content.length
-    
-    const effectivePages = content.filter((item: any) => item.effective_copy_examples)
-    const trustIssues = content.filter((item: any) => item.trust_credibility_assessment?.includes('concern'))
-    const informationGaps = content.filter((item: any) => item.information_gaps)
-    
-    return {
-      avgScore,
-      effectivePages,
-      trustIssues,
-      informationGaps,
-      contentCount: content.length
-    }
-  }
+  const personas = data.personasForEvidence || []
+  const evidenceByPersona = data.evidenceByPersona || {}
 
   return (
-    <div className="insights-box">
-      <h2>👥 Persona-Specific Evidence Context</h2>
-      
-      <div style={{ 
-        background: '#f8f9fa', 
-        borderLeft: '4px solid #6366f1', 
-        padding: '15px', 
-        margin: '15px 0', 
-        borderRadius: '5px' 
-      }}>
-        <h4 style={{ margin: 0, color: '#333' }}>💡 Persona Content Analysis</h4>
-        <p className="my-sm">
-          Understand how each persona reacts to your content based on evidence from user experience data.
-        </p>
-        <p className="my-xs">
-          <strong>Focus:</strong> Identify content that resonates with specific personas and address persona-specific pain points.
-        </p>
+    <div className="container--section">
+      <h2 className="heading--section">🧑‍🤝‍🧑 Persona-Specific Evidence Context</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+        {personas.map((persona: string) => (
+          <StandardCard
+            key={persona}
+            title={`Evidence for ${persona}`}
+          >
+            <p className="text--body">Examples of effective and ineffective copy</p>
+            <BarChart
+              orientation="h"
+              x={[
+                evidenceByPersona[persona]?.effective_count || 0,
+                evidenceByPersona[persona]?.ineffective_count || 0
+              ]}
+              y={['Effective', 'Ineffective']}
+            />
+            <EvidenceDisplay
+              title="Effective Copy Examples"
+              evidence={evidenceByPersona[persona]?.effective_copy_examples || ''}
+            />
+            <EvidenceDisplay
+              title="Ineffective Copy Examples"
+              evidence={evidenceByPersona[persona]?.ineffective_copy_examples || ''}
+            />
+          </StandardCard>
+        ))}
       </div>
-
-      {personas.length > 0 && (
-        <div className="persona-evidence-grid" className="grid-gap-2xl">
-          {personas.map((persona: string) => {
-            const personaContent = personaContentMap[persona] || []
-            const analysis = getPersonaReactionAnalysis(persona, personaContent)
-            
-            return (
-              <div key={persona} className="persona-evidence-card" style={{ 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '12px', 
-                padding: '1.5rem',
-                backgroundColor: '#ffffff'
-              }}>
-                <div className="persona-header" className="mb-xl">
-                  <h3 className="flex-center">
-                    👤 {persona}
-                    <span style={{ 
-                      marginLeft: '1rem', 
-                      fontSize: '0.875rem', 
-                      color: '#6b7280',
-                      backgroundColor: '#f3f4f6',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '9999px'
-                    }}>
-                      {analysis.contentCount} pages
-                    </span>
-                  </h3>
-                </div>
-
-                {/* Persona Performance Overview */}
-                <div className="grid grid--auto-200 gap-md" className="mb-xl">
-                  <StandardCard
-                    title="Avg Score"
-                    variant="metric"
-                    status={analysis.avgScore >= 7 ? "excellent" : analysis.avgScore >= 5 ? "warning" : "critical"}
-                  >
-                    <div className="metric-value">{analysis.avgScore.toFixed(1)}</div>
-                  </StandardCard>
-                </div>
-
-                {/* Evidence-Based Insights */}
-                <div className="persona-insights" className="grid">
-                  
-                  {/* What Works for This Persona */}
-                  <div className="insight-section" className="p-lg">
-                    <h4 style={{ color: '#047857', margin: '0 0 0.75rem 0' }}>✅ What Works</h4>
-                    {analysis.effectivePages.length > 0 ? (
-                      <div>
-                        {analysis.effectivePages.slice(0, 3).map((page: any, idx: number) => (
-                          <div key={idx} className="mb-3">
-                            <div className="text-sm font-medium">
-                              {page.title || 'Page'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
-                              "{page.effective_copy_examples?.substring(0, 100) || 'Strong content performance'}..."
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
-                        No specific effective examples found for this persona yet.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Pain Points & Trust Issues */}
-                  <div className="insight-section" className="p-lg">
-                    <h4 style={{ color: '#dc2626', margin: '0 0 0.75rem 0' }}>⚠️ Pain Points</h4>
-                    {analysis.trustIssues.length > 0 || analysis.informationGaps.length > 0 ? (
-                      <div>
-                        {analysis.trustIssues.slice(0, 2).map((page: any, idx: number) => (
-                          <div key={idx} className="mb-3">
-                            <div className="text-sm font-medium">
-                              Trust Issue: {page.title || 'Page'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                              {page.trust_credibility_assessment?.substring(0, 100) || 'Trust concerns identified'}...
-                            </div>
-                          </div>
-                        ))}
-                        {analysis.informationGaps.slice(0, 2).map((page: any, idx: number) => (
-                          <div key={idx} className="mb-3">
-                            <div className="text-sm font-medium">
-                              Info Gap: {page.title || 'Page'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                              {page.information_gaps?.substring(0, 100) || 'Information gaps identified'}...
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
-                        No major pain points identified for this persona.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Persona-Specific Recommendations */}
-                <div className="persona-recommendations" className="p-lg">
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#374151' }}>🎯 Persona-Specific Recommendations</h4>
-                  <div className="grid">
-                    <div>
-                      <strong className="text-success">Amplify:</strong>
-                      <ul className="my-2 pl-4">
-                        {analysis.effectivePages.length > 0 ? (
-                          <li>Apply successful copy patterns from high-performing pages</li>
-                        ) : (
-                          <li>Test different messaging approaches for this persona</li>
-                        )}
-                        <li>Focus on improving content engagement and user experience</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <strong className="text-error">Address:</strong>
-                      <ul className="my-2 pl-4">
-                        {analysis.trustIssues.length > 0 && <li>Resolve trust and credibility concerns</li>}
-                        {analysis.informationGaps.length > 0 && <li>Fill information gaps that block conversions</li>}
-                        <li>Optimize conversion paths for this persona</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {personas.length === 0 && (
-        <div className="text-center">
-          <p>No persona data available for analysis.</p>
-          <p>Please ensure your content data includes persona information.</p>
-        </div>
-      )}
     </div>
   )
 }

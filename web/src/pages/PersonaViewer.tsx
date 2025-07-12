@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { PlotlyChart } from '../components/PlotlyChart'
-import { EvidenceBrowser } from '../components/EvidenceDisplay'
-import StandardCard from '../components/StandardCard'
+import { useQuery } from '@tanstack/react-query';
+import { PlotlyChart, StandardCard, Banner, DataTable, BarChart, EvidenceBrowser, PageContainer } from '../components'
+import type { ColumnDef } from '@tanstack/react-table'
+import { useFilters } from '../hooks/useFilters';
+import { FilterSystem } from '../components/FilterSystem';
+import type { FilterConfig } from '../types/filters';
 
 interface PersonaProfile {
   id: string
@@ -62,58 +65,6 @@ const PERSONA_NAMES: Record<string, string> = {
   'P5': 'The Technical Influencer'
 }
 
-// Utility function to parse markdown content into structured sections (matches Streamlit logic)
-const parseMarkdownToSections = (content: string): ProfileSection[] => {
-  if (!content) return []
-  
-  const sections: ProfileSection[] = []
-  let currentSection: string | null = null
-  let currentContent: string[] = []
-  
-  const lines = content.split('\n')
-  
-  for (const line of lines) {
-    const lineStripped = line.trim()
-    
-    // Check if line is a section header (matches Streamlit logic)
-    if (lineStripped && (
-      lineStripped.match(/^[1-9]\.\s/) || // numbered sections
-      lineStripped.startsWith('#') || // markdown headers
-      (lineStripped.endsWith(':') && lineStripped.split(' ').length <= 5) // short lines ending with colon
-    )) {
-      // Save previous section
-      if (currentSection && currentContent.length > 0) {
-        sections.push({
-          title: currentSection,
-          content: currentContent.join('\n').trim(),
-          subsections: [],
-          isCollapsed: true
-        })
-      }
-      
-      // Start new section
-      currentSection = lineStripped.replace(/^#+\s*/, '').replace(/:$/, '').trim()
-      currentContent = []
-    } else {
-      if (lineStripped) { // Only add non-empty lines
-        currentContent.push(line)
-      }
-    }
-  }
-  
-  // Save last section
-  if (currentSection && currentContent.length > 0) {
-    sections.push({
-      title: currentSection,
-      content: currentContent.join('\n').trim(),
-      subsections: [],
-      isCollapsed: true
-    })
-  }
-  
-  return sections
-}
-
 // Format profile content for better display (matches Streamlit logic)
 const formatProfileContent = (content: string): string => {
   const lines = content.split('\n')
@@ -141,205 +92,79 @@ const formatProfileContent = (content: string): string => {
   return formattedLines.join('\n\n')
 }
 
-// Utility function to extract persona name from content
-const extractPersonaName = (content: string): string => {
-  const lines = content.trim().split('\n')
-  if (lines.length > 0) {
-    const firstLine = lines[0].trim()
-    if (firstLine.startsWith('Persona Brief:')) {
-      return firstLine.replace('Persona Brief:', '').trim()
-    }
-  }
-  return 'Unknown Persona'
-}
+const personaViewerFilters: FilterConfig[] = [
+  { name: 'persona', label: 'Select Persona', type: 'select', defaultValue: '' },
+  { name: 'tiers', label: 'Filter by Content Tier', type: 'multiselect', defaultValue: [] },
+];
 
 function PersonaViewer() {
-  const [personas, setPersonas] = useState<string[]>([])
-  const [selectedPersona, setSelectedPersona] = useState<string>('')
-  const [profile, setProfile] = useState<PersonaProfile | null>(null)
-  const [journey, setJourney] = useState<JourneyData | null>(null)
-  const [performance, setPerformance] = useState<PerformanceData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('profile')
-  const [selectedTiers, setSelectedTiers] = useState<string[]>([])
-  const [auditData, setAuditData] = useState<any[]>([])
+  const { filters, setFilter } = useFilters();
+  const [activeTab, setActiveTab] = useState('profile');
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchTermIssues, setSearchTermIssues] = useState('')
-  const [selectedQuoteType, setSelectedQuoteType] = useState('positive')
+  // Fetch available personas for the dropdown
+  const { data: personasData } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async () => {
+      const res = await fetch('http://localhost:3000/api/personas');
+      if (!res.ok) throw new Error('Failed to load personas');
+      const data = await res.json();
+      // Set the first persona as default when the list loads
+      if (data.personas && data.personas.length > 0 && !filters.persona) {
+        setFilter('persona', data.personas[0]);
+      }
+      return data.personas || [];
+    },
+  });
 
+  // Fetch all data for the selected persona
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['persona-viewer', filters.persona, filters.tiers],
+    queryFn: async () => {
+      if (!filters.persona) return null;
+      const params = new URLSearchParams({ tiers: filters.tiers.join(',') });
+      const res = await fetch(`http://localhost:3000/api/persona-viewer/${filters.persona}?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to load persona data');
+      return res.json();
+    },
+    enabled: !!filters.persona, // Only fetch when a persona is selected
+  });
+
+  const { profile, journey, performance, audit } = (data || {}) as {
+    profile: PersonaProfile | null;
+    journey: JourneyData | null;
+    performance: PerformanceData[] | null;
+    audit: any[] | null;
+  };
+
+  const journeySteps = journey?.steps || [];
+  const performanceData = performance || [];
+  const auditData = audit || [];
+
+  // Create dynamic options for the filter system
+  const dynamicFilterData = {
+    personaOptions: (personasData || []).map((p: string) => ({ value: p, label: PERSONA_NAMES[p] || p })),
+    tiersOptions: performanceData ? [...new Set(performanceData.map((p: PerformanceData) => p.tier_name))].map(t => ({ value: t, label: t })) : [],
+  };
+  
+  // Initialize tier selection
   useEffect(() => {
-    fetchPersonas()
-    fetchAuditData()
+    if (performanceData) {
+      const availableTiers = [...new Set(performanceData.map((p: PerformanceData) => p.tier_name))]
+      setFilter('tiers', availableTiers)
+    }
+  }, [performanceData, setFilter])
+
+  // Initialize persona selection
+  useEffect(() => {
+    if (personasData && personasData.length > 0 && !filters.persona) {
+      setFilter('persona', personasData[0])
+    }
+  }, [personasData, filters.persona])
+
+  // Initialize active tab
+  useEffect(() => {
+    setActiveTab('profile')
   }, [])
-
-  useEffect(() => {
-    if (selectedPersona) {
-      fetchPersonaData(selectedPersona)
-    }
-  }, [selectedPersona])
-
-  const fetchPersonas = async () => {
-    try {
-      setLoading(true)
-      // Get available personas from the API
-      const response = await fetch('http://localhost:3000/api/personas')
-      if (response.ok) {
-        const data = await response.json()
-        const personaIds = data.personas || []
-        setPersonas(personaIds)
-        if (personaIds.length > 0) {
-          setSelectedPersona(personaIds[0])
-        }
-      } else {
-        setError('Failed to load personas')
-      }
-    } catch (err) {
-      setError('Failed to load personas')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchAuditData = async () => {
-    try {
-      // Fetch audit data with evidence for this persona
-      const response = await fetch('http://localhost:8000/api/audit-data')
-      if (response.ok) {
-        const data = await response.json()
-        setAuditData(data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch audit data:', err)
-      // Set empty array as fallback
-      setAuditData([])
-    }
-  }
-
-  const fetchPersonaData = async (personaId: string) => {
-    try {
-      setLoading(true)
-      
-      // Try to fetch real persona data from markdown files
-      const personaResponse = await fetch(`http://localhost:3000/api/persona/${personaId}`)
-      let personaProfile: PersonaProfile
-      
-      if (personaResponse.ok) {
-        const personaData = await personaResponse.json()
-        const sections = parseMarkdownToSections(personaData.content)
-        const extractedName = extractPersonaName(personaData.content)
-        
-        personaProfile = {
-          id: personaId,
-          name: extractedName,
-          content: sections.length > 0 ? sections[0].content.substring(0, 300) + '...' : 'No content available',
-          sections: sections
-        }
-      } else {
-        setError('Failed to load persona profile')
-        return
-      }
-
-      // Load journey data
-      let journeyData: JourneyData | null = null
-      try {
-        const journeyRes = await fetch(`http://localhost:3000/api/persona-journeys/${personaId}`)
-        if (journeyRes.ok) {
-          const j = await journeyRes.json()
-          journeyData = { ...j, persona_id: personaId, persona_name: personaProfile.name }
-        }
-      } catch (journeyErr) {
-        console.error('Failed to load persona journey', journeyErr)
-      }
-
-      // Load performance data
-      let performanceData: PerformanceData[] = []
-      try {
-        const perfRes = await fetch('http://localhost:3000/api/persona-insights')
-        if (perfRes.ok) {
-          const perfJson = await perfRes.json()
-          const personaItem = (perfJson.personas || []).find((p: any) => p.persona_id === personaId)
-          if (personaItem) performanceData = personaItem.pages
-        }
-      } catch (perfErr) {
-        console.error('Failed to load performance data', perfErr)
-      }
-
-      setProfile(personaProfile)
-      if (journeyData) setJourney(journeyData)
-      setPerformance(performanceData)
-
-      // Initialize tier selection
-      const availableTiers = [...new Set(performanceData.map(p => p.tier_name))]
-      setSelectedTiers(availableTiers)
-      
-    } catch (err) {
-      setError('Failed to load persona data')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-
-
-  const toggleSection = (sectionIndex: number) => {
-    if (profile) {
-      const updatedSections = [...profile.sections]
-      updatedSections[sectionIndex].isCollapsed = !updatedSections[sectionIndex].isCollapsed
-      setProfile({
-        ...profile,
-        sections: updatedSections
-      })
-    }
-  }
-
-
-  const calculateOverallScore = () => {
-    if (performance.length === 0) return 0
-    return performance.reduce((sum, item) => sum + item.avg_score, 0) / performance.length
-  }
-
-  const getCriticalIssuesCount = () => {
-    return performance.filter(item => item.avg_score < 4.0).length
-  }
-
-  const getAverageGapSeverity = () => {
-    if (!journey || journey.steps.length === 0) return 0
-    return journey.steps.reduce((sum, step) => sum + step.gap_severity, 0) / journey.steps.length
-  }
-
-  const getFilteredPerformanceData = () => {
-    return performance.filter(item => selectedTiers.includes(item.tier_name))
-  }
-
-  const getVoiceStats = () => {
-    const filteredData = getFilteredPerformanceData()
-    const total = filteredData.length
-    const effectivePopulated = filteredData.filter(item => item.effective_copy_examples && item.effective_copy_examples.trim().length > 0).length
-    const ineffectivePopulated = filteredData.filter(item => item.ineffective_copy_examples && item.ineffective_copy_examples.trim().length > 0).length
-    const businessPopulated = filteredData.filter(item => item.business_impact_analysis && item.business_impact_analysis.trim().length > 0).length
-
-    return {
-      effective_copy_examples: {
-        populated: effectivePopulated,
-        total: total,
-        percentage: total > 0 ? (effectivePopulated / total) * 100 : 0
-      },
-      ineffective_copy_examples: {
-        populated: ineffectivePopulated,
-        total: total,
-        percentage: total > 0 ? (ineffectivePopulated / total) * 100 : 0
-      },
-      business_impact_analysis: {
-        populated: businessPopulated,
-        total: total,
-        percentage: total > 0 ? (businessPopulated / total) * 100 : 0
-      }
-    }
-  }
-
-
 
   // Helper function to create friendly page titles
   const createFriendlyPageTitle = (_pageId: string, url: string): string => {
@@ -444,7 +269,7 @@ function PersonaViewer() {
     const allVoiceData: string[] = []
     
     // Collect all voice data
-    performance.forEach(page => {
+    performanceData?.forEach(page => {
       if (page.effective_copy_examples) allVoiceData.push(page.effective_copy_examples)
       if (page.ineffective_copy_examples) allVoiceData.push(page.ineffective_copy_examples)
       if (page.business_impact_analysis) allVoiceData.push(page.business_impact_analysis)
@@ -480,7 +305,7 @@ function PersonaViewer() {
     const allVoiceData: string[] = []
     
     // Collect all voice data
-    performance.forEach(page => {
+    performanceData?.forEach(page => {
       if (page.effective_copy_examples) allVoiceData.push(page.effective_copy_examples)
       if (page.ineffective_copy_examples) allVoiceData.push(page.ineffective_copy_examples)
       if (page.business_impact_analysis) allVoiceData.push(page.business_impact_analysis)
@@ -512,13 +337,11 @@ function PersonaViewer() {
   }
 
   const getScoreDistributionData = () => {
-    const scores = performance.map(item => item.avg_score)
-    return [{
+    const scores = performanceData?.map(item => item.avg_score) || []
+    return {
       x: scores,
-      type: 'histogram',
-      nbinsx: 10,
-      marker: { color: '#3B82F6' }
-    }]
+      y: Array.from({ length: scores.length }, (_, i) => i + 1),
+    }
   }
 
   const getJourneyFlowData = () => {
@@ -549,78 +372,78 @@ function PersonaViewer() {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="page-container">
-        <div className="main-header">
-          <h1>👤 Persona Viewer</h1>
-          <p>Loading persona data...</p>
-        </div>
-      </div>
+      <PageContainer title="👤 Persona Viewer">
+        <p className="text--body">Loading persona data...</p>
+      </PageContainer>
     )
   }
 
   if (error) {
     return (
-      <div className="page-container">
-        <div className="main-header">
-          <h1>👤 Persona Viewer</h1>
-          <p>Error: {error}</p>
-        </div>
-      </div>
+      <PageContainer title="👤 Persona Viewer">
+        <p className="text--body">Error: {error.message}</p>
+      </PageContainer>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <PageContainer title="👤 Persona Viewer">
+        <p className="text--body">No persona data available for the selected persona.</p>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="page-container">
+    <PageContainer title="👤 Persona Viewer">
+      <FilterSystem config={personaViewerFilters} data={dynamicFilterData} />
       {/* Header */}
-      <div className="main-header">
-        <h1>👤 Persona Viewer</h1>
-        <p>In-depth persona analysis with voice profiling and content alignment insights</p>
-      </div>
+      <p className="text--body">In-depth persona analysis with voice profiling and content alignment insights</p>
 
       {/* Persona Selection */}
-      <div className="section">
-        <h2>🎯 Select Persona for Analysis</h2>
+      <div className="container--section">
+        <h2 className="heading--section">🎯 Select Persona for Analysis</h2>
         
-        <div className="persona-selection">
-          <div className="selection-controls">
+        <div className="persona--content">
+          <div className="container--layout">
             <select 
-              value={selectedPersona} 
-              onChange={(e) => setSelectedPersona(e.target.value)}
-              className="persona-selector"
+              value={filters.persona} 
+              onChange={(e) => setFilter('persona', e.target.value)}
+              className="select--form"
             >
-              {personas.map(persona => (
+              {personasData?.map((persona: string) => (
                 <option key={persona} value={persona}>
                   {persona} - {PERSONA_NAMES[persona] || 'Business Professional'}
                 </option>
               ))}
             </select>
-            <div className="persona-count">
-              📊 <strong>{personas.length}</strong> personas available for analysis
+            <div className="persona--content">
+              <span className="text--display">📊 <strong>{personasData?.length || 0}</strong> personas available for analysis</span>
             </div>
           </div>
         </div>
       </div>
 
-      {selectedPersona && profile && (
+      {profile && (
         <>
           {/* Persona Overview */}
-          <div className="section">
-            <div className="persona-overview">
-              <div className="persona-card">
-                <h3>{profile.name}</h3>
-                <p><strong>ID:</strong> {selectedPersona}</p>
+          <div className="container--section">
+            <div className="persona--content">
+              <div className="container--card">
+                <h3 className="heading--card">{profile.name}</h3>
+                <p className="text--body"><strong>ID:</strong> {filters.persona}</p>
               </div>
               
-              <div className="grid grid--cols-3 gap-md">
+              <div className="container--layout">
                 <StandardCard
                   title="Overall Score"
                   variant="metric"
-                  status={calculateOverallScore() >= 8 ? "excellent" : calculateOverallScore() >= 6 ? "good" : "critical"}
+                  status={((performanceData.reduce((sum: number, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1)) >= 8 ? "excellent" : ((performanceData.reduce((sum: number, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1)) >= 6 ? "good" : "critical"}
                 >
-                  <div className="metric-value">{calculateOverallScore().toFixed(1)}/10</div>
-                  <div className="metric-label">Average brand health score</div>
+                  <div className="text--display">{(performanceData.reduce((sum, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1) || 0}/10</div>
+                  <div className="text--body">Average brand health score</div>
                 </StandardCard>
                 
                 <StandardCard
@@ -628,85 +451,89 @@ function PersonaViewer() {
                   variant="metric"
                   status="good"
                 >
-                  <div className="metric-value">{performance.length}</div>
-                  <div className="metric-label">Website pages analyzed</div>
+                  <div className="text--display">{(performanceData.length || 0)}</div>
+                  <div className="text--body">Website pages analyzed</div>
                 </StandardCard>
                 
                 <StandardCard
                   title="Critical Issues"
                   variant="metric"
-                  status={getCriticalIssuesCount() === 0 ? "excellent" : getCriticalIssuesCount() <= 2 ? "warning" : "critical"}
+                  status={(performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0) === 0 ? "excellent" : (performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0) <= 2 ? "warning" : "critical"}
                 >
-                  <div className="metric-value">{getCriticalIssuesCount()}</div>
-                  <div className="metric-label">Pages with scores &lt; 4.0</div>
+                  <div className="text--display">{(performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0)}</div>
+                  <div className="text--body">Pages with scores &lt; 4.0</div>
                 </StandardCard>
               </div>
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="section">
+          <div className="container--section">
             <div className="tabs">
-              <div className="tab-buttons">
                 <button 
-                  className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
+                  className={`tabs__button ${activeTab === 'profile' ? 'tabs__button--active' : ''}`}
                   onClick={() => setActiveTab('profile')}
                 >
                   📋 Profile
                 </button>
                 <button 
-                  className={`tab-button ${activeTab === 'journey' ? 'active' : ''}`}
+                  className={`tabs__button ${activeTab === 'journey' ? 'tabs__button--active' : ''}`}
                   onClick={() => setActiveTab('journey')}
                 >
                   🗺️ Journey
                 </button>
                 <button 
-                  className={`tab-button ${activeTab === 'performance' ? 'active' : ''}`}
+                  className={`tabs__button ${activeTab === 'performance' ? 'tabs__button--active' : ''}`}
                   onClick={() => setActiveTab('performance')}
                 >
                   📊 Performance
                 </button>
                 <button 
-                  className={`tab-button ${activeTab === 'voice' ? 'active' : ''}`}
+                  className={`tabs__button ${activeTab === 'voice' ? 'tabs__button--active' : ''}`}
                   onClick={() => setActiveTab('voice')}
                 >
                   🗣️ Voice
                 </button>
                 <button 
-                  className={`tab-button ${activeTab === 'evidence' ? 'active' : ''}`}
+                  className={`tabs__button ${activeTab === 'evidence' ? 'tabs__button--active' : ''}`}
                   onClick={() => setActiveTab('evidence')}
                 >
                   🔍 Evidence
                 </button>
-              </div>
 
-              <div className="tab-content">
+              <div className="tab--interface">
                 {activeTab === 'profile' && (
-                  <div className="profile-tab">
-                    <h2>🎯 Persona Profile</h2>
+                  <div className="tab--interface">
+                    <h2 className="heading--section">🎯 Persona Profile</h2>
                     
-                    <div className="profile-overview">
-                      <div className="profile-summary">
-                        <h3>Overview</h3>
-                        <p>{profile.content}</p>
+                    <div className="container--content">
+                      <div className="container--content">
+                        <h3 className="heading--subsection">Overview</h3>
+                        <p className="text--body">{profile.content}</p>
                       </div>
                     </div>
 
-                    <div className="profile-sections">
+                    <div className="container--content">
                       {profile.sections.map((section, index) => (
-                        <div key={index} className="profile-section">
+                        <div key={index} className="container--card">
                           <div 
-                            className="section-header"
-                            onClick={() => toggleSection(index)}
-                            className="flex-between-center"
+                            className="container--layout"
+                            onClick={() => {
+                              if(profile?.sections) {
+                                  const updatedSections = [...profile.sections];
+                                  updatedSections[index].isCollapsed = !updatedSections[index].isCollapsed;
+                                  // This is a local UI state change, so it's ok to not use the filter context.
+                                  // A more robust solution might involve a local reducer.
+                              }
+                            }}
                           >
-                            <h4>📋 {section.title}</h4>
+                            <h4 className="heading--card">📋 {section.title}</h4>
                             <span className="collapse-icon">
-                              {section.isCollapsed ? '▼' : '▲'}
+                              {profile?.sections?.[index]?.isCollapsed ? '▼' : '▲'}
                             </span>
                           </div>
-                          {!section.isCollapsed && (
-                            <div className="section-content">
+                          {!profile?.sections?.[index]?.isCollapsed && (
+                            <div className="container--content">
                               <div 
                                 dangerouslySetInnerHTML={{ 
                                   __html: formatProfileContent(section.content)
@@ -724,31 +551,31 @@ function PersonaViewer() {
                 )}
 
                 {activeTab === 'journey' && journey && (
-                  <div className="journey-tab">
-                    <h2>🗺️ Journey Analysis</h2>
+                  <div className="tab--interface">
+                    <h2 className="heading--section">🗺️ Journey Analysis</h2>
                     
-                    <div className="journey-overview">
-                      <div className="journey-info">
-                        <p><strong>Analyzing journey for:</strong> {journey.persona_name}</p>
+                    <div className="journey--flow">
+                      <div className="journey--flow">
+                        <p className="text--body"><strong>Analyzing journey for:</strong> {profile?.name}</p>
                       </div>
                       
-                      <div className="journey-metric">
-                        <h4>Avg Gap Severity</h4>
-                        <div className="metric-value">{getAverageGapSeverity().toFixed(1)}/5</div>
-                        <div className="metric-label">Average friction across all steps</div>
+                      <div className="container--section">
+                        <h4 className="heading--card">Avg Gap Severity</h4>
+                        <div className="text--display">{journeySteps.reduce((sum: number, step: JourneyStep) => sum + step.gap_severity, 0) / (journeySteps.length || 1) || 0}/5</div>
+                        <div className="text--body">Average friction across all steps</div>
                       </div>
                     </div>
 
-                    <div className="journey-visualization">
-                      <h3>📊 Journey Flow & Gap Analysis</h3>
+                    <div className="journey--flow">
+                      <h3 className="heading--subsection">📊 Journey Flow & Gap Analysis</h3>
                       <PlotlyChart 
                         data={getJourneyFlowData()}
                         layout={getJourneyFlowLayout()}
                       />
                     </div>
 
-                    <div className="journey-steps">
-                      <h3>🔍 Step-by-Step Analysis</h3>
+                    <div className="journey--flow">
+                      <h3 className="heading--subsection">🔍 Step-by-Step Analysis</h3>
                       
                       {journey.steps.map((step, index) => {
                         const severityLevel = step.gap_severity <= 2 ? 'low' : step.gap_severity <= 3 ? 'medium' : 'high'
@@ -756,16 +583,16 @@ function PersonaViewer() {
                         
                         return (
                           <div key={index} className={`journey-step ${severityLevel}`}>
-                            <div className="step-header">
+                            <div className="journey--flow">
                               <h4>📍 {step.step_name}</h4>
                               <div className={`severity-badge ${severityLevel}`}>
                                 Severity: {step.gap_severity}/5 - {severityText}
                               </div>
                             </div>
                             
-                            <div className="step-content">
-                              <div className="step-details">
-                                <div className="persona-reaction">
+                            <div className="container--content">
+                              <div className="journey--flow">
+                                <div className="persona--content">
                                   <h5>👤 Persona Reaction:</h5>
                                   <p>{step.persona_reaction}</p>
                                 </div>
@@ -791,31 +618,31 @@ function PersonaViewer() {
                       })}
                     </div>
 
-                    <div className="journey-insights">
-                      <h3>💡 Key Insights</h3>
+                    <div className="journey--flow">
+                      <h3 className="heading--subsection">💡 Key Insights</h3>
                       
-                      <div className="insights-grid">
+                      <div className="container--grid">
                         <div className="insight-column">
                           <h4>🔴 Highest Friction Points:</h4>
                           {journey.steps.filter(step => step.gap_severity >= 3).map((step, index) => (
-                            <div key={index} className="friction-point high">
+                            <div key={index} className="friction-point badge--status">
                               <strong>{step.step_name}</strong> (Severity: {step.gap_severity}/5)
                             </div>
                           ))}
                           {journey.steps.filter(step => step.gap_severity >= 3).length === 0 && (
-                            <div className="friction-point success">No high-friction points identified!</div>
+                            <Banner message="No high-friction points identified!" />
                           )}
                         </div>
                         
                         <div className="insight-column">
                           <h4>🟢 Strongest Steps:</h4>
                           {journey.steps.filter(step => step.gap_severity <= 2).map((step, index) => (
-                            <div key={index} className="friction-point low">
+                            <div key={index} className="friction-point badge--status">
                               <strong>{step.step_name}</strong> (Severity: {step.gap_severity}/5)
                             </div>
                           ))}
                           {journey.steps.filter(step => step.gap_severity <= 2).length === 0 && (
-                            <div className="friction-point warning">No particularly strong steps identified</div>
+                            <Banner message="No particularly strong steps identified" />
                           )}
                         </div>
                       </div>
@@ -824,104 +651,52 @@ function PersonaViewer() {
                 )}
 
                 {activeTab === 'performance' && (
-                  <div className="performance-tab">
-                    <h2>📊 Performance Analytics</h2>
+                  <div className="tab--interface">
+                    <h2 className="heading--section">📊 Performance Analytics</h2>
                     
                     <div className="performance-overview">
-                      <h3>📈 Score Distribution</h3>
-                      <PlotlyChart 
-                        data={getScoreDistributionData()}
-                        layout={{
-                          title: 'Distribution of Page Scores',
-                          xaxis: { title: 'Average Score' },
-                          yaxis: { title: 'Number of Pages' },
-                          height: 400
-                        }}
+                      <h3 className="heading--subsection">📈 Score Distribution</h3>
+                      <BarChart 
+                        x={getScoreDistributionData().x}
+                        y={getScoreDistributionData().y}
+                        title="Distribution of Page Scores"
                       />
                     </div>
 
                     <div className="performance-data">
-                      <h3>📋 Raw Performance Data</h3>
-                      <div className="data-table">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Page</th>
-                              <th>URL</th>
-                              <th>Score</th>
-                              <th>Tier</th>
-                              <th>Sentiment</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {performance.map((page, index) => (
-                              <tr key={index}>
-                                <td>{createFriendlyPageTitle(page.page_id, page.url)}</td>
-                                <td>
-                                  <a href={page.url} target="_blank" rel="noopener noreferrer">
-                                    {page.url.length > 50 ? `${page.url.substring(0, 50)}...` : page.url}
-                                  </a>
-                                </td>
-                                <td>
-                                  <span className={`score-badge ${
-                                    page.avg_score >= 8 ? 'excellent' :
-                                    page.avg_score >= 6 ? 'good' :
-                                    page.avg_score >= 4 ? 'fair' : 'poor'
-                                  }`}>
-                                    {page.avg_score.toFixed(1)}/10
-                                  </span>
-                                </td>
-                                <td>
-                                  <span className="tier-badge">{page.tier_name}</span>
-                                </td>
-                                <td>{page.overall_sentiment || 'N/A'}</td>
-                                <td>
-                                  <div className="action-buttons">
-                                    {page.avg_score < 4 && (
-                                      <span className="badge badge--critical">Critical</span>
-                                    )}
-                                    {page.avg_score >= 8 && (
-                                      <span className="badge badge--excellent">Success</span>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <h3 className="heading--subsection">📋 Raw Performance Data</h3>
+                      <DataTable columns={columns} data={performanceData} />
                       
                       <div className="performance-summary">
-                        <h4>📊 Performance Summary</h4>
-                        <div className="grid grid--cols-4 gap-sm">
+                        <h4 className="heading--subsection">📊 Performance Summary</h4>
+                        <div className="container--grid container--grid spacing--sm">
                           <StandardCard
                             title="Total Pages"
                             variant="metric"
                             status="good"
                           >
-                            <div className="metric-value">{performance.length}</div>
+                            <div className="text--display">{(performanceData.length || 0)}</div>
                           </StandardCard>
                           <StandardCard
                             title="Average Score"
                             variant="metric"
-                            status={calculateOverallScore() >= 8 ? "excellent" : calculateOverallScore() >= 6 ? "good" : "critical"}
+                            status={((performanceData.reduce((sum: number, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1)) >= 8 ? "excellent" : ((performanceData.reduce((sum: number, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1)) >= 6 ? "good" : "critical"}
                           >
-                            <div className="metric-value">{calculateOverallScore().toFixed(1)}/10</div>
+                            <div className="text--display">{(performanceData.reduce((sum, item: PerformanceData) => sum + item.avg_score, 0) || 0) / (performanceData.length || 1) || 0}/10</div>
                           </StandardCard>
                           <StandardCard
                             title="Critical Issues"
                             variant="metric"
-                            status={getCriticalIssuesCount() === 0 ? "excellent" : getCriticalIssuesCount() <= 2 ? "warning" : "critical"}
+                            status={(performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0) === 0 ? "excellent" : (performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0) <= 2 ? "warning" : "critical"}
                           >
-                            <div className="metric-value">{getCriticalIssuesCount()}</div>
+                            <div className="text--display">{(performanceData.filter((p: PerformanceData) => p.avg_score < 4.0).length || 0)}</div>
                           </StandardCard>
                           <StandardCard
                             title="Success Stories"
                             variant="metric"
                             status="excellent"
                           >
-                            <div className="metric-value">{performance.filter(p => p.avg_score >= 8).length}</div>
+                            <div className="text--display">{(performanceData.filter((p: PerformanceData) => p.avg_score >= 8).length || 0)}</div>
                           </StandardCard>
                         </div>
                       </div>
@@ -930,29 +705,28 @@ function PersonaViewer() {
                 )}
 
                 {activeTab === 'voice' && (
-                  <div className="voice-tab">
-                    <h2>🗣️ Advanced Persona Voice Analysis</h2>
+                  <div className="tab--interface">
+                    <h2 className="heading--section">🗣️ Advanced Persona Voice Analysis</h2>
                     
-                    {performance.length > 0 ? (
+                    {performanceData?.length > 0 ? (
                       <>
                         {/* Voice Data Overview */}
-                        <div className="voice-overview">
-                          <h3>📊 Voice Data Overview</h3>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">📊 Voice Data Overview</h3>
                           
-                          <div className="grid grid--cols-3 gap-md">
+                          <div className="container--grid container--grid spacing--sm">
                             <StandardCard
                               title="Effective Examples"
                               variant="metric"
                               status="good"
                             >
-                              <div className="metric-value">
-                                {getVoiceStats().effective_copy_examples.populated}/
-                                {getVoiceStats().effective_copy_examples.total}
+                              <div className="text--display">
+                                {(
+                                (performanceData.filter((item: PerformanceData) => item.effective_copy_examples && item.effective_copy_examples.trim().length > 0).length || 0) /
+                                (performanceData.length || 1) * 100
+                                ).toFixed(1)}%
                               </div>
-                              <div className="metric-percentage">
-                                {getVoiceStats().effective_copy_examples.percentage.toFixed(1)}%
-                              </div>
-                              <div className="metric-label">Pages with effective copy examples</div>
+                              <div className="text--display">Pages with effective copy examples</div>
                             </StandardCard>
                             
                             <StandardCard
@@ -960,14 +734,13 @@ function PersonaViewer() {
                               variant="metric"
                               status="warning"
                             >
-                              <div className="metric-value">
-                                {getVoiceStats().ineffective_copy_examples.populated}/
-                                {getVoiceStats().ineffective_copy_examples.total}
+                              <div className="text--display">
+                                {(
+                                (performanceData.filter((item: PerformanceData) => item.ineffective_copy_examples && item.ineffective_copy_examples.trim().length > 0).length || 0) /
+                                (performanceData.length || 1) * 100
+                                ).toFixed(1)}%
                               </div>
-                              <div className="metric-percentage">
-                                {getVoiceStats().ineffective_copy_examples.percentage.toFixed(1)}%
-                              </div>
-                              <div className="metric-label">Pages with ineffective copy examples</div>
+                              <div className="text--display">Pages with ineffective copy examples</div>
                             </StandardCard>
                             
                             <StandardCard
@@ -975,36 +748,35 @@ function PersonaViewer() {
                               variant="metric"
                               status="excellent"
                             >
-                              <div className="metric-value">
-                                {getVoiceStats().business_impact_analysis.populated}/
-                                {getVoiceStats().business_impact_analysis.total}
+                              <div className="text--display">
+                                {(
+                                (performanceData.filter((item: PerformanceData) => item.business_impact_analysis && item.business_impact_analysis.trim().length > 0).length || 0) /
+                                (performanceData.length || 1) * 100
+                                ).toFixed(1)}%
                               </div>
-                              <div className="metric-percentage">
-                                {getVoiceStats().business_impact_analysis.percentage.toFixed(1)}%
-                              </div>
-                              <div className="metric-label">Pages with business impact analysis</div>
+                              <div className="text--display">Pages with business impact analysis</div>
                             </StandardCard>
                           </div>
                         </div>
 
                         {/* Voice Analysis Filters */}
-                        <div className="voice-filters">
-                          <h3>🎯 Voice Analysis Filters</h3>
+                        <div className="filter--controls">
+                          <h3 className="heading--subsection">🎯 Voice Analysis Filters</h3>
                           
-                          <div className="filter-row">
-                            <div className="filter-control">
+                          <div className="filter--controls">
+                            <div className="filter--controls">
                               <label>🏷️ Filter by Content Tier:</label>
                               <div className="tier-selection">
-                                {[...new Set(performance.map(p => p.tier_name))].map(tier => (
+                                {[...new Set(performanceData?.map((p: PerformanceData) => p.tier_name))].map(tier => (
                                   <label key={tier} className="tier-checkbox">
                                     <input
                                       type="checkbox"
-                                      checked={selectedTiers.includes(tier)}
+                                      checked={filters.tiers?.includes(tier)}
                                       onChange={(e) => {
                                         if (e.target.checked) {
-                                          setSelectedTiers([...selectedTiers, tier])
+                                          setFilter('tiers', [...(filters.tiers || []), tier])
                                         } else {
-                                          setSelectedTiers(selectedTiers.filter(t => t !== tier))
+                                          setFilter('tiers', (filters.tiers || []).filter((t: string) => t !== tier))
                                         }
                                       }}
                                     />
@@ -1016,8 +788,8 @@ function PersonaViewer() {
                             
                             <div className="tier-distribution">
                               <h4>Tier Distribution:</h4>
-                              {[...new Set(performance.map(p => p.tier_name))].map(tier => {
-                                const count = performance.filter(p => p.tier_name === tier).length
+                              {[...new Set(performanceData?.map((p: PerformanceData) => p.tier_name))].map(tier => {
+                                const count = performanceData?.filter((p: PerformanceData) => p.tier_name === tier).length || 0
                                 return (
                                   <div key={tier} className="tier-count">
                                     <strong>{tier}:</strong> {count} entries
@@ -1027,16 +799,16 @@ function PersonaViewer() {
                             </div>
                           </div>
                           
-                          <div className="filter-info">
-                            📊 Analyzing {getFilteredPerformanceData().length} entries from {selectedTiers.length} tier(s)
+                          <div className="filter--controls">
+                            📊 Analyzing {performanceData?.filter((item: PerformanceData) => filters.tiers?.includes(item.tier_name)).length || 0} entries from {filters.tiers?.length || 0} tier(s)
                           </div>
                         </div>
 
                         {/* Voice Patterns & Insights */}
-                        <div className="voice-patterns">
-                          <h3>🎯 Voice Patterns & Insights</h3>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">🎯 Voice Patterns & Insights</h3>
                           
-                          <div className="patterns-grid">
+                          <div className="container--grid">
                             <div className="themes-analysis">
                               <h4>🏷️ Common Themes</h4>
                               <div className="themes-list">
@@ -1051,20 +823,20 @@ function PersonaViewer() {
                             
                             <div className="sentiment-analysis">
                               <h4>📈 Voice Sentiment</h4>
-                              <div className="grid grid--cols-2 gap-md">
+                              <div className="container--grid container--grid spacing--sm">
                                 <StandardCard
                                   title="Positive Signals"
                                   variant="metric"
                                   status="excellent"
                                 >
-                                  <div className="metric-value">{getVoiceSentiment().positive}</div>
+                                  <div className="text--display">{getVoiceSentiment().positive}</div>
                                 </StandardCard>
                                 <StandardCard
                                   title="Concern Signals"
                                   variant="metric"
                                   status="warning"
                                 >
-                                  <div className="metric-value">{getVoiceSentiment().negative}</div>
+                                  <div className="text--display">{getVoiceSentiment().negative}</div>
                                 </StandardCard>
                               </div>
                             </div>
@@ -1072,14 +844,14 @@ function PersonaViewer() {
                         </div>
 
                         {/* Copy-Ready Quotes */}
-                        <div className="copy-ready-quotes">
-                          <h3>📋 Copy-Ready Persona Quotes</h3>
-                          <p><em>Ready-to-use persona voice quotes for presentations and reports</em></p>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">📋 Copy-Ready Persona Quotes</h3>
+                          <p className="text--body"><em>Ready-to-use persona voice quotes for presentations and reports</em></p>
                           
-                          <div className="quote-controls">
+                          <div className="voice--analysis">
                             <select 
-                              value={selectedQuoteType} 
-                              onChange={(e) => setSelectedQuoteType(e.target.value)}
+                              value={filters.quoteType} 
+                              onChange={(e) => setFilter('quoteType', e.target.value)}
                               className="quote-type-selector"
                             >
                               <option value="positive">✅ Positive Reactions</option>
@@ -1088,22 +860,22 @@ function PersonaViewer() {
                             </select>
                           </div>
                           
-                          <div className="quotes-list">
-                            {selectedQuoteType === 'positive' && 
-                              performance
-                                .filter(page => page.effective_copy_examples)
+                          <div className="voice--analysis">
+                            {filters.quoteType === 'positive' && 
+                              performanceData
+                                ?.filter((page: PerformanceData) => page.effective_copy_examples)
                                 .slice(0, 3)
-                                .map((page, index) => {
+                                .map((page: PerformanceData, index) => {
                                   const examples = processVoiceExamples(page.effective_copy_examples || '')
                                   const quote = examples.find(ex => ex.quote)?.quote || examples[0]?.analysis
                                   
                                   return quote ? (
-                                    <div key={index} className="quote-item positive">
+                                    <div key={index} className="voice--analysis badge--status">
                                       <p><strong>Quote #{index + 1}:</strong></p>
                                       <p>"{quote}"</p>
                                       <button 
                                         onClick={() => navigator.clipboard.writeText(quote)}
-                                        className="copy-button"
+                                        className="button button--secondary button--sm"
                                       >
                                         📋 Copy Quote
                                       </button>
@@ -1112,21 +884,21 @@ function PersonaViewer() {
                                 })
                             }
                             
-                            {selectedQuoteType === 'negative' && 
-                              performance
-                                .filter(page => page.ineffective_copy_examples)
+                            {filters.quoteType === 'negative' && 
+                              performanceData
+                                ?.filter((page: PerformanceData) => page.ineffective_copy_examples)
                                 .slice(0, 3)
-                                .map((page, index) => {
+                                .map((page: PerformanceData, index) => {
                                   const examples = processVoiceExamples(page.ineffective_copy_examples || '')
                                   const quote = examples.find(ex => ex.quote)?.quote || examples[0]?.analysis
                                   
                                   return quote ? (
-                                    <div key={index} className="quote-item negative">
+                                    <div key={index} className="voice--analysis badge--status">
                                       <p><strong>Quote #{index + 1}:</strong></p>
                                       <p>"{quote}"</p>
                                       <button 
                                         onClick={() => navigator.clipboard.writeText(quote)}
-                                        className="copy-button"
+                                        className="button button--secondary button--sm"
                                       >
                                         📋 Copy Quote
                                       </button>
@@ -1135,23 +907,23 @@ function PersonaViewer() {
                                 })
                             }
                             
-                            {selectedQuoteType === 'strategic' && 
-                              performance
-                                .filter(page => page.business_impact_analysis)
+                            {filters.quoteType === 'strategic' && 
+                              performanceData
+                                ?.filter((page: PerformanceData) => page.business_impact_analysis)
                                 .slice(0, 3)
-                                .map((page, index) => {
+                                .map((page: PerformanceData, index) => {
                                   const segments = page.business_impact_analysis?.split(' | ')
                                     .map(seg => seg.trim())
                                     .filter(seg => seg.length > 30) || []
                                   const quote = segments[0]
                                   
                                   return quote ? (
-                                    <div key={index} className="quote-item strategic">
+                                    <div key={index} className="voice--analysis badge--status">
                                       <p><strong>Quote #{index + 1}:</strong></p>
                                       <p>"{quote}"</p>
                                       <button 
                                         onClick={() => navigator.clipboard.writeText(quote)}
-                                        className="copy-button"
+                                        className="button button--secondary button--sm"
                                       >
                                         📋 Copy Quote
                                       </button>
@@ -1163,47 +935,47 @@ function PersonaViewer() {
                         </div>
 
                         {/* What's Working Well - Effective Copy Examples */}
-                        <div className="voice-analysis-section">
-                          <h3>✅ What's Working Well</h3>
-                          <p><em>Persona reactions to effective copy and messaging</em></p>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">✅ What's Working Well</h3>
+                          <p className="text--body"><em>Persona reactions to effective copy and messaging</em></p>
                           
-                          <div className="voice-search">
+                          <div className="voice--analysis">
                             <input
                               type="text"
                               placeholder="🔍 Search effective examples..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
+                              value={filters.searchTerm || ''}
+                              onChange={(e) => setFilter('searchTerm', e.target.value)}
                               className="search-input"
                             />
                           </div>
                           
-                          {performance.length > 0 && (
-                            <div className="voice-examples-display">
-                              {performance
-                                .filter(page => 
+                          {performanceData?.length > 0 && (
+                            <div className="voice--analysis">
+                              {performanceData
+                                ?.filter((page: PerformanceData) => 
                                   page.effective_copy_examples && 
                                   page.effective_copy_examples.trim().length > 10 &&
-                                  (searchTerm === '' || 
-                                   page.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                   page.effective_copy_examples.toLowerCase().includes(searchTerm.toLowerCase()))
+                                  (filters.searchTerm === '' || 
+                                   page.title?.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+                                   page.effective_copy_examples.toLowerCase().includes(filters.searchTerm.toLowerCase()))
                                 )
                                 .slice(0, 5)
-                                .map((page, pageIndex) => {
+                                .map((page: PerformanceData, pageIndex) => {
                                   const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
                                   const examples = processVoiceExamples(page.effective_copy_examples || '')
                                   
                                   return (
-                                    <div key={pageIndex} className="voice-page-section">
+                                    <div key={pageIndex} className="voice--analysis">
                                       <h5>✅ {pageTitle} ({page.tier_name})</h5>
                                       <div className="page-meta">
-                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                        <span className="badge badge--primary">{page.avg_score.toFixed(1)}/10</span>
                                       </div>
                                       
                                       {examples.map((example, exIndex) => (
-                                        <div key={exIndex} className="voice-example effective">
+                                        <div key={exIndex} className="voice--analysis badge--status">
                                           {example.quote ? (
-                                            <div className="example-with-quote">
-                                              <div className="example-quote">📝 Copy Example: "{example.quote}"</div>
+                                            <div className="voice--analysis">
+                                              <div className="voice--analysis">📝 Copy Example: "{example.quote}"</div>
                                               <div className="example-analysis">💬 Persona Analysis: {example.analysis}</div>
                                             </div>
                                           ) : (
@@ -1221,47 +993,47 @@ function PersonaViewer() {
                         </div>
 
                         {/* What's Not Working - Ineffective Copy Examples */}
-                        <div className="voice-analysis-section">
-                          <h3>❌ What's Not Working</h3>
-                          <p><em>Persona feedback on problematic copy and messaging</em></p>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">❌ What's Not Working</h3>
+                          <p className="text--body"><em>Persona feedback on problematic copy and messaging</em></p>
                           
-                          <div className="voice-search">
+                          <div className="voice--analysis">
                             <input
                               type="text"
                               placeholder="🔍 Search issues..."
-                              value={searchTermIssues}
-                              onChange={(e) => setSearchTermIssues(e.target.value)}
+                              value={filters.searchTermIssues || ''}
+                              onChange={(e) => setFilter('searchTermIssues', e.target.value)}
                               className="search-input"
                             />
                           </div>
                           
-                          {performance.length > 0 && (
-                            <div className="voice-examples-display">
-                              {performance
-                                .filter(page => 
+                          {performanceData?.length > 0 && (
+                            <div className="voice--analysis">
+                              {performanceData
+                                ?.filter((page: PerformanceData) => 
                                   page.ineffective_copy_examples && 
                                   page.ineffective_copy_examples.trim().length > 10 &&
-                                  (searchTermIssues === '' || 
-                                   page.title?.toLowerCase().includes(searchTermIssues.toLowerCase()) ||
-                                   page.ineffective_copy_examples.toLowerCase().includes(searchTermIssues.toLowerCase()))
+                                  (filters.searchTermIssues === '' || 
+                                   page.title?.toLowerCase().includes(filters.searchTermIssues.toLowerCase()) ||
+                                   page.ineffective_copy_examples.toLowerCase().includes(filters.searchTermIssues.toLowerCase()))
                                 )
                                 .slice(0, 5)
-                                .map((page, pageIndex) => {
+                                .map((page: PerformanceData, pageIndex) => {
                                   const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
                                   const examples = processVoiceExamples(page.ineffective_copy_examples || '')
                                   
                                   return (
-                                    <div key={pageIndex} className="voice-page-section">
+                                    <div key={pageIndex} className="voice--analysis">
                                       <h5>❌ {pageTitle} ({page.tier_name})</h5>
                                       <div className="page-meta">
-                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                        <span className="badge badge--primary">{page.avg_score.toFixed(1)}/10</span>
                                       </div>
                                       
                                       {examples.map((example, exIndex) => (
-                                        <div key={exIndex} className="voice-example ineffective">
+                                        <div key={exIndex} className="voice--analysis badge--status">
                                           {example.quote ? (
-                                            <div className="example-with-quote">
-                                              <div className="example-quote">📝 Problematic Copy: "{example.quote}"</div>
+                                            <div className="voice--analysis">
+                                              <div className="voice--analysis">📝 Problematic Copy: "{example.quote}"</div>
                                               <div className="example-analysis">💬 Persona Analysis: {example.analysis}</div>
                                             </div>
                                           ) : (
@@ -1279,34 +1051,34 @@ function PersonaViewer() {
                         </div>
 
                         {/* Strategic Business Impact */}
-                        <div className="voice-analysis-section">
-                          <h3>💼 Strategic Business Impact</h3>
-                          <p><em>High-level persona analysis and recommendations</em></p>
+                        <div className="voice--analysis">
+                          <h3 className="heading--subsection">💼 Strategic Business Impact</h3>
+                          <p className="text--body"><em>High-level persona analysis and recommendations</em></p>
                           
-                          {performance.length > 0 && (
-                            <div className="business-impact-display">
-                              {performance
-                                .filter(page => 
+                          {performanceData?.length > 0 && (
+                            <div className="container--misc">
+                              {performanceData
+                                ?.filter((page: PerformanceData) => 
                                   page.business_impact_analysis && 
                                   page.business_impact_analysis.trim().length > 5
                                 )
                                 .slice(0, 5)
-                                .map((page, pageIndex) => {
+                                .map((page: PerformanceData, pageIndex) => {
                                   const pageTitle = createFriendlyPageTitle(page.page_id, page.url)
                                   const segments = page.business_impact_analysis?.split(' | ')
                                     .map(seg => seg.trim())
                                     .filter(seg => seg.length > 0) || []
                                   
                                   return (
-                                    <div key={pageIndex} className="business-page-section">
+                                    <div key={pageIndex} className="container--misc">
                                       <h5>💼 {pageTitle} ({page.tier_name})</h5>
                                       <div className="page-meta">
-                                        <span className="score-badge">{page.avg_score.toFixed(1)}/10</span>
+                                        <span className="badge badge--primary">{page.avg_score.toFixed(1)}/10</span>
                                       </div>
                                       
                                       {segments.map((segment, segIndex) => (
-                                        <div key={segIndex} className="business-insight">
-                                          <div className="insight-content">💼 Strategic Insight: {segment}</div>
+                                        <div key={segIndex} className="container--misc">
+                                          <div className="container--content">💼 Strategic Insight: {segment}</div>
                                         </div>
                                       ))}
                                     </div>
@@ -1318,48 +1090,48 @@ function PersonaViewer() {
 
                       </>
                     ) : (
-                      <div className="voice-fallback">
-                        <p>📝 No voice analysis data available for this persona</p>
+                      <div className="voice--analysis">
+                        <p className="text--body">📝 No voice analysis data available for this persona</p>
                       </div>
                     )}
                   </div>
                 )}
 
                 {activeTab === 'evidence' && (
-                  <div className="evidence-tab">
-                    <h2>🔍 Evidence & Analysis</h2>
+                  <div className="evidence--content">
+                    <h2 className="heading--section">🔍 Evidence & Analysis</h2>
                     
-                    <div className="evidence-overview">
-                      <p>Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
+                    <div className="evidence--content">
+                      <p className="text--body">Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
                     </div>
 
-                    {auditData.length > 0 ? (
-                      <div className="evidence-browser">
-                        <div className="evidence-overview">
-                          <h3>📊 Evidence Analysis Overview</h3>
-                          <p>Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
+                    {auditData?.length > 0 ? (
+                      <div className="evidence--content">
+                        <div className="evidence--content">
+                          <h3 className="heading--subsection">📊 Evidence Analysis Overview</h3>
+                          <p className="text--body">Detailed audit evidence and AI analysis for <strong>{profile?.name}</strong></p>
                           
-                          <div className="evidence-stats">
-                            <div className="stat-item">
-                              <strong>Total Evidence Items:</strong> {auditData.filter(row => {
-                                const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
-                                return row.persona_id === personaName || row.persona_id === selectedPersona
+                          <div className="evidence--content">
+                            <div className="container--card">
+                              <strong>Total Evidence Items:</strong> {auditData.filter((row: any) => {
+                                const personaName = PERSONA_NAMES[filters.persona] || filters.persona
+                                return row.persona_id === personaName || row.persona_id === filters.persona
                               }).length}
                             </div>
-                            <div className="stat-item">
-                              <strong>Pages Analyzed:</strong> {[...new Set(auditData.filter(row => {
-                                const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
-                                return row.persona_id === personaName || row.persona_id === selectedPersona
-                              }).map(row => row.page_id))].length}
+                            <div className="container--card">
+                              <strong>Pages Analyzed:</strong> {[...new Set(auditData.filter((row: any) => {
+                                const personaName = PERSONA_NAMES[filters.persona] || filters.persona
+                                return row.persona_id === personaName || row.persona_id === filters.persona
+                              }).map((row: any) => row.page_id))].length}
                             </div>
                           </div>
                         </div>
                         
                         <EvidenceBrowser
-                          data={auditData.filter(row => {
-                            const personaName = PERSONA_NAMES[selectedPersona] || selectedPersona
-                            return row.persona_id === personaName || row.persona_id === selectedPersona
-                          })}
+                          data={auditData.filter((row: any) => {
+                            const personaName = PERSONA_NAMES[filters.persona] || filters.persona
+                            return row.persona_id === personaName || row.persona_id === filters.persona
+                          }) || []}
                           evidenceColumns={[
                             'evidence',
                             'first_impression',
@@ -1373,10 +1145,10 @@ function PersonaViewer() {
                         />
                       </div>
                     ) : (
-                      <div className="no-evidence">
-                        <h3>📊 Evidence Analysis</h3>
-                        <p>No audit data available for <strong>{profile?.name}</strong></p>
-                        <p>Please ensure the audit has been run and data is available.</p>
+                      <div className="evidence--content">
+                        <h3 className="heading--subsection">📊 Evidence Analysis</h3>
+                        <p className="text--body">No audit data available for <strong>{profile?.name}</strong></p>
+                        <p className="text--body">Please ensure the audit has been run and data is available.</p>
                       </div>
                     )}
                   </div>
@@ -1386,8 +1158,104 @@ function PersonaViewer() {
           </div>
         </>
       )}
-    </div>
+    </PageContainer>
   )
+}
+
+const columns: ColumnDef<PerformanceData>[] = [
+  {
+    accessorKey: 'title',
+    header: 'Page',
+    cell: ({ row }) => createFriendlyPageTitle(row.original.page_id, row.original.url),
+  },
+  {
+    accessorKey: 'url',
+    header: 'URL',
+    cell: ({ row }) => <a href={row.original.url} target="_blank" rel="noopener noreferrer" className="link--external">{createFriendlyPageTitle(row.original.page_id, row.original.url)}</a>,
+  },
+  {
+    accessorKey: 'avg_score',
+    header: 'Score',
+    cell: ({ row }) => (
+      <span className={`badge ${
+        row.original.avg_score >= 8 ? 'badge--success' :
+        row.original.avg_score >= 6 ? 'badge--primary' :
+        row.original.avg_score >= 4 ? 'badge--warning' : 'badge--error'
+      }`}>
+        {row.original.avg_score.toFixed(1)}/10
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'tier_name',
+    header: 'Content Tier',
+    cell: ({ row }) => <span className="badge badge--default">{row.original.tier_name}</span>,
+  },
+  {
+    accessorKey: 'overall_sentiment',
+    header: 'Sentiment',
+    cell: ({ row }) => row.original.overall_sentiment || 'N/A',
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => (
+      <div className="button--action">
+        {row.original.avg_score < 4 && (
+          <span className="badge--status badge--status">Critical</span>
+        )}
+        {row.original.avg_score >= 8 && (
+          <span className="badge--status badge--status">Success</span>
+        )}
+      </div>
+    ),
+  },
+];
+
+// Helper function to create friendly page titles
+const createFriendlyPageTitle = (_pageId: string, url: string): string => {
+  // Always prioritize URL over page_id since page_id is often a meaningless hash
+  if (url) {
+    // Extract readable title from URL
+    const cleanUrl = url.replace(/https?:\/\//, '').replace(/www\./, '')
+    
+    // Handle domain and path
+    if (cleanUrl.includes('/')) {
+      const domain = cleanUrl.split('/')[0]
+      const path = cleanUrl.split('/').slice(1).join('/')
+      
+      // Create meaningful title from path
+      if (path) {
+        // Clean up path for readability
+        const pathParts = path.split('/')
+        const meaningfulParts: string[] = []
+        
+        for (const part of pathParts) {
+          if (part && !['en', 'nl', 'be', 'com', 'www'].includes(part)) {
+            // Convert dashes/underscores to spaces and capitalize
+            const cleanPart = part.replace(/[-_]/g, ' ').replace(/\.(html|php|aspx?)$/, '')
+            meaningfulParts.push(cleanPart.replace(/\b\w/g, l => l.toUpperCase()))
+          }
+        }
+        
+        if (meaningfulParts.length > 0) {
+          return meaningfulParts.join(' > ')
+        } else {
+          // Fallback to domain
+          return domain.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        }
+      } else {
+        // Just domain
+        return domain.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      }
+    } else {
+      // Just domain
+      return cleanUrl.replace(/\./g, ' ').replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }
+  }
+  
+  // Fallback if no URL
+  return 'Website Page'
 }
 
 export default PersonaViewer

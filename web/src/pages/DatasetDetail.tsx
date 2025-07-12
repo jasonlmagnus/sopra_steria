@@ -6,8 +6,13 @@ import { PageContainer, DataTable } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-function DatasetDetail() {
-  const { name } = useParams()
+interface DatasetDetailProps {
+  datasetName?: string;
+}
+
+function DatasetDetail({ datasetName }: DatasetDetailProps) {
+  const { name: nameFromParams } = useParams()
+  const name = datasetName || nameFromParams
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dataset', name],
@@ -19,16 +24,17 @@ function DatasetDetail() {
     enabled: !!name,
   })
 
-  const dataArray = Array.isArray(data) ? data : []
-
   // create columns dynamically from keys
   const columns = React.useMemo<ColumnDef<any, any>[]>(() => {
-    if (dataArray.length === 0) return []
+    const dataArray = Array.isArray(data) ? data : [];
+    if (dataArray.length === 0) return [];
     return Object.keys(dataArray[0]).map(key => ({
       accessorKey: key,
       header: key,
-    }))
-  }, [dataArray])
+    }));
+  }, [data]);
+
+  const dataArray = Array.isArray(data) ? data : []
 
   if (!name) return <p>No dataset specified</p>
   if (isLoading) return <p>Loading dataset...</p>

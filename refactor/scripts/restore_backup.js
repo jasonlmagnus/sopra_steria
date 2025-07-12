@@ -33,7 +33,7 @@ function copyDirectory(src, dest) {
 }
 
 function listBackups() {
-  const backupDir = path.join(__dirname, 'backup_before_refactor');
+  const backupDir = path.join(__dirname, '..', 'backups', 'backup_before_refactor');
   
   if (!fs.existsSync(backupDir)) {
     console.log(`${colors.yellow}No backups found.${colors.reset}`);
@@ -49,7 +49,7 @@ function listBackups() {
 }
 
 function restoreFromBackup(backupName) {
-  const backupPath = path.join(__dirname, 'backup_before_refactor', backupName);
+      const backupPath = path.join(__dirname, '..', 'backups', 'backup_before_refactor', backupName);
   
   if (!fs.existsSync(backupPath)) {
     console.log(`${colors.red}❌ Backup not found: ${backupName}${colors.reset}`);
@@ -61,7 +61,7 @@ function restoreFromBackup(backupName) {
   // Restore pages
   const pagesBackup = path.join(backupPath, 'pages');
   if (fs.existsSync(pagesBackup)) {
-    const pagesDir = path.join(__dirname, 'web', 'src', 'pages');
+    const pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
     if (fs.existsSync(pagesDir)) {
       fs.rmSync(pagesDir, { recursive: true, force: true });
     }
@@ -72,7 +72,7 @@ function restoreFromBackup(backupName) {
   // Restore styles
   const stylesBackup = path.join(backupPath, 'styles');
   if (fs.existsSync(stylesBackup)) {
-    const stylesDir = path.join(__dirname, 'web', 'src', 'styles');
+    const stylesDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles');
     if (fs.existsSync(stylesDir)) {
       fs.rmSync(stylesDir, { recursive: true, force: true });
     }

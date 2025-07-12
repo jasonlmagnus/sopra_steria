@@ -1,0 +1,31 @@
+.banner {
+  padding: 1rem;
+  border-radius: 6px;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+/* Default to info style */
+.banner--info {
+  border-left-color: #3b82f6; /* blue-500 */
+  background-color: #eff6ff; /* blue-50 */
+  color: #1e40af; /* blue-800 */
+}
+
+.banner--warning {
+  border-left-color: #f59e0b; /* amber-500 */
+  background-color: #fefce8; /* amber-50 */
+  color: #92400e; /* amber-800 */
+}
+
+.banner--error {
+  border-left-color: #ef4444; /* red-500 */
+  background-color: #fef2f2; /* red-50 */
+  color: #b91c1c; /* red-800 */
+}
+
+.banner--success {
+  border-left-color: #22c55e; /* green-500 */
+  background-color: #f0fdf4; /* green-50 */
+  color: #166534; /* green-800 */
+} 

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { PageContainer } from '../components'
 
 const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -19,15 +20,14 @@ function PagesList() {
   const pages = data?.pages || []
 
   return (
-    <div>
-      <h2>Pages Brand Score</h2>
+    <PageContainer title="Pages Brand Score">
       <BarChart width={600} height={300} data={pages.slice(0, 10)}>
         <XAxis dataKey="slug" hide={true} />
         <YAxis />
         <Tooltip />
         <Bar dataKey="avg_score" fill="#3d4a6b" />
       </BarChart>
-    </div>
+    </PageContainer>
   )
 }
 

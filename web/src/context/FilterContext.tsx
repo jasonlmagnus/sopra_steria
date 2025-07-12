@@ -1,40 +1,26 @@
-import React, { createContext, useContext, useState } from 'react'
+import { useState, type ReactNode, useCallback } from 'react';
+import { FilterContext, type FiltersState } from './FilterContextValue';
 
-export interface FilterState {
-  persona: string
-  tier: string
-  scoreRange: [number, number]
+interface FilterProviderProps {
+  children: ReactNode;
 }
 
-interface FilterContextValue extends FilterState {
-  setPersona: (p: string) => void
-  setTier: (t: string) => void
-  setScoreRange: (r: [number, number]) => void
+export function FilterProvider({ children }: FilterProviderProps) {
+  const [filters, setFilters] = useState<FiltersState>({});
+
+  const setFilter = useCallback((name: string, value: any) => {
+    setFilters(prev => ({...prev, [name]: value}));
+  }, []);
+
+  const setAllFilters = useCallback((newFilters: FiltersState) => {
+    setFilters(newFilters);
+  }, []);
+
+  const value = {
+    filters,
+    setFilter,
+    setAllFilters,
+  };
+
+  return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }
-
-const FilterContext = createContext<FilterContextValue | undefined>(undefined)
-
-export function useFilters() {
-  const ctx = useContext(FilterContext)
-  if (!ctx) throw new Error('useFilters must be used within FilterProvider')
-  return ctx
-}
-
-export function FilterProvider({ children }: { children: React.ReactNode }) {
-  const [persona, setPersona] = useState('')
-  const [tier, setTier] = useState('')
-  const [scoreRange, setScoreRange] = useState<[number, number]>([0, 10])
-
-  const value: FilterContextValue = {
-    persona,
-    tier,
-    scoreRange,
-    setPersona,
-    setTier,
-    setScoreRange
-  }
-
-  return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>
-}
-
-export default FilterContext

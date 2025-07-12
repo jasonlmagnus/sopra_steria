@@ -1,0 +1,4359 @@
+{
+  "summary": {
+    "totalCSSFiles": 17,
+    "totalCSSClasses": 931,
+    "totalFileSize": 138886,
+    "usedClasses": 324,
+    "orphanedClasses": 738,
+    "redundancyPercentage": 79.26960257787326
+  },
+  "files": [
+    {
+      "path": "web/src/styles/dashboard.css",
+      "classes": [
+        "css",
+        "page-container",
+        "page-header",
+        "page-title",
+        "page-subtitle",
+        "section",
+        "section__title",
+        "section__subtitle",
+        "insights-box",
+        "insights-box__title",
+        "data-table",
+        "chart-container",
+        "chart-title",
+        "alert",
+        "alert--info",
+        "1",
+        "2",
+        "alert--success",
+        "alert--warning",
+        "alert--error",
+        "loading",
+        "loading-spinner",
+        "code-block",
+        "info-box",
+        "list-item",
+        "tabs",
+        "tab-buttons",
+        "tab-button",
+        "active",
+        "tab-content",
+        "profile-tab",
+        "profile-overview",
+        "profile-summary",
+        "profile-sections",
+        "profile-section",
+        "section-content",
+        "6",
+        "section-header",
+        "collapse-icon",
+        "journey-tab",
+        "journey-overview",
+        "journey-metric",
+        "journey-steps",
+        "journey-step",
+        "high",
+        "medium",
+        "low",
+        "step-header",
+        "step-content",
+        "severity-badge",
+        "5px",
+        "severity-indicator",
+        "severity-score",
+        "performance-tab",
+        "performance-overview",
+        "voice-tab",
+        "voice-overview",
+        "voice-metrics",
+        "voice-metric",
+        "metric-percentage",
+        "voice-examples-grid",
+        "voice-examples-column",
+        "voice-example",
+        "effective",
+        "ineffective",
+        "insights-grid",
+        "insight-column",
+        "friction-point",
+        "success",
+        "warning",
+        "success-stories",
+        "success-summary",
+        "story-header",
+        "excellence-badge",
+        "success-excellent",
+        "success-good",
+        "success-improving",
+        "story-metrics",
+        "metric",
+        "story-evidence",
+        "experience-metrics",
+        "experience-metric",
+        "evidence-grid",
+        "evidence-section",
+        "positive",
+        "evidence-content",
+        "persona-quotes",
+        "persona-quote",
+        "full-analysis",
+        "trust-assessment",
+        "story-url",
+        "matrix-description",
+        "quick-wins-section",
+        "quick-wins-grid",
+        "quick-win-card",
+        "quick-win-meta",
+        "platform-evidence",
+        "evidence-sections",
+        "evidence-card",
+        "evidence-header",
+        "evidence-metrics",
+        "evidence-item",
+        "effective-copy",
+        "ineffective-copy",
+        "evidence-recommendations",
+        "recommendation-category",
+        "platform-evidence-summary",
+        "platform-summary-card",
+        "platform-metrics",
+        "metric-row",
+        "score",
+        "platform-evidence-sample",
+        "evidence-text"
+      ],
+      "classCount": 113,
+      "fileSize": 22447,
+      "lines": 1032
+    },
+    {
+      "path": "web/src/styles/utilities/elements.css",
+      "classes": [
+        "container",
+        "container--page",
+        "container--section",
+        "container--card",
+        "container--insight",
+        "container--metric",
+        "container--header",
+        "container--content",
+        "container--sidebar",
+        "container--modal",
+        "container--form",
+        "container--tabs",
+        "container--grid",
+        "container--flex",
+        "container--flex-between",
+        "container--flex-center",
+        "container--loading",
+        "container--alert",
+        "text--label",
+        "text--value",
+        "text--badge",
+        "25rem",
+        "75rem",
+        "text--icon",
+        "text--separator",
+        "text--status",
+        "text--metric",
+        "text--caption",
+        "text--body",
+        "6",
+        "text--body-secondary",
+        "text--body-small",
+        "5",
+        "text--body-large",
+        "text--description",
+        "heading--page",
+        "heading--section",
+        "heading--subsection",
+        "heading--card",
+        "heading--metric",
+        "button--primary",
+        "button--secondary",
+        "button--action",
+        "label--form",
+        "label--filter",
+        "input--form",
+        "select--form",
+        "hero-content",
+        "hero-icon",
+        "hero-stats",
+        "stat-item",
+        "process-number",
+        "process-content",
+        "warning-content",
+        "warning-icon",
+        "5rem",
+        "warning-text",
+        "success-icon",
+        "success-content",
+        "file-upload-area",
+        "2s",
+        "file-input",
+        "file-upload-label",
+        "upload-icon",
+        "upload-text",
+        "model-options",
+        "model-option",
+        "selected",
+        "model-label",
+        "model-icon",
+        "model-content",
+        "model-features",
+        "url-input-container",
+        "url-tabs",
+        "url-tab",
+        "active",
+        "url-input-content",
+        "url-textarea",
+        "url-help",
+        "help-icon",
+        "url-validation",
+        "validation-title",
+        "validation-grid",
+        "invalid-urls",
+        "launch-section",
+        "launch-summary",
+        "summary-items",
+        "summary-item",
+        "summary-label",
+        "summary-value",
+        "launch-button",
+        "disabled",
+        "launch-icon",
+        "launch-text",
+        "launch-title",
+        "launch-subtitle",
+        "9",
+        "audit-progress",
+        "progress-header",
+        "progress-meta",
+        "progress-visualization",
+        "progress-circle",
+        "progress-svg",
+        "progress-text",
+        "progress-percentage",
+        "progress-label",
+        "progress-details",
+        "progress-status",
+        "status-icon",
+        "status-text",
+        "progress-stats",
+        "stat",
+        "stat-label",
+        "stat-value",
+        "audit-log",
+        "log-header",
+        "log-controls",
+        "log-status",
+        "log-container",
+        "log-line",
+        "log-empty",
+        "post-audit",
+        "completion-celebration",
+        "celebration-animation",
+        "next-steps-container",
+        "steps-grid",
+        "step-card",
+        "step-icon",
+        "step-content",
+        "processing-status",
+        "status-card",
+        "status-success",
+        "status-pending",
+        "action-section",
+        "process-button",
+        "completed",
+        "button-icon",
+        "button-content",
+        "button-title",
+        "button-subtitle",
+        "completion-actions",
+        "nav-button",
+        "primary",
+        "secondary",
+        "processing-progress",
+        "processing-header",
+        "processing-steps",
+        "step",
+        "step-number",
+        "step-label",
+        "processing-bar",
+        "processing-fill",
+        "3s",
+        "status-message",
+        "status-percentage",
+        "persona-selection",
+        "selection-controls",
+        "persona-count",
+        "persona-overview",
+        "tab-buttons",
+        "tab-content",
+        "profile-tab",
+        "journey-tab",
+        "performance-tab",
+        "voice-tab",
+        "profile-overview",
+        "profile-summary",
+        "profile-sections",
+        "collapse-icon",
+        "section-content",
+        "journey-overview",
+        "journey-info",
+        "journey-visualization",
+        "journey-steps",
+        "step-header",
+        "step-details",
+        "persona-reaction",
+        "quick-fixes",
+        "severity-indicator",
+        "severity-score",
+        "severity-label",
+        "journey-insights",
+        "insights-grid",
+        "insight-column",
+        "friction-point",
+        "high",
+        "low",
+        "success",
+        "warning",
+        "performance-overview",
+        "performance-data",
+        "data-table",
+        "tier-badge",
+        "action-buttons",
+        "performance-summary",
+        "metric-value",
+        "metric-percentage",
+        "metric-label",
+        "voice-overview",
+        "voice-filters",
+        "filter-row",
+        "filter-control",
+        "tier-selection",
+        "tier-checkbox",
+        "tier-distribution",
+        "tier-count",
+        "filter-info",
+        "voice-patterns",
+        "patterns-grid",
+        "themes-analysis",
+        "themes-list",
+        "theme-item",
+        "theme-name",
+        "theme-count",
+        "sentiment-analysis",
+        "copy-ready-quotes",
+        "quote-controls",
+        "quote-type-selector",
+        "quotes-list",
+        "quote-item",
+        "positive",
+        "negative",
+        "strategic",
+        "copy-button",
+        "voice-analysis-section",
+        "voice-search",
+        "search-input",
+        "voice-examples-display",
+        "voice-page-section",
+        "page-meta",
+        "score-badge",
+        "voice-example",
+        "effective",
+        "example-with-quote",
+        "example-quote",
+        "example-analysis",
+        "example-insight",
+        "loading-spinner",
+        "empty-state",
+        "metrics-grid",
+        "filter-controls",
+        "filter-group",
+        "filter-label",
+        "multi-select",
+        "multi-select-option",
+        "selected-items",
+        "selected-item",
+        "filter-select",
+        "checkbox-group",
+        "action-button",
+        "metric-card",
+        "insights-box",
+        "section",
+        "section__title",
+        "section__subtitle",
+        "card",
+        "card--metric",
+        "card__title",
+        "card__content",
+        "evidence-sections",
+        "evidence-section",
+        "evidence-grid",
+        "evidence-card",
+        "evidence-header",
+        "evidence-score",
+        "score-value",
+        "score-label",
+        "evidence-content",
+        "evidence-item",
+        "effective-copy"
+      ],
+      "classCount": 270,
+      "fileSize": 33279,
+      "lines": 1691
+    },
+    {
+      "path": "web/src/styles/utilities/layout.css",
+      "classes": [
+        "hidden",
+        "visible",
+        "sr-only",
+        "w-full",
+        "h-full",
+        "flex",
+        "flex-col",
+        "flex-center",
+        "flex-between",
+        "flex-between-center",
+        "flex-wrap",
+        "flex-nowrap",
+        "flex-1",
+        "content-box",
+        "info-box-light",
+        "relative",
+        "absolute",
+        "cursor-pointer",
+        "sm-hidden",
+        "sm-visible",
+        "md-grid-2",
+        "md-grid-3"
+      ],
+      "classCount": 22,
+      "fileSize": 1420,
+      "lines": 64
+    },
+    {
+      "path": "web/src/styles/utilities/text.css",
+      "classes": [
+        "text-center",
+        "text-left",
+        "text-right",
+        "text-primary",
+        "text-secondary",
+        "text-dark",
+        "text-success",
+        "text-warning",
+        "text-error",
+        "text-success-dark",
+        "text-error-dark",
+        "text-slate-600",
+        "text-gray-600",
+        "font-bold",
+        "font-semibold",
+        "font-medium",
+        "font-normal",
+        "text-sm",
+        "text-base",
+        "text-lg",
+        "text-xl",
+        "italic"
+      ],
+      "classCount": 22,
+      "fileSize": 1064,
+      "lines": 32
+    },
+    {
+      "path": "web/src/styles/utilities/spacing.css",
+      "classes": [
+        "m-0",
+        "mb-0",
+        "mb-1",
+        "mb-2",
+        "mb-3",
+        "mb-4",
+        "mb-5",
+        "mt-0",
+        "mt-1",
+        "mt-2",
+        "mt-3",
+        "mt-4",
+        "mt-5",
+        "mb-3-4",
+        "75rem",
+        "mb-4-5",
+        "p-1",
+        "p-2",
+        "p-3",
+        "p-4"
+      ],
+      "classCount": 20,
+      "fileSize": 795,
+      "lines": 26
+    },
+    {
+      "path": "web/src/styles/utilities/combinations.css",
+      "classes": [
+        "reset-text",
+        "reset-margin-dark",
+        "inline-block-center",
+        "flex-center",
+        "flex-between"
+      ],
+      "classCount": 5,
+      "fileSize": 535,
+      "lines": 31
+    },
+    {
+      "path": "web/src/styles/utilities/colors.css",
+      "classes": [
+        "bg-primary",
+        "bg-secondary",
+        "bg-success",
+        "bg-warning",
+        "bg-error",
+        "bg-subtle",
+        "bg-white",
+        "bg-gray-50",
+        "bg-gray-100",
+        "border-primary",
+        "border-secondary",
+        "border-success",
+        "border-warning",
+        "border-error"
+      ],
+      "classCount": 14,
+      "fileSize": 834,
+      "lines": 18
+    },
+    {
+      "path": "web/src/styles/utilities/borders.css",
+      "classes": [
+        "border",
+        "border-b",
+        "border-l",
+        "border-r",
+        "border-t",
+        "border-2",
+        "border-4",
+        "rounded",
+        "rounded-lg",
+        "rounded-full"
+      ],
+      "classCount": 10,
+      "fileSize": 580,
+      "lines": 16
+    },
+    {
+      "path": "web/src/styles/components/voice-analysis.css",
+      "classes": [
+        "voice-patterns",
+        "advanced-voice-examples",
+        "business-impact-analysis",
+        "patterns-grid",
+        "themes-analysis",
+        "sentiment-analysis",
+        "themes-list",
+        "theme-item",
+        "theme-name",
+        "theme-count",
+        "sentiment-metrics",
+        "sentiment-item",
+        "positive",
+        "1",
+        "negative",
+        "sentiment-label",
+        "sentiment-count",
+        "voice-search",
+        "search-input",
+        "voice-page-section",
+        "business-page-section",
+        "page-meta",
+        "voice-example",
+        "business-insight",
+        "quoted_copy",
+        "persona_insight",
+        "example-quote",
+        "example-analysis",
+        "insight-content",
+        "5",
+        "insights-header",
+        "loading-state",
+        "voice-fallback",
+        "load-button",
+        "2s"
+      ],
+      "classCount": 35,
+      "fileSize": 5353,
+      "lines": 238
+    },
+    {
+      "path": "web/src/styles/components/button.css",
+      "classes": [
+        "btn",
+        "5",
+        "btn--sm",
+        "btn--lg",
+        "btn--primary",
+        "btn--secondary",
+        "btn--success",
+        "btn--warning",
+        "9",
+        "btn--critical",
+        "btn--ghost",
+        "btn--loading",
+        "btn__icon",
+        "2em",
+        "btn__icon--left",
+        "btn__icon--right",
+        "btn-group",
+        "form-group",
+        "form-label",
+        "form-input",
+        "form-select",
+        "form-textarea",
+        "1",
+        "form-input--error",
+        "form-select--error",
+        "form-textarea--error",
+        "form-input--success",
+        "form-select--success",
+        "form-textarea--success",
+        "form-row",
+        "progress",
+        "progress__bar",
+        "progress__bar--success",
+        "progress__bar--warning",
+        "progress__bar--critical",
+        "scrollable",
+        "scrollable--sm",
+        "scrollable--lg",
+        "scrollable--xl",
+        "primary-button",
+        "apply-button",
+        "action-button",
+        "nav-button",
+        "retry-button",
+        "generate-button",
+        "secondary-button",
+        "export-button",
+        "audit-button",
+        "copy-button"
+      ],
+      "classCount": 49,
+      "fileSize": 8974,
+      "lines": 409
+    },
+    {
+      "path": "web/src/styles/components/card.css",
+      "classes": [
+        "card",
+        "card--metric",
+        "card--persona",
+        "card--content",
+        "card--success",
+        "card--excellent",
+        "card--good",
+        "card--warning",
+        "card--critical",
+        "card__title",
+        "card__subtitle",
+        "card__content",
+        "6",
+        "card__metric",
+        "card__metric-value",
+        "card__metric-label",
+        "5px",
+        "card__metric-description",
+        "card__actions",
+        "card--clickable",
+        "metric-card",
+        "persona-card",
+        "content-card",
+        "metric-value",
+        "metric-label",
+        "metric-description"
+      ],
+      "classCount": 26,
+      "fileSize": 4297,
+      "lines": 195
+    },
+    {
+      "path": "web/src/styles/components/quote-display.css",
+      "classes": [
+        "copy-ready-quotes",
+        "quote-controls",
+        "quote-type-selector",
+        "1",
+        "quotes-list",
+        "quote-item",
+        "2s",
+        "positive",
+        "negative",
+        "strategic",
+        "6",
+        "2em",
+        "copy-button",
+        "copied",
+        "quote-type-indicator",
+        "7",
+        "quotes-empty"
+      ],
+      "classCount": 17,
+      "fileSize": 3683,
+      "lines": 184
+    },
+    {
+      "path": "web/src/styles/components/slider.css",
+      "classes": [
+        "control-group",
+        "2",
+        "2s",
+        "1",
+        "3",
+        "4",
+        "5",
+        "slider-container",
+        "slider-labels",
+        "5rem",
+        "75rem",
+        "slider-value"
+      ],
+      "classCount": 12,
+      "fileSize": 5010,
+      "lines": 215
+    },
+    {
+      "path": "web/src/styles/components/visual-brand-hygiene.css",
+      "classes": [
+        "sidebar-insights",
+        "1",
+        "sidebar-card",
+        "2rem",
+        "quick-insight",
+        "success",
+        "error",
+        "insight-icon",
+        "5rem",
+        "insight-content",
+        "9rem",
+        "quick-stats",
+        "stat-item",
+        "stat-label",
+        "stat-value",
+        "priority-matrix",
+        "action-plans",
+        "action-section",
+        "1rem",
+        "action-item",
+        "action-details",
+        "action-metrics",
+        "action-recommendations",
+        "implementation-roadmap",
+        "roadmap-timeline",
+        "roadmap-month",
+        "05",
+        "roi-projection",
+        "color-grid",
+        "color-card",
+        "color-swatch",
+        "2",
+        "color-info",
+        "8rem",
+        "secondary-colors",
+        "secondary-color-card",
+        "secondary-color-swatch",
+        "secondary-color-info",
+        "typography-showcase",
+        "font-family",
+        "typography-examples",
+        "type-example",
+        "font-specifications",
+        "accessibility-info",
+        "contrast-examples",
+        "contrast-item",
+        "contrast-ratio",
+        "logo-guidelines",
+        "logo-specs",
+        "logo-spec-section",
+        "evidence-grid",
+        "evidence-card",
+        "evidence-header",
+        "evidence-score",
+        "score-value",
+        "score-label",
+        "75rem",
+        "5px",
+        "evidence-content",
+        "evidence-item",
+        "85rem",
+        "4",
+        "effective-copy",
+        "ineffective-copy",
+        "no-evidence",
+        "performance-insights",
+        "insight-cards",
+        "insight-card",
+        "warning",
+        "info",
+        "insight-metric",
+        "recommendations",
+        "recommendation-category"
+      ],
+      "classCount": 73,
+      "fileSize": 11340,
+      "lines": 714
+    },
+    {
+      "path": "web/src/styles/components/badge.css",
+      "classes": [
+        "badge",
+        "5px",
+        "badge--sm",
+        "65rem",
+        "badge--lg",
+        "badge--default",
+        "badge--primary",
+        "badge--excellent",
+        "badge--good",
+        "badge--warning",
+        "badge--critical",
+        "badge--priority-high",
+        "1",
+        "2",
+        "badge--priority-medium",
+        "badge--priority-low",
+        "badge--status-completed",
+        "badge--status-in-progress",
+        "badge--status-blocked",
+        "badge--status-not-started",
+        "badge--status-on-hold",
+        "badge__icon",
+        "badge--dot",
+        "quick-win-badge",
+        "strength-badge",
+        "critical-badge",
+        "pattern-tag",
+        "priority-badge",
+        "high",
+        "medium",
+        "low",
+        "status-badge",
+        "completed",
+        "in_progress",
+        "blocked",
+        "not_started",
+        "on_hold",
+        "tier-badge",
+        "score-badge"
+      ],
+      "classCount": 39,
+      "fileSize": 6167,
+      "lines": 274
+    },
+    {
+      "path": "web/src/styles/pages/ReportsExport.css",
+      "classes": [
+        "css",
+        "reports-export-container",
+        "header-actions",
+        "last-updated",
+        "data-overview",
+        "overview-metric",
+        "2s",
+        "data-quality",
+        "quality-metrics",
+        "quality-metric",
+        "quality-score",
+        "excellent",
+        "good",
+        "warning",
+        "critical",
+        "quality-label",
+        "report-config-grid",
+        "config-section",
+        "config-group",
+        "checkbox-group",
+        "multi-select",
+        "multi-select-option",
+        "selected-items",
+        "selected-item",
+        "html-report-options",
+        "report-option",
+        "selected",
+        "export-options",
+        "export-option",
+        "export-icon",
+        "export-name",
+        "export-description",
+        "dataset-browser",
+        "dataset-list",
+        "dataset-item",
+        "dataset-header",
+        "dataset-name",
+        "dataset-size",
+        "dataset-info",
+        "loading-state",
+        "loading-spinner",
+        "error-state",
+        "success-state",
+        "data-table-container",
+        "data-table",
+        "05em",
+        "url-cell",
+        "descriptor",
+        "warn",
+        "concern",
+        "fail",
+        "pass",
+        "table-note",
+        "flags",
+        "flag",
+        "quick-win",
+        "success",
+        "clickable",
+        "dataset-description",
+        "5",
+        "back-button",
+        "dataset-selector",
+        "dataset-option",
+        "dataset-icon",
+        "dataset-details",
+        "dataset-meta",
+        "filter-controls",
+        "filter-group"
+      ],
+      "classCount": 68,
+      "fileSize": 13508,
+      "lines": 654
+    },
+    {
+      "path": "web/src/styles/pages/RunAudit.css",
+      "classes": [
+        "css",
+        "run-audit-container",
+        "hero-header",
+        "w3",
+        "org",
+        "1",
+        "3",
+        "hero-content",
+        "hero-icon",
+        "hero-title",
+        "hero-subtitle",
+        "25rem",
+        "9",
+        "6",
+        "hero-stats",
+        "stat-item",
+        "stat-number",
+        "5rem",
+        "stat-label",
+        "875rem",
+        "8",
+        "05em",
+        "audit-warning",
+        "2",
+        "warning-content",
+        "warning-icon",
+        "warning-text",
+        "process-overview",
+        "section-title",
+        "process-grid",
+        "process-card",
+        "3s",
+        "15",
+        "process-number",
+        "process-content",
+        "audit-configuration",
+        "config-grid",
+        "config-section",
+        "section-header",
+        "section-badge",
+        "75rem",
+        "file-upload-area",
+        "file-input",
+        "file-upload-label",
+        "upload-icon",
+        "upload-text",
+        "upload-title",
+        "upload-subtitle",
+        "file-success",
+        "success-icon",
+        "success-content",
+        "model-options",
+        "model-option",
+        "selected",
+        "model-label",
+        "model-icon",
+        "model-content",
+        "125rem",
+        "model-description",
+        "model-features",
+        "feature-tag",
+        "cost",
+        "speed",
+        "quality",
+        "premium",
+        "deep",
+        "urls-section",
+        "url-input-container",
+        "url-input-content",
+        "url-textarea",
+        "url-help",
+        "help-icon",
+        "url-validation",
+        "validation-title",
+        "validation-grid",
+        "invalid-urls",
+        "8rem",
+        "launch-section",
+        "launch-summary",
+        "summary-items",
+        "summary-item",
+        "summary-label",
+        "summary-value",
+        "audit-progress",
+        "progress-header",
+        "progress-meta",
+        "progress-visualization",
+        "progress-circle",
+        "progress-svg",
+        "progress-text",
+        "progress-percentage",
+        "progress-label",
+        "progress-details",
+        "progress-status",
+        "status-icon",
+        "status-text",
+        "progress-stats",
+        "stat",
+        "stat-value",
+        "audit-log",
+        "log-header",
+        "log-status",
+        "log-container",
+        "log-line",
+        "2s",
+        "log-empty",
+        "post-audit",
+        "completion-celebration",
+        "7",
+        "celebration-animation",
+        "next-steps-container",
+        "next-steps-info",
+        "steps-grid",
+        "step-card",
+        "step-icon",
+        "step-content",
+        "processing-status",
+        "status-card",
+        "status-success",
+        "status-processing",
+        "action-section",
+        "processing-progress",
+        "processing-header",
+        "processing-visualization",
+        "processing-steps",
+        "step",
+        "step-number",
+        "active",
+        "4",
+        "completed",
+        "step-label",
+        "processing-bar",
+        "processing-fill",
+        "5s",
+        "status-message",
+        "status-percentage"
+      ],
+      "classCount": 136,
+      "fileSize": 19600,
+      "lines": 1108
+    }
+  ],
+  "orphanedClasses": [
+    {
+      "class": "css",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "page-container",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "page-header",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "page-title",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "page-subtitle",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "section",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "data-table",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "chart-container",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "chart-title",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "alert",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "alert--info",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "1",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "2",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "alert--success",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "alert--warning",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "alert--error",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "loading",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "loading-spinner",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "code-block",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "info-box",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "list-item",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "tabs",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "tab-buttons",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "active",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "tab-content",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "profile-tab",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "profile-section",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "section-content",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "6",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "section-header",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "journey-tab",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "journey-overview",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "journey-metric",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "journey-steps",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "medium",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "step-header",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "step-content",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "5px",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "performance-tab",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-tab",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-overview",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-metrics",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-metric",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "metric-percentage",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-examples-grid",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-examples-column",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "voice-example",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "insights-grid",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "warning",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success-stories",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success-summary",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success-excellent",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success-good",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "success-improving",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "story-metrics",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "metric",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "story-evidence",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "experience-metrics",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "experience-metric",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-grid",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-section",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-content",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "persona-quotes",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "persona-quote",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "matrix-description",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "quick-wins-section",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "quick-wins-grid",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "quick-win-card",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "quick-win-meta",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "platform-evidence",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-sections",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-card",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-header",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-metrics",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-item",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-recommendations",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "platform-evidence-summary",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "platform-summary-card",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "platform-metrics",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "metric-row",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "score",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "platform-evidence-sample",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "evidence-text",
+      "file": "dashboard.css"
+    },
+    {
+      "class": "container",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--page",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--insight",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--metric",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--header",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--sidebar",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--modal",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--tabs",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--flex",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--flex-between",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--flex-center",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--loading",
+      "file": "elements.css"
+    },
+    {
+      "class": "container--alert",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--label",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--badge",
+      "file": "elements.css"
+    },
+    {
+      "class": "25rem",
+      "file": "elements.css"
+    },
+    {
+      "class": "75rem",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--status",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--metric",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--caption",
+      "file": "elements.css"
+    },
+    {
+      "class": "6",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--body-secondary",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--body-small",
+      "file": "elements.css"
+    },
+    {
+      "class": "5",
+      "file": "elements.css"
+    },
+    {
+      "class": "text--description",
+      "file": "elements.css"
+    },
+    {
+      "class": "heading--metric",
+      "file": "elements.css"
+    },
+    {
+      "class": "button--primary",
+      "file": "elements.css"
+    },
+    {
+      "class": "label--filter",
+      "file": "elements.css"
+    },
+    {
+      "class": "hero-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "hero-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "hero-stats",
+      "file": "elements.css"
+    },
+    {
+      "class": "stat-item",
+      "file": "elements.css"
+    },
+    {
+      "class": "process-number",
+      "file": "elements.css"
+    },
+    {
+      "class": "process-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "warning-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "warning-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "5rem",
+      "file": "elements.css"
+    },
+    {
+      "class": "warning-text",
+      "file": "elements.css"
+    },
+    {
+      "class": "success-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "success-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "file-upload-area",
+      "file": "elements.css"
+    },
+    {
+      "class": "2s",
+      "file": "elements.css"
+    },
+    {
+      "class": "file-input",
+      "file": "elements.css"
+    },
+    {
+      "class": "file-upload-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "upload-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "upload-text",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-options",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-option",
+      "file": "elements.css"
+    },
+    {
+      "class": "selected",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "model-features",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-input-container",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-tabs",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-tab",
+      "file": "elements.css"
+    },
+    {
+      "class": "active",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-input-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-textarea",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-help",
+      "file": "elements.css"
+    },
+    {
+      "class": "help-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "url-validation",
+      "file": "elements.css"
+    },
+    {
+      "class": "validation-title",
+      "file": "elements.css"
+    },
+    {
+      "class": "validation-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "invalid-urls",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-section",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-summary",
+      "file": "elements.css"
+    },
+    {
+      "class": "summary-items",
+      "file": "elements.css"
+    },
+    {
+      "class": "summary-item",
+      "file": "elements.css"
+    },
+    {
+      "class": "summary-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "summary-value",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-button",
+      "file": "elements.css"
+    },
+    {
+      "class": "disabled",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-text",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-title",
+      "file": "elements.css"
+    },
+    {
+      "class": "launch-subtitle",
+      "file": "elements.css"
+    },
+    {
+      "class": "9",
+      "file": "elements.css"
+    },
+    {
+      "class": "audit-progress",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-header",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-meta",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-visualization",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-circle",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-text",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-percentage",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-details",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-status",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-text",
+      "file": "elements.css"
+    },
+    {
+      "class": "progress-stats",
+      "file": "elements.css"
+    },
+    {
+      "class": "stat",
+      "file": "elements.css"
+    },
+    {
+      "class": "stat-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "stat-value",
+      "file": "elements.css"
+    },
+    {
+      "class": "audit-log",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-header",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-controls",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-status",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-container",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-line",
+      "file": "elements.css"
+    },
+    {
+      "class": "log-empty",
+      "file": "elements.css"
+    },
+    {
+      "class": "post-audit",
+      "file": "elements.css"
+    },
+    {
+      "class": "completion-celebration",
+      "file": "elements.css"
+    },
+    {
+      "class": "celebration-animation",
+      "file": "elements.css"
+    },
+    {
+      "class": "next-steps-container",
+      "file": "elements.css"
+    },
+    {
+      "class": "steps-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-card",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-status",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-card",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-success",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-pending",
+      "file": "elements.css"
+    },
+    {
+      "class": "action-section",
+      "file": "elements.css"
+    },
+    {
+      "class": "completed",
+      "file": "elements.css"
+    },
+    {
+      "class": "button-icon",
+      "file": "elements.css"
+    },
+    {
+      "class": "button-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "button-title",
+      "file": "elements.css"
+    },
+    {
+      "class": "button-subtitle",
+      "file": "elements.css"
+    },
+    {
+      "class": "completion-actions",
+      "file": "elements.css"
+    },
+    {
+      "class": "nav-button",
+      "file": "elements.css"
+    },
+    {
+      "class": "primary",
+      "file": "elements.css"
+    },
+    {
+      "class": "secondary",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-progress",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-header",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-steps",
+      "file": "elements.css"
+    },
+    {
+      "class": "step",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-number",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-bar",
+      "file": "elements.css"
+    },
+    {
+      "class": "processing-fill",
+      "file": "elements.css"
+    },
+    {
+      "class": "3s",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-message",
+      "file": "elements.css"
+    },
+    {
+      "class": "status-percentage",
+      "file": "elements.css"
+    },
+    {
+      "class": "persona-selection",
+      "file": "elements.css"
+    },
+    {
+      "class": "persona-count",
+      "file": "elements.css"
+    },
+    {
+      "class": "persona-overview",
+      "file": "elements.css"
+    },
+    {
+      "class": "tab-buttons",
+      "file": "elements.css"
+    },
+    {
+      "class": "tab-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "profile-tab",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-tab",
+      "file": "elements.css"
+    },
+    {
+      "class": "performance-tab",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-tab",
+      "file": "elements.css"
+    },
+    {
+      "class": "section-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-overview",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-info",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-visualization",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-steps",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-header",
+      "file": "elements.css"
+    },
+    {
+      "class": "step-details",
+      "file": "elements.css"
+    },
+    {
+      "class": "persona-reaction",
+      "file": "elements.css"
+    },
+    {
+      "class": "journey-insights",
+      "file": "elements.css"
+    },
+    {
+      "class": "insights-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "success",
+      "file": "elements.css"
+    },
+    {
+      "class": "warning",
+      "file": "elements.css"
+    },
+    {
+      "class": "data-table",
+      "file": "elements.css"
+    },
+    {
+      "class": "action-buttons",
+      "file": "elements.css"
+    },
+    {
+      "class": "metric-value",
+      "file": "elements.css"
+    },
+    {
+      "class": "metric-percentage",
+      "file": "elements.css"
+    },
+    {
+      "class": "metric-label",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-overview",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-filters",
+      "file": "elements.css"
+    },
+    {
+      "class": "filter-row",
+      "file": "elements.css"
+    },
+    {
+      "class": "filter-control",
+      "file": "elements.css"
+    },
+    {
+      "class": "filter-info",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-patterns",
+      "file": "elements.css"
+    },
+    {
+      "class": "patterns-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "copy-ready-quotes",
+      "file": "elements.css"
+    },
+    {
+      "class": "quote-controls",
+      "file": "elements.css"
+    },
+    {
+      "class": "quotes-list",
+      "file": "elements.css"
+    },
+    {
+      "class": "quote-item",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-analysis-section",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-search",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-examples-display",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-page-section",
+      "file": "elements.css"
+    },
+    {
+      "class": "voice-example",
+      "file": "elements.css"
+    },
+    {
+      "class": "example-with-quote",
+      "file": "elements.css"
+    },
+    {
+      "class": "example-quote",
+      "file": "elements.css"
+    },
+    {
+      "class": "loading-spinner",
+      "file": "elements.css"
+    },
+    {
+      "class": "metrics-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "filter-controls",
+      "file": "elements.css"
+    },
+    {
+      "class": "filter-group",
+      "file": "elements.css"
+    },
+    {
+      "class": "metric-card",
+      "file": "elements.css"
+    },
+    {
+      "class": "section",
+      "file": "elements.css"
+    },
+    {
+      "class": "card",
+      "file": "elements.css"
+    },
+    {
+      "class": "card--metric",
+      "file": "elements.css"
+    },
+    {
+      "class": "card__title",
+      "file": "elements.css"
+    },
+    {
+      "class": "card__content",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-sections",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-section",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-grid",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-card",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-header",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-score",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-content",
+      "file": "elements.css"
+    },
+    {
+      "class": "evidence-item",
+      "file": "elements.css"
+    },
+    {
+      "class": "hidden",
+      "file": "layout.css"
+    },
+    {
+      "class": "visible",
+      "file": "layout.css"
+    },
+    {
+      "class": "sr-only",
+      "file": "layout.css"
+    },
+    {
+      "class": "h-full",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex-col",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex-between",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex-between-center",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex-wrap",
+      "file": "layout.css"
+    },
+    {
+      "class": "flex-nowrap",
+      "file": "layout.css"
+    },
+    {
+      "class": "content-box",
+      "file": "layout.css"
+    },
+    {
+      "class": "relative",
+      "file": "layout.css"
+    },
+    {
+      "class": "absolute",
+      "file": "layout.css"
+    },
+    {
+      "class": "sm-hidden",
+      "file": "layout.css"
+    },
+    {
+      "class": "sm-visible",
+      "file": "layout.css"
+    },
+    {
+      "class": "md-grid-2",
+      "file": "layout.css"
+    },
+    {
+      "class": "md-grid-3",
+      "file": "layout.css"
+    },
+    {
+      "class": "text-center",
+      "file": "text.css"
+    },
+    {
+      "class": "text-right",
+      "file": "text.css"
+    },
+    {
+      "class": "text-primary",
+      "file": "text.css"
+    },
+    {
+      "class": "text-secondary",
+      "file": "text.css"
+    },
+    {
+      "class": "text-dark",
+      "file": "text.css"
+    },
+    {
+      "class": "font-bold",
+      "file": "text.css"
+    },
+    {
+      "class": "font-semibold",
+      "file": "text.css"
+    },
+    {
+      "class": "font-medium",
+      "file": "text.css"
+    },
+    {
+      "class": "font-normal",
+      "file": "text.css"
+    },
+    {
+      "class": "text-sm",
+      "file": "text.css"
+    },
+    {
+      "class": "text-base",
+      "file": "text.css"
+    },
+    {
+      "class": "text-xl",
+      "file": "text.css"
+    },
+    {
+      "class": "italic",
+      "file": "text.css"
+    },
+    {
+      "class": "mb-0",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mb-2",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mb-3",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mb-4",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mb-5",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-0",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-1",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-2",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-3",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-4",
+      "file": "spacing.css"
+    },
+    {
+      "class": "mt-5",
+      "file": "spacing.css"
+    },
+    {
+      "class": "75rem",
+      "file": "spacing.css"
+    },
+    {
+      "class": "p-1",
+      "file": "spacing.css"
+    },
+    {
+      "class": "p-2",
+      "file": "spacing.css"
+    },
+    {
+      "class": "p-3",
+      "file": "spacing.css"
+    },
+    {
+      "class": "p-4",
+      "file": "spacing.css"
+    },
+    {
+      "class": "reset-margin-dark",
+      "file": "combinations.css"
+    },
+    {
+      "class": "inline-block-center",
+      "file": "combinations.css"
+    },
+    {
+      "class": "flex-between",
+      "file": "combinations.css"
+    },
+    {
+      "class": "bg-primary",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-secondary",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-success",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-warning",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-error",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-subtle",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-white",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-gray-50",
+      "file": "colors.css"
+    },
+    {
+      "class": "bg-gray-100",
+      "file": "colors.css"
+    },
+    {
+      "class": "border-primary",
+      "file": "colors.css"
+    },
+    {
+      "class": "border-secondary",
+      "file": "colors.css"
+    },
+    {
+      "class": "border-success",
+      "file": "colors.css"
+    },
+    {
+      "class": "border-warning",
+      "file": "colors.css"
+    },
+    {
+      "class": "border-error",
+      "file": "colors.css"
+    },
+    {
+      "class": "border",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-b",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-l",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-r",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-t",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-2",
+      "file": "borders.css"
+    },
+    {
+      "class": "border-4",
+      "file": "borders.css"
+    },
+    {
+      "class": "rounded-lg",
+      "file": "borders.css"
+    },
+    {
+      "class": "rounded-full",
+      "file": "borders.css"
+    },
+    {
+      "class": "voice-patterns",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "advanced-voice-examples",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "business-impact-analysis",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "patterns-grid",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "sentiment-metrics",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "sentiment-item",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "1",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "sentiment-label",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "sentiment-count",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "voice-search",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "voice-page-section",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "voice-example",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "quoted_copy",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "persona_insight",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "example-quote",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "5",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "insights-header",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "loading-state",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "voice-fallback",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "load-button",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "2s",
+      "file": "voice-analysis.css"
+    },
+    {
+      "class": "btn",
+      "file": "button.css"
+    },
+    {
+      "class": "5",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--sm",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--lg",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--primary",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--secondary",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--success",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--warning",
+      "file": "button.css"
+    },
+    {
+      "class": "9",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--critical",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--ghost",
+      "file": "button.css"
+    },
+    {
+      "class": "btn--loading",
+      "file": "button.css"
+    },
+    {
+      "class": "btn__icon",
+      "file": "button.css"
+    },
+    {
+      "class": "2em",
+      "file": "button.css"
+    },
+    {
+      "class": "btn__icon--left",
+      "file": "button.css"
+    },
+    {
+      "class": "btn__icon--right",
+      "file": "button.css"
+    },
+    {
+      "class": "btn-group",
+      "file": "button.css"
+    },
+    {
+      "class": "form-group",
+      "file": "button.css"
+    },
+    {
+      "class": "form-label",
+      "file": "button.css"
+    },
+    {
+      "class": "form-input",
+      "file": "button.css"
+    },
+    {
+      "class": "form-select",
+      "file": "button.css"
+    },
+    {
+      "class": "form-textarea",
+      "file": "button.css"
+    },
+    {
+      "class": "1",
+      "file": "button.css"
+    },
+    {
+      "class": "form-input--error",
+      "file": "button.css"
+    },
+    {
+      "class": "form-select--error",
+      "file": "button.css"
+    },
+    {
+      "class": "form-textarea--error",
+      "file": "button.css"
+    },
+    {
+      "class": "form-input--success",
+      "file": "button.css"
+    },
+    {
+      "class": "form-select--success",
+      "file": "button.css"
+    },
+    {
+      "class": "form-textarea--success",
+      "file": "button.css"
+    },
+    {
+      "class": "form-row",
+      "file": "button.css"
+    },
+    {
+      "class": "progress",
+      "file": "button.css"
+    },
+    {
+      "class": "progress__bar",
+      "file": "button.css"
+    },
+    {
+      "class": "progress__bar--success",
+      "file": "button.css"
+    },
+    {
+      "class": "progress__bar--warning",
+      "file": "button.css"
+    },
+    {
+      "class": "progress__bar--critical",
+      "file": "button.css"
+    },
+    {
+      "class": "scrollable",
+      "file": "button.css"
+    },
+    {
+      "class": "scrollable--sm",
+      "file": "button.css"
+    },
+    {
+      "class": "scrollable--lg",
+      "file": "button.css"
+    },
+    {
+      "class": "scrollable--xl",
+      "file": "button.css"
+    },
+    {
+      "class": "primary-button",
+      "file": "button.css"
+    },
+    {
+      "class": "apply-button",
+      "file": "button.css"
+    },
+    {
+      "class": "nav-button",
+      "file": "button.css"
+    },
+    {
+      "class": "retry-button",
+      "file": "button.css"
+    },
+    {
+      "class": "generate-button",
+      "file": "button.css"
+    },
+    {
+      "class": "secondary-button",
+      "file": "button.css"
+    },
+    {
+      "class": "audit-button",
+      "file": "button.css"
+    },
+    {
+      "class": "card",
+      "file": "card.css"
+    },
+    {
+      "class": "card--metric",
+      "file": "card.css"
+    },
+    {
+      "class": "card--persona",
+      "file": "card.css"
+    },
+    {
+      "class": "card--success",
+      "file": "card.css"
+    },
+    {
+      "class": "card--excellent",
+      "file": "card.css"
+    },
+    {
+      "class": "card--good",
+      "file": "card.css"
+    },
+    {
+      "class": "card--warning",
+      "file": "card.css"
+    },
+    {
+      "class": "card--critical",
+      "file": "card.css"
+    },
+    {
+      "class": "card__title",
+      "file": "card.css"
+    },
+    {
+      "class": "card__subtitle",
+      "file": "card.css"
+    },
+    {
+      "class": "card__content",
+      "file": "card.css"
+    },
+    {
+      "class": "6",
+      "file": "card.css"
+    },
+    {
+      "class": "card__metric",
+      "file": "card.css"
+    },
+    {
+      "class": "card__metric-value",
+      "file": "card.css"
+    },
+    {
+      "class": "card__metric-label",
+      "file": "card.css"
+    },
+    {
+      "class": "5px",
+      "file": "card.css"
+    },
+    {
+      "class": "card__metric-description",
+      "file": "card.css"
+    },
+    {
+      "class": "card__actions",
+      "file": "card.css"
+    },
+    {
+      "class": "card--clickable",
+      "file": "card.css"
+    },
+    {
+      "class": "metric-card",
+      "file": "card.css"
+    },
+    {
+      "class": "persona-card",
+      "file": "card.css"
+    },
+    {
+      "class": "content-card",
+      "file": "card.css"
+    },
+    {
+      "class": "metric-value",
+      "file": "card.css"
+    },
+    {
+      "class": "metric-label",
+      "file": "card.css"
+    },
+    {
+      "class": "metric-description",
+      "file": "card.css"
+    },
+    {
+      "class": "copy-ready-quotes",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "quote-controls",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "1",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "quotes-list",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "quote-item",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "2s",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "6",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "2em",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "copied",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "quote-type-indicator",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "7",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "quotes-empty",
+      "file": "quote-display.css"
+    },
+    {
+      "class": "control-group",
+      "file": "slider.css"
+    },
+    {
+      "class": "2",
+      "file": "slider.css"
+    },
+    {
+      "class": "2s",
+      "file": "slider.css"
+    },
+    {
+      "class": "1",
+      "file": "slider.css"
+    },
+    {
+      "class": "3",
+      "file": "slider.css"
+    },
+    {
+      "class": "4",
+      "file": "slider.css"
+    },
+    {
+      "class": "5",
+      "file": "slider.css"
+    },
+    {
+      "class": "slider-container",
+      "file": "slider.css"
+    },
+    {
+      "class": "slider-labels",
+      "file": "slider.css"
+    },
+    {
+      "class": "5rem",
+      "file": "slider.css"
+    },
+    {
+      "class": "75rem",
+      "file": "slider.css"
+    },
+    {
+      "class": "slider-value",
+      "file": "slider.css"
+    },
+    {
+      "class": "1",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "sidebar-card",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "2rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "success",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "error",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "5rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "9rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "stat-item",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "stat-label",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "stat-value",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "priority-matrix",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "action-section",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "1rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "action-item",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "action-details",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "action-metrics",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "roadmap-timeline",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "roadmap-month",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "05",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "roi-projection",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "color-grid",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "2",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "8rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "secondary-colors",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "secondary-color-card",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "secondary-color-swatch",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "secondary-color-info",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-grid",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-card",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-header",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-score",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "75rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "5px",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-content",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "evidence-item",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "85rem",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "4",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "no-evidence",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "insight-cards",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "insight-card",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "warning",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "insight-metric",
+      "file": "visual-brand-hygiene.css"
+    },
+    {
+      "class": "badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "5px",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--sm",
+      "file": "badge.css"
+    },
+    {
+      "class": "65rem",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--lg",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--primary",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--excellent",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--good",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--warning",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--critical",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--priority-high",
+      "file": "badge.css"
+    },
+    {
+      "class": "1",
+      "file": "badge.css"
+    },
+    {
+      "class": "2",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--priority-medium",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--priority-low",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--status-completed",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--status-in-progress",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--status-blocked",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--status-not-started",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--status-on-hold",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge__icon",
+      "file": "badge.css"
+    },
+    {
+      "class": "badge--dot",
+      "file": "badge.css"
+    },
+    {
+      "class": "quick-win-badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "strength-badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "critical-badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "pattern-tag",
+      "file": "badge.css"
+    },
+    {
+      "class": "priority-badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "medium",
+      "file": "badge.css"
+    },
+    {
+      "class": "status-badge",
+      "file": "badge.css"
+    },
+    {
+      "class": "completed",
+      "file": "badge.css"
+    },
+    {
+      "class": "in_progress",
+      "file": "badge.css"
+    },
+    {
+      "class": "blocked",
+      "file": "badge.css"
+    },
+    {
+      "class": "not_started",
+      "file": "badge.css"
+    },
+    {
+      "class": "on_hold",
+      "file": "badge.css"
+    },
+    {
+      "class": "css",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "reports-export-container",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "data-overview",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "overview-metric",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "2s",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "data-quality",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "quality-metrics",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "quality-metric",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "quality-score",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "excellent",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "good",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "warning",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "quality-label",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "report-config-grid",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "config-section",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "config-group",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "html-report-options",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "report-option",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "selected",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "export-option",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "export-icon",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "export-name",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "export-description",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-browser",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-list",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-item",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-header",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-name",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-size",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-info",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "loading-state",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "loading-spinner",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "error-state",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "success-state",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "data-table-container",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "data-table",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "05em",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "url-cell",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "descriptor",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "warn",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "concern",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "fail",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "pass",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "table-note",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "flags",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "flag",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "success",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "clickable",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-description",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "5",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "back-button",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-selector",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-option",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-icon",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-details",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "dataset-meta",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "filter-controls",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "filter-group",
+      "file": "ReportsExport.css"
+    },
+    {
+      "class": "css",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "run-audit-container",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-header",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "w3",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "org",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "1",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "3",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-title",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-subtitle",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "25rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "9",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "6",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "hero-stats",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "stat-item",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "stat-number",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "5rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "stat-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "875rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "8",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "05em",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "audit-warning",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "2",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "warning-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "warning-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "warning-text",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "process-overview",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "section-title",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "process-grid",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "process-card",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "3s",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "15",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "process-number",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "process-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "audit-configuration",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "config-grid",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "config-section",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "section-header",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "section-badge",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "75rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "file-upload-area",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "file-input",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "file-upload-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "upload-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "upload-text",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "upload-title",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "upload-subtitle",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "file-success",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "success-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "success-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-options",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-option",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "selected",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "125rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-description",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "model-features",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "feature-tag",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "cost",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "speed",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "quality",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "premium",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "deep",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "urls-section",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "url-input-container",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "url-input-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "url-textarea",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "url-help",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "help-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "url-validation",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "validation-title",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "validation-grid",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "invalid-urls",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "8rem",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "launch-section",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "launch-summary",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "summary-items",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "summary-item",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "summary-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "summary-value",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "audit-progress",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-header",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-meta",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-visualization",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-circle",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-text",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-percentage",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-details",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-status",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-text",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "progress-stats",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "stat",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "stat-value",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "audit-log",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "log-header",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "log-status",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "log-container",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "log-line",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "2s",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "log-empty",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "post-audit",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "completion-celebration",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "7",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "celebration-animation",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "next-steps-container",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "next-steps-info",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "steps-grid",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step-card",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step-icon",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step-content",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-status",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-card",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-success",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-processing",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "action-section",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-progress",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-header",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-visualization",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-steps",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step-number",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "active",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "4",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "completed",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "step-label",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-bar",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "processing-fill",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "5s",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-message",
+      "file": "RunAudit.css"
+    },
+    {
+      "class": "status-percentage",
+      "file": "RunAudit.css"
+    }
+  ],
+  "usedClasses": [
+    "container--layout",
+    "container--feedback",
+    "loading--state",
+    "text--body",
+    "container--section",
+    "heading--page",
+    "alert--message",
+    "container--grid",
+    "spacing--gap",
+    "text--display",
+    "button--secondary",
+    "flex-1",
+    "label--form",
+    "select--form",
+    "text--separator",
+    "heading--section",
+    "w-full",
+    "spacing--margin",
+    "cursor-pointer",
+    "text--emphasis",
+    "reset-text",
+    "my-xs",
+    "text--body-large",
+    "text-gray-600",
+    "input--form",
+    "info-box-light",
+    "heading--subsection",
+    "table--full",
+    "bg-muted",
+    "text-left",
+    "text-info",
+    "no-underline",
+    "card--content",
+    "persona--content",
+    "flex-center",
+    "metric--display",
+    "insight-section",
+    "p-lg",
+    "mb-3-4",
+    "text-success-dark",
+    "m-0",
+    "text-error-dark",
+    "mb-4-5",
+    "text-slate-600",
+    "text-success",
+    "my-2",
+    "pl-4",
+    "text-error",
+    "bg-light",
+    "button--action",
+    "'critical'",
+    "brand.raw_score",
+    "'warning'",
+    "'fair'",
+    "''}",
+    "'status-critical'",
+    "'status-fair'",
+    "'status-good'",
+    "'status-excellent'}",
+    "`container--section",
+    "''",
+    "`text--display",
+    "'status-excellent'",
+    "main-header",
+    "container--content",
+    "heading--card",
+    "insights-box",
+    "mb-xs",
+    "margin-0",
+    "my-2xl",
+    "selection-controls",
+    "container--card",
+    "tab--interface",
+    "profile-overview",
+    "profile-summary",
+    "profile-sections",
+    "collapse-icon",
+    "journey--flow",
+    "quick-fixes",
+    "severity-indicator",
+    "severity-score",
+    "severity-label",
+    "insight-column",
+    "friction-point",
+    "high",
+    "low",
+    "performance-overview",
+    "performance-data",
+    "tier-badge",
+    "badge--status",
+    "performance-summary",
+    "voice--analysis",
+    "filter--controls",
+    "tier-selection",
+    "tier-checkbox",
+    "tier-distribution",
+    "tier-count",
+    "themes-analysis",
+    "themes-list",
+    "theme-item",
+    "theme-name",
+    "theme-count",
+    "sentiment-analysis",
+    "quote-type-selector",
+    "positive",
+    "copy-button",
+    "negative",
+    "strategic",
+    "search-input",
+    "page-meta",
+    "score-badge",
+    "effective",
+    "example-analysis",
+    "example-insight",
+    "ineffective",
+    "business-impact-display",
+    "business-page-section",
+    "business-insight",
+    "insight-content",
+    "evidence--content",
+    "tab-button",
+    "'profile'",
+    "'active'",
+    "'journey'",
+    "'performance'",
+    "'voice'",
+    "'evidence'",
+    "journey-step",
+    "severity-badge",
+    "page.avg_score",
+    ">=",
+    "'excellent'",
+    "'good'",
+    "'poor'",
+    "}",
+    "`tab-button",
+    "`journey-step",
+    "`severity-badge",
+    "`score-badge",
+    "header-actions",
+    "refresh-button",
+    "last-updated",
+    "quick-win",
+    "critical",
+    "button--tab",
+    "'data-explorer'",
+    "'custom-reports'",
+    "'html-reports'",
+    "'export-center'",
+    "'selected'",
+    "dataset.name",
+    "badge--status--status",
+    "'All",
+    "Personas'",
+    "'Selected",
+    "'Consolidated",
+    "Report'",
+    "'csv'",
+    "'excel'",
+    "'json'",
+    "'parquet'",
+    "`button--tab",
+    "`container--card",
+    "`badge--status--status",
+    "container--hero",
+    "icon--ui",
+    "container--form",
+    "number--display",
+    "container--workflow",
+    "container--model",
+    "container--urls",
+    "container--analysis",
+    "input--file",
+    "label--upload",
+    "label--option",
+    "badge--cost",
+    "badge--speed",
+    "badge--quality",
+    "badge--premium",
+    "badge--deep",
+    "textarea--input",
+    "icon--help",
+    "heading--validation",
+    "container--actions",
+    "text--summary-label",
+    "text--summary-value",
+    "text--launch-title",
+    "text--launch-subtitle",
+    "progress-svg",
+    "text--percentage",
+    "text--progress-label",
+    "text--stat-label",
+    "text--stat-value",
+    "container--log-header",
+    "text--log-status",
+    "container--log-content",
+    "container--log-line",
+    "container--log-empty",
+    "container--status-success",
+    "container--status-pending",
+    "text--button-title",
+    "text--button-subtitle",
+    "button--nav",
+    "'openai'",
+    "'anthropic'",
+    "'paste'",
+    "'upload'",
+    "button--launch",
+    "'ready'",
+    "'disabled'}",
+    "process-button",
+    "'completed'",
+    "processingState.progress",
+    "`button--launch",
+    "'disabled'",
+    "`process-button",
+    "empty-state",
+    "filter-label",
+    "multi-select",
+    "multi-select-option",
+    "selected-items",
+    "selected-item",
+    "filter-select",
+    "checkbox-group",
+    "action-button",
+    "rounded",
+    "section__title",
+    "text-lg",
+    "ml-2",
+    "section__subtitle",
+    "badge--default",
+    "score-value",
+    "score-label",
+    "effective-copy",
+    "ineffective-copy",
+    "mr-1",
+    "'badge--critical'",
+    "'badge--excellent'}",
+    "badge--status}",
+    "'positive'",
+    "'warning'}",
+    "tab.id",
+    "'default'}",
+    "'badge--excellent'",
+    "platform.Average_Score",
+    "'badge--warning'",
+    "'badge--critical'}",
+    "`badge--status",
+    "`card--content",
+    "card--content`",
+    "'default'",
+    "controls",
+    "control-select",
+    "score-display",
+    "score-scale",
+    "card-description",
+    "kpi-set",
+    "text--value",
+    "recommendations-list",
+    "tag-group",
+    "tag",
+    "tag--effort",
+    "tag--impact",
+    "tag--timeline",
+    "tag--tier",
+    "insights-box__title",
+    "story-header",
+    "full-analysis",
+    "trust-assessment",
+    "business-impact",
+    "story-url",
+    "text-warning",
+    "border-accent",
+    "text-purple",
+    "excellence-badge",
+    "`excellence-badge",
+    "criteria-analysis",
+    "criteria-insights",
+    "detailed-breakdown",
+    "tier-insights",
+    "regional-analysis",
+    "regional-insights",
+    "regional-performance",
+    "consistency-insights",
+    "priority-overview",
+    "action-plans",
+    "action-recommendations",
+    "implementation-roadmap",
+    "brand-colors",
+    "color-sections",
+    "color-section",
+    "color-card",
+    "color-swatch",
+    "color-info",
+    "mb-1",
+    "typography-standards",
+    "typography-showcase",
+    "font-family",
+    "typography-examples",
+    "type-example",
+    "font-specifications",
+    "color-accessibility",
+    "accessibility-info",
+    "contrast-examples",
+    "contrast-item",
+    "contrast-ratio",
+    "logo-guidelines",
+    "logo-specs",
+    "logo-spec-section",
+    "performance-insights",
+    "insight-icon",
+    "info",
+    "recommendations",
+    "recommendation-category",
+    "export-options",
+    "export-button",
+    "sidebar-insights",
+    "quick-insight",
+    "quick-stats",
+    "'criteria'",
+    "'tier'",
+    "'regional'",
+    "'priority'",
+    "'standards'"
+  ]
+}

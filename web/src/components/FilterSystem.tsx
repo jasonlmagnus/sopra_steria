@@ -1,63 +1,105 @@
-import React, { useEffect } from 'react'
-import { useFilters } from '../context/FilterContext'
+import React from 'react';
+import { useFilters } from '../hooks/useFilters';
+import type { FilterConfig } from '../types/filters';
+import './FilterSystem.css';
 
-export interface FilterSystemProps {
-  personaOptions: string[]
-  tierOptions: string[]
+interface FilterSystemProps {
+  config: FilterConfig[];
+  data: any; // Data from API, containing dynamic options
 }
 
-export function FilterSystem({ personaOptions, tierOptions }: FilterSystemProps) {
-  const { persona, setPersona, tier, setTier, scoreRange, setScoreRange } = useFilters()
+export function FilterSystem({ config, data }: FilterSystemProps) {
+  const { filters, setFilter } = useFilters();
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem('filters')
-    if (saved) {
-      try {
-        const f = JSON.parse(saved)
-        if (f.persona) setPersona(f.persona)
-        if (f.tier) setTier(f.tier)
-        if (f.scoreRange) setScoreRange(f.scoreRange)
-      } catch {
-        // ignore parse errors
-      }
+  const renderFilter = (filter: FilterConfig) => {
+    const { name, label, type, options, min, max, step } = filter;
+    const value = filters[name] || '';
+
+    switch (type) {
+      case 'select':
+        const dynamicOptions = data[name + 'Options'] || options || [];
+        return (
+          <div key={name} className="filter-item">
+            <label htmlFor={name} className="filter-label">{label}</label>
+            <select
+              id={name}
+              value={value}
+              onChange={(e) => setFilter(name, e.target.value)}
+              className="filter-select"
+            >
+              {dynamicOptions.map((opt: any) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        );
+      case 'range':
+        return (
+          <div key={name} className="filter-item">
+            <label htmlFor={name} className="filter-label">{label}: {value}</label>
+            <input
+              type="range"
+              id={name}
+              min={min}
+              max={max}
+              step={step}
+              value={value}
+              onChange={(e) => setFilter(name, Number(e.target.value))}
+              className="filter-range"
+            />
+          </div>
+        );
+      case 'text':
+        return (
+          <div key={name} className="filter-item">
+            <label htmlFor={name} className="filter-label">{label}</label>
+            <input
+              type="text"
+              id={name}
+              value={value}
+              onChange={(e) => setFilter(name, e.target.value)}
+              className="filter-input"
+            />
+          </div>
+        );
+      case 'multiselect':
+        const selectedValues = value || [];
+        return (
+          <div key={name} className="filter-item">
+            <label className="filter-label">{label}</label>
+            <div className="filter-multiselect-group">
+              {(options || []).map(opt => (
+                <div key={opt.value} className="filter-checkbox-item">
+                  <input
+                    type="checkbox"
+                    id={`${name}-${opt.value}`}
+                    checked={selectedValues.includes(opt.value)}
+                    onChange={(e) => {
+                      const newSelection = e.target.checked
+                        ? [...selectedValues, opt.value]
+                        : selectedValues.filter((v: any) => v !== opt.value);
+                      setFilter(name, newSelection);
+                    }}
+                  />
+                  <label htmlFor={`${name}-${opt.value}`}>{opt.label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      default:
+        return null;
     }
-  }, [setPersona, setTier, setScoreRange])
-
-  useEffect(() => {
-    sessionStorage.setItem('filters', JSON.stringify({ persona, tier, scoreRange }))
-  }, [persona, tier, scoreRange])
+  };
 
   return (
     <div className="filter-system">
-      <select value={persona} onChange={(e) => setPersona(e.target.value)}>
-        <option value="">All Personas</option>
-        {personaOptions.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
-      <select value={tier} onChange={(e) => setTier(e.target.value)} style={{ marginLeft: '0.5rem' }}>
-        <option value="">All Tiers</option>
-        {tierOptions.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
-      <label style={{ marginLeft: '0.5rem' }}>
-        Score ≥ {scoreRange[0]}
-        <input
-          type="range"
-          min="0"
-          max="10"
-          step="0.5"
-          value={scoreRange[0]}
-          onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])}
-        />
-      </label>
+      <h2 className="heading--section">Filters</h2>
+      <div className="filter-controls-container">
+        {config.map(renderFilter)}
+      </div>
     </div>
-  )
+  );
 }
 
-export default FilterSystem
+export default FilterSystem; 

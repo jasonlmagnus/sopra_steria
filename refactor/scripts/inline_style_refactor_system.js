@@ -19,8 +19,8 @@ const colors = {
 
 class InlineStyleRefactor {
   constructor() {
-    this.pagesDir = path.join(__dirname, 'web', 'src', 'pages');
-    this.stylesDir = path.join(__dirname, 'web', 'src', 'styles');
+    this.pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
+    this.stylesDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles');
     this.utilsDir = path.join(this.stylesDir, 'utilities');
     
     // Style pattern collectors
@@ -721,7 +721,7 @@ ${colors.bold}🏗️ GENERATED CLASSES BREAKDOWN:${colors.reset}`);
   createBackup() {
     console.log(`${colors.cyan}💾 Creating automatic backup...${colors.reset}`);
     
-    const backupDir = path.join(__dirname, 'backup_before_refactor');
+    const backupDir = path.join(__dirname, '..', 'backups', 'backup_before_refactor');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const timestampedBackupDir = path.join(backupDir, `refactor_${timestamp}`);
     
@@ -731,13 +731,13 @@ ${colors.bold}🏗️ GENERATED CLASSES BREAKDOWN:${colors.reset}`);
     }
     
     // Backup pages
-    const pagesDir = path.join(__dirname, 'web', 'src', 'pages');
+    const pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
     if (fs.existsSync(pagesDir)) {
       this.copyDirectory(pagesDir, path.join(timestampedBackupDir, 'pages'));
     }
     
     // Backup styles
-    const stylesDir = path.join(__dirname, 'web', 'src', 'styles');
+    const stylesDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles');
     if (fs.existsSync(stylesDir)) {
       this.copyDirectory(stylesDir, path.join(timestampedBackupDir, 'styles'));
     }

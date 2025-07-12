@@ -1,5 +1,3 @@
-import React from 'react'
-
 export interface PersonaSelectorProps {
   personas: string[]
   selected: string

@@ -1,10 +1,18 @@
-import React from 'react'
+import React from 'react';
+import './Banner.css';
 
-export interface BannerProps {
-  message: string
-  variant?: 'info' | 'success' | 'warning' | 'danger'
-}
+type BannerProps = {
+  message: React.ReactNode;
+  type?: 'info' | 'warning' | 'error' | 'success';
+  className?: string;
+};
 
-export default function Banner({ message, variant = 'info' }: BannerProps) {
-  return <div className={`banner banner--${variant}`}>{message}</div>
-}
+const Banner: React.FC<BannerProps> = ({ message, type = 'info', className = '' }) => {
+  return (
+    <div className={`banner banner--${type} ${className}`}>
+      {message}
+    </div>
+  );
+};
+
+export default Banner; 

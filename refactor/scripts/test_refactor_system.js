@@ -6,8 +6,8 @@ const InlineStyleRefactor = require('./inline_style_refactor_system');
 
 class RefactorTester {
   constructor() {
-    this.testDir = path.join(__dirname, 'test_refactor');
-    this.backupDir = path.join(__dirname, 'backup_before_refactor');
+    this.testDir = path.join(__dirname, '..', 'test-outputs', 'test_refactor');
+    this.backupDir = path.join(__dirname, '..', 'backups', 'backup_before_refactor');
     this.refactor = new InlineStyleRefactor();
   }
 
@@ -33,8 +33,8 @@ class RefactorTester {
   createBackup() {
     console.log('💾 Creating backup of original files...');
     
-    const pagesDir = path.join(__dirname, 'web', 'src', 'pages');
-    const stylesDir = path.join(__dirname, 'web', 'src', 'styles');
+    const pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
+    const stylesDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles');
     
     // Backup pages
     if (fs.existsSync(pagesDir)) {
@@ -73,7 +73,7 @@ class RefactorTester {
   testSingleFile(fileName) {
     console.log(`🧪 Testing refactor on ${fileName}...`);
     
-    const originalPath = path.join(__dirname, 'web', 'src', 'pages', fileName);
+    const originalPath = path.join(__dirname, '..', '..', 'web', 'src', 'pages', fileName);
     const testPath = path.join(this.testDir, fileName);
     
     if (!fs.existsSync(originalPath)) {
@@ -105,7 +105,7 @@ class RefactorTester {
   validateGeneratedCSS() {
     console.log('✅ Validating generated CSS classes...');
     
-    const utilsDir = path.join(__dirname, 'web', 'src', 'styles', 'utilities');
+    const utilsDir = path.join(__dirname, '..', '..', 'web', 'src', 'styles', 'utilities');
     
     if (!fs.existsSync(utilsDir)) {
       console.log('⚠️  Utilities directory does not exist yet');
@@ -136,7 +136,7 @@ class RefactorTester {
   dryRun() {
     console.log('🔍 Performing dry run analysis...');
     
-    const pagesDir = path.join(__dirname, 'web', 'src', 'pages');
+    const pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
     const files = fs.readdirSync(pagesDir)
       .filter(file => file.endsWith('.tsx'))
       .map(file => path.join(pagesDir, file));

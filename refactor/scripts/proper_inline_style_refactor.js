@@ -271,7 +271,7 @@ function refactorFile(filePath) {
 }
 
 function main() {
-  const webSrcPath = path.join(__dirname, 'web', 'src');
+  const webSrcPath = path.join(__dirname, '..', '..', 'web', 'src');
   const pagesPath = path.join(webSrcPath, 'pages');
   
   if (!fs.existsSync(pagesPath)) {

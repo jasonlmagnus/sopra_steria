@@ -1545,6 +1545,44 @@ app.post('/api/export/:format', async (req, res) => {
   }
 });
 
+app.get('/api/persona-viewer/:personaId', async (req, res) => {
+  const { personaId } = req.params;
+  const { tiers } = req.query; // Tiers will be a comma-separated string
+
+  try {
+    // Fetch all data in parallel
+    const [personaRes, journeyRes, performanceRes, auditRes] = await Promise.all([
+      axios.get(`http://localhost:3000/api/persona/${personaId}`),
+      axios.get(`http://localhost:3000/api/persona-journeys/${personaId}`),
+      axios.get(`http://localhost:3000/api/performance-data/${personaId}`),
+      axios.get('http://localhost:8000/api/audit-data') // This seems to be a different service
+    ]);
+
+    if (personaRes.status !== 200) return res.status(404).json({ error: 'Persona not found' });
+
+    const personaData = personaRes.data;
+    const journeyData = journeyRes.status === 200 ? journeyRes.data : null;
+    let performanceData = performanceRes.status === 200 ? performanceRes.data : [];
+    const auditData = auditRes.status === 200 ? auditRes.data : [];
+
+    // Filter performance data by tier if provided
+    if (tiers) {
+      const selectedTiers = tiers.split(',');
+      performanceData = performanceData.filter(p => selectedTiers.includes(p.tier_name));
+    }
+
+    res.json({
+      profile: personaData,
+      journey: journeyData,
+      performance: performanceData,
+      audit: auditData,
+    });
+  } catch (error) {
+    console.error(`Error fetching data for persona ${personaId}:`, error);
+    res.status(500).json({ error: 'Failed to fetch persona viewer data' });
+  }
+});
+
 
 const port = process.env.PORT || 3000;
 

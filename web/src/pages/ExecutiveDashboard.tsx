@@ -1,12 +1,39 @@
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import PagesList from './PagesList'
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { ExpandableCard, PageContainer, PageHeader } from '../components';
+import PagesList from './PagesList';
+import { useFilters } from '../hooks/useFilters';
+import { FilterSystem } from '../components/FilterSystem';
+import type { FilterConfig } from '../types/filters';
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+const dashboardFilters: FilterConfig[] = [
+  {
+    name: 'tier',
+    label: 'Focus on Content Tier:',
+    type: 'select',
+    defaultValue: 'All Tiers',
+    options: [
+      { value: 'All Tiers', label: 'All Tiers' },
+      { value: 'Tier 1 (Strategic)', label: 'Tier 1 (Strategic)' },
+      { value: 'Tier 2 (Tactical)', label: 'Tier 2 (Tactical)' },
+      { value: 'Tier 3 (Operational)', label: 'Tier 3 (Operational)' },
+    ],
+  },
+];
 
 function ExecutiveDashboard() {
-  const [tierFilter, setTierFilter] = useState('All Tiers')
+  const { filters, setAllFilters } = useFilters();
 
+  useEffect(() => {
+    const defaultFilters = dashboardFilters.reduce((acc, f) => {
+      acc[f.name] = f.defaultValue;
+      return acc;
+    }, {} as { [key: string]: any });
+    setAllFilters(defaultFilters);
+  }, [setAllFilters]);
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['summary'],
     queryFn: async () => {
@@ -26,14 +53,15 @@ function ExecutiveDashboard() {
   })
 
   const { data: strategicData } = useQuery({
-    queryKey: ['strategic-assessment', tierFilter],
+    queryKey: ['strategic-assessment', filters.tier],
     queryFn: async () => {
-      const tierParam = tierFilter !== 'All Tiers' ? `?tier=${encodeURIComponent(tierFilter)}` : ''
-      const res = await fetch(`${apiBase}/api/strategic-assessment${tierParam}`)
-      if (!res.ok) throw new Error('Failed to load strategic assessment')
-      return res.json()
-    }
-  })
+      const tierParam = filters.tier && filters.tier !== 'All Tiers' ? `?tier=${encodeURIComponent(filters.tier)}` : '';
+      const res = await fetch(`${apiBase}/api/strategic-assessment${tierParam}`);
+      if (!res.ok) throw new Error('Failed to load strategic assessment');
+      return res.json();
+    },
+    enabled: !!filters.tier,
+  });
 
   const { data: successData } = useQuery({
     queryKey: ['success-stories'],
@@ -44,8 +72,22 @@ function ExecutiveDashboard() {
     }
   })
 
-  if (isLoading) return <div className="main-header"><h1>🎯 Brand Health Command Center</h1><p>Loading brand health metrics...</p></div>
-  if (error) return <div className="main-header"><h1>🎯 Brand Health Command Center</h1><p>Error loading dashboard data</p></div>
+  if (isLoading) return (
+    <div className="container--layout">
+      <PageHeader
+        title="🎯 Brand Health Command Center"
+        description="Loading brand health metrics..."
+      />
+    </div>
+  )
+  if (error) return (
+    <div className="container--layout">
+      <PageHeader
+        title="🎯 Brand Health Command Center"
+        description="Error loading dashboard data"
+      />
+    </div>
+  )
 
   const brand = data?.brand_health || {}
   const metrics = data?.key_metrics || {}
@@ -81,12 +123,6 @@ function ExecutiveDashboard() {
     return conversion.raw_score || 0
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 7.0) return "#22C55E" // Green
-    if (score >= 4.0) return "#F59E0B" // Amber
-    return "#EF4444" // Red
-  }
-
   const getScoreStatus = (score: number) => {
     if (score >= 7.0) return "HIGH"
     if (score >= 4.0) return "MODERATE"
@@ -94,82 +130,58 @@ function ExecutiveDashboard() {
   }
 
   return (
-    <div>
-      {/* Executive Header */}
-      <div className="main-header">
-        <h1>🎯 Brand Health Command Center</h1>
-        <p>30-second strategic marketing decision engine for executives</p>
-      </div>
+    <PageContainer title="🎯 Brand Health Command Center">
+      <PageHeader
+        title="🎯 Brand Health Command Center"
+        description="30-second strategic marketing decision engine for executives"
+      />
 
       {/* Brand Health Overview */}
-      <h2>Brand Health Overview</h2>
-      <div className="grid grid--auto-200 mb-4">
-        <div className={`metric-card ${brand.raw_score < 4 ? 'critical' : brand.raw_score < 6 ? 'warning' : brand.raw_score < 8 ? 'fair' : ''}`}>
-          <div className={`metric-value ${brand.raw_score < 4 ? 'status-critical' : brand.raw_score < 6 ? 'status-fair' : brand.raw_score < 8 ? 'status-good' : 'status-excellent'}`}>
+      <h2 className="heading--section">Brand Health Overview</h2>
+      <div className="container--layout">
+        <div className={`container--section ${brand.raw_score < 4 ? 'critical' : brand.raw_score < 6 ? 'warning' : brand.raw_score < 8 ? 'fair' : ''}`}>
+          <div className={`text--display ${brand.raw_score < 4 ? 'status-critical' : brand.raw_score < 6 ? 'status-fair' : brand.raw_score < 8 ? 'status-good' : 'status-excellent'}`}>
             {brand.raw_score || 0}/10
           </div>
-          <div className="metric-label">Overall Brand Health - {brand.status || 'Unknown'}</div>
+          <div className="text--display">Overall Brand Health - {brand.status || 'Unknown'}</div>
         </div>
 
-        <div className={`metric-card ${metrics.critical_issues > 0 ? 'critical' : ''}`}>
-          <div className="metric-value">{metrics.critical_issues || 0}</div>
-          <div className="metric-label">Critical Issues</div>
+        <div className={`container--section text--display > 0 ? 'critical' : ''}`}>
+          <div className="text--display">{metrics.critical_issues || 0}</div>
+          <div className="text--display">Critical Issues</div>
         </div>
 
-        <div className="metric-card">
-          <div className="metric-value">{metrics.quick_wins || 0}</div>
-          <div className="metric-label">Quick Wins</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.quick_wins || 0}</div>
+          <div className="text--display">Quick Wins</div>
         </div>
 
-        <div className="metric-card">
-          <div className="metric-value">{metrics.success_pages || 0}</div>
-          <div className="metric-label">Success Pages</div>
+        <div className="container--section">
+          <div className="text--display">{metrics.success_pages || 0}</div>
+          <div className="text--display">Success Pages</div>
         </div>
       </div>
 
       {/* Strategic Focus */}
-      <h3>🎯 Strategic Focus</h3>
-      <div className="grid grid--cols-3 gap-sm mb-4">
-        <div>
-          <label htmlFor="tier-filter" className="block text-sm font-medium mb-1">Focus on Content Tier:</label>
-          <select 
-            id="tier-filter"
-            value={tierFilter} 
-            onChange={(e) => setTierFilter(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="All Tiers">All Tiers</option>
-            <option value="Tier 1 (Strategic)">Tier 1 (Strategic)</option>
-            <option value="Tier 2 (Tactical)">Tier 2 (Tactical)</option>
-            <option value="Tier 3 (Operational)">Tier 3 (Operational)</option>
-          </select>
-        </div>
-        <div className="flex items-end">
-          {tierFilter !== "All Tiers" && (
-            <div className="text-sm text-blue-600 bg-blue-50 p-2 rounded">
-              📊 Filtering analysis by {tierFilter}
-            </div>
-          )}
-        </div>
-      </div>
-
+      <h3 className="heading--subsection">🎯 Strategic Focus</h3>
+      <FilterSystem config={dashboardFilters} data={{}} />
+      
       {/* Strategic Brand Assessment */}
-      <h2>Strategic Brand Assessment</h2>
-      <div className="grid grid--cols-3 gap-lg mb-4">
+      <h2 className="heading--section">Strategic Brand Assessment</h2>
+      <div className="container--layout">
         
         {/* Are we distinct? */}
-        <div className="executive-question">
-          <h4>Are we distinct?</h4>
+        <div className="container--section">
+          <h4 className="heading--subsection">Are we distinct?</h4>
           {(() => {
             const score = getDistinctivenessScore()
-            const color = getScoreColor(score)
             const status = getScoreStatus(score)
             
             return (
-              <div className="text-center">
-                <div className="font-bold">{score.toFixed(1)}/10</div>
-                <div className="font-semibold">{status}</div>
-                <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
+              <div className="text--display">
+                <div className="text--display text--emphasis">{score.toFixed(1)}/10</div>
+                <div className="text--body text--emphasis">{status}</div>
+                <div className="text--body" style={{ marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   First impression uniqueness (40%)<br/>
                   Brand visibility (30%)<br/>
@@ -181,18 +193,17 @@ function ExecutiveDashboard() {
         </div>
 
         {/* Are we resonating? */}
-        <div className="executive-question">
-          <h4>Are we resonating?</h4>
+        <div className="container--section">
+          <h4 className="heading--subsection">Are we resonating?</h4>
           {(() => {
             const score = getResonanceScore()
-            const color = getScoreColor(score)
             const status = getScoreStatus(score)
             
             return (
-              <div className="text-center">
-                <div className="font-bold">{score.toFixed(1)}/10</div>
-                <div className="font-semibold">{status}</div>
-                <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
+              <div className="container--layout text--display">
+                <div className="text--display text--emphasis">{score.toFixed(1)}/10</div>
+                <div className="text--body text--emphasis">{status}</div>
+                <div className="text--body text--body" style={{ marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   User sentiment scores (50%)<br/>
                   Content engagement (30%)<br/>
@@ -204,18 +215,17 @@ function ExecutiveDashboard() {
         </div>
 
         {/* Are we converting? */}
-        <div className="executive-question">
-          <h4>Are we converting?</h4>
+        <div className="container--section">
+          <h4 className="heading--subsection">Are we converting?</h4>
           {(() => {
             const score = getConversionScore()
-            const color = getScoreColor(score)
             const status = getScoreStatus(score)
             
             return (
-              <div className="text-center">
-                <div className="font-bold">{score.toFixed(1)}/10</div>
-                <div className="font-semibold">{status}</div>
-                <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
+              <div className="container--layout text--display">
+                <div className="text--display text--emphasis">{score.toFixed(1)}/10</div>
+                <div className="text--body text--emphasis">{status}</div>
+                <div className="text--body text--body" style={{ marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   Conversion likelihood (50%)<br/>
                   Trust & credibility (30%)<br/>
@@ -228,155 +238,70 @@ function ExecutiveDashboard() {
       </div>
 
       {/* Top 3 Improvement Opportunities */}
-      <h2>🎯 Top 3 Improvement Opportunities</h2>
-      <p className="text-sm text-secondary mb-3">*For comprehensive analysis, visit the **Opportunity & Impact** tab*</p>
+      <h2 className="heading--section">🎯 Top 3 Improvement Opportunities</h2>
+      <p className="text--body text--body">*For comprehensive analysis, visit the **Opportunity & Impact** tab*</p>
       
       {opps.length > 0 ? (
-        <div className="space-y-3 mb-4">
-          {opps.map((opp: any, i: number) => (
-            <details key={i} className="insights-box">
-              <summary className="cursor-pointer font-semibold">
-                #{i + 1} - {opp.page_title} (Impact: {opp.potential_impact})
-              </summary>
-              <div className="mt-3">
-                <div className="grid grid--cols-3 gap-md mb-3">
-                  <div className="metric-card">
-                    <div className="metric-value">{opp.current_score?.toFixed(1) || 'N/A'}</div>
-                    <div className="metric-label">Current Score</div>
-                  </div>
-                  <div className="metric-card">
-                    <div className="metric-value">{opp.effort_level}</div>
-                    <div className="metric-label">Effort Level</div>
-                  </div>
-                  <div className="metric-card">
-                    <div className="metric-value">{opp.potential_impact}</div>
-                    <div className="metric-label">Potential Impact</div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div>
-                    <strong>💡 Recommendation:</strong>
-                    <p className="text-sm italic mt-1">{opp.recommendation}</p>
-                  </div>
-                  
-                  {opp.evidence && opp.evidence !== opp.recommendation && (
-                    <div>
-                      <strong>📋 Evidence:</strong>
-                      <p className="text-sm mt-1">{opp.evidence.substring(0, 200)}...</p>
-                    </div>
-                  )}
-                </div>
-                
-                <p className="text-sm text-secondary mt-2">
-                  *👉 For detailed action plan, visit **Opportunity & Impact** tab*
-                </p>
+        <div className="container--section">
+          {opps.map((opp: any) => (
+            <ExpandableCard key={opp.id} title={`${(opp.priority_score || 0).toFixed(1)}/10 Priority - ${opp.title}`}>
+              <p className="text--body">{opp.description}</p>
+              <div className="text--body" style={{ marginTop: '1rem' }}>
+                <strong>Page:</strong> {opp.page_id}<br/>
+                <strong>Persona:</strong> {opp.persona}<br/>
+                <strong>Evidence:</strong> <span className="text-gray-600 italic">{opp.evidence}</span>
               </div>
-            </details>
+            </ExpandableCard>
           ))}
         </div>
       ) : (
-        <div className="insights-box">
-          <p>📈 No specific opportunities identified. Visit **Content Matrix** for detailed analysis.</p>
-        </div>
+        <p className="text--body">No improvement opportunities found.</p>
       )}
 
       {/* Top 5 Success Stories */}
-      <h2>🌟 Top 5 Success Stories</h2>
-      <p className="text-sm text-secondary mb-3">*For detailed success analysis, visit the **Success Library** tab*</p>
+      <h2 className="heading--section">🏆 Top 5 Success Stories</h2>
+      <p className="text--body text--body">*For comprehensive analysis, visit the **Success Library** tab*</p>
       
       {successStories.length > 0 ? (
-        <div className="space-y-3 mb-4">
-          <div className="text-sm text-green-600 bg-green-50 p-2 rounded mb-3">
-            🎉 Found {successStories.length} high-performing pages (score ≥ 7.7)
-          </div>
-          
-          {successStories.map((story: any, i: number) => (
-            <details key={i} className="insights-box">
-              <summary className="cursor-pointer font-semibold">
-                ⭐ #{i + 1} - {story.page_title} - Score: {story.raw_score?.toFixed(1)}
-              </summary>
-              <div className="mt-3">
-                <div className="grid grid--cols-2 gap-md mb-3">
-                  <div>
-                    <div className="metric-card">
-                      <div className="metric-value">{story.raw_score?.toFixed(1)}/10</div>
-                      <div className="metric-label">Score</div>
-                    </div>
-                    <div className="metric-card">
-                      <div className="metric-value">{story.tier}</div>
-                      <div className="metric-label">Tier</div>
-                    </div>
-                    
-                    {story.key_strengths && story.key_strengths.length > 0 && (
-                      <div className="mt-3">
-                        <strong>✨ Key Strengths:</strong>
-                        <ul className="text-sm mt-1 space-y-1">
-                          {story.key_strengths.slice(0, 2).map((strength: string, idx: number) => (
-                            <li key={idx}>• {strength}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    {story.evidence && story.evidence !== 'nan' && String(story.evidence).trim().length > 10 ? (
-                      <div>
-                        <strong>📋 Evidence:</strong>
-                        <p className="text-sm mt-1 italic">
-                          {String(story.evidence).length > 200 
-                            ? `${String(story.evidence).substring(0, 200)}...` 
-                            : String(story.evidence)
-                          }
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <strong>📋 Evidence:</strong>
-                        <p className="text-sm mt-1 italic">Evidence details available in Success Library tab</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-sm text-secondary mt-2">
-                  *👉 For pattern analysis and replication guide, visit **Success Library** tab*
-                </p>
+        <div className="container--section">
+          {successStories.map((story: any) => (
+            <ExpandableCard key={story.id} title={`${story.score.toFixed(1)}/10 - ${story.page_id}`}>
+              <p className="text--body">{story.description}</p>
+              <div className="text--body" style={{ marginTop: '1rem' }}>
+                <strong>Persona:</strong> {story.persona}<br/>
+                <strong>URL:</strong> <a href={story.url} target="_blank" rel="noopener noreferrer">{story.url}</a>
               </div>
-            </details>
+            </ExpandableCard>
           ))}
         </div>
       ) : (
-        <div className="insights-box">
-          <p>⚠️ No pages currently scoring 7.7 or above. Focus on improvement opportunities.</p>
-        </div>
+        <p className="text--body">No success stories found.</p>
       )}
 
       {/* Strategic Recommendations */}
       {recs.length > 0 && (
-        <div>
-          <h2>💡 Strategic Recommendations</h2>
-          <p className="text-sm text-secondary mb-3">*AI-generated action priorities based on current brand health*</p>
+        <div className="container--section">
+          <h2 className="heading--section">💡 Strategic Recommendations</h2>
+          <p className="text--body text--body">*AI-generated action priorities based on current brand health*</p>
           
-          <div className="space-y-3 mb-4">
+          <div className="container--section">
             {recs.map((rec: any, i: number) => (
-              <div key={i} className="insights-box">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
+              <div key={i} className="container--section">
+                <div className="container--layout">
+                  <div className="container--layout">
                     <strong>{i + 1}.</strong> {rec}
                   </div>
-                  <div className="ml-4">
+                  <div className="container--layout">
                     {rec.toLowerCase().includes('critical pages') || rec.toLowerCase().includes('scoring below') ? (
-                      <button className="nav-button">🔍 View Critical Pages</button>
+                      <button className="button--action">🔍 View Critical Pages</button>
                     ) : rec.toLowerCase().includes('quick wins') || rec.toLowerCase().includes('immediate impact') ? (
-                      <button className="nav-button">⚡ See Quick Wins</button>
+                      <button className="button--action">⚡ See Quick Wins</button>
                     ) : rec.toLowerCase().includes('persona') ? (
-                      <button className="nav-button">👥 Analyze Persona</button>
+                      <button className="button--action">👥 Analyze Persona</button>
                     ) : rec.toLowerCase().includes('improvements') || rec.toLowerCase().includes('opportunities') ? (
-                      <button className="nav-button">💡 Get Action Plan</button>
+                      <button className="button--action">💡 Get Action Plan</button>
                     ) : (
-                      <button className="nav-button">📊 Explore Analysis</button>
+                      <button className="button--action">📊 Explore Analysis</button>
                     )}
                   </div>
                 </div>
@@ -387,43 +312,43 @@ function ExecutiveDashboard() {
       )}
 
       {/* Page Performance Overview */}
-      <h2>📄 Page Performance Overview</h2>
-      <p className="text-sm text-secondary mb-3">*Quick visual overview of brand scores across all audited pages*</p>
+      <h2 className="heading--section">📄 Page Performance Overview</h2>
+      <p className="text--body text--body">*Quick visual overview of brand scores across all audited pages*</p>
       
-      <div className="page-performance-section">
+      <div className="container--section">
         <PagesList />
       </div>
 
       {/* Deep-Dive Analysis Navigation */}
-      <h2>🧭 Deep-Dive Analysis</h2>
-      <p className="mb-3"><strong>Need more details?</strong> Visit these specialized tabs for comprehensive analysis:</p>
+      <h2 className="heading--section">🧭 Deep-Dive Analysis</h2>
+      <p className="text--body"><strong>Need more details?</strong> Visit these specialized tabs for comprehensive analysis:</p>
       
-      <div className="grid grid--cols-3 gap-lg mb-4">
-        <div>
+      <div className="container--layout">
+        <div className="container--layout">
           <strong>📊 Analysis Tabs:</strong>
-          <ul className="text-sm mt-2 space-y-1">
+          <ul className="text--body">
             <li>• <strong>👥 Persona Insights</strong> - How different personas experience your brand</li>
             <li>• <strong>📊 Content Matrix</strong> - Detailed performance by content type and tier</li>
           </ul>
         </div>
         
-        <div>
+        <div className="container--layout">
           <strong>🎯 Action Tabs:</strong>
-          <ul className="text-sm mt-2 space-y-1">
+          <ul className="text--body">
             <li>• <strong>💡 Opportunity & Impact</strong> - Comprehensive improvement roadmap</li>
             <li>• <strong>🌟 Success Library</strong> - Pattern analysis and replication guides</li>
           </ul>
         </div>
         
-        <div>
+        <div className="container--layout">
           <strong>📋 Data & Tools:</strong>
-          <ul className="text-sm mt-2 space-y-1">
+          <ul className="text--body">
             <li>• <strong>📋 Reports & Export</strong> - Custom reports and data exports</li>
             <li>• <strong>🚀 Run Audit</strong> - Generate fresh audit data</li>
           </ul>
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }
 

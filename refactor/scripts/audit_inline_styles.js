@@ -99,7 +99,7 @@ function auditPage(filePath) {
 }
 
 function generateReport() {
-  const pagesDir = path.join(__dirname, 'web', 'src', 'pages');
+  const pagesDir = path.join(__dirname, '..', '..', 'web', 'src', 'pages');
   
   if (!fs.existsSync(pagesDir)) {
     console.error(`${colors.red}ERROR: Pages directory not found at ${pagesDir}${colors.reset}`);

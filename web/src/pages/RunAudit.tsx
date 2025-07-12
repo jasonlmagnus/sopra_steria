@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ScoreCard } from '../components/ScoreCard';
+import { Banner, PageContainer, StandardCard } from '../components';
 import '../styles/pages/RunAudit.css';
 
 interface AuditState {
@@ -348,60 +348,18 @@ const RunAudit: React.FC = () => {
   const canRunAudit = personaFile && urlsText.trim() && urlValidation.valid > 0 && !auditState.isRunning;
 
   return (
-    <div className="run-audit-container">
-      {/* Hero Header */}
-      <div className="hero-header">
-        <div className="hero-content">
-          <div className="hero-icon">🚀</div>
-          <h1 className="hero-title">Brand Audit Runner</h1>
-          <p className="hero-subtitle">
-            Launch sophisticated brand audits with YAML-driven methodology and dual AI provider support
-          </p>
-          <div className="hero-stats">
-            <div className="stat-item">
-              <span className="stat-number">50+</span>
-              <span className="stat-label">Criteria</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">2</span>
-              <span className="stat-label">AI Models</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">100%</span>
-              <span className="stat-label">Automated</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Running Audit Warning */}
-      {auditState.isRunning && (
-        <div className="audit-warning">
-          <div className="warning-content">
-            <div className="warning-icon">⚠️</div>
-            <div className="warning-text">
-              <h3>Audit Currently Running</h3>
-              <p>Persona: <strong>{auditState.personaName}</strong> • Model: <strong>{selectedModel.toUpperCase()}</strong></p>
-              <p>Please wait for completion or stop the current audit below.</p>
-            </div>
-            <button className="stop-audit-btn" onClick={stopAudit}>
-              🛑 Stop Audit
-            </button>
-          </div>
-        </div>
-      )}
-
-      {!auditState.isRunning && !auditState.auditComplete && !auditState.isProcessing && (
-        <>
-          {/* Process Overview */}
-          <div className="process-overview">
-            <h2 className="section-title">🎯 Audit Process Overview</h2>
-            <div className="process-grid">
-              <div className="process-card upload">
-                <div className="process-number">1</div>
-                <div className="process-content">
-                  <h3>📋 Upload Persona</h3>
-                  <p>Define your target audience with a comprehensive persona file</p>
+    <PageContainer title="🚀 Run New Audit">
+      <div className="container--layout">
+        {/* Left Column: Configuration */}
+        <div className="container--layout">
+          <div className="container--section">
+            <h2 className="heading--section">🎯 Audit Process Overview</h2>
+            <div className="container--layout">
+              <div className="container--card container--form">
+                <div className="number--display">1</div>
+                <div className="container--workflow">
+                  <h3 className="heading--card">📋 Upload Persona</h3>
+                  <p className="text--body">Define your target audience with a comprehensive persona file</p>
                   <ul>
                     <li>Markdown format (.md)</li>
                     <li>Detailed persona characteristics</li>
@@ -410,11 +368,11 @@ const RunAudit: React.FC = () => {
                 </div>
               </div>
               
-              <div className="process-card model">
-                <div className="process-number">2</div>
-                <div className="process-content">
-                  <h3>🤖 Select AI Model</h3>
-                  <p>Choose between cost-effective and premium analysis</p>
+              <div className="container--card container--model">
+                <div className="number--display">2</div>
+                <div className="container--workflow">
+                  <h3 className="heading--card">🤖 Select AI Model</h3>
+                  <p className="text--body">Choose between cost-effective and premium analysis</p>
                   <ul>
                     <li>OpenAI GPT-4.1-Mini (Cost effective)</li>
                     <li>Anthropic Claude-3-Opus (Premium)</li>
@@ -423,11 +381,11 @@ const RunAudit: React.FC = () => {
                 </div>
               </div>
               
-              <div className="process-card urls">
-                <div className="process-number">3</div>
-                <div className="process-content">
-                  <h3>🌐 Provide URLs</h3>
-                  <p>Submit URLs for comprehensive brand analysis</p>
+              <div className="container--card container--urls">
+                <div className="number--display">3</div>
+                <div className="container--workflow">
+                  <h3 className="heading--card">🌐 Provide URLs</h3>
+                  <p className="text--body">Submit URLs for comprehensive brand analysis</p>
                   <ul>
                     <li>Multiple input methods</li>
                     <li>Automatic validation</li>
@@ -436,11 +394,11 @@ const RunAudit: React.FC = () => {
                 </div>
               </div>
               
-              <div className="process-card analysis">
-                <div className="process-number">4</div>
-                <div className="process-content">
-                  <h3>📊 Deep Analysis</h3>
-                  <p>AI-powered evaluation across 50+ criteria</p>
+              <div className="container--card container--analysis">
+                <div className="number--display">4</div>
+                <div className="container--workflow">
+                  <h3 className="heading--card">📊 Deep Analysis</h3>
+                  <p className="text--body">AI-powered evaluation across 50+ criteria</p>
                   <ul>
                     <li>Experience reports</li>
                     <li>Hygiene scorecards</li>
@@ -452,56 +410,60 @@ const RunAudit: React.FC = () => {
           </div>
 
           {/* Configuration Section */}
-          <div className="audit-configuration">
-            <h2 className="section-title">⚙️ Audit Configuration</h2>
+          <div className="container--section">
+            <h2 className="heading--section">⚙️ Audit Configuration</h2>
             
-            <div className="config-grid">
+            <div className="container--layout">
               {/* Persona Upload */}
-              <div className="config-section persona-section">
-                <div className="section-header">
-                  <h3>📋 Step 1: Upload Persona File</h3>
-                  <div className="section-badge">Required</div>
+              <div className="container--card container--section">
+                <div className="container--layout">
+                  <h3 className="heading--card">📋 Step 1: Upload Persona File</h3>
+                  <div className="text--display">Required</div>
                 </div>
                 
-                <div className="file-upload-area">
+                <div className="container--form">
                   <input
                     type="file"
                     id="persona-file"
                     accept=".md"
                     onChange={handlePersonaFileUpload}
                     disabled={auditState.isRunning}
-                    className="file-input"
+                    className="input--file"
                   />
-                  <label htmlFor="persona-file" className="file-upload-label">
-                    <div className="upload-icon">📁</div>
-                    <div className="upload-text">
-                      <span className="upload-title">Choose Persona File</span>
-                      <span className="upload-subtitle">Drag & drop or click to browse (.md files)</span>
+                  <label htmlFor="persona-file" className="label--upload">
+                    <div className="icon--ui">📁</div>
+                    <div className="container--content">
+                      <span className="text--display">Choose Persona File</span>
+                      <span className="text--body">Drag & drop or click to browse (.md files)</span>
                     </div>
                   </label>
                 </div>
                 
                 {personaFile && (
-                  <div className="file-success">
-                    <div className="success-icon">✅</div>
-                    <div className="success-content">
-                      <p><strong>File loaded:</strong> {personaFile.name}</p>
-                      <p><strong>Detected persona:</strong> {extractPersonaName(personaContent, personaFile.name)}</p>
-                      <p><strong>File size:</strong> {(personaFile.size / 1024).toFixed(1)} KB</p>
-                    </div>
+                  <div className="container--section">
+                    <div className="icon--ui">✅</div>
+                    <Banner
+                      message={
+                        <>
+                          <p className="text--body"><strong>File loaded:</strong> {personaFile.name}</p>
+                          <p className="text--body"><strong>Detected persona:</strong> {extractPersonaName(personaContent, personaFile.name)}</p>
+                          <p className="text--body"><strong>File size:</strong> {(personaFile.size / 1024).toFixed(1)} KB</p>
+                        </>
+                      }
+                    />
                   </div>
                 )}
               </div>
 
               {/* Model Selection */}
-              <div className="config-section model-section">
-                <div className="section-header">
-                  <h3>🤖 Step 2: Select AI Model</h3>
-                  <div className="section-badge">Choose Wisely</div>
+              <div className="container--card container--section">
+                <div className="container--layout">
+                  <h3 className="heading--card">🤖 Step 2: Select AI Model</h3>
+                  <div className="text--display">Choose Wisely</div>
                 </div>
                 
-                <div className="model-options">
-                  <div className={`model-option ${selectedModel === 'openai' ? 'selected' : ''}`}>
+                <div className="container--form">
+                  <div className={`container--card ${selectedModel === 'openai' ? 'selected' : ''}`}>
                     <input
                       type="radio"
                       id="openai"
@@ -510,21 +472,21 @@ const RunAudit: React.FC = () => {
                       onChange={(e) => setSelectedModel(e.target.value as 'openai')}
                       disabled={auditState.isRunning}
                     />
-                    <label htmlFor="openai" className="model-label">
-                      <div className="model-icon">🔥</div>
-                      <div className="model-content">
-                        <h4>OpenAI GPT-4.1-Mini</h4>
-                        <p className="model-description">Cost-effective choice with excellent quality</p>
-                        <div className="model-features">
-                          <span className="feature-tag cost">Low Cost</span>
-                          <span className="feature-tag speed">Fast</span>
-                          <span className="feature-tag quality">High Quality</span>
+                    <label htmlFor="openai" className="label--option">
+                      <div className="icon--ui">🔥</div>
+                      <div className="container--content">
+                        <h4 className="heading--card">OpenAI GPT-4.1-Mini</h4>
+                        <p className="text--body">Cost-effective choice with excellent quality</p>
+                        <div className="container--section">
+                          <span className="text--display badge--cost">Low Cost</span>
+                          <span className="text--display badge--speed">Fast</span>
+                          <span className="text--display badge--quality">High Quality</span>
                         </div>
                       </div>
                     </label>
                   </div>
                   
-                  <div className={`model-option ${selectedModel === 'anthropic' ? 'selected' : ''}`}>
+                  <div className={`container--card ${selectedModel === 'anthropic' ? 'selected' : ''}`}>
                     <input
                       type="radio"
                       id="anthropic"
@@ -533,15 +495,15 @@ const RunAudit: React.FC = () => {
                       onChange={(e) => setSelectedModel(e.target.value as 'anthropic')}
                       disabled={auditState.isRunning}
                     />
-                    <label htmlFor="anthropic" className="model-label">
-                      <div className="model-icon">🧠</div>
-                      <div className="model-content">
-                        <h4>Anthropic Claude-3-Opus</h4>
-                        <p className="model-description">Premium choice for highest quality analysis</p>
-                        <div className="model-features">
-                          <span className="feature-tag premium">Premium</span>
-                          <span className="feature-tag deep">Deep Analysis</span>
-                          <span className="feature-tag quality">Superior Quality</span>
+                    <label htmlFor="anthropic" className="label--option">
+                      <div className="icon--ui">🧠</div>
+                      <div className="container--content">
+                        <h4 className="heading--card">Anthropic Claude-3-Opus</h4>
+                        <p className="text--body">Premium choice for highest quality analysis</p>
+                        <div className="container--section">
+                          <span className="text--display badge--premium">Premium</span>
+                          <span className="text--display badge--deep">Deep Analysis</span>
+                          <span className="text--display badge--quality">Superior Quality</span>
                         </div>
                       </div>
                     </label>
@@ -551,62 +513,62 @@ const RunAudit: React.FC = () => {
             </div>
 
             {/* URL Input Section */}
-            <div className="config-section urls-section">
-              <div className="section-header">
-                <h3>🌐 Step 3: Provide URLs to Audit</h3>
-                <div className="section-badge">Multiple Methods</div>
+            <div className="container--section container--section">
+              <div className="container--layout">
+                <h3 className="heading--card">🌐 Step 3: Provide URLs to Audit</h3>
+                <div className="text--display">Multiple Methods</div>
               </div>
               
-              <div className="url-input-container">
-                <div className="url-tabs">
+              <div className="container--form">
+                <div className="tabs">
                   <button 
-                    className={`url-tab ${activeTab === 'paste' ? 'active' : ''}`}
+                    className={`tabs__button ${activeTab === 'paste' ? 'tabs__button--active' : ''}`}
                     onClick={() => setActiveTab('paste')}
                   >
                     ✏️ Paste URLs
                   </button>
                   <button 
-                    className={`url-tab ${activeTab === 'upload' ? 'active' : ''}`}
+                    className={`tabs__button ${activeTab === 'upload' ? 'tabs__button--active' : ''}`}
                     onClick={() => setActiveTab('upload')}
                   >
                     📁 Upload File
                   </button>
                 </div>
                 
-                <div className="url-input-content">
+                <div className="container--content">
                   {activeTab === 'paste' && (
-                    <div className="url-paste-section">
+                    <div className="container--form">
                       <textarea
                         value={urlsText}
                         onChange={(e) => setUrlsText(e.target.value)}
                         placeholder="https://example.com&#10;https://example.com/about&#10;https://example.com/services&#10;https://example.com/contact"
                         rows={8}
                         disabled={auditState.isRunning}
-                        className="url-textarea"
+                        className="textarea--input"
                       />
-                      <div className="url-help">
-                        <span className="help-icon">💡</span>
+                      <div className="container--section">
+                        <span className="icon--help">💡</span>
                         <span>Enter one URL per line. Both HTTP and HTTPS URLs are supported.</span>
                       </div>
                     </div>
                   )}
                   
                   {activeTab === 'upload' && (
-                    <div className="url-upload-section">
-                      <div className="file-upload-area">
+                    <div className="container--form">
+                      <div className="container--form">
                         <input
                           type="file"
                           id="url-file"
                           accept=".txt,.md"
                           onChange={handleUrlFileUpload}
                           disabled={auditState.isRunning}
-                          className="file-input"
+                          className="input--file"
                         />
-                        <label htmlFor="url-file" className="file-upload-label">
-                          <div className="upload-icon">📄</div>
-                          <div className="upload-text">
-                            <span className="upload-title">Upload URL File</span>
-                            <span className="upload-subtitle">TXT or MD files containing URLs</span>
+                        <label htmlFor="url-file" className="label--upload">
+                          <div className="icon--ui">📄</div>
+                          <div className="container--content">
+                            <span className="text--display">Upload URL File</span>
+                            <span className="text--body">TXT or MD files containing URLs</span>
                           </div>
                         </label>
                       </div>
@@ -621,38 +583,38 @@ const RunAudit: React.FC = () => {
               <div className="url-validation">
                 <h4 className="validation-title">🔍 URL Validation Results</h4>
                 <div className="validation-grid">
-                  <ScoreCard 
+                  <StandardCard 
                     label="Total URLs" 
                     value={urlValidation.total.toString()} 
-                    variant="default"
+                    status="default"
                   />
-                  <ScoreCard 
+                  <StandardCard 
                     label="Valid URLs" 
                     value={urlValidation.valid.toString()} 
-                    variant="success"
+                    status="good"
                   />
                   {urlValidation.invalid > 0 ? (
-                    <ScoreCard 
+                    <StandardCard 
                       label="Invalid URLs" 
                       value={urlValidation.invalid.toString()} 
-                      variant="warning"
+                      status="warning"
                     />
                   ) : (
-                    <ScoreCard 
+                    <StandardCard 
                       label="Status" 
                       value="✅ All Valid" 
-                      variant="success"
+                      status="good"
                     />
                   )}
-                  <ScoreCard 
+                  <StandardCard 
                     label="Ready to Audit" 
                     value={canRunAudit ? "✅ Yes" : "❌ No"} 
-                    variant={canRunAudit ? "success" : "warning"}
+                    status={canRunAudit ? "good" : "warning"}
                   />
                 </div>
                 
                 {urlValidation.invalid > 0 && (
-                  <div className="invalid-urls">
+                  <div className="container--form">
                     <h5>⚠️ Invalid URLs Found:</h5>
                     <ul>
                       {urlValidation.invalidUrls.slice(0, 5).map((url, index) => (
@@ -668,287 +630,320 @@ const RunAudit: React.FC = () => {
             )}
 
             {/* Launch Section */}
-            <div className="launch-section">
-              <div className="launch-summary">
+            <div className="container--workflow">
+              <div className="container--section">
                 <h4>🚀 Ready to Launch</h4>
-                <div className="summary-items">
-                  <div className="summary-item">
-                    <span className="summary-label">Persona:</span>
-                    <span className="summary-value">
+                <div className="container--actions">
+                  <div className="container--card">
+                    <span className="text--summary-label">Persona:</span>
+                    <span className="text--summary-value">
                       {personaFile ? extractPersonaName(personaContent, personaFile.name) : 'Not selected'}
                     </span>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">AI Model:</span>
-                    <span className="summary-value">{selectedModel.toUpperCase()}</span>
+                  <div className="container--card">
+                    <span className="text--summary-label">AI Model:</span>
+                    <span className="text--summary-value">{selectedModel.toUpperCase()}</span>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">URLs:</span>
-                    <span className="summary-value">{urlValidation.valid} valid URLs</span>
+                  <div className="container--card">
+                    <span className="text--summary-label">URLs:</span>
+                    <span className="text--summary-value">{urlValidation.valid} valid URLs</span>
                   </div>
-                  <div className="summary-item">
-                    <span className="summary-label">Estimated Time:</span>
-                    <span className="summary-value">{Math.ceil(urlValidation.valid * 1.5)} minutes</span>
+                  <div className="container--card">
+                    <span className="text--summary-label">Estimated Time:</span>
+                    <span className="text--summary-value">{Math.ceil(urlValidation.valid * 1.5)} minutes</span>
                   </div>
                 </div>
               </div>
               
               <button 
-                className={`launch-button ${canRunAudit ? 'ready' : 'disabled'}`}
+                className={`button--launch ${canRunAudit ? 'ready' : 'disabled'}`}
                 onClick={runAudit}
                 disabled={!canRunAudit}
               >
-                <div className="launch-icon">🚀</div>
-                <div className="launch-text">
-                  <span className="launch-title">Launch Brand Audit</span>
-                  <span className="launch-subtitle">
+                <div className="icon--ui">🚀</div>
+                <div className="container--content">
+                  <span className="text--launch-title">Launch Brand Audit</span>
+                  <span className="text--launch-subtitle">
                     {!canRunAudit ? 'Complete configuration above' : 'Begin comprehensive analysis'}
                   </span>
                 </div>
               </button>
             </div>
           </div>
-        </>
-      )}
-
-      {/* Audit Progress */}
-      {auditState.isRunning && (
-        <div className="audit-progress">
-          <div className="progress-header">
-            <h2>🔄 Audit in Progress</h2>
-            <div className="progress-meta">
-              <span>Using {selectedModel.toUpperCase()}</span>
-              <span>•</span>
-              <span>Persona: {auditState.personaName}</span>
-              <span>•</span>
-              <span>{auditState.totalUrls} URLs</span>
-            </div>
-          </div>
-          
-          <div className="progress-visualization">
-            <div className="progress-circle">
-              <svg viewBox="0 0 100 100" className="progress-svg">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#e5e5e5"
-                  strokeWidth="8"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${auditState.currentProgress * 2.83} 283`}
-                  style={{ transition: 'stroke-dasharray 0.5s ease' }}
-                />
-              </svg>
-              <div className="progress-text">
-                <span className="progress-percentage">{auditState.currentProgress}%</span>
-                <span className="progress-label">Complete</span>
-              </div>
-            </div>
-            
-            <div className="progress-details">
-              <div className="progress-status">
-                <div className="status-icon">🎯</div>
-                <div className="status-text">{auditState.statusText}</div>
-              </div>
-              
-              <div className="progress-stats">
-                <div className="stat">
-                  <span className="stat-label">Elapsed Time:</span>
-                  <span className="stat-value">
-                    {auditState.startTime ? 
-                      Math.floor((Date.now() - auditState.startTime.getTime()) / 1000 / 60) : 0
-                    } minutes
-                  </span>
-                </div>
-                <div className="stat">
-                  <span className="stat-label">URLs Processed:</span>
-                  <span className="stat-value">{Math.floor((auditState.currentProgress / 100) * auditState.totalUrls)}/{auditState.totalUrls}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="audit-log">
-            <div className="log-header">
-              <h3>📋 Live Audit Log</h3>
-              <div className="log-controls">
-                <span className="log-status">🟢 Live</span>
-              </div>
-            </div>
-            <div className="log-container" ref={logContainerRef}>
-              {auditState.logLines.length > 0 ? (
-                auditState.logLines.map((line, index) => (
-                  <div key={index} className="log-line">{line}</div>
-                ))
-              ) : (
-                <div className="log-empty">Waiting for audit logs...</div>
-              )}
-            </div>
-          </div>
         </div>
-      )}
 
-      {/* Post-Audit Processing */}
-      {auditState.auditComplete && !auditState.isRunning && !auditState.isProcessing && (
-        <div className="post-audit">
-          <div className="completion-celebration">
-            <div className="celebration-animation">🎉</div>
-            <h2>✅ Audit Complete!</h2>
-            <p>Raw audit files generated successfully for <strong>{auditState.completedPersonaName}</strong></p>
-          </div>
-          
-          <div className="next-steps-container">
-            <div className="next-steps-info">
-              <h3>🎯 What's Next?</h3>
-              <div className="steps-grid">
-                <div className="step-card">
-                  <div className="step-icon">🏷️</div>
-                  <div className="step-content">
-                    <h4>Tier Classification</h4>
-                    <p>URLs classified into business importance tiers</p>
+        {/* Right Column: Status & Logs */}
+        <div className="container--layout">
+          <div className="container--section">
+            <h2 className="heading--section">📊 Audit Status & Logs</h2>
+            {/* Running Audit Warning */}
+            {auditState.isRunning && (
+              <Banner
+                type="warning"
+                message={
+                  <div className="container--layout">
+                    <div className="icon--ui">⚠️</div>
+                    <div className="container--content">
+                      <h3 className="heading--subsection">Audit Currently Running</h3>
+                      <p className="text--body">Persona: <strong>{auditState.personaName}</strong> • Model: <strong>{selectedModel.toUpperCase()}</strong></p>
+                      <p className="text--body">Please wait for completion or stop the current audit below.</p>
+                    </div>
+                    <button className="button--action" onClick={stopAudit}>
+                      🛑 Stop Audit
+                    </button>
                   </div>
-                </div>
-                <div className="step-card">
-                  <div className="step-icon">📊</div>
-                  <div className="step-content">
-                    <h4>Data Processing</h4>
-                    <p>Convert markdown reports to structured CSV/Parquet</p>
-                  </div>
-                </div>
-                <div className="step-card">
-                  <div className="step-icon">📋</div>
-                  <div className="step-content">
-                    <h4>Strategic Summary</h4>
-                    <p>Generate executive-level insights and recommendations</p>
-                  </div>
-                </div>
-                <div className="step-card">
-                  <div className="step-icon">🗄️</div>
-                  <div className="step-content">
-                    <h4>Database Integration</h4>
-                    <p>Add to unified multi-persona dataset</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="processing-status">
-              <h4>📊 Processing Status</h4>
-              <div className="status-card">
-                {processingState.status === 'completed' ? (
-                  <div className="status-success">
-                    <div className="status-icon">✅</div>
-                    <div className="status-text">
-                      <p><strong>Already processed</strong></p>
-                      <p>Data is ready for dashboard</p>
+                }
+              />
+            )}
+
+            {!auditState.isRunning && !auditState.auditComplete && !auditState.isProcessing && (
+              <>
+                {/* Audit Progress */}
+                <div className="container--card">
+                  <div className="container--workflow">
+                    <h2>🔄 Audit in Progress</h2>
+                    <div className="container--workflow">
+                      <span>Using {selectedModel.toUpperCase()}</span>
+                      <span>•</span>
+                      <span>Persona: {auditState.personaName}</span>
+                      <span>•</span>
+                      <span>{auditState.totalUrls} URLs</span>
                     </div>
                   </div>
-                ) : (
-                  <div className="status-pending">
-                    <div className="status-icon">⏳</div>
-                    <div className="status-text">
-                      <p><strong>Raw files only</strong></p>
-                      <p>Needs processing for dashboard</p>
+                  
+                  <div className="container--workflow">
+                    <div className="container--workflow">
+                      <svg viewBox="0 0 100 100" className="progress-svg">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="#e5e5e5"
+                          strokeWidth="8"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="45"
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="8"
+                          strokeLinecap="round"
+                          strokeDasharray={`${auditState.currentProgress * 2.83} 283`}
+                          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                        />
+                      </svg>
+                      <div className="container--workflow">
+                        <span className="text--percentage">{auditState.currentProgress}%</span>
+                        <span className="text--progress-label">Complete</span>
+                      </div>
+                    </div>
+                    
+                    <div className="container--workflow">
+                      <div className="container--workflow">
+                        <div className="icon--ui">🎯</div>
+                        <div className="text--display">{auditState.statusText}</div>
+                      </div>
+                      
+                      <div className="container--workflow">
+                        <div className="container--card">
+                          <span className="text--stat-label">Elapsed Time:</span>
+                          <span className="text--stat-value">
+                            {auditState.startTime ? 
+                              Math.floor((Date.now() - auditState.startTime.getTime()) / 1000 / 60) : 0
+                            } minutes
+                          </span>
+                        </div>
+                        <div className="container--card">
+                          <span className="text--stat-label">URLs Processed:</span>
+                          <span className="text--stat-value">{Math.floor((auditState.currentProgress / 100) * auditState.totalUrls)}/{auditState.totalUrls}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="action-section">
-            <button 
-              className={`process-button ${processingState.status === 'completed' ? 'completed' : ''}`}
-              onClick={processAuditResults}
-              disabled={processingState.status === 'completed' || processingState.status === 'running'}
-            >
-              <div className="button-icon">
-                {processingState.status === 'completed' ? '✅' : '🗄️'}
-              </div>
-              <div className="button-content">
-                <span className="button-title">
-                  {processingState.status === 'completed' ? 'Processing Complete' : 'Add to Database'}
-                </span>
-                <span className="button-subtitle">
-                  {processingState.status === 'completed' 
-                    ? 'Data ready for dashboard' 
-                    : 'Process and integrate audit results'}
-                </span>
-              </div>
-            </button>
-            
-            {processingState.status === 'completed' && (
-              <div className="completion-actions">
-                <button className="nav-button secondary">
-                  <span className="button-icon">🏠</span>
-                  <span>Dashboard Home</span>
-                </button>
-                <button className="nav-button primary" onClick={resetAudit}>
-                  <span className="button-icon">🚀</span>
-                  <span>Run Another Audit</span>
-                </button>
+                  
+                  <div className="container--card">
+                    <div className="container--log-header">
+                      <h3>📋 Live Audit Log</h3>
+                      <div className="container--actions">
+                        <span className="text--log-status">🟢 Live</span>
+                      </div>
+                    </div>
+                    <div className="container--log-content" ref={logContainerRef}>
+                      {auditState.logLines.length > 0 ? (
+                        auditState.logLines.map((line, index) => (
+                          <div key={index} className="container--log-line">{line}</div>
+                        ))
+                      ) : (
+                        <div className="container--log-empty">Waiting for audit logs...</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Post-Audit Processing */}
+            {auditState.auditComplete && !auditState.isRunning && !auditState.isProcessing && (
+              <Banner
+                type="success"
+                message={
+                  <div>
+                    <div className="text-center">
+                      <span className="text-5xl">🎉</span>
+                      <h2 className="heading--section">✅ Audit Complete!</h2>
+                      <p>Raw audit files generated successfully for <strong>{auditState.completedPersonaName}</strong></p>
+                    </div>
+                    
+                    <div className="container--actions">
+                      <div className="container--content">
+                        <h3 className="heading--subsection">🎯 What's Next?</h3>
+                        <div className="container--actions">
+                          <div className="container--card">
+                            <div className="journey--flow">🏷️</div>
+                            <div className="container--content">
+                              <h4>Tier Classification</h4>
+                              <p>URLs classified into business importance tiers</p>
+                            </div>
+                          </div>
+                          <div className="container--card">
+                            <div className="journey--flow">📊</div>
+                            <div className="container--content">
+                              <h4>Data Processing</h4>
+                              <p>Convert markdown reports to structured CSV/Parquet</p>
+                            </div>
+                          </div>
+                          <div className="container--card">
+                            <div className="journey--flow">📋</div>
+                            <div className="container--content">
+                              <h4>Strategic Summary</h4>
+                              <p>Generate executive-level insights and recommendations</p>
+                            </div>
+                          </div>
+                          <div className="container--card">
+                            <div className="journey--flow">🗄️</div>
+                            <div className="container--content">
+                              <h4>Database Integration</h4>
+                              <p>Add to unified multi-persona dataset</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="container--card">
+                        <h4 className="heading--subsection">📊 Processing Status</h4>
+                        <div className="container--card">
+                          {processingState.status === 'completed' ? (
+                            <div className="container--status-success">
+                              <div className="icon--ui">✅</div>
+                              <div className="text--display">
+                                <p><strong>Already processed</strong></p>
+                                <p>Data is ready for dashboard</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="container--status-pending">
+                              <div className="icon--ui">⏳</div>
+                              <div className="text--display">
+                                <p><strong>Raw files only</strong></p>
+                                <p>Needs processing for dashboard</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="container--actions">
+                      <button 
+                        className={`process-button ${processingState.status === 'completed' ? 'completed' : ''}`}
+                        onClick={processAuditResults}
+                        disabled={processingState.status === 'completed' || processingState.status === 'running'}
+                      >
+                        <div className="button--action">
+                          {processingState.status === 'completed' ? '✅' : '🗄️'}
+                        </div>
+                        <div className="container--content">
+                          <span className="text--button-title">
+                            {processingState.status === 'completed' ? 'Processing Complete' : 'Add to Database'}
+                          </span>
+                          <span className="text--button-subtitle">
+                            {processingState.status === 'completed' 
+                              ? 'Data ready for dashboard' 
+                              : 'Process and integrate audit results'}
+                          </span>
+                        </div>
+                      </button>
+                      
+                      {processingState.status === 'completed' && (
+                        <div className="container--actions">
+                          <button className="button--nav button--secondary">
+                            <span className="button--action">🏠</span>
+                            <span>Dashboard Home</span>
+                          </button>
+                          <button className="button--nav button--action" onClick={resetAudit}>
+                            <span className="button--action">🚀</span>
+                            <span>Run Another Audit</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                }
+              />
+            )}
+
+            {/* Processing Progress */}
+            {auditState.isProcessing && (
+              <div className="container--workflow">
+                <div className="container--workflow">
+                  <h2>🔄 Processing Audit Results</h2>
+                  <p>Converting raw audit files into dashboard-ready data...</p>
+                </div>
+                
+                <div className="container--workflow">
+                  <div className="container--workflow">
+                    <div className={`container--card ${processingState.progress >= 20 ? 'completed' : processingState.progress >= 10 ? 'active' : ''}`}>
+                      <div className="number--display">1</div>
+                      <div className="text--display">Import</div>
+                    </div>
+                    <div className={`container--card ${processingState.progress >= 40 ? 'completed' : processingState.progress >= 30 ? 'active' : ''}`}>
+                      <div className="number--display">2</div>
+                      <div className="text--display">Classify</div>
+                    </div>
+                    <div className={`container--card ${processingState.progress >= 60 ? 'completed' : processingState.progress >= 50 ? 'active' : ''}`}>
+                      <div className="number--display">3</div>
+                      <div className="text--display">Process</div>
+                    </div>
+                    <div className={`container--card ${processingState.progress >= 80 ? 'completed' : processingState.progress >= 70 ? 'active' : ''}`}>
+                      <div className="number--display">4</div>
+                      <div className="text--display">Summarize</div>
+                    </div>
+                    <div className={`container--card ${processingState.progress >= 100 ? 'completed' : processingState.progress >= 90 ? 'active' : ''}`}>
+                      <div className="number--display">5</div>
+                      <div className="text--display">Integrate</div>
+                    </div>
+                  </div>
+                  
+                  <div className="container--workflow">
+                    <div 
+                      className="container--workflow" 
+                      style={{ width: `${processingState.progress}%` }}
+                    />
+                  </div>
+                  
+                  <div className="container--card">
+                    <div className="text--display">{processingState.message}</div>
+                    <div className="text--display">{processingState.progress}%</div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
-      )}
-
-      {/* Processing Progress */}
-      {auditState.isProcessing && (
-        <div className="processing-progress">
-          <div className="processing-header">
-            <h2>🔄 Processing Audit Results</h2>
-            <p>Converting raw audit files into dashboard-ready data...</p>
-          </div>
-          
-          <div className="processing-visualization">
-            <div className="processing-steps">
-              <div className={`step ${processingState.progress >= 20 ? 'completed' : processingState.progress >= 10 ? 'active' : ''}`}>
-                <div className="step-number">1</div>
-                <div className="step-label">Import</div>
-              </div>
-              <div className={`step ${processingState.progress >= 40 ? 'completed' : processingState.progress >= 30 ? 'active' : ''}`}>
-                <div className="step-number">2</div>
-                <div className="step-label">Classify</div>
-              </div>
-              <div className={`step ${processingState.progress >= 60 ? 'completed' : processingState.progress >= 50 ? 'active' : ''}`}>
-                <div className="step-number">3</div>
-                <div className="step-label">Process</div>
-              </div>
-              <div className={`step ${processingState.progress >= 80 ? 'completed' : processingState.progress >= 70 ? 'active' : ''}`}>
-                <div className="step-number">4</div>
-                <div className="step-label">Summarize</div>
-              </div>
-              <div className={`step ${processingState.progress >= 100 ? 'completed' : processingState.progress >= 90 ? 'active' : ''}`}>
-                <div className="step-number">5</div>
-                <div className="step-label">Integrate</div>
-              </div>
-            </div>
-            
-            <div className="processing-bar">
-              <div 
-                className="processing-fill" 
-                style={{ width: `${processingState.progress}%` }}
-              />
-            </div>
-            
-            <div className="processing-status">
-              <div className="status-message">{processingState.message}</div>
-              <div className="status-percentage">{processingState.progress}%</div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

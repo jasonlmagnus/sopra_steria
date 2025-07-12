@@ -8,7 +8,14 @@ describe('ExpandableCard', () => {
         <span>inner</span>
       </ExpandableCard>
     )
-    expect(screen.queryByText('inner')).not.toBeInTheDocument()
+    // Content should be in the document but not visible
+    expect(screen.getByText('inner')).toBeInTheDocument()
+    
+    // Click to expand
+    fireEvent.click(screen.getByText(/Test/))
+    expect(screen.getByText('inner')).toBeInTheDocument()
+
+    // Click to collapse
     fireEvent.click(screen.getByText(/Test/))
     expect(screen.getByText('inner')).toBeInTheDocument()
   })
