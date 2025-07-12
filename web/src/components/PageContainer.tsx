@@ -1,13 +1,21 @@
 import React from 'react'
+import { PageHeader } from './PageHeader'
 
 export interface PageContainerProps {
-  /** Optional page title. Currently unused but kept for backwards compatibility */
-  title?: string
+  title: string
+  description?: string
   children: React.ReactNode
 }
 
-export function PageContainer({ children }: PageContainerProps) {
-  return <div className="page-container">{children}</div>
+export function PageContainer({ title, description, children }: PageContainerProps) {
+  return (
+    <div className="page-container">
+      <PageHeader title={title} description={description} />
+      <div className="page-container__content">
+        {children}
+      </div>
+    </div>
+  )
 }
 
 export default PageContainer

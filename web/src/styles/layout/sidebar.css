@@ -53,8 +53,6 @@
 }
 
 .sidebar__logo-text {
-  white-space: nowrap;
-  overflow: hidden;
   transition: opacity var(--transition-base);
 }
 
@@ -211,4 +209,4 @@
   white-space: nowrap;
   overflow: hidden;
   transition: opacity var(--transition-base);
-} 
+}
