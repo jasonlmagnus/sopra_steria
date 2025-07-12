@@ -16,7 +16,7 @@ export function FilterSystem({ config, data }: FilterSystemProps) {
     const value = filters[name] || '';
 
     switch (type) {
-      case 'select':
+      case 'select': {
         const dynamicOptions = data[name + 'Options'] || options || [];
         return (
           <div key={name} className="filter-item">
@@ -33,6 +33,7 @@ export function FilterSystem({ config, data }: FilterSystemProps) {
             </select>
           </div>
         );
+      }
       case 'range':
         return (
           <div key={name} className="filter-item">
@@ -62,7 +63,7 @@ export function FilterSystem({ config, data }: FilterSystemProps) {
             />
           </div>
         );
-      case 'multiselect':
+      case 'multiselect': {
         const selectedValues = value || [];
         return (
           <div key={name} className="filter-item">
@@ -87,6 +88,7 @@ export function FilterSystem({ config, data }: FilterSystemProps) {
             </div>
           </div>
         )
+      }
       default:
         return null;
     }
