@@ -35,13 +35,8 @@ function OpportunityImpact() {
         <h1>💡 Opportunity & Impact</h1>
         <p>Loading impact analysis...</p>
       </div>
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <div style={{ 
-          border: '2px solid #e2e8f0', 
-          borderRadius: '8px', 
-          padding: '2rem',
-          backgroundColor: '#f8fafc' 
-        }}>
+      <div className="p-2xl text-center">
+        <div className="alert">
           <p>🔄 Updating filters...</p>
         </div>
       </div>
@@ -54,13 +49,8 @@ function OpportunityImpact() {
         <h1>💡 Opportunity & Impact</h1>
         <p>Error loading impact analysis</p>
       </div>
-      <div style={{ padding: '2rem' }}>
-        <div style={{ 
-          border: '2px solid #fecaca', 
-          borderRadius: '8px', 
-          padding: '2rem',
-          backgroundColor: '#fef2f2' 
-        }}>
+      <div className="p-2xl">
+        <div className="alert">
           <p>❌ Error: {error.message}</p>
           <p>Please try adjusting your filters or refresh the page.</p>
         </div>
@@ -98,15 +88,15 @@ function OpportunityImpact() {
             borderRadius: '5px' 
           }}>
             <h4 style={{ margin: 0, color: '#333' }}>⚠️ Filter Results</h4>
-            <p style={{ margin: '8px 0', color: '#92400e', fontWeight: 'bold' }}>
+            <p className="font-bold">
               No opportunities match your current filter criteria
             </p>
-            <p style={{ margin: '5px 0' }}>
+            <p className="my-xs">
               <strong>Try:</strong> Lowering the impact threshold slider or selecting "All" for other filters
             </p>
           </div>
           
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="p-2xl text-center">
             <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
               Current filters: <strong>Impact Threshold:</strong> {controls.impactThreshold}, <strong>Effort:</strong> {controls.effortLevel}, 
               <strong>Priority:</strong> {controls.priorityLevel}, <strong>Tier:</strong> {controls.contentTier}
@@ -154,7 +144,7 @@ function ImpactCalculationExplainer() {
   return (
     <div className="insights-box">
       <div 
-        style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        className="flex-between-center"
         onClick={() => setExpanded(!expanded)}
       >
         <h3>📊 How Impact is Calculated</h3>
@@ -162,13 +152,13 @@ function ImpactCalculationExplainer() {
       </div>
       
       {expanded && (
-        <div style={{ marginTop: '1rem' }}>
-          <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '6px', fontFamily: 'monospace' }}>
+        <div className="mt-lg">
+          <div className="p-lg">
             <strong>Impact Score Formula:</strong><br/>
             <code>Impact = (10 - Current Score) × Tier Weight</code>
           </div>
           
-          <div style={{ marginTop: '1rem' }}>
+          <div className="mt-lg">
             <strong>What this means:</strong>
             <ul>
               <li><strong>Current Score:</strong> The page's performance score (1-10 scale)</li>
@@ -183,7 +173,7 @@ function ImpactCalculationExplainer() {
             </ul>
           </div>
 
-          <div style={{ marginTop: '1rem' }}>
+          <div className="mt-lg">
             <strong>Examples:</strong>
             <ul>
               <li>Page scoring 3/10 in Tier 2: Impact = (10-3) × 0.5 = <strong>3.5</strong></li>
@@ -192,7 +182,7 @@ function ImpactCalculationExplainer() {
             </ul>
           </div>
 
-          <div style={{ marginTop: '1rem' }}>
+          <div className="mt-lg">
             <strong>Why this works:</strong>
             <ul>
               <li>Prioritizes pages with bigger performance gaps</li>
@@ -215,9 +205,9 @@ function OpportunityControls({ controls, setControls, data }: any) {
     <div className="insights-box">
       <h2>🎛️ Opportunity Analysis Controls</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+      <div className="grid">
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             💥 Min Impact Score: {controls.impactThreshold}
           </label>
           <input 
@@ -227,19 +217,19 @@ function OpportunityControls({ controls, setControls, data }: any) {
             step="0.5"
             value={controls.impactThreshold}
             onChange={(e) => setControls({...controls, impactThreshold: parseFloat(e.target.value)})}
-            style={{ width: '100%' }}
+            className="w-full"
           />
           <small>Minimum impact score to show opportunities</small>
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             ⚡ Effort Level
           </label>
           <select 
             value={controls.effortLevel}
             onChange={(e) => setControls({...controls, effortLevel: e.target.value})}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+            className="w-full"
           >
             {effortLevels.map(level => (
               <option key={level} value={level}>{level}</option>
@@ -248,13 +238,13 @@ function OpportunityControls({ controls, setControls, data }: any) {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             🎯 Priority Level
           </label>
           <select 
             value={controls.priorityLevel}
             onChange={(e) => setControls({...controls, priorityLevel: e.target.value})}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+            className="w-full"
           >
             {priorityLevels.map(level => (
               <option key={level} value={level}>{level}</option>
@@ -263,13 +253,13 @@ function OpportunityControls({ controls, setControls, data }: any) {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             🏗️ Content Tier
           </label>
           <select 
             value={controls.contentTier}
             onChange={(e) => setControls({...controls, contentTier: e.target.value})}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+            className="w-full"
           >
             {tiers.map((tier, index) => (
               <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
@@ -278,9 +268,9 @@ function OpportunityControls({ controls, setControls, data }: any) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             📊 Max Opportunities
           </label>
           <input 
@@ -289,7 +279,7 @@ function OpportunityControls({ controls, setControls, data }: any) {
             max="50"
             value={controls.maxOpportunities}
             onChange={(e) => setControls({...controls, maxOpportunities: parseInt(e.target.value)})}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #D1D5DB' }}
+            className="w-full"
           />
         </div>
       </div>
@@ -307,7 +297,7 @@ function ImpactOverview({ overview, opportunities }: any) {
     <div className="insights-box">
       <h2>📊 Impact Overview</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         <div className="metric-card">
           <div className="metric-value">{totalOpportunities}</div>
           <div className="metric-label">Total Opportunities</div>
@@ -328,7 +318,7 @@ function ImpactOverview({ overview, opportunities }: any) {
 
       {/* Impact Distribution Chart */}
       {opportunities.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
+        <div className="mt-2xl">
           <PlotlyChart 
             data={[{
               type: 'histogram',
@@ -381,17 +371,17 @@ function PrioritizedOpportunities({ opportunities }: any) {
         const avgScore = opps.reduce((sum: number, opp: any) => sum + (opp.currentScore || 0), 0) / opps.length
         
         return (
-          <div key={tier} style={{ marginBottom: '0.5rem' }}>
+          <div key={tier} className="mb-md">
             <strong>{tier}:</strong> {opps.length} opps | Avg Impact: {avgImpact.toFixed(1)}/10 | Avg Score: {avgScore.toFixed(1)}/10
           </div>
         )
       })}
 
       {/* Individual Opportunities */}
-      <h3 style={{ marginTop: '2rem' }}>Prioritized Improvement Opportunities</h3>
+      <h3 className="mt-2xl">Prioritized Improvement Opportunities</h3>
       
       {opportunities.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+        <div className="text-center">
           📊 No opportunities identified. Try adjusting the filters.
         </div>
       ) : (
@@ -430,31 +420,19 @@ function OpportunityCard({ opportunity, rank, expanded, onToggle }: any) {
   const title = `#${rank} - ${pageTitle} (${priorityLabel})`
 
   return (
-    <div style={{ 
-      border: '1px solid #D1D5DB', 
-      borderRadius: '8px', 
-      marginBottom: '1rem',
-      background: expanded ? '#f8fafc' : 'white'
-    }}>
+    <div className="mb-lg">
       <div 
-        style={{ 
-          padding: '1rem', 
-          cursor: 'pointer', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          borderBottom: expanded ? '1px solid #D1D5DB' : 'none'
-        }}
+        className="flex-between-center"
         onClick={onToggle}
       >
-        <h4 style={{ margin: 0 }}>{title}</h4>
+        <h4 className="margin-0">{title}</h4>
         <span>{expanded ? '▼' : '▶'}</span>
       </div>
 
       {expanded && (
-        <div style={{ padding: '1rem' }}>
+        <div className="p-lg">
           {/* Metrics Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="grid">
             <div className="metric-card">
               <div className="metric-value">{currentScore.toFixed(1)}/10</div>
               <div className="metric-label">Current Score</div>
@@ -474,14 +452,9 @@ function OpportunityCard({ opportunity, rank, expanded, onToggle }: any) {
           </div>
 
           {/* Recommendation */}
-          <div style={{ marginBottom: '1rem' }}>
+          <div className="mb-lg">
             <h4>💡 Recommended Action</h4>
-            <div style={{ 
-              background: '#e7f3ff', 
-              border: '1px solid #3d4a6b', 
-              borderRadius: '6px', 
-              padding: '1rem' 
-            }}>
+            <div className="p-lg">
               <strong>Action:</strong> {opportunity.recommendation || 'Improve page performance based on identified gaps'}
             </div>
           </div>
@@ -491,7 +464,7 @@ function OpportunityCard({ opportunity, rank, expanded, onToggle }: any) {
             <h4>📋 Supporting Evidence & Analysis</h4>
             
             {/* Experience Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="grid">
               <div>
                 <strong>🟢 Sentiment:</strong> {opportunity.sentiment || 'Unknown'}
               </div>
@@ -504,22 +477,12 @@ function OpportunityCard({ opportunity, rank, expanded, onToggle }: any) {
             </div>
 
             {/* Content Examples */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ 
-                background: '#d4edda', 
-                padding: '1rem', 
-                borderRadius: '6px', 
-                borderLeft: '4px solid #28a745' 
-              }}>
+            <div className="grid">
+              <div className="p-lg">
                 <strong>✅ What's Working Well:</strong><br/>
                 {opportunity.effectiveExamples || 'No specific effective examples identified'}
               </div>
-              <div style={{ 
-                background: '#f8d7da', 
-                padding: '1rem', 
-                borderRadius: '6px', 
-                borderLeft: '4px solid #dc3545' 
-              }}>
+              <div className="p-lg">
                 <strong>❌ What's Not Working:</strong><br/>
                 {opportunity.ineffectiveExamples || 'No specific ineffective examples identified'}
               </div>
@@ -538,25 +501,19 @@ function AIStrategicRecommendations({ aiRecommendations, data }: any) {
       
       {aiRecommendations.length > 0 ? (
         <div>
-          <div style={{ color: '#28a745', marginBottom: '1rem' }}>
+          <div className="mb-lg">
             🎯 Generated {aiRecommendations.length} strategic recommendations
           </div>
           
           {aiRecommendations.map((rec: string, index: number) => (
-            <div key={index} style={{ 
-              background: '#e7f3ff', 
-              border: '1px solid #3d4a6b', 
-              borderRadius: '6px', 
-              padding: '1rem',
-              marginBottom: '1rem'
-            }}>
+            <div key={index} className="mb-lg">
               <h4>🤖 AI Recommendation #{index + 1}</h4>
               <p>{rec}</p>
             </div>
           ))}
         </div>
       ) : (
-        <div style={{ color: '#6c757d' }}>
+        <div className="text-muted">
           🤖 AI strategic recommendations not available. Executive summary may need to be regenerated.
         </div>
       )}
@@ -571,23 +528,17 @@ function AIPatternAnalysis({ data }: any) {
   const patterns = data.patterns || []
 
   return (
-    <div style={{ marginTop: '2rem' }}>
+    <div className="mt-2xl">
       <h3>🔍 AI Pattern Analysis</h3>
       
       {patterns.length > 0 ? (
         patterns.map((insight: string, index: number) => (
-          <div key={index} style={{ 
-            background: '#f8f9fa', 
-            border: '1px solid #dee2e6', 
-            borderRadius: '6px', 
-            padding: '1rem',
-            marginBottom: '0.5rem'
-          }}>
+          <div key={index} className="p-lg">
             {insight}
           </div>
         ))
       ) : (
-        <div style={{ color: '#6c757d' }}>
+        <div className="text-muted">
           📊 Pattern analysis not available for current dataset.
         </div>
       )}
@@ -606,26 +557,14 @@ function CriteriaDeepDive({ criteriaAnalysis }: any) {
       {criteria.length > 0 ? (
         <div>
           {/* Bottom 5 Criteria */}
-          <div style={{ 
-            background: '#fee2e2', 
-            border: '1px solid #dc3545', 
-            borderRadius: '6px', 
-            padding: '1rem',
-            marginBottom: '2rem'
-          }}>
+          <div className="mb-2xl">
             <strong>🎯 Biggest Improvement Opportunities (Bottom 5 Criteria)</strong>
           </div>
 
           {criteria.slice(0, 5).map((criterion: any, index: number) => {
             const improvementPotential = 10 - criterion.score
             return (
-              <div key={index} style={{ 
-                background: '#fee2e2', 
-                border: '1px solid #dc3545', 
-                borderRadius: '6px', 
-                padding: '1rem',
-                marginBottom: '0.5rem'
-              }}>
+              <div key={index} className="p-lg">
                 <strong>#{index + 1} - {criterion.name}</strong><br/>
                 Current Score: {criterion.score.toFixed(1)}/10 | Improvement Potential: +{improvementPotential.toFixed(1)}
               </div>
@@ -633,7 +572,7 @@ function CriteriaDeepDive({ criteriaAnalysis }: any) {
           })}
 
           {/* Criteria Performance Chart */}
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-2xl">
             <PlotlyChart 
               data={[{
                 type: 'bar',
@@ -658,10 +597,10 @@ function CriteriaDeepDive({ criteriaAnalysis }: any) {
 
           {/* Correlation Analysis */}
           {correlations.length > 0 && (
-            <div style={{ marginTop: '2rem' }}>
+            <div className="mt-2xl">
               <h3>🔗 Criteria Correlation Analysis</h3>
               
-              <div style={{ marginBottom: '1rem' }}>
+              <div className="mb-lg">
                 <h4>🔗 Strong Correlations (|r| &gt; 0.5)</h4>
                 
                 {correlations.slice(0, 5).map((corr: any, index: number) => {
@@ -669,13 +608,7 @@ function CriteriaDeepDive({ criteriaAnalysis }: any) {
                   const corrStrength = Math.abs(corr.correlation) > 0.7 ? "Strong" : "Moderate"
                   
                   return (
-                    <div key={index} style={{ 
-                      background: '#f8f9fa', 
-                      border: '1px solid #dee2e6', 
-                      borderRadius: '6px', 
-                      padding: '1rem',
-                      marginBottom: '0.5rem'
-                    }}>
+                    <div key={index} className="p-lg">
                       <strong>{corrStrength} {corrType} Correlation:</strong><br/>
                       {corr.criteria1} ↔ {corr.criteria2}<br/>
                       Correlation: {corr.correlation.toFixed(2)}
@@ -687,7 +620,7 @@ function CriteriaDeepDive({ criteriaAnalysis }: any) {
           )}
         </div>
       ) : (
-        <div style={{ color: '#6c757d' }}>
+        <div className="text-muted">
           📊 Criteria data not available for deep dive analysis.
         </div>
       )}
@@ -711,14 +644,9 @@ function ActionRoadmap({ roadmap, opportunities }: any) {
     <div className="insights-box">
       <h2>🗺️ Action Roadmap</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         {/* Quick Wins */}
-        <div style={{ 
-          background: '#d4edda', 
-          border: '1px solid #28a745', 
-          borderRadius: '6px', 
-          padding: '1rem'
-        }}>
+        <div className="p-lg">
           <h3>⚡ Quick Wins (Low Effort, High Impact)</h3>
           <p><strong>{quickWins.length} opportunities</strong></p>
           
@@ -735,19 +663,14 @@ function ActionRoadmap({ roadmap, opportunities }: any) {
           ))}
           
           {quickWins.length > 3 && (
-            <div style={{ color: '#6c757d', fontStyle: 'italic' }}>
+            <div className="text-muted font-italic">
               💡 +{quickWins.length - 3} more quick wins available
             </div>
           )}
         </div>
 
         {/* Fill-ins */}
-        <div style={{ 
-          background: '#fff3cd', 
-          border: '1px solid #ffc107', 
-          borderRadius: '6px', 
-          padding: '1rem'
-        }}>
+        <div className="p-lg">
           <h3>🔧 Fill-ins (Medium Effort)</h3>
           <p><strong>{fillIns.length} opportunities</strong></p>
           
@@ -764,19 +687,14 @@ function ActionRoadmap({ roadmap, opportunities }: any) {
           ))}
           
           {fillIns.length > 3 && (
-            <div style={{ color: '#6c757d', fontStyle: 'italic' }}>
+            <div className="text-muted font-italic">
               💡 +{fillIns.length - 3} more fill-ins available
             </div>
           )}
         </div>
 
         {/* Major Projects */}
-        <div style={{ 
-          background: '#fee2e2', 
-          border: '1px solid #dc3545', 
-          borderRadius: '6px', 
-          padding: '1rem'
-        }}>
+        <div className="p-lg">
           <h3>🚀 Major Projects (High Effort, High Impact)</h3>
           <p><strong>{majorProjects.length} opportunities</strong></p>
           
@@ -793,7 +711,7 @@ function ActionRoadmap({ roadmap, opportunities }: any) {
           ))}
           
           {majorProjects.length > 3 && (
-            <div style={{ color: '#6c757d', fontStyle: 'italic' }}>
+            <div className="text-muted font-italic">
               💡 +{majorProjects.length - 3} more major projects available
             </div>
           )}
@@ -801,14 +719,9 @@ function ActionRoadmap({ roadmap, opportunities }: any) {
       </div>
 
       {/* Implementation Timeline */}
-      <div style={{ marginTop: '2rem' }}>
+      <div className="mt-2xl">
         <h3>📅 Suggested Implementation Timeline</h3>
-        <div style={{ 
-          background: '#f8f9fa', 
-          border: '1px solid #dee2e6', 
-          borderRadius: '6px', 
-          padding: '1rem'
-        }}>
+        <div className="p-lg">
           <div><strong>Phase 1 (Weeks 1-2):</strong> Execute top 3 Quick Wins</div>
           <div><strong>Phase 2 (Weeks 3-6):</strong> Start 1-2 Major Projects, continue with Fill-ins</div>
           <div><strong>Phase 3 (Weeks 7-12):</strong> Complete Major Projects, optimize based on results</div>

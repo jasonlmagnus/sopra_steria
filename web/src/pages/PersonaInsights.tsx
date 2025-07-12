@@ -100,38 +100,32 @@ function PersonaInsights() {
       {/* Persona Analysis Focus */}
       <div className="insights-box">
         <h2>🎯 Persona Analysis Focus</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', alignItems: 'center' }}>
+        <div className="grid-2-1">
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+            <label className="font-semibold">
               👤 Select Persona for Analysis
             </label>
             <select 
               value={selectedPersona}
               onChange={(e) => setSelectedPersona(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '0.5rem', 
-                borderRadius: '4px', 
-                border: '1px solid #D1D5DB',
-                fontSize: '1rem'
-              }}
+              className="w-full"
             >
               {allPersonas.map(persona => (
                 <option key={persona} value={persona}>{persona}</option>
               ))}
             </select>
-            <small style={{ color: '#666', fontSize: '0.9rem' }}>
+            <small className="text-secondary text-sm">
               Choose 'All' for comparison view, or specific persona for detailed analysis
             </small>
           </div>
           <div>
             {selectedPersona === 'All' ? (
-              <div className="insights-box" style={{ background: '#e0f2fe', textAlign: 'center' }}>
+              <div className="insights-box" className="text-center">
                 <strong>📊 Comparison Mode</strong><br/>
                 <small>Analyzing all personas side-by-side</small>
               </div>
             ) : (
-              <div className="insights-box" style={{ background: '#e8f5e8', textAlign: 'center' }}>
+              <div className="insights-box" className="text-center">
                 <strong>🔍 Deep Dive Mode</strong><br/>
                 <small>Focused analysis of {selectedPersona}</small>
               </div>
@@ -183,8 +177,8 @@ function PersonaComparisonAnalysis({ personas }: { personas: PersonaData[] }) {
               status={status}
               variant="persona"
             >
-              <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                <strong style={{ color: '#2C3E50' }}>{persona.page_count || 0} pages analyzed</strong>
+              <div className="text-center">
+                <strong className="text-dark">{persona.page_count || 0} pages analyzed</strong>
               </div>
             </StandardCard>
           )
@@ -193,7 +187,7 @@ function PersonaComparisonAnalysis({ personas }: { personas: PersonaData[] }) {
 
       {/* Comparison Charts */}
       <h3>📈 Persona Performance Comparison Charts</h3>
-      <div style={{ marginBottom: '2rem' }}>
+      <div className="mb-2xl">
         <PlotlyChart 
           data={[{
             type: 'bar',
@@ -216,7 +210,7 @@ function PersonaComparisonAnalysis({ personas }: { personas: PersonaData[] }) {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="grid">
         <div>
           <PlotlyChart 
             data={[{
@@ -264,17 +258,17 @@ function PersonaRankingInsights({ personas }: { personas: PersonaData[] }) {
   const bottomPersonas = personas.slice(-2)
 
   return (
-    <div className="insights-box" style={{ marginTop: '2rem' }}>
+    <div className="insights-box" className="mt-2xl">
       <h3>🏆 Persona Performance Ranking</h3>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+      <div className="grid">
         <div>
-          <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
+          <div className="insights-box" className="card card--excellent">
             <h4>🥇 Top Performing Personas</h4>
             {topPersonas.map((persona, index) => {
               const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"
               return (
-                <div key={persona.persona_id} style={{ margin: '0.5rem 0' }}>
+                <div key={persona.persona_id} className="my-md">
                   <strong>{medal} {persona.persona_id.replace('_', ' ')}: {persona.avg_score.toFixed(1)}/10</strong><br/>
                   <small>• {persona.page_count} pages analyzed</small>
                 </div>
@@ -287,7 +281,7 @@ function PersonaRankingInsights({ personas }: { personas: PersonaData[] }) {
           <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
             <h4>📉 Areas for Improvement</h4>
             {bottomPersonas.map((persona) => (
-              <div key={persona.persona_id} style={{ margin: '0.5rem 0' }}>
+              <div key={persona.persona_id} className="my-md">
                 <strong>⚠️ {persona.persona_id.replace('_', ' ')}: {persona.avg_score.toFixed(1)}/10</strong><br/>
                 <small>• Focus on improving content quality and alignment</small>
               </div>
@@ -299,7 +293,7 @@ function PersonaRankingInsights({ personas }: { personas: PersonaData[] }) {
       {/* Strategic Recommendations */}
       <div>
         <h4>🎯 Strategic Recommendations</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="grid">
           <div>
             <div className="insights-box" style={{ background: '#e6f7ff', borderLeft: '4px solid #91d5ff' }}>
               <h5>🏆 Benchmark Persona</h5>
@@ -372,12 +366,12 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
       {/* Page Performance Analysis */}
       <div className="insights-box">
         <h3>📄 Page Performance Analysis</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className="grid">
           <div>
-            <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
+            <div className="insights-box" className="card card--excellent">
               <h4>🏆 Top Performing Pages for {persona.replace('_', ' ')}</h4>
               {pages.slice(0, 3).map((page: PersonaPageData, idx: number) => (
-                <div key={idx} style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', margin: '0.5rem 0' }}>
+                <div key={idx} className="p-lg">
                   <strong>{page.title || page.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 50)}</strong><br/>
                   <small>{page.tier_name} • Score: {(page.avg_score || 0).toFixed(1)}/10</small>
                 </div>
@@ -388,7 +382,7 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
             <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
               <h4>📉 Improvement Opportunities for {persona.replace('_', ' ')}</h4>
               {pages.slice(-3).map((page: PersonaPageData, idx: number) => (
-                <div key={idx} style={{ background: '#fee2e2', padding: '1rem', borderRadius: '8px', margin: '0.5rem 0' }}>
+                <div key={idx} className="p-lg">
                   <strong>{page.title || page.url_slug?.replace(/[^a-zA-Z0-9]/g, ' ').substring(0, 50)}</strong><br/>
                   <small>{page.tier_name} • Score: {(page.avg_score || 0).toFixed(1)}/10</small>
                 </div>
@@ -399,7 +393,7 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
 
         {/* Page Performance Chart */}
         {pages.length > 1 && (
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-2xl">
             <PlotlyChart 
               data={[{
                 type: 'bar',
@@ -433,40 +427,34 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
           {pages.length > 0 ? (
             <div>
               {pages.slice(0, 3).map((page: PersonaPageData, idx: number) => (
-                <div key={idx} style={{ 
-                  background: '#f8fafc', 
-                  padding: '1rem', 
-                  borderRadius: '8px', 
-                  border: '1px solid #D1D5DB',
-                  margin: '1rem 0'
-                }}>
+                <div key={idx} className="p-lg">
                   <strong>{page.title || 'Page Analysis'}</strong><br/>
                   <em>"{page.first_impression || page.feedback || 'Positive user experience with clear navigation and relevant content.'}"</em>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ color: '#666', fontStyle: 'italic' }}>
+            <p className="text-secondary font-italic">
               💬 No first impression data available for detailed analysis.
             </p>
           )}
         </div>
 
         {/* Effective vs Ineffective Copy */}
-        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+        <div className="evidence-section" className="mt-2xl">
           <h4>📝 Copy Analysis</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="grid">
             <div>
-              <div className="insights-box" style={{ background: '#d4edda', borderLeft: '4px solid #28a745' }}>
+              <div className="insights-box" className="card card--excellent">
                 <h5>✅ Effective Copy Examples</h5>
                                   {pages.filter((p: PersonaPageData) => p.effective_copy_examples).slice(0, 3).map((page: PersonaPageData, idx: number) => (
-                    <div key={idx} style={{ marginBottom: '1rem' }}>
+                    <div key={idx} className="mb-lg">
                       <strong>{page.title || 'Page'}:</strong><br/>
-                      <em style={{ fontSize: '0.9em' }}>"{page.effective_copy_examples?.substring(0, 150)}..."</em>
+                      <em className="text-sm">"{page.effective_copy_examples?.substring(0, 150)}..."</em>
                     </div>
                   ))}
                 {pages.filter((p: PersonaPageData) => p.effective_copy_examples).length === 0 && (
-                  <p style={{ color: '#666', fontStyle: 'italic' }}>No effective copy examples available.</p>
+                  <p className="text-secondary font-italic">No effective copy examples available.</p>
                 )}
               </div>
             </div>
@@ -474,13 +462,13 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
               <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
                 <h5>❌ Areas for Improvement</h5>
                                   {pages.filter((p: PersonaPageData) => p.ineffective_copy_examples).slice(0, 3).map((page: PersonaPageData, idx: number) => (
-                    <div key={idx} style={{ marginBottom: '1rem' }}>
+                    <div key={idx} className="mb-lg">
                       <strong>{page.title || 'Page'}:</strong><br/>
-                      <em style={{ fontSize: '0.9em' }}>"{page.ineffective_copy_examples?.substring(0, 150)}..."</em>
+                      <em className="text-sm">"{page.ineffective_copy_examples?.substring(0, 150)}..."</em>
                     </div>
                   ))}
                 {pages.filter((p: PersonaPageData) => p.ineffective_copy_examples).length === 0 && (
-                  <p style={{ color: '#666', fontStyle: 'italic' }}>No improvement areas identified.</p>
+                  <p className="text-secondary font-italic">No improvement areas identified.</p>
                 )}
               </div>
             </div>
@@ -488,67 +476,49 @@ function IndividualPersonaAnalysis({ persona, personaPages, isLoading }: { perso
         </div>
 
         {/* Trust & Credibility Assessment */}
-        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+        <div className="evidence-section" className="mt-2xl">
           <h4>🛡️ Trust & Credibility Assessment</h4>
           <div>
             {pages.filter((p: PersonaPageData) => p.trust_credibility_assessment).slice(0, 3).map((page: PersonaPageData, idx: number) => (
-              <div key={idx} style={{ 
-                background: '#e3f2fd', 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                border: '1px solid #2196f3',
-                margin: '1rem 0'
-              }}>
+              <div key={idx} className="p-lg">
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                                  <em style={{ fontSize: '0.9em' }}>"{page.trust_credibility_assessment?.substring(0, 200)}..."</em>
+                                  <em className="text-sm">"{page.trust_credibility_assessment?.substring(0, 200)}..."</em>
               </div>
             ))}
             {pages.filter((p: PersonaPageData) => p.trust_credibility_assessment).length === 0 && (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>No trust assessment data available.</p>
+              <p className="text-secondary font-italic">No trust assessment data available.</p>
             )}
           </div>
         </div>
 
         {/* Business Impact Analysis */}
-        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+        <div className="evidence-section" className="mt-2xl">
           <h4>💼 Business Impact Analysis</h4>
           <div>
             {pages.filter((p: PersonaPageData) => p.business_impact_analysis).slice(0, 3).map((page: PersonaPageData, idx: number) => (
-              <div key={idx} style={{ 
-                background: '#f3e5f5', 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                border: '1px solid #9c27b0',
-                margin: '1rem 0'
-              }}>
+              <div key={idx} className="p-lg">
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                                  <em style={{ fontSize: '0.9em' }}>"{page.business_impact_analysis?.substring(0, 200)}..."</em>
+                                  <em className="text-sm">"{page.business_impact_analysis?.substring(0, 200)}..."</em>
               </div>
             ))}
             {pages.filter((p: PersonaPageData) => p.business_impact_analysis).length === 0 && (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>No business impact analysis available.</p>
+              <p className="text-secondary font-italic">No business impact analysis available.</p>
             )}
           </div>
         </div>
 
         {/* Information Gaps */}
-        <div className="evidence-section" style={{ marginTop: '2rem' }}>
+        <div className="evidence-section" className="mt-2xl">
           <h4>🔍 Information Gaps</h4>
           <div>
             {pages.filter((p: PersonaPageData) => p.information_gaps).slice(0, 3).map((page: PersonaPageData, idx: number) => (
-              <div key={idx} style={{ 
-                background: '#fff3e0', 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                border: '1px solid #ff9800',
-                margin: '1rem 0'
-              }}>
+              <div key={idx} className="p-lg">
                 <strong>{page.title || 'Page Analysis'}:</strong><br/>
-                                  <em style={{ fontSize: '0.9em' }}>"{page.information_gaps?.substring(0, 200)}..."</em>
+                                  <em className="text-sm">"{page.information_gaps?.substring(0, 200)}..."</em>
               </div>
             ))}
             {pages.filter((p: PersonaPageData) => p.information_gaps).length === 0 && (
-              <p style={{ color: '#666', fontStyle: 'italic' }}>No information gaps identified.</p>
+              <p className="text-secondary font-italic">No information gaps identified.</p>
             )}
           </div>
         </div>
@@ -579,18 +549,18 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
   const leastConsistent = scoreVariations.reduce((a, b) => a.variation > b.variation ? a : b)
 
   return (
-    <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #D1D5DB' }}>
+    <div className="mt-2xl">
       <h2>🔄 Cross-Persona Insights</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+      <div className="grid">
         <div>
           <div className="insights-box">
             <h3>📊 Persona Consistency Analysis</h3>
-            <div className="insights-box" style={{ background: '#e8f5e8', marginBottom: '1rem' }}>
+            <div className="insights-box" className="mb-lg">
               <strong>🎯 Most Consistent Experience:</strong> {mostConsistent.persona_id.replace('_', ' ')}<br/>
               <small>Score variation: ±{mostConsistent.variation.toFixed(1)}</small>
             </div>
-            <div className="insights-box" style={{ background: '#fff3cd', marginBottom: '1rem' }}>
+            <div className="insights-box" className="mb-lg">
               <strong>📊 Most Variable Experience:</strong> {leastConsistent.persona_id.replace('_', ' ')}<br/>
               <small>Score variation: ±{leastConsistent.variation.toFixed(1)}</small>
             </div>
@@ -600,7 +570,7 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
         <div>
           <div className="insights-box">
             <h3>🎯 Strategic Recommendations</h3>
-            <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #D1D5DB' }}>
+            <div className="p-lg">
               <strong>🏆 Benchmark Persona:</strong> {bestPersona?.persona_id.replace('_', ' ') || 'Unknown'}<br/>
               <em>Use their experience patterns as templates</em><br/><br/>
               
@@ -612,14 +582,14 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
       </div>
 
       {/* Evidence-Based Cross-Persona Insights */}
-      <div className="insights-box" style={{ marginTop: '2rem' }}>
+      <div className="insights-box" className="mt-2xl">
         <h3>🔍 Evidence-Based Cross-Persona Insights</h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div className="grid">
           <div>
-            <div className="insights-box" style={{ background: '#e8f5e8', borderLeft: '4px solid #28a745' }}>
+            <div className="insights-box" className="card card--excellent">
               <h4>✅ Common Success Patterns</h4>
-              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+              <ul className="my-2 pl-4">
                 <li>Clear value propositions resonate across all personas</li>
                 <li>Professional, credible design elements build trust</li>
                 <li>Industry-specific examples drive engagement</li>
@@ -631,7 +601,7 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
           <div>
             <div className="insights-box" style={{ background: '#fee2e2', borderLeft: '4px solid #ef4444' }}>
               <h4>❌ Common Pain Points</h4>
-              <ul style={{ margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
+              <ul className="my-2 pl-4">
                 <li>Generic messaging fails to address specific needs</li>
                 <li>Missing technical depth for decision makers</li>
                 <li>Lack of regulatory compliance frameworks</li>
@@ -641,10 +611,10 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
           </div>
         </div>
 
-        <div style={{ marginTop: '1rem' }}>
+        <div className="mt-lg">
           <div className="insights-box" style={{ background: '#fff3e0', borderLeft: '4px solid #ff9800' }}>
             <h4>🎯 Priority Actions Based on Evidence</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+            <div className="grid">
               <div>
                 <strong>Short-term (1-3 months):</strong>
                 <ul style={{ fontSize: '0.9em', margin: '0.5rem 0', paddingLeft: '1.2rem' }}>
@@ -677,19 +647,14 @@ function CrossPersonaInsights({ personas }: { personas: PersonaData[] }) {
       {/* Overall Performance Summary */}
       <div className="insights-box">
         <h3>📈 Overall Persona Performance Summary</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+        <div className="grid">
           {sortedPersonas.map((persona: PersonaData) => {
             const score = persona.avg_score || 0
             const level = score >= 7 ? 'Excellent' : score >= 5 ? 'Good' : score >= 3 ? 'Fair' : 'Poor'
             const color = score >= 7 ? '#28a745' : score >= 5 ? '#ffc107' : score >= 3 ? '#fd7e14' : '#dc3545'
             
             return (
-              <div key={persona.persona_id} style={{ 
-                background: '#f8fafc', 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                borderLeft: `4px solid ${color}` 
-              }}>
+              <div key={persona.persona_id} className="p-lg">
                 <strong>{persona.persona_id.replace('_', ' ')}</strong><br/>
                 <small>Score: {score.toFixed(1)}/10 • Level: {level} • {persona.page_count} pages</small>
               </div>

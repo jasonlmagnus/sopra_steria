@@ -294,11 +294,11 @@ function StrategicRecommendations() {
         </div>
 
         {/* Competitive Context */}
-        <div className="insights-box" style={{ marginTop: '2rem' }}>
+        <div className="insights-box" className="mt-2xl">
           <h3>🏆 Competitive Position</h3>
           <div className="grid grid--2">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="flex-center">
                 <span className="metric-value" style={{ 
                   color: strategicData.competitiveContext.overallPosition === 'Above Average' ? 'var(--status-excellent)' : 'var(--status-critical)'
                 }}>
@@ -398,7 +398,7 @@ function StrategicRecommendations() {
       {viewMode === 'themes' && (
         <div className="insights-box">
           <h2>🧠 Strategic Themes</h2>
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div className="grid-gap-xl">
             {strategicData.strategicThemes.map((theme) => (
               <div key={theme.id} className="theme-card" style={{ 
                 border: '1px solid #dee2e6', 
@@ -406,35 +406,21 @@ function StrategicRecommendations() {
                 padding: '1.5rem',
                 backgroundColor: '#fff'
               }}>
-                <div className="theme-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                  <h3 style={{ margin: 0 }}>{theme.title}</h3>
-                  <div className="theme-badges" style={{ display: 'flex', gap: '0.5rem' }}>
-                    <span className="badge" style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: getImpactColor(theme.businessImpact),
-                      color: 'white'
-                    }}>
+                <div className="theme-header" className="flex">
+                  <h3 className="margin-0">{theme.title}</h3>
+                  <div className="theme-badges" className="flex-gap-sm">
+                    <span className="badge" className="font-semibold">
                       {theme.businessImpact} Impact
                     </span>
-                    <span className="badge" style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: getRiskColor(theme.competitiveRisk),
-                      color: 'white'
-                    }}>
+                    <span className="badge" className="font-semibold">
                       {theme.competitiveRisk} Risk
                     </span>
                   </div>
                 </div>
 
-                <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{theme.description}</p>
+                <p className="mb-lg">{theme.description}</p>
 
-                <div className="grid grid--auto-150 gap-md" style={{ marginBottom: '1rem' }}>
+                <div className="grid grid--auto-150 gap-md" className="mb-lg">
                   <StandardCard
                     title="Current Score"
                     variant="metric"
@@ -458,18 +444,18 @@ function StrategicRecommendations() {
                   </StandardCard>
                 </div>
 
-                <div className="theme-insights" style={{ marginBottom: '1rem' }}>
+                <div className="theme-insights" className="mb-lg">
                   <h4>Key Insights</h4>
-                  <ul style={{ paddingLeft: '1.5rem' }}>
+                  <ul className="pl-xl">
                     {theme.keyInsights.map((insight, idx) => (
-                      <li key={idx} style={{ marginBottom: '0.5rem' }}>{insight}</li>
+                      <li key={idx} className="mb-md">{insight}</li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="theme-so-what" style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #dee2e6' }}>
+                <div className="theme-so-what" className="p-lg">
                   <h4 style={{ color: '#007bff', marginBottom: '0.5rem' }}>💡 So What?</h4>
-                  <p style={{ margin: 0, fontWeight: '600' }}>{theme.soWhat}</p>
+                  <p className="font-semibold">{theme.soWhat}</p>
                 </div>
               </div>
             ))}
@@ -481,7 +467,7 @@ function StrategicRecommendations() {
       {viewMode === 'recommendations' && (
         <div className="insights-box">
           <h2>📋 Strategic Action Items</h2>
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div className="grid-gap-xl">
             {strategicData.recommendations.map((rec) => (
               <div key={rec.id} className="recommendation-card" style={{ 
                 border: '1px solid #dee2e6', 
@@ -489,35 +475,21 @@ function StrategicRecommendations() {
                 padding: '1.5rem',
                 backgroundColor: rec.businessImpact === 'High' ? '#fef2f2' : rec.businessImpact === 'Medium' ? '#fffbeb' : '#f0fdf4'
               }}>
-                <div className="recommendation-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                  <h3 style={{ margin: 0 }}>{rec.title}</h3>
-                  <div className="recommendation-badges" style={{ display: 'flex', gap: '0.5rem' }}>
-                    <span className="badge" style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: getImpactColor(rec.businessImpact),
-                      color: 'white'
-                    }}>
+                <div className="recommendation-header" className="flex">
+                  <h3 className="margin-0">{rec.title}</h3>
+                  <div className="recommendation-badges" className="flex-gap-sm">
+                    <span className="badge" className="font-semibold">
                       {rec.businessImpact} Impact
                     </span>
-                    <span className="badge" style={{ 
-                      padding: '0.25rem 0.5rem', 
-                      borderRadius: '4px', 
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: '#6c757d',
-                      color: 'white'
-                    }}>
+                    <span className="badge" className="font-semibold">
                       {rec.timeline}
                     </span>
                   </div>
                 </div>
 
-                <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{rec.description}</p>
+                <p className="mb-lg">{rec.description}</p>
 
-                <div className="grid grid--auto-150 gap-md" style={{ marginBottom: '1rem' }}>
+                <div className="grid grid--auto-150 gap-md" className="mb-lg">
                   <StandardCard
                     title="Current Score"
                     variant="metric"
@@ -548,12 +520,12 @@ function StrategicRecommendations() {
                   </StandardCard>
                 </div>
 
-                <div className="recommendation-so-what" style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '6px', border: '1px solid #dee2e6', marginBottom: '1rem' }}>
+                <div className="recommendation-so-what" className="mb-lg">
                   <h4 style={{ color: '#007bff', marginBottom: '0.5rem' }}>💡 So What?</h4>
-                  <p style={{ margin: 0, fontWeight: '600' }}>{rec.soWhat}</p>
+                  <p className="font-semibold">{rec.soWhat}</p>
                 </div>
 
-                <div className="recommendation-evidence" style={{ marginBottom: '1rem' }}>
+                <div className="recommendation-evidence" className="mb-lg">
                   <EvidenceDisplay
                     evidence={[{ type: 'evidence' as const, content: rec.evidence }]}
                     title="Supporting Evidence"
@@ -564,9 +536,9 @@ function StrategicRecommendations() {
 
                 <div className="recommendation-implementation">
                   <h4>🔧 Implementation Steps</h4>
-                  <ol style={{ paddingLeft: '1.5rem' }}>
+                  <ol className="pl-xl">
                     {rec.implementationSteps.map((step, idx) => (
-                      <li key={idx} style={{ marginBottom: '0.5rem' }}>{step}</li>
+                      <li key={idx} className="mb-md">{step}</li>
                     ))}
                   </ol>
                 </div>
@@ -580,7 +552,7 @@ function StrategicRecommendations() {
       {viewMode === 'roadmap' && (
         <div className="insights-box">
           <h2>🗺️ Implementation Roadmap</h2>
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div className="grid-gap-xl">
             {strategicData.implementationRoadmap.map((phase, idx) => (
               <div key={idx} className="roadmap-phase" style={{ 
                 border: '1px solid #dee2e6', 
@@ -588,26 +560,26 @@ function StrategicRecommendations() {
                 padding: '1.5rem',
                 backgroundColor: '#fff'
               }}>
-                <div className="phase-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                  <h3 style={{ margin: 0 }}>{phase.phase}</h3>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#28a745' }}>
+                <div className="phase-header" className="flex">
+                  <h3 className="margin-0">{phase.phase}</h3>
+                  <div className="font-bold">
                     {phase.expectedImpact}
                   </div>
                 </div>
-                <p style={{ color: '#4b5563', marginBottom: '1rem' }}>{phase.focus}</p>
+                <p className="mb-lg">{phase.focus}</p>
                 
-                <div className="phase-recommendations" style={{ marginBottom: '1rem' }}>
+                <div className="phase-recommendations" className="mb-lg">
                   <h4>📋 Key Recommendations</h4>
-                  <ul style={{ paddingLeft: '1.5rem' }}>
+                  <ul className="pl-xl">
                     {phase.recommendations.map((rec, recIdx) => (
-                      <li key={recIdx} style={{ marginBottom: '0.5rem' }}>{rec}</li>
+                      <li key={recIdx} className="mb-md">{rec}</li>
                     ))}
                   </ul>
                 </div>
 
                 <div className="phase-impact">
                   <h4>🎯 Expected Impact</h4>
-                  <p style={{ fontWeight: '600', color: '#28a745' }}>{phase.expectedImpact}</p>
+                  <p className="font-semibold">{phase.expectedImpact}</p>
                 </div>
               </div>
             ))}
@@ -662,7 +634,7 @@ function StrategicRecommendations() {
               }}
             />
           </div>
-          <div className="matrix-legend" style={{ marginTop: '1rem' }}>
+          <div className="matrix-legend" className="mt-lg">
             <h4>Legend:</h4>
             <p><strong>Size:</strong> Current score (larger = higher current score)</p>
             <p><strong>Color:</strong> Timeline (Red = Immediate, Orange = Short-term, Yellow = Medium-term, Green = Long-term)</p>
@@ -674,7 +646,7 @@ function StrategicRecommendations() {
       {viewMode === 'executive' && (
         <div className="insights-box">
           <h2>📈 Tier-Level Intelligence</h2>
-          <div style={{ display: 'grid', gap: '1.5rem' }}>
+          <div className="grid-gap-xl">
             {Object.entries(strategicData.tierAnalysis).map(([tier, data]) => (
               <div key={tier} className="tier-card" style={{ 
                 border: '1px solid #dee2e6', 
@@ -682,16 +654,9 @@ function StrategicRecommendations() {
                 padding: '1.5rem',
                 backgroundColor: '#f8f9fa'
               }}>
-                <div className="tier-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                  <h3 style={{ margin: 0 }}>{tier}</h3>
-                  <span className="badge" style={{ 
-                    padding: '0.25rem 0.5rem', 
-                    borderRadius: '4px', 
-                    fontSize: '0.75rem',
-                    fontWeight: '600',
-                    backgroundColor: '#007bff',
-                    color: 'white'
-                  }}>
+                <div className="tier-header" className="flex">
+                  <h3 className="margin-0">{tier}</h3>
+                  <span className="badge" className="font-semibold">
                     Tier Analysis
                   </span>
                 </div>
@@ -727,11 +692,11 @@ function StrategicRecommendations() {
                   </StandardCard>
                 </div>
                 
-                <div style={{ marginTop: '1rem' }}>
-                  <p style={{ color: '#4b5563' }}>
+                <div className="mt-lg">
+                  <p className="text-secondary">
                     <strong>Priority:</strong> {data.priority}
                   </p>
-                  <p style={{ color: '#4b5563' }}>
+                  <p className="text-secondary">
                     <strong>Business Context:</strong> {data.businessContext}
                   </p>
                 </div>
@@ -857,13 +822,13 @@ function FallbackRecommendationsView({
         <h2 className="insights-box__title">📋 Recommendations ({filteredRecs.length})</h2>
         <div className="section">
           {filteredRecs.map((rec) => (
-            <div key={rec.id} className="card" style={{ marginBottom: '1.5rem' }}>
+            <div key={rec.id} className="card" className="mb-xl">
               <div className="card-header">
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 className="flex-center">
                   {getPriorityIcon(rec.priority_score)}
                   {rec.title}
                 </h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="flex-gap-sm">
                   <span 
                     className="badge"
                     style={{ 
@@ -879,10 +844,10 @@ function FallbackRecommendationsView({
                 </div>
               </div>
               
-              <div style={{ padding: '1rem' }}>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>{rec.description}</p>
+              <div className="p-lg">
+                <p className="mb-lg">{rec.description}</p>
                 
-                <div className="metrics-grid" style={{ marginBottom: '1rem' }}>
+                <div className="metrics-grid" className="mb-lg">
                   <StandardCard
                     title="Priority Score"
                     variant="metric"
@@ -917,7 +882,7 @@ function FallbackRecommendationsView({
                 </div>
 
                 {rec.url && (
-                  <div style={{ marginBottom: '1rem' }}>
+                  <div className="mb-lg">
                     <strong>🔗 Page URL:</strong>
                     <br />
                     <a href={rec.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)' }}>

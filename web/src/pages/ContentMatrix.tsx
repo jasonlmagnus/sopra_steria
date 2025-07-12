@@ -35,13 +35,8 @@ function ContentMatrix() {
         <h1>📊 Content Matrix</h1>
         <p>Loading content analysis...</p>
       </div>
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <div style={{ 
-          border: '2px solid #e2e8f0', 
-          borderRadius: '8px', 
-          padding: '2rem',
-          backgroundColor: '#f8fafc' 
-        }}>
+      <div className="p-2xl text-center">
+        <div className="alert">
           <p>🔄 Updating filters...</p>
         </div>
       </div>
@@ -54,13 +49,8 @@ function ContentMatrix() {
         <h1>📊 Content Matrix</h1>
         <p>Error loading content analysis</p>
       </div>
-      <div style={{ padding: '2rem' }}>
-        <div style={{ 
-          border: '2px solid #fecaca', 
-          borderRadius: '8px', 
-          padding: '2rem',
-          backgroundColor: '#fef2f2' 
-        }}>
+      <div className="p-2xl">
+        <div className="alert">
           <p>❌ Error: {error.message}</p>
           <p>Please try adjusting your filters or refresh the page.</p>
         </div>
@@ -97,15 +87,15 @@ function ContentMatrix() {
             borderRadius: '5px' 
           }}>
             <h4 style={{ margin: 0, color: '#333' }}>⚠️ Filter Results</h4>
-            <p style={{ margin: '8px 0', color: '#92400e', fontWeight: 'bold' }}>
+            <p className="font-bold">
               No pages match your current filter criteria
             </p>
-            <p style={{ margin: '5px 0' }}>
+            <p className="my-xs">
               <strong>Try:</strong> Lowering the minimum score slider or selecting "All" for other filters
             </p>
           </div>
           
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="p-2xl text-center">
             <p style={{ fontSize: '1.1rem', color: '#6b7280' }}>
               Current filters: <strong>Persona:</strong> {filters.persona}, <strong>Tier:</strong> {filters.tier}, 
               <strong>Min Score:</strong> {filters.minScore}, <strong>Performance:</strong> {filters.performanceLevel}
@@ -155,20 +145,15 @@ function ContentFilters({ filters, setFilters, data }: any) {
   return (
     <div className="insights-box">
       <h2>🎛️ Content Analysis Filters</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             👥 Persona
           </label>
           <select 
             value={filters.persona}
             onChange={(e) => setFilters({...filters, persona: e.target.value})}
-            style={{ 
-              width: '100%', 
-              padding: '0.5rem', 
-              borderRadius: '4px', 
-              border: '1px solid #D1D5DB'
-            }}
+            className="w-full"
           >
             {personas.map((persona, index) => (
               <option key={`persona-${index}-${persona}`} value={persona}>{persona}</option>
@@ -177,18 +162,13 @@ function ContentFilters({ filters, setFilters, data }: any) {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             🏗️ Content Tier
           </label>
           <select 
             value={filters.tier}
             onChange={(e) => setFilters({...filters, tier: e.target.value})}
-            style={{ 
-              width: '100%', 
-              padding: '0.5rem', 
-              borderRadius: '4px', 
-              border: '1px solid #D1D5DB'
-            }}
+            className="w-full"
           >
             {tiers.map((tier, index) => (
               <option key={`tier-${index}-${tier}`} value={tier}>{tier}</option>
@@ -197,7 +177,7 @@ function ContentFilters({ filters, setFilters, data }: any) {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             📊 Min Score: {filters.minScore}
           </label>
           <input 
@@ -207,23 +187,18 @@ function ContentFilters({ filters, setFilters, data }: any) {
             step="0.5"
             value={filters.minScore}
             onChange={(e) => setFilters({...filters, minScore: parseFloat(e.target.value)})}
-            style={{ width: '100%' }}
+            className="w-full"
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label className="font-semibold">
             ⭐ Performance Level
           </label>
           <select 
             value={filters.performanceLevel}
             onChange={(e) => setFilters({...filters, performanceLevel: e.target.value})}
-            style={{ 
-              width: '100%', 
-              padding: '0.5rem', 
-              borderRadius: '4px', 
-              border: '1px solid #D1D5DB'
-            }}
+            className="w-full"
           >
             {performanceLevels.map((level, index) => (
               <option key={`level-${index}-${level}`} value={level}>{level}</option>
@@ -267,14 +242,14 @@ function PerformanceOverview({ metrics }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Content Status</h4>
-        <p style={{ margin: '8px 0', color: impactColor, fontWeight: 'bold' }}>{businessImpact}</p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="font-bold">{businessImpact}</p>
+        <p className="my-xs">
           <strong>Focus:</strong> Prioritize pages scoring below 6.0 for maximum impact
         </p>
       </div>
 
       {/* Performance Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         <div className="metric-card">
           <div className="metric-value">{avgScore.toFixed(1)}</div>
           <div className="metric-label">Average Score</div>
@@ -303,7 +278,7 @@ function PerformanceOverview({ metrics }: any) {
 
       {/* Performance Distribution Chart */}
       {(metrics.excellent || metrics.good || metrics.fair || metrics.poor) && (
-        <div style={{ marginTop: '2rem' }}>
+        <div className="mt-2xl">
           <PlotlyChart 
             data={[{
               type: 'pie',
@@ -339,10 +314,10 @@ function TierPerformanceAnalysis({ data }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Tier Analysis</h4>
-        <p style={{ margin: '8px 0' }}>
+        <p className="my-sm">
           Compare performance across content tiers to identify systematic strengths and weaknesses.
         </p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="my-xs">
           <strong>Focus:</strong> Tier 1 (Brand) pages should score highest as they represent your core brand.
         </p>
       </div>
@@ -350,7 +325,7 @@ function TierPerformanceAnalysis({ data }: any) {
       {tierData.length > 0 && (
         <div>
           {/* Tier Performance Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+          <div className="grid">
             {tierData.map((tier: any) => (
               <div key={tier.tier} className="metric-card">
                 <h4>{tier.tier} - {tier.name}</h4>
@@ -358,7 +333,7 @@ function TierPerformanceAnalysis({ data }: any) {
                   {tier.avgScore.toFixed(1)}/10
                 </div>
                 <div className="metric-label">Average Score</div>
-                <div style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+                <div className="mt-lg">
                   <strong>{tier.pageCount} pages</strong> • Weight: {(tier.weight * 100).toFixed(0)}%
                 </div>
               </div>
@@ -404,10 +379,10 @@ function ContentHeatmap({ heatmapData }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Heatmap Analysis</h4>
-        <p style={{ margin: '8px 0' }}>
+        <p className="my-sm">
           Use this heatmap to identify patterns of high and low performance.
         </p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="my-xs">
           <strong>Focus:</strong> Look for dark red cells to find problem areas and bright green cells for success stories.
         </p>
       </div>
@@ -433,16 +408,16 @@ function ContentHeatmap({ heatmapData }: any) {
           />
 
           {/* Heatmap Insights */}
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-2xl">
             <h3>🔍 Heatmap Insights</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="insights-box" style={{ background: '#d4edda' }}>
+            <div className="grid">
+              <div className="insights-box" className="bg-success-light">
                 <strong>🔥 Top Performing Areas:</strong>
                 {heatmapData.hotspots?.map((spot: any, idx: number) => (
                   <div key={idx}>• <strong>{spot.tier}</strong> - {spot.criteria}: {spot.score.toFixed(1)}</div>
                 ))}
               </div>
-              <div className="insights-box" style={{ background: '#fee2e2' }}>
+              <div className="insights-box" className="bg-error-light">
                 <strong>❄️ Areas Needing Attention:</strong>
                 {heatmapData.coldspots?.map((spot: any, idx: number) => (
                   <div key={idx}>• <strong>{spot.tier}</strong> - {spot.criteria}: {spot.score.toFixed(1)}</div>
@@ -469,10 +444,10 @@ function CriteriaDeepDive({ criteriaData }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Criteria Analysis</h4>
-        <p style={{ margin: '8px 0' }}>
+        <p className="my-sm">
           Understand which criteria are driving performance up or down.
         </p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="my-xs">
           <strong>Focus:</strong> Identify low-scoring criteria to find systemic content issues.
         </p>
       </div>
@@ -481,12 +456,12 @@ function CriteriaDeepDive({ criteriaData }: any) {
         <div>
           {/* Criteria Performance Ranking */}
           <h3>📊 Criteria Performance Ranking</h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th style={{ padding: '1rem', textAlign: 'left', border: '1px solid #D1D5DB' }}>Criteria</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Average Score</th>
+                <tr className="bg-muted">
+                  <th className="text-left">Criteria</th>
+                  <th className="text-center">Average Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -495,14 +470,8 @@ function CriteriaDeepDive({ criteriaData }: any) {
                   const bgColor = score >= 8 ? '#d4edda' : score >= 6 ? '#fff3cd' : score >= 4 ? '#fee2e2' : '#f8d7da'
                   return (
                     <tr key={idx}>
-                      <td style={{ padding: '1rem', border: '1px solid #D1D5DB' }}>{criteria.name}</td>
-                      <td style={{ 
-                        padding: '1rem', 
-                        textAlign: 'center', 
-                        border: '1px solid #D1D5DB',
-                        background: bgColor,
-                        fontWeight: 'bold'
-                      }}>
+                      <td className="p-lg">{criteria.name}</td>
+                      <td className="text-center">
                         {score.toFixed(1)}
                       </td>
                     </tr>
@@ -513,14 +482,14 @@ function CriteriaDeepDive({ criteriaData }: any) {
           </div>
 
           {/* Best and Worst Criteria */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '2rem' }}>
-            <div className="insights-box" style={{ background: '#d4edda' }}>
+          <div className="grid">
+            <div className="insights-box" className="bg-success-light">
               <strong>🏆 Top 3 Performing Criteria:</strong>
               {criteriaData.slice(0, 3).map((criteria: any, idx: number) => (
                 <div key={idx}>{idx + 1}. <strong>{criteria.name}</strong>: {criteria.avgScore.toFixed(1)}/10</div>
               ))}
             </div>
-            <div className="insights-box" style={{ background: '#fee2e2' }}>
+            <div className="insights-box" className="bg-error-light">
               <strong>📉 Bottom 3 Performing Criteria:</strong>
               {criteriaData.slice(-3).reverse().map((criteria: any, idx: number) => (
                 <div key={idx}>{idx + 1}. <strong>{criteria.name}</strong>: {criteria.avgScore.toFixed(1)}/10</div>
@@ -529,7 +498,7 @@ function CriteriaDeepDive({ criteriaData }: any) {
           </div>
 
           {/* Criteria Distribution Chart */}
-          <div style={{ marginTop: '2rem' }}>
+          <div className="mt-2xl">
             <PlotlyChart 
               data={[{
                 type: 'bar',
@@ -572,10 +541,10 @@ function PageDrillDown({ pageData }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Page Analysis</h4>
-        <p style={{ margin: '8px 0' }}>
+        <p className="my-sm">
           Analyze individual page performance across criteria.
         </p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="my-xs">
           <strong>Focus:</strong> Select a page to see its detailed scorecard.
         </p>
       </div>
@@ -583,19 +552,14 @@ function PageDrillDown({ pageData }: any) {
       {pageData.length > 0 && (
         <div>
           {/* Page Selection */}
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <div className="mb-2xl">
+            <label className="font-semibold">
               Select Page for Detailed Analysis:
             </label>
             <select 
               value={selectedPage}
               onChange={(e) => setSelectedPage(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '0.5rem', 
-                borderRadius: '4px', 
-                border: '1px solid #D1D5DB'
-              }}
+              className="w-full"
             >
               <option value="">Choose a page...</option>
               {pageData.map((page: any) => (
@@ -606,17 +570,17 @@ function PageDrillDown({ pageData }: any) {
 
           {/* Page Performance Summary */}
           <h3>📊 Page Performance Summary</h3>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th style={{ padding: '1rem', textAlign: 'left', border: '1px solid #D1D5DB' }}>Page</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Tier</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Score</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Sentiment</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Engagement</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Conversion</th>
-                  <th style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>Personas</th>
+                <tr className="bg-muted">
+                  <th className="text-left">Page</th>
+                  <th className="text-center">Tier</th>
+                  <th className="text-center">Score</th>
+                  <th className="text-center">Sentiment</th>
+                  <th className="text-center">Engagement</th>
+                  <th className="text-center">Conversion</th>
+                  <th className="text-center">Personas</th>
                 </tr>
               </thead>
               <tbody>
@@ -625,27 +589,16 @@ function PageDrillDown({ pageData }: any) {
                   const bgColor = score >= 8 ? '#d4edda' : score >= 6 ? '#fff3cd' : score >= 4 ? '#fee2e2' : '#f8d7da'
                   return (
                     <tr key={idx}>
-                      <td style={{ padding: '1rem', border: '1px solid #D1D5DB' }}>{page.title}</td>
-                      <td style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>{page.tier}</td>
-                      <td style={{ 
-                        padding: '1rem', 
-                        textAlign: 'center', 
-                        border: '1px solid #D1D5DB',
-                        background: bgColor,
-                        fontWeight: 'bold'
-                      }}>
+                      <td className="p-lg">{page.title}</td>
+                      <td className="text-center">{page.tier}</td>
+                      <td className="text-center">
                         {score.toFixed(1)}
                       </td>
-                      <td style={{ 
-                        padding: '1rem', 
-                        textAlign: 'center', 
-                        border: '1px solid #D1D5DB',
-                        color: (page.overall_sentiment >= 6) ? '#10b981' : (page.overall_sentiment >= 4) ? '#f59e0b' : '#ef4444'
-                      }}>
+                      <td className="text-center">
                         {page.overall_sentiment ? page.overall_sentiment.toFixed(1) : 'N/A'}
                       </td>
 
-                      <td style={{ padding: '1rem', textAlign: 'center', border: '1px solid #D1D5DB' }}>{page.personas}</td>
+                      <td className="text-center">{page.personas}</td>
                     </tr>
                   )
                 })}
@@ -655,7 +608,7 @@ function PageDrillDown({ pageData }: any) {
 
           {/* Selected Page Details */}
           {selectedPage && (
-            <div style={{ marginTop: '2rem' }}>
+            <div className="mt-2xl">
               {(() => {
                 const page = pageData.find((p: any) => p.id === selectedPage)
                 if (!page) return null
@@ -701,7 +654,7 @@ function PageDrillDown({ pageData }: any) {
                 return (
                   <div className="insights-box">
                     <h3>🔍 Detailed Analysis: {page.title}</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                    <div className="grid">
                       <div className="metric-card">
                         <div className="metric-value">{page.avgScore.toFixed(1)}/10</div>
                         <div className="metric-label">Overall Score</div>
@@ -718,7 +671,7 @@ function PageDrillDown({ pageData }: any) {
                       {page.url && (
                         <div className="metric-card">
                           <div className="metric-value">
-                            <a href={page.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>
+                            <a href={page.url} target="_blank" rel="noopener noreferrer" className="text-info no-underline">
                               🔗 View Page
                             </a>
                           </div>
@@ -728,7 +681,7 @@ function PageDrillDown({ pageData }: any) {
                     </div>
                     
                     {evidenceItems.length > 0 && (
-                      <div style={{ marginTop: '1rem' }}>
+                      <div className="mt-lg">
                         <EvidenceDisplay
                           evidence={evidenceItems}
                           title={`Evidence Analysis for ${page.title}`}
@@ -786,16 +739,16 @@ function PersonaEvidenceContext({ data }: any) {
         borderRadius: '5px' 
       }}>
         <h4 style={{ margin: 0, color: '#333' }}>💡 Persona Content Analysis</h4>
-        <p style={{ margin: '8px 0' }}>
+        <p className="my-sm">
           Understand how each persona reacts to your content based on evidence from user experience data.
         </p>
-        <p style={{ margin: '5px 0' }}>
+        <p className="my-xs">
           <strong>Focus:</strong> Identify content that resonates with specific personas and address persona-specific pain points.
         </p>
       </div>
 
       {personas.length > 0 && (
-        <div className="persona-evidence-grid" style={{ display: 'grid', gap: '2rem' }}>
+        <div className="persona-evidence-grid" className="grid-gap-2xl">
           {personas.map((persona: string) => {
             const personaContent = personaContentMap[persona] || []
             const analysis = getPersonaReactionAnalysis(persona, personaContent)
@@ -807,8 +760,8 @@ function PersonaEvidenceContext({ data }: any) {
                 padding: '1.5rem',
                 backgroundColor: '#ffffff'
               }}>
-                <div className="persona-header" style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: 0, color: '#1f2937', display: 'flex', alignItems: 'center' }}>
+                <div className="persona-header" className="mb-xl">
+                  <h3 className="flex-center">
                     👤 {persona}
                     <span style={{ 
                       marginLeft: '1rem', 
@@ -824,7 +777,7 @@ function PersonaEvidenceContext({ data }: any) {
                 </div>
 
                 {/* Persona Performance Overview */}
-                <div className="grid grid--auto-200 gap-md" style={{ marginBottom: '1.5rem' }}>
+                <div className="grid grid--auto-200 gap-md" className="mb-xl">
                   <StandardCard
                     title="Avg Score"
                     variant="metric"
@@ -835,21 +788,16 @@ function PersonaEvidenceContext({ data }: any) {
                 </div>
 
                 {/* Evidence-Based Insights */}
-                <div className="persona-insights" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                <div className="persona-insights" className="grid">
                   
                   {/* What Works for This Persona */}
-                  <div className="insight-section" style={{ 
-                    padding: '1rem', 
-                    border: '1px solid #d1f2eb', 
-                    borderRadius: '8px', 
-                    backgroundColor: '#f0fdfa' 
-                  }}>
+                  <div className="insight-section" className="p-lg">
                     <h4 style={{ color: '#047857', margin: '0 0 0.75rem 0' }}>✅ What Works</h4>
                     {analysis.effectivePages.length > 0 ? (
                       <div>
                         {analysis.effectivePages.slice(0, 3).map((page: any, idx: number) => (
-                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
-                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          <div key={idx} className="mb-3">
+                            <div className="text-sm font-medium">
                               {page.title || 'Page'}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
@@ -866,18 +814,13 @@ function PersonaEvidenceContext({ data }: any) {
                   </div>
 
                   {/* Pain Points & Trust Issues */}
-                  <div className="insight-section" style={{ 
-                    padding: '1rem', 
-                    border: '1px solid #fecaca', 
-                    borderRadius: '8px', 
-                    backgroundColor: '#fef2f2' 
-                  }}>
+                  <div className="insight-section" className="p-lg">
                     <h4 style={{ color: '#dc2626', margin: '0 0 0.75rem 0' }}>⚠️ Pain Points</h4>
                     {analysis.trustIssues.length > 0 || analysis.informationGaps.length > 0 ? (
                       <div>
                         {analysis.trustIssues.slice(0, 2).map((page: any, idx: number) => (
-                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
-                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          <div key={idx} className="mb-3">
+                            <div className="text-sm font-medium">
                               Trust Issue: {page.title || 'Page'}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
@@ -886,8 +829,8 @@ function PersonaEvidenceContext({ data }: any) {
                           </div>
                         ))}
                         {analysis.informationGaps.slice(0, 2).map((page: any, idx: number) => (
-                          <div key={idx} style={{ marginBottom: '0.75rem' }}>
-                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          <div key={idx} className="mb-3">
+                            <div className="text-sm font-medium">
                               Info Gap: {page.title || 'Page'}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
@@ -905,17 +848,12 @@ function PersonaEvidenceContext({ data }: any) {
                 </div>
 
                 {/* Persona-Specific Recommendations */}
-                <div className="persona-recommendations" style={{ 
-                  marginTop: '1.5rem', 
-                  padding: '1rem', 
-                  backgroundColor: '#f8fafc', 
-                  borderRadius: '8px' 
-                }}>
+                <div className="persona-recommendations" className="p-lg">
                   <h4 style={{ margin: '0 0 1rem 0', color: '#374151' }}>🎯 Persona-Specific Recommendations</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                  <div className="grid">
                     <div>
-                      <strong style={{ color: '#059669' }}>Amplify:</strong>
-                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                      <strong className="text-success">Amplify:</strong>
+                      <ul className="my-2 pl-4">
                         {analysis.effectivePages.length > 0 ? (
                           <li>Apply successful copy patterns from high-performing pages</li>
                         ) : (
@@ -925,8 +863,8 @@ function PersonaEvidenceContext({ data }: any) {
                       </ul>
                     </div>
                     <div>
-                      <strong style={{ color: '#dc2626' }}>Address:</strong>
-                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1.25rem' }}>
+                      <strong className="text-error">Address:</strong>
+                      <ul className="my-2 pl-4">
                         {analysis.trustIssues.length > 0 && <li>Resolve trust and credibility concerns</li>}
                         {analysis.informationGaps.length > 0 && <li>Fill information gaps that block conversions</li>}
                         <li>Optimize conversion paths for this persona</li>
@@ -941,7 +879,7 @@ function PersonaEvidenceContext({ data }: any) {
       )}
 
       {personas.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+        <div className="text-center">
           <p>No persona data available for analysis.</p>
           <p>Please ensure your content data includes persona information.</p>
         </div>

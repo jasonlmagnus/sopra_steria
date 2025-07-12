@@ -1,0 +1,654 @@
+/* Reports Export Page Styles */
+
+/* Import shared components */
+@import '../components/button.css';
+@import '../components/card.css';
+@import '../utilities/text.css';
+@import '../utilities/colors.css';
+@import '../utilities/spacing.css';
+@import '../utilities/layout.css';
+@import '../utilities/borders.css';
+
+.reports-export-container {
+  min-height: 100vh;
+  background: var(--background-subtle);
+  font-family: var(--font-primary);
+}
+
+/* Header Actions - Page-specific */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.last-updated {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Data Overview - Page-specific layout */
+.data-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.overview-metric {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.overview-metric:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Data Quality Section - Page-specific */
+.data-quality {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.quality-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.quality-metric {
+  text-align: center;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+}
+
+.quality-score {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-xs);
+}
+
+.quality-score.excellent {
+  color: var(--status-excellent);
+}
+
+.quality-score.good {
+  color: var(--status-good);
+}
+
+.quality-score.warning {
+  color: var(--status-warning);
+}
+
+.quality-score.critical {
+  color: var(--status-critical);
+}
+
+.quality-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Report Configuration - Page-specific grid */
+.report-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.config-section {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+}
+
+.config-section h4 {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.config-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.config-group:last-child {
+  margin-bottom: 0;
+}
+
+.config-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.config-group select,
+.config-group input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  background: var(--background);
+}
+
+/* Multi-select component - Page-specific */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.multi-select {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--background);
+}
+
+.multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.multi-select-option:hover {
+  background: var(--gray-50);
+}
+
+.multi-select-option input[type="checkbox"] {
+  width: auto;
+}
+
+.multi-select-option label {
+  flex: 1;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.selected-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.selected-item {
+  background: var(--primary-color-10);
+  color: var(--primary-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.selected-item button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  padding: 0;
+  margin-left: var(--spacing-xs);
+}
+
+/* HTML Report Options - Page-specific */
+.html-report-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.report-option {
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.report-option:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-color-5);
+}
+
+.report-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color-10);
+}
+
+.report-option h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.report-option p {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Export Options - Page-specific */
+.export-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.export-option {
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-option:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-color-5);
+}
+
+.export-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color-10);
+}
+
+.export-icon {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-sm);
+}
+
+.export-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.export-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Dataset Browser - Page-specific */
+.dataset-browser {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.dataset-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dataset-item {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dataset-item:hover {
+  background: var(--gray-50);
+}
+
+.dataset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.dataset-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.dataset-size {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.dataset-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Loading and Error States - Page-specific */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: var(--spacing-sm);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state {
+  background: var(--status-critical-5);
+  border: 1px solid var(--status-critical);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  color: var(--status-critical);
+  text-align: center;
+}
+
+.success-state {
+  background: var(--status-excellent-5);
+  border: 1px solid var(--status-excellent);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  color: var(--status-excellent);
+  text-align: center;
+}
+
+/* Data Table - Page-specific styling */
+.data-table-container {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  margin-bottom: var(--spacing-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  background: var(--gray-50);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table tr:hover {
+  background: var(--gray-50);
+}
+
+.url-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.url-cell a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.url-cell a:hover {
+  text-decoration: underline;
+}
+
+/* Descriptors - Page-specific status indicators */
+.descriptor {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.descriptor.warn {
+  background: var(--status-warning-10);
+  color: var(--status-warning);
+}
+
+.descriptor.concern {
+  background: var(--status-critical-10);
+  color: var(--status-critical);
+}
+
+.descriptor.fail {
+  background: var(--status-critical-10);
+  color: var(--status-critical);
+}
+
+.descriptor.pass {
+  background: var(--status-good-10);
+  color: var(--status-good);
+}
+
+.descriptor.good {
+  background: var(--status-excellent-10);
+  color: var(--status-excellent);
+}
+
+.table-note {
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-top: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Flags - Page-specific indicators */
+.flags {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.flag {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.flag.quick-win {
+  background: var(--status-excellent-10);
+  color: var(--status-excellent);
+}
+
+.flag.critical {
+  background: var(--status-critical-10);
+  color: var(--status-critical);
+}
+
+.flag.success {
+  background: var(--status-excellent-10);
+  color: var(--status-excellent);
+}
+
+/* Dataset interaction - Page-specific */
+.dataset-item.clickable {
+  cursor: pointer;
+}
+
+.dataset-item.clickable:hover {
+  background: var(--primary-color-5);
+  border-left: 4px solid var(--primary-color);
+}
+
+.dataset-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-xs);
+  line-height: 1.5;
+}
+
+.back-button {
+  background: var(--gray-100);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: var(--spacing-lg);
+}
+
+.back-button:hover {
+  background: var(--gray-200);
+  transform: translateX(-2px);
+}
+
+/* Dataset Selector - Page-specific */
+.dataset-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dataset-option {
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.dataset-option:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-color-5);
+}
+
+.dataset-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color-10);
+}
+
+.dataset-icon {
+  font-size: var(--font-size-xl);
+  color: var(--primary-color);
+}
+
+.dataset-details {
+  flex: 1;
+}
+
+.dataset-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dataset-meta {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .data-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter-controls {
+    flex-direction: column;
+  }
+
+  .filter-group {
+    min-width: auto;
+  }
+
+  .report-config-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .html-report-options {
+    grid-template-columns: 1fr;
+  }
+
+  .export-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .export-options {
+    grid-template-columns: 1fr;
+  }
+
+  .quality-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+} 

@@ -1,0 +1,110 @@
+{
+  "refactoring_rules": {
+    "min_utility_usage": 2,
+    "max_dynamic_styles": 5,
+    "replacement_threshold": 0.7,
+    "preserve_dynamic_styles": true
+  },
+  "utility_mapping": {
+    "spacing": {
+      "margin": "m",
+      "marginTop": "mt",
+      "marginBottom": "mb",
+      "marginLeft": "ml",
+      "marginRight": "mr",
+      "padding": "p",
+      "paddingTop": "pt",
+      "paddingBottom": "pb",
+      "paddingLeft": "pl",
+      "paddingRight": "pr",
+      "gap": "gap"
+    },
+    "colors": {
+      "backgroundColor": "bg",
+      "color": "text",
+      "borderColor": "border-color"
+    },
+    "typography": {
+      "fontSize": "text",
+      "fontWeight": "font",
+      "textAlign": "text",
+      "lineHeight": "leading"
+    },
+    "layout": {
+      "display": "d",
+      "flexDirection": "flex",
+      "justifyContent": "justify",
+      "alignItems": "items",
+      "gridTemplateColumns": "grid-cols",
+      "gridGap": "gap"
+    },
+    "sizing": {
+      "width": "w",
+      "height": "h",
+      "maxWidth": "max-w",
+      "maxHeight": "max-h",
+      "minWidth": "min-w",
+      "minHeight": "min-h"
+    },
+    "borders": {
+      "border": "border",
+      "borderWidth": "border",
+      "borderStyle": "border",
+      "borderRadius": "rounded",
+      "borderLeft": "border-l",
+      "borderRight": "border-r",
+      "borderTop": "border-t",
+      "borderBottom": "border-b"
+    }
+  },
+  "common_values": {
+    "spacing": {
+      "0": "0",
+      "5px": "1",
+      "10px": "2",
+      "15px": "3",
+      "20px": "4",
+      "1rem": "4",
+      "1.5rem": "6",
+      "2rem": "8",
+      "0.5rem": "2"
+    },
+    "colors": {
+      "#fff": "white",
+      "#ffffff": "white",
+      "#000": "black",
+      "#000000": "black",
+      "#E85A4F": "primary",
+      "#2C3E50": "dark",
+      "#f8f9fa": "light",
+      "#dee2e6": "gray-300",
+      "#6c757d": "gray-500",
+      "transparent": "transparent"
+    },
+    "typography": {
+      "bold": "bold",
+      "600": "semibold",
+      "400": "normal",
+      "center": "center",
+      "left": "left",
+      "right": "right"
+    }
+  },
+  "preserve_patterns": [
+    "template literals with variables",
+    "conditional styles",
+    "dynamic calculations",
+    "theme-based styles"
+  ],
+  "critical_files": [
+    "Methodology.tsx",
+    "ContentMatrix.tsx",
+    "PersonaInsights.tsx",
+    "OpportunityImpact.tsx"
+  ],
+  "output_paths": {
+    "utilities_dir": "web/src/styles/utilities",
+    "components_dir": "web/src/styles/components",
+    "generated_dir": "web/src/styles/generated"
+  }
+} 

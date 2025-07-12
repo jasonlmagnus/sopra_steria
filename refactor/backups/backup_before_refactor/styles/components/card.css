@@ -1,0 +1,195 @@
+/* ===== CARD COMPONENTS ===== */
+
+/* Base card component */
+.card {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Card variants */
+.card--metric {
+  border-left: 4px solid var(--primary-color);
+  text-align: center;
+}
+
+.card--persona {
+  text-align: center;
+  border-top: 4px solid var(--border-color);
+}
+
+.card--content {
+  border-left: 4px solid var(--primary-color);
+}
+
+.card--success {
+  border-left: 4px solid var(--status-excellent);
+}
+
+/* Card status variants */
+.card--excellent {
+  border-left-color: var(--status-excellent);
+}
+
+.card--good {
+  border-left-color: var(--status-good);
+}
+
+.card--warning {
+  border-left-color: var(--status-warning);
+}
+
+.card--critical {
+  border-left-color: var(--status-critical);
+}
+
+/* Persona card status variants */
+.card--persona.card--excellent {
+  border-top-color: var(--status-excellent);
+}
+
+.card--persona.card--good {
+  border-top-color: var(--status-good);
+}
+
+.card--persona.card--warning {
+  border-top-color: var(--status-warning);
+}
+
+.card--persona.card--critical {
+  border-top-color: var(--status-critical);
+}
+
+/* Card elements */
+.card__title {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.card__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card__content {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Metric display within cards */
+.card__metric {
+  text-align: center;
+}
+
+.card__metric-value {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  line-height: 1;
+  margin: 0;
+}
+
+.card__metric-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.card__metric-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+}
+
+/* Card actions */
+.card__actions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+/* Clickable card */
+.card--clickable {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Legacy support - maps old classes to new BEM structure */
+.metric-card {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+  border-left: 4px solid var(--primary-color);
+  text-align: center;
+}
+
+.persona-card {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+  text-align: center;
+  border-top: 4px solid var(--border-color);
+}
+
+.content-card {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+  border-left: 4px solid var(--primary-color);
+}
+
+.metric-value {
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-color);
+  line-height: 1;
+  margin: 0;
+}
+
+.metric-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.metric-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: var(--spacing-sm);
+} 

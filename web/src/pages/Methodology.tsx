@@ -53,7 +53,7 @@ function Methodology() {
       <div className="insights-box">
         <h4>Crisis Impact Multipliers</h4>
         <p>Reputation issues can significantly impact your overall brand health score:</p>
-        <div style={{ marginTop: '1rem' }}>
+        <div className="mt-lg">
           {Object.entries(data.calculation?.crisis_multipliers || {}).map(([crisis, multiplier]) => {
             const mult = multiplier as number
             const reduction = (1 - mult) * 100
@@ -116,8 +116,8 @@ function Methodology() {
             background: colorMap[det.color] || '#f8f9fa',
             borderLeft: `4px solid ${borderMap[det.color] || '#6c757d'}`
           }}>
-            <h5 style={{ margin: '0 0 5px 0' }}>{range}: {det.label}</h5>
-            <p style={{ margin: 0 }}><strong>Status:</strong> {det.status}</p>
+            <h5 className="mb-xs">{range}: {det.label}</h5>
+            <p className="margin-0"><strong>Status:</strong> {det.status}</p>
           </div>
         )
       })}
@@ -128,13 +128,13 @@ function Methodology() {
         <p>All scores must be supported by specific evidence from the audited content:</p>
       </div>
 
-      <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #D1D5DB', margin: '1rem 0' }}>
+      <div className="p-lg">
         <h5>High Scores (≥7)</h5>
         <p><strong>Requirement:</strong> {data.evidence?.high_scores?.requirement || ''}</p>
         <p><strong>Penalty:</strong> {data.evidence?.high_scores?.penalty || ''}</p>
       </div>
 
-      <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #D1D5DB', margin: '1rem 0' }}>
+      <div className="p-lg">
         <h5>Low Scores (≤4)</h5>
         <p><strong>Requirement:</strong> {data.evidence?.low_scores?.requirement || ''}</p>
         <p><strong>Penalty:</strong> {data.evidence?.low_scores?.penalty || ''}</p>
@@ -154,9 +154,9 @@ function Methodology() {
       {Object.entries(data.classification?.onsite || {}).map(([tierKey, tierData]) => {
         const tier = tierData as any
         return (
-          <div key={tierKey} style={{ border: '2px solid #dee2e6', padding: '20px', margin: '15px 0', borderRadius: '8px' }}>
+          <div key={tierKey} className="alert">
             <h4>{tierKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}: {tier.name}</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="grid">
               <div>
                 <strong>Weight in Onsite:</strong> {(tier.weight_in_onsite * 100).toFixed(0)}%
               </div>
@@ -168,7 +168,7 @@ function Methodology() {
               </div>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+            <div className="grid">
               <div>
                 <h5>Triggers</h5>
                 <ul>
@@ -231,10 +231,10 @@ function Methodology() {
                   const criterion = criterionData as any
                   return (
                     <details key={criterionKey} style={{ margin: '1rem 0', padding: '0.5rem', border: '1px solid #dee2e6', borderRadius: '4px' }}>
-                      <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+                      <summary className="cursor-pointer font-bold">
                         {criterionKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} ({criterion.weight}%)
                       </summary>
-                      <div style={{ marginTop: '1rem' }}>
+                      <div className="mt-lg">
                         <p><strong>Description:</strong> {criterion.description}</p>
                         <p><strong>Requirements:</strong></p>
                         <ul>
@@ -257,10 +257,10 @@ function Methodology() {
                   const criterion = criterionData as any
                   return (
                     <details key={criterionKey} style={{ margin: '1rem 0', padding: '0.5rem', border: '1px solid #dee2e6', borderRadius: '4px' }}>
-                      <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+                      <summary className="cursor-pointer font-bold">
                         {criterionKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} ({criterion.weight}%)
                       </summary>
-                      <div style={{ marginTop: '1rem' }}>
+                      <div className="mt-lg">
                         <p><strong>Description:</strong> {criterion.description}</p>
                         <p><strong>Requirements:</strong></p>
                         <ul>
@@ -275,7 +275,7 @@ function Methodology() {
               </div>
             )}
             
-            <hr style={{ margin: '2rem 0' }} />
+            <hr className="my-2xl" />
           </div>
         )
       })}
@@ -293,16 +293,16 @@ function Methodology() {
 
       <div style={{ background: '#f8f9fa', padding: '15px', margin: '10px 0', borderRadius: '5px' }}>
         <h5>Global Corporate Positioning</h5>
-        <p style={{ fontWeight: 'bold', color: '#E85A4F' }}>"{data.messaging?.corporate_hierarchy?.global || ''}"</p>
+        <p className="font-bold">"{data.messaging?.corporate_hierarchy?.global || ''}"</p>
       </div>
 
       <div style={{ background: '#f8f9fa', padding: '15px', margin: '10px 0', borderRadius: '5px' }}>
         <h5>Regional Narrative (BENELUX)</h5>
-        <p style={{ fontWeight: 'bold', color: '#2C3E50' }}>"{data.messaging?.corporate_hierarchy?.regional || ''}"</p>
+        <p className="font-bold">"{data.messaging?.corporate_hierarchy?.regional || ''}"</p>
       </div>
 
       <h3>Sub-Narratives by Domain</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+      <div className="grid">
         {Object.entries(data.messaging?.corporate_hierarchy?.sub_narratives || {}).map(([domain, narrative]) => (
           <div key={domain} style={{ border: '1px solid #dee2e6', padding: '10px', borderRadius: '5px' }}>
             <strong>{domain.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong><br/>
@@ -355,7 +355,7 @@ function Methodology() {
         
         return (
           <div key={ruleKey} style={{ borderLeft: `4px solid ${color}`, padding: '15px', margin: '10px 0', background: '#f8f9fa' }}>
-            <h5 style={{ margin: '0 0 5px 0', color }}>{rule.severity} - {ruleKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h5>
+            <h5 className="mb-xs">{rule.severity} - {ruleKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</h5>
             <p><strong>Trigger:</strong> {rule.trigger}</p>
             <p><strong>Penalty:</strong> {rule.penalty}</p>
           </div>
@@ -408,10 +408,10 @@ function Methodology() {
         
         return (
           <details key={exampleKey} style={{ margin: '1rem 0', padding: '0.5rem', border: '1px solid #dee2e6', borderRadius: '4px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>
+            <summary className="cursor-pointer font-bold">
               {exampleKey.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} (Score: {score}/10)
             </summary>
-            <div style={{ marginTop: '1rem' }}>
+            <div className="mt-lg">
               <div style={{ borderLeft: `4px solid ${scoreColor}`, padding: '10px', background: '#f8f9fa' }}>
                 <p><strong>Example Text:</strong></p>
                 <blockquote>"{example.text}"</blockquote>
@@ -465,22 +465,13 @@ function Methodology() {
       </div>
 
       {/* Tab Navigation */}
-      <div style={{ borderBottom: '1px solid #dee2e6', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+      <div className="mb-2xl">
+        <div className="flex">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '0.75rem 1rem',
-                border: 'none',
-                background: activeTab === tab.id ? '#E85A4F' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#2C3E50',
-                borderRadius: '4px 4px 0 0',
-                cursor: 'pointer',
-                fontWeight: activeTab === tab.id ? '600' : '400',
-                transition: 'all 0.2s'
-              }}
+              className="cursor-pointer"
             >
               {tab.label}
             </button>
@@ -494,7 +485,7 @@ function Methodology() {
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: '50px', padding: '20px', borderTop: '1px solid #D1D5DB', textAlign: 'center', color: '#6c757d' }}>
+      <div className="text-center">
         <p>Brand Health Command Center - Methodology v{data.metadata?.version || '2.1'}</p>
       </div>
     </div>

@@ -595,8 +595,8 @@ const SuccessLibrary: React.FC = () => {
         <div className="implementation-roadmap">
           <h3>🗺️ Implementation Roadmap</h3>
           <div className="roadmap-phases">
-            <div className="phase-card" style={{ borderLeftColor: '#10b981' }}>
-              <h4 style={{ color: '#10b981' }}>Phase 1: Analysis (Week 1)</h4>
+            <div className="phase-card" className="border-l-success">
+              <h4 className="text-success">Phase 1: Analysis (Week 1)</h4>
               <ul>
                 <li>Analyze top 3 success stories in detail</li>
                 <li>Identify common patterns and elements</li>
@@ -605,8 +605,8 @@ const SuccessLibrary: React.FC = () => {
               </ul>
             </div>
             
-            <div className="phase-card" style={{ borderLeftColor: '#f59e0b' }}>
-              <h4 style={{ color: '#f59e0b' }}>Phase 2: Planning (Week 2)</h4>
+            <div className="phase-card" className="border-l-warning">
+              <h4 className="text-warning">Phase 2: Planning (Week 2)</h4>
               <ul>
                 <li>Select content for pattern application</li>
                 <li>Prioritize by potential impact</li>
@@ -615,8 +615,8 @@ const SuccessLibrary: React.FC = () => {
               </ul>
             </div>
             
-            <div className="phase-card" style={{ borderLeftColor: '#0ea5e9' }}>
-              <h4 style={{ color: '#0ea5e9' }}>Phase 3: Implementation (Weeks 3-4)</h4>
+            <div className="phase-card" className="border-l-info">
+              <h4 className="text-info">Phase 3: Implementation (Weeks 3-4)</h4>
               <ul>
                 <li>Apply success patterns to selected content</li>
                 <li>Test new content variations</li>
@@ -625,8 +625,8 @@ const SuccessLibrary: React.FC = () => {
               </ul>
             </div>
             
-            <div className="phase-card" style={{ borderLeftColor: '#8b5cf6' }}>
-              <h4 style={{ color: '#8b5cf6' }}>Phase 4: Optimization (Week 5+)</h4>
+            <div className="phase-card" className="border-l-purple">
+              <h4 className="text-purple">Phase 4: Optimization (Week 5+)</h4>
               <ul>
                 <li>Analyze results and performance</li>
                 <li>Refine patterns based on data</li>

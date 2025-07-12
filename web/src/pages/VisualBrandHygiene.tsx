@@ -944,13 +944,7 @@ function VisualBrandHygiene() {
                           >
                             <div 
                               className="color-swatch" 
-                              style={{ 
-                                backgroundColor: color.hex,
-                                width: '100%',
-                                height: '60px',
-                                borderRadius: 'var(--border-radius)',
-                                marginBottom: 'var(--spacing-sm)'
-                              }}
+                              className="w-full"
                             ></div>
                             <div className="color-info">
                               <h5 style={{ color: color.hex, margin: '0 0 var(--spacing-xs) 0' }}>{color.name}</h5>
@@ -981,13 +975,7 @@ function VisualBrandHygiene() {
                           >
                             <div 
                               className="color-swatch" 
-                              style={{ 
-                                backgroundColor: color.hex,
-                                width: '100%',
-                                height: '40px',
-                                borderRadius: 'var(--border-radius)',
-                                marginBottom: 'var(--spacing-sm)'
-                              }}
+                              className="w-full"
                             ></div>
                             <div className="color-info">
                               <strong style={{ color: color.hex, fontSize: 'var(--font-size-sm)' }}>{color.name}</strong>

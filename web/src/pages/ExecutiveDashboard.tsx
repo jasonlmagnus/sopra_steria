@@ -166,9 +166,9 @@ function ExecutiveDashboard() {
             const status = getScoreStatus(score)
             
             return (
-              <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${color}` }}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color }}>{score.toFixed(1)}/10</div>
-                <div style={{ color, fontWeight: '600', margin: '0.5rem 0' }}>{status}</div>
+              <div className="text-center">
+                <div className="font-bold">{score.toFixed(1)}/10</div>
+                <div className="font-semibold">{status}</div>
                 <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   First impression uniqueness (40%)<br/>
@@ -189,9 +189,9 @@ function ExecutiveDashboard() {
             const status = getScoreStatus(score)
             
             return (
-              <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${color}` }}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color }}>{score.toFixed(1)}/10</div>
-                <div style={{ color, fontWeight: '600', margin: '0.5rem 0' }}>{status}</div>
+              <div className="text-center">
+                <div className="font-bold">{score.toFixed(1)}/10</div>
+                <div className="font-semibold">{status}</div>
                 <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   User sentiment scores (50%)<br/>
@@ -212,9 +212,9 @@ function ExecutiveDashboard() {
             const status = getScoreStatus(score)
             
             return (
-              <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', borderLeft: `4px solid ${color}` }}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color }}>{score.toFixed(1)}/10</div>
-                <div style={{ color, fontWeight: '600', margin: '0.5rem 0' }}>{status}</div>
+              <div className="text-center">
+                <div className="font-bold">{score.toFixed(1)}/10</div>
+                <div className="font-semibold">{status}</div>
                 <div style={{ fontSize: '0.85rem', color: '#6B7280', marginTop: '0.5rem' }}>
                   <strong>How we measure:</strong><br/>
                   Conversion likelihood (50%)<br/>

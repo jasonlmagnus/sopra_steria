@@ -698,7 +698,7 @@ function PersonaViewer() {
                           <div 
                             className="section-header"
                             onClick={() => toggleSection(index)}
-                            style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                            className="flex-between-center"
                           >
                             <h4>📋 {section.title}</h4>
                             <span className="collapse-icon">

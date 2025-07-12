@@ -368,7 +368,7 @@ function AuditReports() {
 
       {/* Action buttons */}
       <div className="section">
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <div className="flex">
           <button 
             onClick={handleRegenerateReports}
             disabled={regenerating}
@@ -390,21 +390,14 @@ function AuditReports() {
       {/* Report selector */}
       {reports.length > 0 && (
         <div className="section">
-          <label htmlFor="report-select" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+          <label htmlFor="report-select" className="font-semibold">
             🔍 Select Report to View:
           </label>
           <select 
             id="report-select"
             onChange={handleReportSelection}
             defaultValue={options[defaultIndex]}
-            style={{ 
-              width: '100%',
-              padding: '0.75rem',
-              fontSize: '1rem',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--border-radius)',
-              background: 'var(--background)'
-            }}
+            className="w-full"
           >
             {options.map((option, index) => (
               <option 
@@ -428,16 +421,8 @@ function AuditReports() {
         <>
           {/* Compact report details - one line */}
           <div className="section">
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              padding: '1rem',
-              background: 'var(--background-secondary)',
-              borderRadius: 'var(--border-radius)',
-              marginBottom: '1rem'
-            }}>
-              <div style={{ fontSize: '0.9rem' }}>
+            <div className="flex-between-center">
+              <div className="text-sm">
                 <strong>📋 {selectedReport.persona_name} - {selectedReport.report_type}</strong>
                 <span style={{ margin: '0 0.5rem', color: '#666' }}>•</span>
                 <span>📁 {selectedReport.file_name}</span>
@@ -458,7 +443,7 @@ function AuditReports() {
 
           {/* Report content title */}
           <div className="section">
-            <h2 style={{ marginBottom: '1rem' }}>📄 Report Content</h2>
+            <h2 className="mb-lg">📄 Report Content</h2>
             
             {/* HTML viewer - 800px height matching Streamlit */}
             <div style={{ 
@@ -468,22 +453,18 @@ function AuditReports() {
             }}>
               <iframe
                 srcDoc={htmlContent}
-                style={{
-                  width: '100%',
-                  height: '800px',
-                  border: 'none'
-                }}
+                className="w-full"
                 title={`${selectedReport.persona_name} - ${selectedReport.report_type}`}
               />
             </div>
           </div>
 
           {/* Compact technical details expander */}
-          <details style={{ marginTop: '1rem', padding: '1rem', background: 'var(--background-secondary)', borderRadius: 'var(--border-radius)' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: '600' }}>
+          <details className="mt-lg">
+            <summary className="cursor-pointer font-semibold">
               🔧 Technical Details
             </summary>
-            <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="grid">
               <div>
                 <strong>Path:</strong> <code>{selectedReport.relative_path}</code><br/>
                 <strong>Category:</strong> {selectedReport.category}
@@ -498,11 +479,11 @@ function AuditReports() {
       )}
 
       {/* Compact help */}
-      <details style={{ marginTop: '2rem', padding: '1rem', background: 'var(--background-secondary)', borderRadius: 'var(--border-radius)' }}>
-        <summary style={{ cursor: 'pointer', fontWeight: '600' }}>
+      <details className="mt-2xl">
+        <summary className="cursor-pointer font-semibold">
           ℹ️ Quick Help
         </summary>
-        <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
+        <div className="mt-lg">
           <p><strong>Quick Usage:</strong> Page auto-loads the main report → Use dropdown to switch reports → Download individual or bulk reports</p>
           <p><strong>Features:</strong> Auto-loading default report • In-dashboard viewing • No new windows • ZIP downloads • Auto-regeneration from latest data</p>
         </div>
