@@ -46,3 +46,16 @@ export function mapSuccessStory(data: any): SuccessStory {
     score: data.score !== undefined ? data.score : data.story_score || 0,
   };
 }
+
+export interface PageSummary {
+  slug: string;
+  avgScore: number;
+}
+
+export function mapPageSummary(data: any): PageSummary {
+  return {
+    slug: data.slug || data.page_slug || '',
+    avgScore:
+      data.avg_score !== undefined ? data.avg_score : data.avgScore || 0,
+  };
+}
