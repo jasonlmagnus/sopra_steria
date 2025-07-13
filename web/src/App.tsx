@@ -1,6 +1,7 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import ExecutiveDashboard from './pages/ExecutiveDashboard'
+import ExecutiveDashboard_AntDesign_Real from './pages/ExecutiveDashboard_AntDesign_Real'
 import Methodology from './pages/Methodology'
 import PersonaInsights from './pages/PersonaInsights'
 import ContentMatrix from './pages/ContentMatrix'
@@ -22,7 +23,8 @@ function App() {
   const location = useLocation()
 
   const navigationItems = [
-    { path: '/', label: 'Executive Dashboard', icon: '🎯' },
+    { path: '/', label: 'Executive Dashboard', icon: '��' },
+    { path: '/antd-real', label: 'Ant Design Real Data', icon: '🎯🐜' },
     { path: '/methodology', label: 'Methodology', icon: '🔬' },
     { path: '/persona-insights', label: 'Persona Insights', icon: '👥' },
     { path: '/content-matrix', label: 'Content Matrix', icon: '📊' },
@@ -74,6 +76,7 @@ function App() {
       <div className={`main-content ${sidebarExpanded ? '' : 'main-content--sidebar-collapsed'}`}>
         <Routes>
           <Route path="/" element={<ExecutiveDashboard />} />
+          <Route path="/antd-real" element={<ExecutiveDashboard_AntDesign_Real />} />
           <Route path="/methodology" element={<Methodology />} />
           <Route path="/persona-insights" element={<PersonaInsights />} />
           <Route path="/content-matrix" element={<ContentMatrix />} />
@@ -86,7 +89,6 @@ function App() {
           <Route path="/visual-brand-hygiene" element={<VisualBrandHygiene />} />
           <Route path="/strategic-recommendations" element={<StrategicRecommendations />} />
           <Route path="/datasets/:name" element={<DatasetDetail />} />
-
           <Route path="/audit-reports" element={<AuditReports />} />
         </Routes>
       </div>

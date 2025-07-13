@@ -19,12 +19,17 @@
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0
+  transition: all 0.3s ease;
+}
 
 .section-badge {
   background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
   color: white;
-  padding: 0
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
 
 .file-upload-label {
   display: block;
@@ -33,7 +38,13 @@
   padding: 3rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0
+  transition: all 0.3s ease;
+}
+
+.file-upload-label:hover {
+  border-color: var(--primary-color);
+  background: var(--gray-50);
+}
 
 /* Model Options - Page-specific component */
 
@@ -42,15 +53,32 @@
   border-radius: 0.75rem;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0
+  transition: all 0.3s ease;
+}
 
-.model-option
+.model-option:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.model-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-50);
+}
 
 .model-content h4 {
-  margin: 0 0 0
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
 
 .feature-tag {
-  padding: 0
+  padding: 0.25rem 0.5rem;
+  background: var(--gray-100);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--gray-700);
+}
 
 /* URLs Section - Page-specific input handling */
 
@@ -60,7 +88,10 @@
 
 .invalid-urls h5 {
   color: var(--status-critical);
-  margin: 0 0 0
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
 
 /* Launch Section - Page-specific */
 
@@ -75,11 +106,30 @@
 /* Audit Log - Page-specific component */
 
 .log-status {
-  padding: 0
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.log-status.success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+}
+
+.log-status.error {
+  background: var(--status-error-bg);
+  color: var(--status-error);
+}
 
 .log-line {
   margin-bottom: 0.25rem;
-  padding: 0
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--gray-50);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
 
 /* Post Audit - Page-specific completion */
 
@@ -100,16 +150,43 @@
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   padding: 1rem;
-  transition: all 0
+  transition: all 0.3s ease;
+}
+
+.step-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
 .step-content h4 {
   font-size: 1rem;
   font-weight: 600;
-  margin: 0 0 0
+  margin: 0 0 0.5rem 0;
+}
 
 /* Processing Status - Page-specific */
 
 .status-success,
+.status-error,
+.status-warning {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.status-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+}
+
+.status-error {
+  background: var(--status-error-bg);
+  color: var(--status-error);
+}
+
+.status-warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+}
 
 /* Action Section - Page-specific */
 
@@ -127,20 +204,38 @@
   font-weight: 600;
   font-size: 0.875rem;
   margin: 0 auto 0.5rem;
-  transition: all 0
+  transition: all 0.3s ease;
+}
 
 @keyframes pulse-blue {
   0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
   50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
 }
 
-.step
+.step.active .step-number {
+  background: var(--primary-color);
+  animation: pulse-blue 2s infinite;
+}
 
-.step
+.step.completed .step-number {
+  background: var(--status-success);
+}
 
-.step
+.step.pending .step-number {
+  background: var(--gray-400);
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
-
+  .config-section {
+    padding: 1rem;
+  }
+  
+  .file-upload-label {
+    padding: 2rem 1rem;
+  }
+  
+  .model-option {
+    padding: 1rem;
+  }
 }
