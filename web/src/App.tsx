@@ -5,6 +5,7 @@ import ExecutiveDashboard_AntDesign_Real from './pages/ExecutiveDashboard_AntDes
 import Methodology from './pages/Methodology'
 import PersonaInsights from './pages/PersonaInsights'
 import ContentMatrix from './pages/ContentMatrix'
+import ContentMatrix_AntDesign from './pages/ContentMatrix_AntDesign'
 import OpportunityImpact from './pages/OpportunityImpact'
 import SuccessLibrary from './pages/SuccessLibrary'
 import ReportsExport from './pages/ReportsExport'
@@ -28,6 +29,7 @@ function App() {
     { path: '/methodology', label: 'Methodology', icon: '🔬' },
     { path: '/persona-insights', label: 'Persona Insights', icon: '👥' },
     { path: '/content-matrix', label: 'Content Matrix', icon: '📊' },
+    { path: '/content-matrix-ant', label: 'Content Matrix Ant', icon: '📊🐜' },
     { path: '/opportunity-impact', label: 'Opportunity Impact', icon: '💡' },
     { path: '/success-library', label: 'Success Library', icon: '🌟' },
     { path: '/reports-export', label: 'Reports Export', icon: '📋' },
@@ -80,6 +82,7 @@ function App() {
           <Route path="/methodology" element={<Methodology />} />
           <Route path="/persona-insights" element={<PersonaInsights />} />
           <Route path="/content-matrix" element={<ContentMatrix />} />
+          <Route path="/content-matrix-ant" element={<ContentMatrix_AntDesign />} />
           <Route path="/opportunity-impact" element={<OpportunityImpact />} />
           <Route path="/success-library" element={<SuccessLibrary />} />
           <Route path="/reports-export" element={<ReportsExport />} />
