@@ -1,0 +1,21 @@
+/* Ant Design font-family override for Ant Design pages only */
+.ant-design-root, .ant-layout, .ant-typography, .ant-card, .ant-list, .ant-alert, .ant-btn {
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif' !important;
+}
+
+/* Spacing & layout utilities (shared across all Ant pages) */
+.p-24 { padding: 24px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-24 { margin-top: 24px; }
+
+/* Layout helpers */
+.dashboard-layout { padding: 24px; background: #f0f2f5; }
+.content-center { text-align: center; padding: 100px 0; }
+
+/* Fallback: force common HTML text tags to inherit Ant font */
+.ant-design-root p,
+.ant-design-root small,
+.ant-design-root code,
+.ant-design-root kbd {
+  font-family: inherit !important;
+} 

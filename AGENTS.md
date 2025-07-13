@@ -109,6 +109,25 @@ export default NewFeaturePage;
 
 ### 5. Styling Guidelines
 
+**Font Family Requirement for Ant Design Pages:**
+- For Ant Design pages, import `../styles/ant.css` at the top of the file.
+- Wrap the page content in a `<div className="ant-design-root">`.
+- This ensures only Ant Design pages use the Ant Design default font-family and existing pages are unaffected.
+- Do NOT change or overwrite existing global or text CSS files.
+
+**Example usage:**
+```tsx
+import '../styles/ant.css';
+
+function MyAntDesignPage() {
+  return (
+    <div className="ant-design-root">
+      {/* ...Ant Design Layout/components... */}
+    </div>
+  );
+}
+```
+
 **Use existing patterns:**
 - Import from `web/src/styles/`
 - Follow Ant Design patterns
@@ -217,10 +236,15 @@ Before submitting any new pages:
 - [ ] Matches Streamlit data display
 - [ ] Preserves existing functionality
 - [ ] Uses consistent styling
+- [ ] For Ant Design pages: imports ant.css and uses <div className="ant-design-root"> wrapper
+- [ ] Uses Ant Design default font-family on Ant Design pages only
 - [ ] Includes proper TypeScript types
 - [ ] **For Ant Design versions:** Uses `{OriginalPageName}_AntDesign.tsx` naming
 - [ ] **For Ant Design versions:** Does NOT overwrite original files
 - [ ] **For Ant Design versions:** Uses Ant Design components and styling
+- [ ] No inline styles except dynamic calculations.
+- [ ] Ant pages use utility classes from `ant.css`; no page-specific CSS unless justified.
+- [ ] Ant pages wrap content in `.ant-design-root` and import `ant.css`.
 
 ## Troubleshooting
 
@@ -262,3 +286,15 @@ For questions about these instructions, refer to:
 - Ant Design versions are clearly identifiable
 - Both versions can coexist in the same directory
 - Easy switching between implementations 
+
+## Ant Design Page Status
+
+- As of now, only one Ant Design page exists: `ExecutiveDashboard_AntDesign_Real.tsx`.
+- All styling, refactoring, and best practices described here apply to this page.
+- All future Ant Design pages must follow the same conventions and patterns.
+
+## Typography and Text Styling
+
+- All visible text in Ant Design pages must use Ant Design Typography components (`<Text>`, `<Paragraph>`, `<Title>`, etc.) instead of raw HTML tags.
+- The CSS fallback in `ant.css` ensures any legacy or third-party HTML tags (e.g., `<p>`, `<small>`, `<code>`) inside `.ant-design-root` will inherit the correct font-family, but this is a safety net, not a primary strategy.
+- Do NOT use inline styles for font or text styling. 
